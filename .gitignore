@@ -1,43 +1,78 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# ----------------------
+# GERAL (Aplica-se a tudo)
+# ----------------------
+# Dependências do Node (Front e Back)
 node_modules/
 
-# Expo
+# Logs e Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
+*.swp
+
+# ----------------------
+# SEGURANÇA (CRÍTICO)
+# ----------------------
+# Ignorar todos os ficheiros de variáveis de ambiente
+# Isto protege a tua SECRET_KEY do BackEnd e chaves de API
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Mas permite ficheiros de exemplo (seguros)
+!*.example
+!*.template
+
+# ----------------------
+# FRONTEND (Expo / React Native)
+# ----------------------
+# Build outputs
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
+# Ficheiros Nativos Gerados (Prebuild)
+# Nota: Sem a barra inicial '/' para apanhar dentro da pasta FrontEnd
+ios/
+android/
+
+# Metro Bundler
+.metro-health-check*
+
+# Certificados e Chaves Mobile
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.keystore
 
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 
-app-example
+# ----------------------
+# BACKEND (Node / Express)
+# ----------------------
+# Relatórios de cobertura de testes
+coverage/
+.nyc_output/
 
-# generated native folders
-/ios
-/android
+# Bases de dados locais (caso tenhas ficheiros)
+*.sqlite
+*.db
+
+# Opcional: Se usares uploads locais
+uploads/
