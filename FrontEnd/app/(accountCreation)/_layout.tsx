@@ -20,7 +20,6 @@ const _layout = () => {
         borderColor: "#ff0000",
         backgroundColor: "#AB8BFF",
         borderRadius: 75,
-        marginBottom: 20,
       }
     }}>
 

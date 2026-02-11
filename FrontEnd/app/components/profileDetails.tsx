@@ -7,23 +7,32 @@ const ProfileDetails = ({name,email,city} :any) => {
   
   const [user,setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const loadProfile = async () => {
 
-    try{
-        setLoading(true)
-        const jsonValue = await SecureStore.getItemAsync("userInfo")
-        if(!jsonValue){
-            return Alert.alert("Erro interno", "Erro ao carregar o utilizador a partir do dispositivo")
-        }
-        setUser(JSON.parse(jsonValue))
-        
-    }catch(err){
-        console.error("Erro ao carregar utilizador", err)
-    }finally{
-        setLoading(false)
+    const loadProfile = async () => {
+  try {
+    setLoading(true);
+    const jsonValue = await SecureStore.getItemAsync("userInfo");
+    console.log("DEBUG - Dados no Store:", jsonValue);
+
+    if (jsonValue) {
+      const userData = JSON.parse(jsonValue);
+      
+      // Criamos o nome a partir do email caso o campo 'name' não exista
+      const email = userData.email || "";
+      const nomeExtraido = email.split('@')[0]; 
+
+      // Atualizamos o estado com o nome processado
+      setUser({
+        ...userData,
+        name: nomeExtraido
+      });
     }
-
+  } catch (err) {
+    console.error("Erro ao carregar utilizador", err);
+  } finally {
+    setLoading(false);
   }
+};
 
     useFocusEffect(
         useCallback(() =>{
@@ -35,15 +44,15 @@ const ProfileDetails = ({name,email,city} :any) => {
   
     return (
         <View>
-            {loading?(
-                <ActivityIndicator
-                    size="large"
-                    color="red"
-                />):(
-        <Text>Olá {user?.name}</Text>
-    )}
-
-    </View>
+  {loading ? (
+    <ActivityIndicator size="large" color="red" />
+  ) : (
+    // Forçamos a exibição do nome que acabámos de processar
+    <Text style={{ fontSize: 20 }}>
+      Olá {user?.name ? user.name : "Visitante"}
+    </Text>
+  )}
+</View>
   )
 }
 

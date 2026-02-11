@@ -9,6 +9,7 @@ const Index = () => {
   useEffect(() => {
 
     verifyLogin();
+    
   }, []);
 
   const verifyLogin = async () => {
@@ -21,12 +22,12 @@ const Index = () => {
       if(token){
         router.replace('/(tabs)/home')
       }else{
-        router.replace('/(accountCreation)/register')
+        router.replace('/(accountCreation)/login')
       }
     
     }catch{
       console.log("Erro rederecionado para pagina de criação de conta")  
-      router.replace('/(accountCreation)/register')
+      router.replace('/(accountCreation)/login')
 
     }
 
@@ -36,10 +37,7 @@ const Index = () => {
   return (
 
     <View className="flex-1 justify-center items-center">
-      <ActivityIndicator
-        size="large"
-        color="red"
-      />
+   
     </View>
 
   );

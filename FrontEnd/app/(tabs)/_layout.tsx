@@ -17,10 +17,10 @@ const _layout = () => {
           alignItems: "center",
         },
         tabBarStyle: {
+          paddingBottom: 5,
           borderColor: "#ff0000",
           backgroundColor: "#AB8BFF",
           borderRadius: 75,
-          marginBottom: 20,
         },
       }}
     >

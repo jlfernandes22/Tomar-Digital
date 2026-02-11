@@ -3,6 +3,14 @@ import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_URL } from '@/constants/api';
 import { router } from 'expo-router';
+import { 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView, 
+  TouchableWithoutFeedback, 
+  Keyboard 
+} from 'react-native';
+
 
 const Register = () => {
   
@@ -53,8 +61,19 @@ const Register = () => {
   
   
   return (
-      <SafeAreaView  className='flex-1 justify-center items-center'>
-        
+        <SafeAreaView className='flex-1'/* 1. Protege as bordas do dispositivo */>
+         <KeyboardAvoidingView 
+           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+           style={{ flex: 1 }}/* 2. Ajusta a altura quando o teclado sobe */
+         >
+           <TouchableWithoutFeedback onPress={Keyboard.dismiss} /*3. Fecha teclado ao tocar fora */ > 
+             <ScrollView 
+  contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
+  keyboardShouldPersistTaps="handled"
+  bounces={false} // <--- Isto remove o efeito de "elástico" no iOS
+  overScrollMode="never" // <--- Isto remove o efeito de "brilho/sombra" no Android
+>
+              
         <View>
           <Text className='
                             ml-auto
@@ -164,7 +183,10 @@ const Register = () => {
           >Criar Conta</Text>
         </TouchableOpacity>
         
-      </SafeAreaView>
+      </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  </SafeAreaView>
     )
 }
 

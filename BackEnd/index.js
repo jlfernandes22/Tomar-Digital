@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from './models/User.js'
 import Business from './models/Business.js';
+import Favorite from './models/Favorite.js';
 import 'dotenv/config';
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -72,7 +73,6 @@ app.post('/registar',async (req, res) => {
 app.post('/iniciarSessao', async (req, res) => {
     
     const {email, password} = req.body
-
     try{
 
         //procurar o utilizador pelo email
@@ -95,10 +95,16 @@ app.post('/iniciarSessao', async (req, res) => {
             {expiresIn: '7d'}
         )
 
-        res.status(201).json({message: "Login efetuado com sucesso",
-            token: token,
-            user: {name: user.name, email: user.email}
-    })
+        // ... dentro do teu try, após gerar o token
+            res.status(201).json({
+                message: "Login efetuado com sucesso",
+                token: token,
+                userId: user._id, // <--- ADICIONA ESTA LINHA AQUI
+                user: { 
+                    name: user.name, 
+                    email: user.email 
+                }
+        });
 
 
     }catch(err){
@@ -128,12 +134,16 @@ app.get('/utilizadores', async (req, res) => {
 //Registar negócio
 app.post('/registarNegocio',async (req, res) => {
 
+   
     const {name, category, location} = req.body
 
     console.log(req.body)
 
     try{
-
+        const existingBusiness = await Business.findOne({ name: name });
+        if (existingBusiness) {
+            return res.status(409).json({ message: "Este negócio já está registrado" });
+        }
         const newBusiness = await new Business({
 
             name: name,
@@ -145,6 +155,8 @@ app.post('/registarNegocio',async (req, res) => {
 
 
         });
+
+        
 
         await newBusiness.save();
         res.status(201).json({message: "Negócio registrado com sucesso"})
@@ -164,6 +176,40 @@ app.get('/negocios', async (req, res) => {
     const Businesses = await Business.find();
     res.json(Businesses)
 
+});
+//guardar comercio
+app.post('/guardarFavorito', async (req, res) => {
+  const { userId, businessId } = req.body; // Verifica se os nomes batem com o Frontend!
+
+  try {
+    // 1. Verifica se já existe para não duplicar
+    const existe = await Favorite.findOne({ userId, businessId });
+    if (existe) return res.status(400).json({ message: "Já está na lista" });
+
+    // 2. Grava no banco
+    const novoFavorito = new Favorite({ userId, businessId });
+    await novoFavorito.save();
+
+    res.status(200).json({ message: "Guardado com sucesso!" });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+app.get('/meusFavoritos/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Procura todos os favoritos deste user
+    const favoritos = await Favorite.find({ userId: userId }).populate('businessId');
+    
+    // Forçamos o envio de um ARRAY, mesmo que esteja vazio []
+    res.status(200).json(Array.isArray(favoritos) ? favoritos : []);
+    
+  } catch (err) {
+    console.error(err);
+    res.status(500).json([]); // Envia array vazio em caso de erro para não quebrar o app
+  }
 });
 
 

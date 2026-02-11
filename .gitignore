@@ -24,11 +24,6 @@ Thumbs.db
 # ----------------------
 # Ignorar todos os ficheiros de variáveis de ambiente
 # Isto protege a tua SECRET_KEY do BackEnd e chaves de API
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 *.env
 
 # Mas permite ficheiros de exemplo (seguros)
