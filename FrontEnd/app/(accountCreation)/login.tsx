@@ -43,15 +43,17 @@ const handleLogin = async () => {
     if (response.ok) {
       const idEncontrado = dados.userId;
       const roleEncontrado = dados.role || dados.userRole || dados.user?.role;
-      if (idEncontrado) {
+      const tokenEncontrado = dados.token;
+      if (idEncontrado && tokenEncontrado) {
         const userInfo = JSON.stringify({
           id: idEncontrado,
           email: dados.user?.email,
-          role: roleEncontrado // Use o que veio da API
+          role: roleEncontrado, // Use o que veio da API
+          token: tokenEncontrado
         });
 
         await SecureStore.setItemAsync("userInfo", userInfo);
-        await login(idEncontrado, roleEncontrado);
+        await login(idEncontrado, roleEncontrado,tokenEncontrado );
         router.replace('/(tabs)/search');
       }
     } else {

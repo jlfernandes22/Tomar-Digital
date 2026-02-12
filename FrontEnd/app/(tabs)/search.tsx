@@ -18,25 +18,23 @@ const Search = () => {
 const { user } = useAuth();
   //carrega a lista do servidor
   const handleNegocios = async () => {
+  setLoading(true);
+  try {
+    const response = await fetch(`${API_URL}/negocios`);
+    const dados = await response.json();
 
-    setLoading(true)
-    try{
+    // FILTRO: Apenas negócios com status 'aprovado' entram na lista
+    // Se o status não existir (negócios antigos), podemos decidir se mostramos ou não
+    const apenasAprovados = dados.filter((item: any) => item.status === 'aprovado');
 
-      const response = await fetch(`${API_URL}/negocios`)
-
-      const dados = await response.json()
-
-      console.log(dados)
-
-      setListaNegocios(dados)
-      setListaFiltrada(dados); // Inicialmente a filtrada é igual à original
-    }catch{
-      console.log("Não foi possível obter a lista de negócios")
-    }finally{
-      setLoading(false)
-    }
-
+    setListaNegocios(apenasAprovados);
+    setListaFiltrada(apenasAprovados); 
+  } catch (error) {
+    console.log("Não foi possível obter a lista de negócios", error);
+  } finally {
+    setLoading(false);
   }
+};
 
   const confirmarGuardar = (negocio: any) => {
   Alert.alert(
@@ -147,18 +145,32 @@ const guardarNaLista = async (businessId: string) => {
           <ActivityIndicator size="large" color="red" style={{ marginTop: 20 }} />
         ) : (
               <FlatList
-          data={listaFiltrada}
-          keyExtractor={(item: any) => item._id}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => confirmarGuardar(item)}>
-              <BusinessList
-                name={item.name}
-                category={item.category}
-                location={item.location}
-              />
-            </TouchableOpacity>
-          )}
-        />  
+  data={listaFiltrada}
+  keyExtractor={(item: any) => item._id}
+  renderItem={({ item }) => (
+    <View className="relative">
+      <TouchableOpacity onPress={() => console.log("Ver detalhes")}>
+        <BusinessList
+          name={item.name}
+          category={item.category}
+          // Se location for um objeto {lat, long}, passamos uma string formatada
+          location={
+            item.location?.lat 
+              ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` 
+              : "Localização não definida"
+          }
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        onPress={() => confirmarGuardar(item)}
+        className="absolute right-6 top-6 bg-purple-600 w-10 h-10 rounded-full items-center justify-center shadow-md"
+      >
+        <Text className="text-white font-bold text-xl">+</Text>
+      </TouchableOpacity>
+    </View>
+  )}
+/>
         )}
       </View>
       </SafeAreaView>

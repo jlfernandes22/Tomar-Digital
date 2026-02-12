@@ -1,11 +1,15 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
+interface User {
+  id: string;
+  role: string;
+  token: string; 
+}
 
 interface AuthContextData {
-  user: { id: string, role: string } | null;
-  login: (id: string, role: string) => Promise<void>; 
+  user: User | null;
+  login: (id: string, role: string, token: string) => Promise<void>; 
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -13,35 +17,36 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider = ({ children }: any) => {
-const [user, setUser] = useState<{ id: string, role: string } | null>(null);
-const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const loadStorageData = async () => {
-    try {
-      // Tenta ir buscar ao SecureStore
-      const savedUser = await SecureStore.getItemAsync("userInfo");
-      
-      if (savedUser) {
-        const userData = JSON.parse(savedUser);
-        setUser({ id: userData.id , role: userData.role}); 
+  useEffect(() => {
+    const loadStorageData = async () => {
+      try {
+        // Usa a chave correta 'user_data' 
+        const savedUser = await SecureStore.getItemAsync("user_data");
+        
+        if (savedUser) {
+          const userData = JSON.parse(savedUser);
+          setUser(userData); 
+        }
+      } catch (e) {
+        console.log("Erro ao carregar dados do SecureStore", e);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.log("Erro ao carregar dados do SecureStore", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-  loadStorageData();
-}, []);
+    };
+    loadStorageData();
+  }, []);
 
-  const login = async (backendId: string, backendRole: string) => {
+  // A função login agora recebe e guarda a info
+  const login = async (backendId: string, backendRole: string, backendToken: string) => {
     try {
-
-    const userData = {
-          id: backendId,
-          role: backendRole
-        };
+      const userData = {
+        id: backendId,
+        role: backendRole,
+        token: backendToken 
+      };
 
       await SecureStore.setItemAsync('user_data', JSON.stringify(userData));
       setUser(userData);

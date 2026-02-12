@@ -3,29 +3,45 @@ import { Tabs } from "expo-router";
 import React from "react";
 import TabIcon from '@/app/components/Tabicon'
 import { useAuth } from "@/context/AuthContext";
+import { Dimensions, Platform } from 'react-native';
 
 
 
 const _layout = () => {
   const { user } = useAuth();
+  const { width } = Dimensions.get('window');
   return (
     <Tabs
-      screenOptions={{
-        tabBarShowLabel: false,
-        tabBarItemStyle: {
-          width: "100%",
-          height: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-        },
-        tabBarStyle: {
-          paddingBottom: 5,
-          borderColor: "#ff0000",
-          backgroundColor: "#AB8BFF",
-          borderRadius: 75,
-        },
-      }}
-    >
+  screenOptions={{
+    // Esconder a label
+    tabBarShowLabel: false, 
+    
+    tabBarStyle: {
+      backgroundColor: "#AB8BFF",
+      position: 'absolute', // Faz a barra flutuar
+      bottom: 15, // Espaço do fundo do telemóvel
+      left: 15,   // Margem da esquerda
+      right: 15,  // Margem da direita
+      height: 70, // Altura fixa para todos
+      borderRadius: 15, // Arredondado mas não exagerado
+      
+      // Sombras para dar profundidade
+      elevation: 5, 
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      
+      borderTopWidth: 0, // Remove a linha de topo
+      paddingHorizontal: 5, // Respiro interno para os ícones não tocarem nas pontas
+    },
+    tabBarItemStyle: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    },
+  }}
+>
       <Tabs.Screen
         name="home"
         options={{
@@ -84,10 +100,21 @@ const _layout = () => {
           options={{
             title: "Camara",
             headerShown: false,
-            // Se não for comerciante, href: null esconde a tab 
             href: user?.role === 'camara' ? '/camara' : null, 
             tabBarIcon: ({ focused }) => (
               <TabIcon focused={focused} icon={images.camaraImg} title="Camara" />
+            ),
+          }}
+        />
+
+         <Tabs.Screen
+          name="add"
+          options={{
+            title: "Adicionar",
+            headerShown: false,
+            href: user?.role === 'comerciante' ? '/add' : null, 
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={images.addImg} title="Adicionar" />
             ),
           }}
         />

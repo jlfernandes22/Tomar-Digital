@@ -6,6 +6,7 @@ import loginImg from "@/assets/tabsImages/login.png";
 import registerImg from "@/assets/tabsImages/register.png"
 import storeImg from "@/assets/tabsImages/store.png"
 import camaraImg from "@/assets/tabsImages/camara.png"
+import addImg from "@/assets/tabsImages/add.png"
 
 export const images = {
   profileImg,
@@ -15,5 +16,6 @@ export const images = {
   loginImg,
   registerImg,
   storeImg,
-  camaraImg
+  camaraImg,
+  addImg
 };

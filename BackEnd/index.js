@@ -14,6 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+
 //////////////////////////////
 //Conectar à mongoDb no docker
 mongoose.connect('mongodb://localhost:27017/tomar_db')
@@ -93,7 +94,7 @@ app.post('/iniciarSessao', async (req, res) => {
                 role: user.role 
             }, 
             process.env.JWT_SECRET, 
-            { expiresIn: '7d' }
+            { expiresIn: '1d' }
         );
 
         
@@ -135,43 +136,62 @@ app.get('/utilizadores', async (req, res) => {
 
 ///////////////////
 //Registar negócio
-app.post('/registarNegocio', authorize(['camara']),async (req, res) => {
-    const {name, category, location} = req.body
+// comerciante propor ou a camara registar
+app.post('/registarNegocio', authorize(['comerciante', 'camara']), async (req, res) => {
+    try {
+        const { name, category, location, owner } = req.body;
 
-    try{
-        const existingBusiness = await Business.findOne({ name: name });
-        if (existingBusiness) {
-            return res.status(409).json({ message: "Este negócio já está registrado" });
+        if (!name || !category || !location) {
+            return res.status(400).json({ message: "Dados incompletos (Nome, Categoria e Localização são obrigatórios)." });
         }
-        const newBusiness = await new Business({
 
-            name: name,
-            category:category,
-            location:{
-                lat:location.lat,
-                long:location.long
-            }
+        const ownerId = req.user.role === 'camara' ? (owner || req.user.id) : req.user.id;
+        //Verificar se já existe um negócio com o mesmo nome para este dono
+        const existe = await Business.findOne({ name, owner });
+
+        if (existe) {
+            return res.status(400).json({ 
+                message: "Já tens um negócio registado com este nome." 
+            });
+        }
+
+        // Se for o comerciante a criar, o status deve ser 'pendente'
+        // Se for a camara, podes definir logo como 'aprovado'
+        const novoNegocio = new Business({
+            name,
+            category,
+            location: {
+                lat: Number(location.lat), // Forçamos a conversão para número por segurança
+                long: Number(location.long)
+            },
+            owner: ownerId,
+            status: req.user.role === 'camara' ? 'aprovado' : 'pendente'
         });
 
-        await newBusiness.save();
-        res.status(201).json({message: "Negócio registrado com sucesso"})
-    }catch(err){
-        res.status(400).json({message: "Erro ao registar negócio"})
+        await novoNegocio.save();
+
+        res.status(201).json({ 
+            message: "Negocio registado com sucesso!", 
+            business: novoNegocio 
+        });
+
+    } catch (error) {
+        console.error("Erro no registo:", error);
+        res.status(500).json({ message: "Erro interno ao guardar o negócio." });
     }
-
-
 });
-
 //Lista de negócios
 app.get('/negocios', async (req, res) => {
-
-    const Businesses = await Business.find();
-    res.json(Businesses)
-
+  try {
+    const negocios = await Business.find({ status: 'aprovado' });
+    res.json(negocios);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao procurar lojas." });
+  }
 });
 //guardar comercio
 app.post('/guardarFavorito', async (req, res) => {
-  const { userId, businessId } = req.body; // Verifica se os nomes batem com o Frontend!
+  const { userId, businessId } = req.body; 
 
   try {
     // 1. Verifica se já existe para não duplicar
@@ -185,6 +205,25 @@ app.post('/guardarFavorito', async (req, res) => {
     res.status(200).json({ message: "Guardado com sucesso!" });
   } catch (err) {
     res.status(500).json(err);
+  }
+});
+
+//retirar favorito
+app.post('/retirarFavorito', async (req, res) => {
+  const { userId, businessId } = req.body;
+
+  try {
+    // Procura e remove o favorito que coincida com o par utilizador/negócio
+    const resultado = await Favorite.findOneAndDelete({ userId, businessId });
+
+    if (!resultado) {
+      return res.status(404).json({ message: "Favorito não encontrado." });
+    }
+
+    res.status(200).json({ message: "Removido dos favoritos com sucesso!" });
+  } catch (err) {
+    console.error("Erro ao remover favorito:", err);
+    res.status(500).json({ message: "Erro interno ao remover.", error: err });
   }
 });
 
@@ -203,6 +242,51 @@ app.get('/meusFavoritos/:userId', async (req, res) => {
   }
 });
 
+// Aprovação 
+app.post('/business/aprovar/:id',authorize(['camara']), async (req, res) => {
+    try {
+        const business = await Business.findByIdAndUpdate(
+            req.params.id, 
+            { status: 'aprovado' }, 
+            { new: true } // Retorna o documento já atualizado
+        );
+
+        if (!business) {
+            return res.status(404).json({ message: "Negócio não encontrado." });
+        }
+
+        res.json({ 
+            message: "Loja aprovada com sucesso!", 
+            business 
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Erro ao aprovar loja." });
+    }
+});
+
+app.delete('/business/rejeitar/:id', authorize(['camara']), async (req, res) => {
+    try {
+        await Business.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Negócio descartado com sucesso." });
+    } catch (error) {
+        res.status(500).json({ message: "Erro ao descartar." });
+    }
+});
+
+// No teu ficheiro de rotas do Backend
+app.get('/business/pendentes', authorize(['camara']), async (req, res) => {
+    try {
+        // MUITO IMPORTANTE: Verifica se o campo no teu Schema se chama 'status'
+        const lista = await Business.find({ status: 'pendente' });
+        
+        console.log("Pedidos encontrados:", lista.length); // Vê isto no terminal do VS Code
+        res.status(200).json(lista);
+    } catch (error) {
+        console.error("Erro ao buscar pendentes:", error);
+        res.status(500).json({ message: "Erro ao carregar lista da Câmara." });
+    }
+});
 
 app.listen(3000, '0.0.0.0', () => console.log('Servidor ligado'));
 //await User.deleteMany({}); // Apaga todos os documentos da coleção User
