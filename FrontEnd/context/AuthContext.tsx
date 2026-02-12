@@ -4,8 +4,8 @@ import * as SecureStore from 'expo-secure-store';
 
 
 interface AuthContextData {
-  user: { id: string } | null;
-  login: (id: string) => Promise<void>;
+  user: { id: string, role: string } | null;
+  login: (id: string, role: string) => Promise<void>; 
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -13,20 +13,18 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider = ({ children }: any) => {
-  // 1. Voltamos para null por padrão (utilizador deslogado)
-  const [user, setUser] = useState<{ id: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+const [user, setUser] = useState<{ id: string, role: string } | null>(null);
+const [loading, setLoading] = useState(true);
 
- // Altera o useEffect do teu AuthContext
 useEffect(() => {
   const loadStorageData = async () => {
     try {
       // Tenta ir buscar ao SecureStore
-      const jsonValue = await SecureStore.getItemAsync("userInfo");
+      const savedUser = await SecureStore.getItemAsync("userInfo");
       
-      if (jsonValue) {
-        const userData = JSON.parse(jsonValue);
-        setUser({ id: userData.id }); // Ou userData.userId, dependendo de como guardaste
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        setUser({ id: userData.id , role: userData.role}); 
       }
     } catch (e) {
       console.log("Erro ao carregar dados do SecureStore", e);
@@ -37,18 +35,23 @@ useEffect(() => {
   loadStorageData();
 }, []);
 
-  // 2. Esta função será chamada no teu ecrã de Login após o fetch com sucesso
-  const login = async (backendId: string) => {
+  const login = async (backendId: string, backendRole: string) => {
     try {
-      await AsyncStorage.setItem('user_id', backendId);
-      setUser({ id: backendId });
+
+    const userData = {
+          id: backendId,
+          role: backendRole
+        };
+
+      await SecureStore.setItemAsync('user_data', JSON.stringify(userData));
+      setUser(userData);
     } catch (e) {
       console.error("Erro ao guardar login", e);
     }
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('user_id');
+    await SecureStore.deleteItemAsync('user_data');
     setUser(null);
   };
 

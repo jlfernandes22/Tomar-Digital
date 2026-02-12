@@ -21,54 +21,49 @@ const Login = () => {
   //Guardar os estados das variáveis que queremos obter para fazer o login
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-const { login } = useAuth();
+  const [role, setRole] = useState('');
+  const { login } = useAuth();
+  
+const handleLogin = async () => {
+  try {
+    console.log("tentar conectar ao servidor");
 
-  const handleLogin = async () => {
+    const response = await fetch(`${API_URL}/iniciarSessao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        role: role
+      }),
+    });
 
-    //Alert.alert("Dados",`Email: ${email}\nPassword: ${password}` )
+    const dados = await response.json();
 
-    //Ligar ao Backend para fazer o login
+    if (response.ok) {
+      const idEncontrado = dados.userId;
+      const roleEncontrado = dados.role || dados.userRole || dados.user?.role;
+      if (idEncontrado) {
+        const userInfo = JSON.stringify({
+          id: idEncontrado,
+          email: dados.user?.email,
+          role: roleEncontrado // Use o que veio da API
+        });
 
-      console.log("tentar conectar ao servidor")
-      console.log(API_URL)
-      //enviar dados à api
-      const response = await fetch(`${API_URL}/iniciarSessao`,{ 
-        method : 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          email:email,
-          password:password
-        }),
-      });
-
-      const dados = await response.json();
-
-      console.log("dadoskugdegq")
-      console.log(dados)
-
-     if (response.ok) {
-       
-        const idEncontrado = dados.userId;
-        const nomeReal = dados.user?.name; // O backend envia isto!
-        // 2. Procura o ID em vários formatos (userId, _id, id)
-        // Tentamos na raiz do objeto E dentro de um sub-objeto 'user' ou 'dados'
-       
-        if (idEncontrado) {
-    // 1. Criamos o objeto que queremos guardar
-// 1. Guardamos TUDO o que queremos mostrar no perfil depois
-    const userInfo = JSON.stringify({ 
-      id: idEncontrado, 
-      email: dados.user?.email, 
-      name: nomeReal });    
-    // 2. Guardamos no SecureStore de forma encriptada
-await SecureStore.setItemAsync("userInfo", userInfo);    
-    // 3. Atualizamos o contexto para a App reagir
-    await login(idEncontrado); 
-    
-    router.replace('/(tabs)/search');
-  }
+        await SecureStore.setItemAsync("userInfo", userInfo);
+        await login(idEncontrado, roleEncontrado);
+        router.replace('/(tabs)/search');
       }
+    } else {
+    
+      Alert.alert("Erro no Login", dados.message || "Credenciais inválidas");
     }
+
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Erro de Rede", "Não foi possível contactar o servidor.");
+  }
+};
 
 
 

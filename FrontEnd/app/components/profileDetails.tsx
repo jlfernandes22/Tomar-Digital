@@ -7,6 +7,11 @@ const ProfileDetails = ({name,email,city} :any) => {
   
   const [user,setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const roleLabels: Record<string, string> = {
+  cidadao: "Cidadão",
+  comerciante: "Comerciante",
+  camara: "Câmara Municipal",
+};
 
     const loadProfile = async () => {
   try {
@@ -47,9 +52,12 @@ const ProfileDetails = ({name,email,city} :any) => {
   {loading ? (
     <ActivityIndicator size="large" color="red" />
   ) : (
+
+    
     // Forçamos a exibição do nome que acabámos de processar
     <Text style={{ fontSize: 20 }}>
-      Olá {user?.name ? user.name : "Visitante"}
+      Olá {user?.name ? user.name : "Visitante"},
+      Cargo: {user?.role ? roleLabels[user.role] : "Não definido"}
     </Text>
   )}
 </View>

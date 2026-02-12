@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import User from './models/User.js'
 import Business from './models/Business.js';
 import Favorite from './models/Favorite.js';
+import { authorize } from './middleware/auth.js';
 import 'dotenv/config';
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -27,7 +28,7 @@ app.post('/registar',async (req, res) => {
 
     console.log("Recebido pedido de registo:", req.body);
    
-    const {email, password, confirmPassword} = req.body
+    const {email, password, confirmPassword, role} = req.body
 
     try{
 
@@ -36,10 +37,6 @@ app.post('/registar',async (req, res) => {
         if(user){
             return res.status(400).json({message: "Utilizador já existe"})
         }
-
-
-        console.log(password)
-        console.log(confirmPassword)
 
         //verificar se as passowrds coincidem
         if(password != confirmPassword){
@@ -53,7 +50,8 @@ app.post('/registar',async (req, res) => {
         const newUser = new User({
             name: email,
             email: email,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role
 
         });
 
@@ -84,27 +82,32 @@ app.post('/iniciarSessao', async (req, res) => {
         }
 
         const rightPassword = await bcrypt.compare(password, user.password)
-
+        //se não fizer match de password
         if(!rightPassword){
             return res.status(400).json({message: "Palavra-passe errada"})
         }
 
         const token = jwt.sign(
-            {userId: user._id, email: user.email},
-            SECRET_KEY,
-            {expiresIn: '7d'}
-        )
+            { 
+                id: user._id, 
+                role: user.role 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
 
-        // ... dentro do teu try, após gerar o token
-            res.status(201).json({
-                message: "Login efetuado com sucesso",
-                token: token,
-                userId: user._id, // <--- ADICIONA ESTA LINHA AQUI
-                user: { 
-                    name: user.name, 
-                    email: user.email 
+        
+
+        //gerar token
+           res.json({
+                token,
+                userId: user._id,
+                user: {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role 
                 }
-        });
+    });
 
 
     }catch(err){
@@ -132,12 +135,8 @@ app.get('/utilizadores', async (req, res) => {
 
 ///////////////////
 //Registar negócio
-app.post('/registarNegocio',async (req, res) => {
-
-   
+app.post('/registarNegocio', authorize(['camara']),async (req, res) => {
     const {name, category, location} = req.body
-
-    console.log(req.body)
 
     try{
         const existingBusiness = await Business.findOne({ name: name });
@@ -152,11 +151,7 @@ app.post('/registarNegocio',async (req, res) => {
                 lat:location.lat,
                 long:location.long
             }
-
-
         });
-
-        
 
         await newBusiness.save();
         res.status(201).json({message: "Negócio registrado com sucesso"})
@@ -167,9 +162,6 @@ app.post('/registarNegocio',async (req, res) => {
 
 });
 
-
-
-///////////////////
 //Lista de negócios
 app.get('/negocios', async (req, res) => {
 
@@ -196,7 +188,7 @@ app.post('/guardarFavorito', async (req, res) => {
   }
 });
 
-app.get('/meusFavoritos/:userId', async (req, res) => {
+app.get('/meusFavoritos/:userId',authorize(['cidadao', 'comerciante', 'camara']), async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -207,10 +199,10 @@ app.get('/meusFavoritos/:userId', async (req, res) => {
     res.status(200).json(Array.isArray(favoritos) ? favoritos : []);
     
   } catch (err) {
-    console.error(err);
     res.status(500).json([]); // Envia array vazio em caso de erro para não quebrar o app
   }
 });
 
 
 app.listen(3000, '0.0.0.0', () => console.log('Servidor ligado'));
+//await User.deleteMany({}); // Apaga todos os documentos da coleção User
