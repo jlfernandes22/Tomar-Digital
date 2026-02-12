@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import MapView, { Marker } from 'react-native-maps'; 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -92,17 +92,37 @@ if (response.ok) {
           onChangeText={setName}
         />
 
-        <Text className="font-semibold ml-1">Categoria:</Text>
-        <View className="border border-gray-300 rounded-xl overflow-hidden">
-          <Picker
-            selectedValue={category}
-            onValueChange={(itemValue) => setCategory(itemValue)}
-          >
-            {categories.map((cat) => (
-              <Picker.Item key={cat} label={cat} value={cat} />
-            ))}
-          </Picker>
-        </View>
+        <Text className="font-semibold ml-1 text-center">Categoria:</Text>
+        <View>
+            <Text className="font-semibold mb-2 ml-1 text-gray-700">Categoria:</Text>
+            
+            <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                className="flex-row"
+                contentContainerStyle={{ paddingVertical: 5 }}
+            >
+                {categories.map((cat) => {
+                const isSelected = category === cat;
+                return (
+                    <TouchableOpacity
+                    key={cat}
+                    onPress={() => setCategory(cat)}
+                    // h-9 para ser bem fino, px-4 para largura confortável
+                    className={`mr-2 px-4 h-9 justify-center rounded-full border ${
+                        isSelected 
+                        ? 'bg-purple-600 border-purple-600' 
+                        : 'bg-gray-100 border-gray-200'
+                    }`}
+                    >
+                    <Text className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-600'}`}>
+                        {cat}
+                    </Text>
+                    </TouchableOpacity>
+                );
+                })}
+            </ScrollView>
+            </View>
 
         {/* MAPA INTERATIVO */}
       <View style={{ height: 350, width: width - 40, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
