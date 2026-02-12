@@ -188,7 +188,7 @@ app.post('/guardarFavorito', async (req, res) => {
   }
 });
 
-app.get('/meusFavoritos/:userId',authorize(['cidadao', 'comerciante', 'camara']), async (req, res) => {
+app.get('/meusFavoritos/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     

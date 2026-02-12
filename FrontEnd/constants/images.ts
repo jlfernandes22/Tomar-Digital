@@ -4,6 +4,8 @@ import searchImg from "@/assets/tabsImages/search.png";
 import profileImg from "@/assets/tabsImages/user.png";
 import loginImg from "@/assets/tabsImages/login.png";
 import registerImg from "@/assets/tabsImages/register.png"
+import storeImg from "@/assets/tabsImages/store.png"
+import camaraImg from "@/assets/tabsImages/camara.png"
 
 export const images = {
   profileImg,
@@ -11,5 +13,7 @@ export const images = {
   bookmarkImg,
   searchImg,
   loginImg,
-  registerImg
+  registerImg,
+  storeImg,
+  camaraImg
 };

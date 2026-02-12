@@ -2,10 +2,12 @@ import { images } from "@/constants/images";
 import { Tabs } from "expo-router";
 import React from "react";
 import TabIcon from '@/app/components/Tabicon'
+import { useAuth } from "@/context/AuthContext";
 
 
 
 const _layout = () => {
+  const { user } = useAuth();
   return (
     <Tabs
       screenOptions={{
@@ -63,6 +65,32 @@ const _layout = () => {
           ),
         }}
       />
+
+         <Tabs.Screen
+          name="store"
+          options={{
+            title: "Store",
+            headerShown: false,
+            // Se não for comerciante, href: null esconde a tab 
+            href: user?.role === 'comerciante' ? '/store' : null, 
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={images.storeImg} title="Store" />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="camara"
+          options={{
+            title: "Camara",
+            headerShown: false,
+            // Se não for comerciante, href: null esconde a tab 
+            href: user?.role === 'camara' ? '/camara' : null, 
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={images.camaraImg} title="Camara" />
+            ),
+          }}
+        />
 
       <Tabs.Screen
         name="profile"
