@@ -6,7 +6,9 @@ import jwt from 'jsonwebtoken';
 import User from './models/User.js'
 import Business from './models/Business.js';
 import Favorite from './models/Favorite.js';
+import Transaction from './models/Transaction.js';
 import { authorize } from './middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -106,6 +108,7 @@ app.post('/iniciarSessao', async (req, res) => {
                 user: {
                     name: user.name,
                     email: user.email,
+                    saldo: user.saldo,
                     role: user.role 
                 }
     });
@@ -280,11 +283,119 @@ app.get('/business/pendentes', authorize(['camara']), async (req, res) => {
         // MUITO IMPORTANTE: Verifica se o campo no teu Schema se chama 'status'
         const lista = await Business.find({ status: 'pendente' });
         
-        console.log("Pedidos encontrados:", lista.length); // Vê isto no terminal do VS Code
         res.status(200).json(lista);
     } catch (error) {
         console.error("Erro ao buscar pendentes:", error);
         res.status(500).json({ message: "Erro ao carregar lista da Câmara." });
+    }
+});
+
+//Comerciante gera o QR Code
+app.post('/gerarQrCode', authorize(['comerciante']), async (req, res) => {
+    try {
+        const { valorOriginal, lojaId } = req.body;
+
+        if (!valorOriginal || valorOriginal <= 0) {
+            return res.status(400).json({ message: "Valor de venda inválido." });
+        }
+
+        // Regra de negócio: 10% de saldo (exemplo)
+        const percentagem = 0.10; 
+        const saldoGerado = (valorOriginal * percentagem).toFixed(2);
+
+        // Gerar um token único e curto para o QR Code
+        // Usamos uuid para ser impossível de adivinhar
+        const tokenUnico = uuidv4();
+
+        const novaTransacao = new Transaction({
+            lojaId: lojaId,
+            valorOriginal,
+            saldoGerado,
+            token: tokenUnico,
+            status: 'pendente'
+        });
+
+        await novaTransacao.save();
+
+        // Enviamos o token para o Frontend gerar o QR Code
+        res.status(201).json({ 
+            token: tokenUnico, 
+            saldoParaOCliente: saldoGerado 
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Erro ao gerar token de saldo." });
+    }
+});
+
+//Cidadão lê o QR Code e ganha o saldo
+app.post('/reclamarSaldo', authorize(['cidadao']), async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        // 1. Procurar a transação (usando o token UUID)
+        // Importante: verificar se o status é 'pendente'
+        const transacao = await Transaction.findOne({ token: token, status: 'pendente' });
+
+        if (!transacao) {
+            console.log("Transação não encontrada ou já processada.");
+            return res.status(404).json({ message: "Este código já foi usado ou é inválido." });
+        }
+
+        // 2. Procurar o utilizador que está a ler o código
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: "Utilizador não encontrado." });
+        }
+
+        // 3. Somar o saldo
+        // Usamos parseFloat para garantir que não há concatenação de texto
+        const valorGanho = parseFloat(transacao.saldoGerado);
+        user.saldo = (user.saldo || 0) + valorGanho;
+
+        // 4. Marcar a transação como concluída ANTES de salvar para evitar re-entradas
+        transacao.status = 'concluido';
+        transacao.clienteId = user._id;
+
+        // 5. Salvar as alterações
+        await user.save();
+        await transacao.save();
+
+        console.log(`Sucesso: ${valorGanho}€ adicionados ao user ${user.id}`);
+
+        console.log(user.saldo);
+        return res.json({ 
+            message: "Saldo adicionado com sucesso!", 
+            valorGanho, 
+            novoSaldoTotal: user.saldo 
+        });
+
+    } catch (error) {
+        // ISTO VAI MOSTRAR O ERRO REAL NO TEU TERMINAL
+        console.error("ERRO CRÍTICO NO BACKEND:", error.message);
+        return res.status(500).json({ message: "Erro interno ao processar saldo." });
+    }
+});
+
+app.get('/meusNegocios', authorize(['comerciante']), async (req, res) => {
+    try {
+        console.log("A procurar lojas para o dono:", req.user.id);
+
+        const negocios = await Business.find({ 
+            owner: req.user.id 
+        });
+
+        console.log("Lojas encontradas:", negocios.length);
+
+        if (!negocios || negocios.length === 0) {
+            return res.status(200).json([]); // Devolve array vazio se não houver lojas
+        }
+
+        res.status(200).json(negocios);
+    } catch (error) {
+        console.error("Erro na rota /meusNegocios:", error);
+        res.status(500).json({ message: "Erro ao procurar lojas." });
     }
 });
 

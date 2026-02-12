@@ -95,6 +95,7 @@ const _layout = () => {
           }}
         />
 
+
         <Tabs.Screen
           name="camara"
           options={{
@@ -115,6 +116,30 @@ const _layout = () => {
             href: user?.role === 'comerciante' ? '/add' : null, 
             tabBarIcon: ({ focused }) => (
               <TabIcon focused={focused} icon={images.addImg} title="Adicionar" />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="purchase"
+          options={{
+            title: "Purchase Code",
+            headerShown: false,
+            href: user?.role === 'comerciante' ? '/purchase' : null, 
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={images.compraImg} title="Purchase Code" />
+            ),
+          }}
+        />
+
+         <Tabs.Screen
+          name="qrcode"
+          options={{
+            title: "QR Code",
+            headerShown: false,
+            href: user?.role === 'cidadao' ? '/qrcode' : null, 
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={images.qrCodeImg} title="QR Code" />
             ),
           }}
         />

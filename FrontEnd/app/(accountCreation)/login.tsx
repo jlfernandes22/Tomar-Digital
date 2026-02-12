@@ -44,16 +44,21 @@ const handleLogin = async () => {
       const idEncontrado = dados.userId;
       const roleEncontrado = dados.role || dados.userRole || dados.user?.role;
       const tokenEncontrado = dados.token;
-      if (idEncontrado && tokenEncontrado) {
-        const userInfo = JSON.stringify({
-          id: idEncontrado,
-          email: dados.user?.email,
-          role: roleEncontrado, // Use o que veio da API
-          token: tokenEncontrado
-        });
+      
+      // 🚨 IMPORTANTE: Extrair o email e o saldo que vêm da API
+      const emailEncontrado = dados.user?.email || email; // se a API não devolver, usa o do estado
+      const saldoEncontrado = dados.user?.saldo || 0;
 
-        await SecureStore.setItemAsync("userInfo", userInfo);
-        await login(idEncontrado, roleEncontrado,tokenEncontrado );
+      if (idEncontrado && tokenEncontrado) {
+        // Chamada corrigida com os 5 argumentos na ordem certa:
+        await login(
+          idEncontrado, 
+          roleEncontrado, 
+          tokenEncontrado, 
+          emailEncontrado, 
+          saldoEncontrado
+        );
+
         router.replace('/(tabs)/search');
       }
     } else {

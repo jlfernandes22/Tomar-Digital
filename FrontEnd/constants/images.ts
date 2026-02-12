@@ -7,6 +7,8 @@ import registerImg from "@/assets/tabsImages/register.png"
 import storeImg from "@/assets/tabsImages/store.png"
 import camaraImg from "@/assets/tabsImages/camara.png"
 import addImg from "@/assets/tabsImages/add.png"
+import compraImg from "@/assets/tabsImages/compra.png"
+import qrCodeImg from "@/assets/tabsImages/qrcode.png"
 
 export const images = {
   profileImg,
@@ -17,5 +19,7 @@ export const images = {
   registerImg,
   storeImg,
   camaraImg,
-  addImg
+  addImg,
+  compraImg,
+  qrCodeImg
 };

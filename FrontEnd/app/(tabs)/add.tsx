@@ -92,9 +92,8 @@ if (response.ok) {
           onChangeText={setName}
         />
 
-        <Text className="font-semibold ml-1 text-center">Categoria:</Text>
         <View>
-            <Text className="font-semibold mb-2 ml-1 text-gray-700">Categoria:</Text>
+            <Text className="font-semibold mb-2 ml-1 text-gray-700 text-center">Categoria:</Text>
             
             <ScrollView 
                 horizontal 
