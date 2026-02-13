@@ -20,7 +20,7 @@ const BusinessList = ({ name, category, location }: any) => {
       <View className="flex-row justify-between items-start">
         <View className="flex-1">
           <Text className="text-lg font-bold text-gray-800">{name}</Text>
-          <Text className="text-purple-600 italic mb-1">{category}</Text>
+          <Text className=" italic mb-1">{category}</Text>
           
           <View className="flex-row items-center">
             <Text className="text-gray-400 text-xs">{formatLocation()}</Text>

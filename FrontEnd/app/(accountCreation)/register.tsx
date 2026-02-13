@@ -15,7 +15,8 @@ import {
 
 const Register = () => {
   
-  
+  const [showRoles, setShowRoles] = useState(false);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -89,7 +90,7 @@ const Register = () => {
               <TextInput 
                 value={email}
                 onChangeText={(text) => setEmail(text)}
-                className='bg-primary focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]' 
+                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]' 
               />
             </View>
 
@@ -100,26 +101,53 @@ const Register = () => {
                 value={city} // Certifique-se de criar o state [city, setCity]
                 onChangeText={(text) => setCity(text)}
                 placeholder="Ex: Lisboa"
-                className='bg-primary focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]' 
+                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]' 
               />
             </View>
 
             {/*  Role */}
-            <View className='min-w-[75%] ml-auto mr-auto'>
-              <Text className='mr-auto ml-auto mt-4 font-semibold'>Cargo</Text>
-              <View className="bg-primary border rounded-full mt-1 overflow-hidden">
-                <Picker
-                  selectedValue={role}
-                  onValueChange={(itemValue) => setRole(itemValue)}
-                  dropdownIconColor="#000" // Cor da setinha no Android
+            <View className="min-w-[75%] mt-4">
+                <Text className="font-semibold mb-1">Cargo</Text>
+
+                {/* botão dropdown */}
+                <TouchableOpacity
+                  onPress={() => setShowRoles(!showRoles)}
+                  className="bg-primary p-2 border rounded-xl px-4 py-3"
                 >
-                  <Picker.Item label="Selecione um cargo..." value="" />
-                  <Picker.Item label="Cidadão" value="cidadao" />
-                  <Picker.Item label="Comerciante" value="comerciante" />
-                  <Picker.Item label="Câmara" value="camara" />
-                </Picker>
-              </View>
-            </View>
+                  <Text>
+                    {role
+                      ? role === 'cidadao'
+                        ? 'Cidadão'
+                        : role === 'comerciante'
+                        ? 'Comerciante'
+                        : 'Câmara'
+                      : 'Selecione um cargo...'}
+                  </Text>
+                </TouchableOpacity>
+
+              {/* lista */}
+              {showRoles && (
+                <View className="border rounded-xl mt-1 bg-white overflow-hidden">
+                  {[
+                    { label: 'Cidadão', value: 'cidadao' },
+                    { label: 'Comerciante', value: 'comerciante' },
+                    { label: 'Câmara', value: 'camara' },
+                  ].map((item) => (
+                    <TouchableOpacity
+                      key={item.value}
+                      onPress={() => {
+                        setRole(item.value);
+                        setShowRoles(false);
+                      }}
+                      className="px-4 py-3 border-b last:border-b-0"
+                    >
+                      <Text>{item.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+  )}
+</View>
+
 
             {/*  Password */}
             <View>
@@ -128,7 +156,7 @@ const Register = () => {
                 secureTextEntry
                 value={password} 
                 onChangeText={(text) => setPassword(text)}
-                className='bg-primary focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]'
+                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]'
               />
             </View>
 
@@ -139,7 +167,7 @@ const Register = () => {
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={(text) => setConfirmPassword(text)}
-                className='bg-primary focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]'
+                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]'
               />
             </View>
 

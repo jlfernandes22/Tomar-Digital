@@ -21,7 +21,7 @@ const _layout = () => {
       },
       tabBarStyle:{
         borderColor: "#ff0000",
-        backgroundColor: "#AB8BFF",
+        backgroundColor: "#FFC299",
         borderRadius: 75,
       }
   }}
@@ -63,18 +63,7 @@ const _layout = () => {
         }}
       />
 
-         <Tabs.Screen
-          name="store"
-          options={{
-            headerShown: false,
-            href: user?.role === 'comerciante' ? '/store' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon 
-                focused={focused}  
-                icon={images.storeImg}   />
-            ),
-          }}
-        />
+       
 
 
         <Tabs.Screen

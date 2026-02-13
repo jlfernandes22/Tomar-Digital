@@ -8,8 +8,18 @@ import { Ionicons } from '@expo/vector-icons'; // Ícones nativos do Expo
 
 const DetalhesBusiness = () => {
 
+  type BusinessType = {
+  _id: string;
+  name: string;
+  category: string;
+  location: {
+    lat: number;
+    long: number;
+  };
+};
+
   const businessId = useLocalSearchParams()
-  const [business, setBusiness] = useState(null)
+const [business, setBusiness] = useState<BusinessType | null>(null);
   const [loading, setLoading] = useState(false)
   const router = useRouter();
 

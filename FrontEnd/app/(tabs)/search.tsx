@@ -118,14 +118,14 @@ const guardarNaLista = async (businessId: string) => {
 
   return (
     <SafeAreaView className="flex-1 bg-whitew">
-      <View className="p-5 rounded-full ml-auto mr-auto border-black border-2 min-w-[95%]">
-        <TextInput 
-          className=""
-          placeholder="Procurar negócio..."
-          placeholderTextColor="#999"
-          value={search}
-          onChangeText={(text) => aoEscrever(text)}
-        />
+      <View className="p-5  rounded-full ml-auto mr-auto border-black border-2 min-w-[95%]">
+        <TextInput
+  className="text-tabColor text-base w-full "
+  placeholder="Procurar negócio..."
+  placeholderTextColor="#946648"
+  value={search}
+  onChangeText={aoEscrever}
+/>
       </View>
       {/* Lista de Resultados */}
       <View style={{ flex: 1}}>

@@ -114,6 +114,7 @@ const handleLogin = async () => {
                     value={email} 
                     onChangeText={(text)=>setEmail(text)}
                     className='
+                    p-2
                     bg-primary 
                     focus:bg-accent 
                       rounded-full 
@@ -143,6 +144,7 @@ const handleLogin = async () => {
         value={password}
         onChangeText={(text) => setPassword(text)}
         className='
+                    p-2
                     bg-primary 
                     focus:bg-accent 
                       rounded-full 
