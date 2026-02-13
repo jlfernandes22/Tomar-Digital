@@ -4,7 +4,6 @@ import { useAuth } from '@/context/AuthContext';
 import { API_URL } from '@/constants/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PieChart } from 'react-native-chart-kit';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 
 const Dashboard = () => {
@@ -20,9 +19,6 @@ const Dashboard = () => {
     
     //paleta de cores temporária
     const CHART_COLORS = ["#f39c12", "#e74c3c", "#8e44ad", "#3498db", "#2ecc71", "#34495e"];
-
-    //hook para descobrir tamanho das abas
-    const tabBarHeight = useBottomTabBarHeight();
 
     const fetchAllInfo = async () => {
         try {
@@ -77,7 +73,7 @@ const Dashboard = () => {
           }else{
             return(
 
-                <ScrollView style={{marginBottom: tabBarHeight}} >
+                <ScrollView  >
 
                   {/* --- GRÁFICO 1: Utilizadores por Cidade --- */}
                   <Text className='ml-auto mr-auto text-xl'>Utilizadores por cidade</Text>

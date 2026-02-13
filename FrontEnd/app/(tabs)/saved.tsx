@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { FlatList, Text, View, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { API_URL } from '@/constants/api';
 import BusinessList from "../components/businessList";
 import { useAuth } from "@/context/AuthContext";
@@ -19,7 +19,7 @@ interface Favorito {
 }
 
   const { user } = useAuth();
-const [favoritos, setFavoritos] = useState<Favorito[]>([]);
+  const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [loading, setLoading] = useState(true);
   
   const carregarFavoritos = async () => {
@@ -81,9 +81,15 @@ const retirarFavorito = async (businessId: string) => {
       ) : (
         <FlatList
   data={favoritos}
-  keyExtractor={(item) => item._id} // Agora o TS reconhece o _id
+  keyExtractor={(item: any) => item._id} // Agora o TS reconhece o _id
   renderItem={({ item }) => (
     <View className="relative">
+      <TouchableOpacity  
+                      onPress={() => {router.push({
+                      pathname: '/components/detalhesBusiness',
+                      params: { id: item.businessId?._id}
+                      })}}>
+
       <BusinessList
         // Usamos encadeamento opcional (?.) para segurança
         name={item.businessId?.name || "Negócio não disponível"}
@@ -99,6 +105,7 @@ const retirarFavorito = async (businessId: string) => {
         className="absolute right-4 top-5 bg-red-500 p-2 rounded-full shadow-sm"
       >
         <Text className="text-white font-bold px-1">Remover</Text>
+      </TouchableOpacity>
       </TouchableOpacity>
     </View>
   )}

@@ -26,12 +26,9 @@ const _layout = () => {
       
 
       <Tabs.Screen
-      
-      name='register'
-
-      options={{
+        name='register'
+        options={{
         headerShown: false,
-
         tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}

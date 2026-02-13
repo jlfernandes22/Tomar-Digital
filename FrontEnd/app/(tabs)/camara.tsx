@@ -3,6 +3,7 @@ import { Text, View, FlatList, TouchableOpacity, Alert, ActivityIndicator } from
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext"; 
+import { router } from "expo-router";
 
 export default function CamaraIndex() {
 
@@ -14,7 +15,14 @@ export default function CamaraIndex() {
     status: string;
   }
 
+  interface Owner {
+    _id: string;
+    name: string;
+    email: string;
+  }
+
   const [pendentes, setPendentes] = useState<Business[]>([]);
+  const [pendOwners, setPendOwners] = useState<Owner[]>([])
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -36,12 +44,40 @@ export default function CamaraIndex() {
         console.error("Erro na resposta:", response.status);
       }
     } catch (error) {
+      console.log(error)
       Alert.alert("Erro", "Não foi possível carregar os pedidos.");
     } finally {
       setLoading(false);
     }
   };
   useEffect(() => { if (user?.token) fetchPendentes(); }, [user?.token]);
+
+
+  // 1. Função para carregar negócios pendentes
+  const fetchOwner = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/utilizador/negocioPendentes`, {
+        method: 'GET', 
+        headers: { 
+          'Authorization': `Bearer ${user?.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    if (response.ok) {
+        const data = await response.json();
+        
+        setPendOwners(data);
+      } else {
+        console.error("Erro na resposta:", response.status);
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível carregar os donos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+    useEffect(() => { if (user?.token) fetchOwner(); }, [user?.token]);
 
   // para Aprovar
   const handleAprovar = async (id: string) => {
@@ -109,37 +145,56 @@ export default function CamaraIndex() {
         <Text className="text-gray-500 text-center mt-10">Não há novos pedidos de Tomar.</Text>
       ) : (
         <FlatList
-          data={pendentes}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View className="bg-white p-5 rounded-3xl mb-4 shadow-sm border border-gray-100">
-  <View>
-    <Text className="text-xl font-bold text-dark">{item.name}</Text>
-    <Text className="text-primary italic">{item.category}</Text>
-    <Text className="text-gray-400 text-xs mt-1">Dono ID: {item.owner}</Text>
-  </View>
-  
-  {/* Contentor dos Botões */}
-  <View className="flex-row gap-x-3 mt-4">
-    {/* Botão Aceitar (Flex-1 para ocupar metade) */}
-    <TouchableOpacity 
-      onPress={() => handleAprovar(item._id)}
-      className="bg-green-500 py-3 rounded-2xl flex-1 items-center"
-    >
-      <Text className="text-white font-bold">Aceitar</Text>
-    </TouchableOpacity>
+  data={pendentes}
+  keyExtractor={(item) => item._id}
+  renderItem={({ item }) => {
+    
+    // 1. Procuramos o dono específico deste negócio na lista pendOwners
+    const donoEspecifico = pendOwners.find((dono) => dono._id === item.owner);
 
-    {/* Botão Descartar (Flex-1 para ocupar a outra metade) */}
-    <TouchableOpacity 
-      onPress={() => handleDescartar(item._id)}
-      className="bg-red-50 py-3 rounded-2xl flex-1 items-center border border-red-200"
-    >
-      <Text className="text-red-600 font-bold">Descartar</Text>
-    </TouchableOpacity>
-  </View>
-</View>
-          )}
-        />
+    return (
+      <View className="relative border-2 p-2 rounded-3xl mb-4">
+        <TouchableOpacity  
+          onPress={() => {
+            router.push({
+              pathname: '/components/detalhesBusiness',
+              params: { id: item._id}
+            });
+          }}
+        >
+          <View>
+            <Text className="text-xl font-bold text-dark">{item.name}</Text>
+            <Text className="text-primary italic">{item.category}</Text>
+            
+            {/* 2. Mostramos o nome do dono. Se ainda não existir, mostra 'A carregar...' */}
+            <Text className="text-gray-400 text-xs mt-1">
+              Dono: {donoEspecifico?.name || 'A carregar...'}
+            </Text>
+          </View>
+
+          {/* Contentor dos Botões */}
+          <View className="flex-row gap-x-3 mt-4">
+            {/* Botão Aceitar */}
+            <TouchableOpacity 
+              onPress={() => handleAprovar(item._id)}
+              className="bg-green-500 py-3 rounded-2xl flex-1 items-center"
+            >
+              <Text className="text-white font-bold">Aceitar</Text>
+            </TouchableOpacity>
+
+            {/* Botão Descartar */}
+            <TouchableOpacity 
+              onPress={() => handleDescartar(item._id)}
+              className="bg-red-50 py-3 rounded-2xl flex-1 items-center border border-red-200"
+            >
+              <Text className="text-red-600 font-bold">Descartar</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }}
+/>
       )}
     </SafeAreaView>
   );

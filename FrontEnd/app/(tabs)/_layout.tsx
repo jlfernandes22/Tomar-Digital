@@ -13,41 +13,27 @@ const _layout = () => {
   return (
     <Tabs
   screenOptions={{
-    // Esconder a label
-    tabBarShowLabel: false, 
-    
-    tabBarStyle: {
-      backgroundColor: "#AB8BFF",
-      position: 'absolute', // Faz a barra flutuar
-      left: 15,   // Margem da esquerda
-      right: 15,  // Margem da direita
-      height: 70, // Altura fixa para todos
-      borderRadius: 15, // Arredondado mas não exagerado
-      
-      // Sombras para dar profundidade
-      elevation: 5, 
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      
-      borderTopWidth: 0, // Remove a linha de topo
-      paddingHorizontal: 5, // Respiro interno para os ícones não tocarem nas pontas
-    },
-    tabBarItemStyle: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100%',
-    },
+      tabBarShowLabel: false,
+      tabBarItemStyle:{
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center"
+      },
+      tabBarStyle:{
+        borderColor: "#ff0000",
+        backgroundColor: "#AB8BFF",
+        borderRadius: 75,
+      }
   }}
 >
       <Tabs.Screen
         name="home"
         options={{
           headerShown: false,
-
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={images.homeImg} title="" />
+            <TabIcon 
+              focused={focused} 
+              icon={images.homeImg}  />
           ),
         }}
       />
@@ -56,9 +42,10 @@ const _layout = () => {
         name="search"
         options={{
           headerShown: false,
-
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={images.searchImg} title="" />
+            <TabIcon 
+              focused={focused} 
+              icon={images.searchImg}  />
           ),
         }}
       />
@@ -67,13 +54,10 @@ const _layout = () => {
         name="saved"
         options={{
           headerShown: false,
-
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               icon={images.bookmarkImg}
-              title=""
-              
             />
           ),
         }}
@@ -83,10 +67,11 @@ const _layout = () => {
           name="store"
           options={{
             headerShown: false,
-            // Se não for comerciante, href: null esconde a tab 
             href: user?.role === 'comerciante' ? '/store' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.storeImg} title=""  />
+              <TabIcon 
+                focused={focused}  
+                icon={images.storeImg}   />
             ),
           }}
         />
@@ -98,7 +83,9 @@ const _layout = () => {
             headerShown: false,
             href: user?.role === 'camara' ? '/camara' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.camaraImg} title=""  />
+              <TabIcon 
+                focused={focused} 
+                icon={images.camaraImg}   />
             ),
           }}
         />
@@ -109,7 +96,9 @@ const _layout = () => {
             headerShown: false,
             href: user?.role === 'comerciante' ? '/add' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.addImg} title=""  />
+              <TabIcon 
+                focused={focused} 
+                icon={images.addImg}   />
             ),
           }}
         />
@@ -120,7 +109,9 @@ const _layout = () => {
             headerShown: false,
             href: user?.role === 'comerciante' ? '/purchase' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.compraImg} title=""  />
+              <TabIcon 
+                focused={focused} 
+                icon={images.compraImg}   />
             ),
           }}
         />
@@ -129,9 +120,10 @@ const _layout = () => {
           name="qrcode"
           options={{
             headerShown: false,
+ 
             href: user?.role === 'cidadao' ? '/qrcode' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.qrCodeImg} title=""  />
+              <TabIcon focused={focused} icon={images.qrCodeImg}   />
             ),
           }}
         />
@@ -140,9 +132,10 @@ const _layout = () => {
           name="dashboardTab"
           options={{
             headerShown: false,
+ 
             href: user?.role === 'camara' ? '/dashboardTab' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.statsImg} title="" />
+              <TabIcon focused={focused} icon={images.statsImg}  />
             )
           }}
         />
@@ -152,12 +145,12 @@ const _layout = () => {
         name="profile"
         options={{
           headerShown: false,
-
+          tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               icon={images.profileImg}
-              title=""
+              
               
             />
           ),

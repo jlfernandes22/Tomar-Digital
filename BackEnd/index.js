@@ -140,6 +140,33 @@ app.get('/utilizadores', async (req, res) => {
 });
 
 
+////////////////////////
+//Lista de utilizadores
+app.get('/utilizador/:id', authorize(['camara']), async (req, res) => {
+
+    try {
+        
+        const pendentes = await Business.find({ status: 'pendente' });
+        
+        
+        const ownerIds = pendentes.map(negocio => negocio.owner);
+
+
+        const owners = await User.find({ _id: { $in: ownerIds } });
+
+        console.log("Donos encontrados:", owners.length);
+
+
+        res.json(owners);
+
+    } catch (error) {
+        console.error("Erro ao procurar donos:", error);
+        res.status(500).json({ message: "Erro interno do servidor" });
+    }
+
+});
+
+
 
 ///////////////////
 //Registar negócio
@@ -196,6 +223,20 @@ app.get('/negocios', async (req, res) => {
     res.json(negocios);
   } catch (error) {
     res.status(500).json({ message: "Erro ao procurar lojas." });
+  }
+});
+
+////////////////////////
+//negocio por id
+app.get('/negocios/:id', async (req, res) => {
+  try {
+    console.log(req.params.id)
+    const negocio = await Business.findById(req.params.id);
+    console.log(negocio);
+    res.json(negocio);
+    
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao encontrar id." });
   }
 });
 

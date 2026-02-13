@@ -4,9 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { SearchBar } from "react-native-screens";
 import { API_URL } from '@/constants/api';
 import BusinessList from "../components/businessList";
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Alert } from "react-native";
 import { useAuth } from "@/context/AuthContext";
+
 const Search = () => {
 
   //criar estado para guardar a lista de negócios
@@ -28,7 +29,8 @@ const { user } = useAuth();
     const apenasAprovados = dados.filter((item: any) => item.status === 'aprovado');
 
     setListaNegocios(apenasAprovados);
-    setListaFiltrada(apenasAprovados); 
+    setListaFiltrada(apenasAprovados);
+
   } catch (error) {
     console.log("Não foi possível obter a lista de negócios", error);
   } finally {
@@ -115,24 +117,10 @@ const guardarNaLista = async (businessId: string) => {
 
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={{ padding: 15, backgroundColor: '#f9f9f9' }}>
-        <TextInput
-          style={{
-            height: 50,
-            backgroundColor: '#fff',
-            borderRadius: 12,
-            paddingHorizontal: 15,
-            borderWidth: 1,
-            borderColor: '#e0e0e0',
-            fontSize: 16,
-            // Sombra leve para parecer mais moderno
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 3.84,
-            elevation: 2,
-          }}
+    <SafeAreaView className="flex-1 bg-whitew">
+      <View className="p-5 rounded-full ml-auto mr-auto border-black border-2 min-w-[95%]">
+        <TextInput 
+          className=""
           placeholder="Procurar negócio..."
           placeholderTextColor="#999"
           value={search}
@@ -140,27 +128,31 @@ const guardarNaLista = async (businessId: string) => {
         />
       </View>
       {/* Lista de Resultados */}
-  <View style={{ flex: 1}}>
+      <View style={{ flex: 1}}>
         {loading ? (
-          <ActivityIndicator size="large" color="red" style={{ marginTop: 20 }} />
+          <ActivityIndicator size="large" className="mt-20 color-red-600" />
         ) : (
               <FlatList
-  data={listaFiltrada}
-  keyExtractor={(item: any) => item._id}
-  renderItem={({ item }) => (
-    <View className="relative">
-      <TouchableOpacity onPress={() => console.log("Ver detalhes")}>
-        <BusinessList
-          name={item.name}
-          category={item.category}
-          // Se location for um objeto {lat, long}, passamos uma string formatada
-          location={
-            item.location?.lat 
-              ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` 
-              : "Localização não definida"
-          }
-        />
-      </TouchableOpacity>
+                data={listaFiltrada}
+                keyExtractor={(item: any) => item._id}
+                renderItem={({ item }) => (
+                <View className="relative">
+
+                <TouchableOpacity onPress={() => {router.push({
+                    pathname: '/components/detalhesBusiness',
+                    params: { id: item._id}
+                    })}}>
+                  <BusinessList
+                    name={item.name}
+                    category={item.category}
+                    // Se location for um objeto {lat, long}, passamos uma string formatada
+                    location={
+                      item.location?.lat 
+                        ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` 
+                        : "Localização não definida"
+                    }
+                  />
+                </TouchableOpacity>
 
       <TouchableOpacity 
         onPress={() => confirmarGuardar(item)}
