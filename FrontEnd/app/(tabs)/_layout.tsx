@@ -8,7 +8,7 @@ import { Dimensions, Platform } from 'react-native';
 
 
 const _layout = () => {
-  const { user } = useAuth();
+  const {user} = useAuth();
   const { width } = Dimensions.get('window');
   return (
     <Tabs
@@ -19,7 +19,6 @@ const _layout = () => {
     tabBarStyle: {
       backgroundColor: "#AB8BFF",
       position: 'absolute', // Faz a barra flutuar
-      bottom: 15, // Espaço do fundo do telemóvel
       left: 15,   // Margem da esquerda
       right: 15,  // Margem da direita
       height: 70, // Altura fixa para todos
@@ -45,11 +44,10 @@ const _layout = () => {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
           headerShown: false,
 
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={images.homeImg} title="Home" />
+            <TabIcon focused={focused} icon={images.homeImg} title="" />
           ),
         }}
       />
@@ -57,11 +55,10 @@ const _layout = () => {
       <Tabs.Screen
         name="search"
         options={{
-          title: "Search",
           headerShown: false,
 
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={images.searchImg} title="Search" />
+            <TabIcon focused={focused} icon={images.searchImg} title="" />
           ),
         }}
       />
@@ -69,14 +66,14 @@ const _layout = () => {
       <Tabs.Screen
         name="saved"
         options={{
-          title: "Saved",
           headerShown: false,
 
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               icon={images.bookmarkImg}
-              title="Saved"
+              title=""
+              
             />
           ),
         }}
@@ -85,12 +82,11 @@ const _layout = () => {
          <Tabs.Screen
           name="store"
           options={{
-            title: "Store",
             headerShown: false,
             // Se não for comerciante, href: null esconde a tab 
             href: user?.role === 'comerciante' ? '/store' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.storeImg} title="Store" />
+              <TabIcon focused={focused} icon={images.storeImg} title=""  />
             ),
           }}
         />
@@ -99,11 +95,10 @@ const _layout = () => {
         <Tabs.Screen
           name="camara"
           options={{
-            title: "Camara",
             headerShown: false,
             href: user?.role === 'camara' ? '/camara' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.camaraImg} title="Camara" />
+              <TabIcon focused={focused} icon={images.camaraImg} title=""  />
             ),
           }}
         />
@@ -111,11 +106,10 @@ const _layout = () => {
          <Tabs.Screen
           name="add"
           options={{
-            title: "Adicionar",
             headerShown: false,
             href: user?.role === 'comerciante' ? '/add' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.addImg} title="Adicionar" />
+              <TabIcon focused={focused} icon={images.addImg} title=""  />
             ),
           }}
         />
@@ -123,11 +117,10 @@ const _layout = () => {
         <Tabs.Screen
           name="purchase"
           options={{
-            title: "Purchase Code",
             headerShown: false,
             href: user?.role === 'comerciante' ? '/purchase' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.compraImg} title="Purchase Code" />
+              <TabIcon focused={focused} icon={images.compraImg} title=""  />
             ),
           }}
         />
@@ -135,30 +128,41 @@ const _layout = () => {
          <Tabs.Screen
           name="qrcode"
           options={{
-            title: "QR Code",
             headerShown: false,
             href: user?.role === 'cidadao' ? '/qrcode' : null, 
             tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.qrCodeImg} title="QR Code" />
+              <TabIcon focused={focused} icon={images.qrCodeImg} title=""  />
             ),
           }}
         />
 
+        <Tabs.Screen
+          name="dashboardTab"
+          options={{
+            headerShown: false,
+            href: user?.role === 'camara' ? '/dashboardTab' : null, 
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={images.statsImg} title="" />
+            )
+          }}
+        />
+
+
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
           headerShown: false,
 
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               icon={images.profileImg}
-              title="Profile"
+              title=""
+              
             />
           ),
         }}
-      />
+      />  
     </Tabs>
   );
 };

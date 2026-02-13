@@ -5,15 +5,20 @@ import React from 'react'
 const TabIcon = ({ focused, icon, title }: any) => {
   if (focused) {
     return (
-      <View className="flex flex-row min-w-[100px] h-auto bg-accent rounded-full justify-center items-center mt-3">
+      <View className="flex flex-row min-w-[20px] min-h-[20px] bg-tabColor rounded-full justify-center items-center">
         <Image className="size-6" source={icon} />
 
-        <Text className="text-s ml-2" >{title}</Text>
+
+        <View>
+          <Text className="text-s ml-2" >{title}</Text>
+        </View> 
+
       </View>
+            
     );
   }
   return (
-    <View className="size-full justify-center items-center mt-4 rounded-full">
+    <View className="size-full justify-center items-center mt-4 rounded-full ">
       <Image className="size-6" source={icon} />
     </View>
   );

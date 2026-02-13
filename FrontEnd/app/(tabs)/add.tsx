@@ -6,18 +6,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { Dimensions } from "react-native";
+import  Map  from "@/app/components/map"
 export default function AddBusinessCamara() {
-const { user } = useAuth(); // Importa o utilizador da sessão atual
-
-const { width } = Dimensions.get('window');
 
 
+  const { user } = useAuth(); // Importa o utilizador da sessão atual
+  const { width } = Dimensions.get('window');
   const [name, setName] = useState("");
   const [userName, setUserName] = useState("");
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(false);
-
-const [selectedLocation, setSelectedLocation] = useState({
+  const [selectedLocation, setSelectedLocation] = useState({
     latitude: 39.6036, 
     longitude: -8.4151,
   });
@@ -124,21 +123,11 @@ if (response.ok) {
             </View>
 
         {/* MAPA INTERATIVO */}
-      <View style={{ height: 350, width: width - 40, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
-            <MapView
-                style={{ flex: 1 }}
-                initialRegion={{
-                latitude: 39.6036,
-                longitude: -8.4151,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-                }}
-                onPress={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
-            >
-                <Marker coordinate={selectedLocation} />
-            </MapView>
+        <View style={{ height: 350, width: width - 40, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
+            <Map/>
         </View>
-<View className="p-4 bg-white">
+        
+        <View className="p-4 bg-white">
         <TouchableOpacity 
           onPress={handleNewBusiness}
           className="bg-purple-600 p-4 rounded-2xl items-center shadow-sm"

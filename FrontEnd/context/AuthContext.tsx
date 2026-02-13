@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
 export interface User {
   id: string;
@@ -32,7 +33,7 @@ const STORAGE_KEY = 'user_data';
 export const AuthProvider = ({ children }: any) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-const updateUser = (updatedData: Partial<User>) => {
+  const updateUser = (updatedData: Partial<User>) => {
   setUser((prev) => {
     if (!prev) return null;
 
@@ -91,6 +92,7 @@ const updateUser = (updatedData: Partial<User>) => {
     try {
       await SecureStore.deleteItemAsync(STORAGE_KEY);
       setUser(null);
+      router.replace('/(accountCreation)/login')
     } catch (e) {
       console.error("Erro no logout:", e);
     }

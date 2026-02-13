@@ -30,15 +30,13 @@ const _layout = () => {
       name='register'
 
       options={{
-
-        title:"Registar",
         headerShown: false,
 
         tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               icon={images.registerImg}
-              title="Criar Conta"
+
             />
           ),
 
@@ -50,14 +48,12 @@ const _layout = () => {
       
       name='login'
       options={{
-        title: "Iniciar Sessão",
         headerShown: false,
 
         tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
               icon={images.loginImg}
-              title="Iniciar Sessão"
             />
           ),
 

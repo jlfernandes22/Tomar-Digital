@@ -8,6 +8,7 @@ module.exports = {
       colors: {
         primary: "#ff0000",
         accent: "#AB8BFF",
+        tabColor: "#9668e3"
       },
     },
   },

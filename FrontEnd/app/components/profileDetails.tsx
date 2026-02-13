@@ -2,6 +2,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } fr
 import React from 'react'
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+
 const profileDetails = () => {
   const { logout, user } = useAuth();
   const router = useRouter();

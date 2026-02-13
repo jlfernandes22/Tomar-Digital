@@ -34,7 +34,6 @@ const handleLogin = async () => {
       body: JSON.stringify({
         email: email,
         password: password,
-        role: role
       }),
     });
 

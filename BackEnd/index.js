@@ -31,9 +31,10 @@ app.post('/registar',async (req, res) => {
 
     console.log("Recebido pedido de registo:", req.body);
    
-    const {email, password, confirmPassword, role} = req.body
+    const {email, password, confirmPassword, role, city} = req.body
 
     try{
+
 
         //verificar se já existe
         const user = await User.findOne({email: email})
@@ -54,7 +55,8 @@ app.post('/registar',async (req, res) => {
             name: email,
             email: email,
             password: hashedPassword,
-            role: role
+            role: role,
+            city: city
 
         });
 
@@ -73,6 +75,8 @@ app.post('/registar',async (req, res) => {
 //Iniciar Sessão
 app.post('/iniciarSessao', async (req, res) => {
     
+    
+
     const {email, password} = req.body
     try{
 
@@ -150,7 +154,7 @@ app.post('/registarNegocio', authorize(['comerciante', 'camara']), async (req, r
 
         const ownerId = req.user.role === 'camara' ? (owner || req.user.id) : req.user.id;
         //Verificar se já existe um negócio com o mesmo nome para este dono
-        const existe = await Business.findOne({ name, owner });
+        const existe = await Business.findOne({ name, owner: ownerId });
 
         if (existe) {
             return res.status(400).json({ 
@@ -183,6 +187,8 @@ app.post('/registarNegocio', authorize(['comerciante', 'camara']), async (req, r
         res.status(500).json({ message: "Erro interno ao guardar o negócio." });
     }
 });
+
+////////////////////////
 //Lista de negócios
 app.get('/negocios', async (req, res) => {
   try {
@@ -192,7 +198,9 @@ app.get('/negocios', async (req, res) => {
     res.status(500).json({ message: "Erro ao procurar lojas." });
   }
 });
-//guardar comercio
+
+////////////////////////
+//guardar comércio
 app.post('/guardarFavorito', async (req, res) => {
   const { userId, businessId } = req.body; 
 
@@ -211,6 +219,7 @@ app.post('/guardarFavorito', async (req, res) => {
   }
 });
 
+////////////////////////
 //retirar favorito
 app.post('/retirarFavorito', async (req, res) => {
   const { userId, businessId } = req.body;
@@ -230,6 +239,9 @@ app.post('/retirarFavorito', async (req, res) => {
   }
 });
 
+
+////////////////////////
+//meus favoritos
 app.get('/meusFavoritos/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -245,7 +257,8 @@ app.get('/meusFavoritos/:userId', async (req, res) => {
   }
 });
 
-// Aprovação 
+////////////////////////
+//aprovação 
 app.post('/business/aprovar/:id',authorize(['camara']), async (req, res) => {
     try {
         const business = await Business.findByIdAndUpdate(
@@ -268,6 +281,8 @@ app.post('/business/aprovar/:id',authorize(['camara']), async (req, res) => {
     }
 });
 
+////////////////////////
+//rejeitar
 app.delete('/business/rejeitar/:id', authorize(['camara']), async (req, res) => {
     try {
         await Business.findByIdAndDelete(req.params.id);
@@ -277,10 +292,11 @@ app.delete('/business/rejeitar/:id', authorize(['camara']), async (req, res) => 
     }
 });
 
-// No teu ficheiro de rotas do Backend
+////////////////////////
+//pedidos negócios pendentes
 app.get('/business/pendentes', authorize(['camara']), async (req, res) => {
     try {
-        // MUITO IMPORTANTE: Verifica se o campo no teu Schema se chama 'status'
+        
         const lista = await Business.find({ status: 'pendente' });
         
         res.status(200).json(lista);
@@ -290,7 +306,8 @@ app.get('/business/pendentes', authorize(['camara']), async (req, res) => {
     }
 });
 
-//Comerciante gera o QR Code
+////////////////////////
+//gerar QRcode
 app.post('/gerarQrCode', authorize(['comerciante']), async (req, res) => {
     try {
         const { valorOriginal, lojaId } = req.body;
@@ -329,7 +346,8 @@ app.post('/gerarQrCode', authorize(['comerciante']), async (req, res) => {
     }
 });
 
-//Cidadão lê o QR Code e ganha o saldo
+////////////////////////
+//ler QRcode e ganhar saldo
 app.post('/reclamarSaldo', authorize(['cidadao']), async (req, res) => {
     try {
         const { token } = req.body;
@@ -378,6 +396,9 @@ app.post('/reclamarSaldo', authorize(['cidadao']), async (req, res) => {
     }
 });
 
+
+////////////////////////
+//negócios do comerciante
 app.get('/meusNegocios', authorize(['comerciante']), async (req, res) => {
     try {
         console.log("A procurar lojas para o dono:", req.user.id);
@@ -399,5 +420,46 @@ app.get('/meusNegocios', authorize(['comerciante']), async (req, res) => {
     }
 });
 
+
+////////////////////////
+//dashboard
+app.get('/dashboard', authorize(['camara']), async (req, res) => {
+    try {
+        
+        // 1. Agregação para contar utilizadores por Cidade
+        // O $group agrupa documentos que tenham o mesmo valor em "$city"
+        const usersByCity = await User.aggregate([
+            {
+                $group: {
+                    _id: "$city",
+                    total : {$sum: 1}
+                }
+            }
+        ])
+
+        // 2. Agregação para contar negócios por Categoria
+        const businessByCategory = await Business.aggregate([
+            {
+                $group:{
+                    _id: "$category",
+                    total : {$sum : 1}
+                }
+            }
+        ])
+        
+        
+        res.status(200).json({
+
+            cities: usersByCity,
+            categories: businessByCategory
+
+        });
+
+    } catch (error) {
+        console.error("Erro ao obter as informações", error);
+        res.status(500).json({ message: "Erro ao obter as informações" });
+    }
+});
+
 app.listen(3000, '0.0.0.0', () => console.log('Servidor ligado'));
-//await User.deleteMany({}); // Apaga todos os documentos da coleção User
+//await Business.deleteMany({}); // Apaga todos os documentos da coleção User

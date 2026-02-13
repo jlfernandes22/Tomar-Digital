@@ -5,13 +5,14 @@ import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext"; 
 
 export default function CamaraIndex() {
-interface Business {
-  _id: string;
-  name: string;
-  category: string;
-  owner: string;
-  status: string;
-}
+
+  interface Business {
+    _id: string;
+    name: string;
+    category: string;
+    owner: string;
+    status: string;
+  }
 
   const [pendentes, setPendentes] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,7 @@ interface Business {
           'Content-Type': 'application/json'
         }
       });
-if (response.ok) {
+    if (response.ok) {
         const data = await response.json();
         setPendentes(data);
       } else {
