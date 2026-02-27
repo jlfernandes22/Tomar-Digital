@@ -66,7 +66,7 @@ const Register = () => {
   
   
   return (
-    <SafeAreaView className='flex-1'>
+    <SafeAreaView className='flex-1 bg-tomar-50'>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -79,42 +79,42 @@ const Register = () => {
             overScrollMode="never" 
           >
             <View>
-              <Text className='ml-auto mr-auto mb-[20%] mt-9 min-w-full justify-center text-center text-5xl font-bold'>
+              <Text className='mb-10 mt-9 text-center text-5xl font-bold text-primary'>
                 Criar conta
               </Text>
             </View>
 
             {/*Email */}
             <View>
-              <Text className='mr-auto ml-auto mt-4 font-semibold'>Email</Text>
+              <Text className='mt-4 font-bold text-primary text-center'>Email</Text>
               <TextInput 
                 value={email}
                 onChangeText={(text) => setEmail(text)}
-                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]' 
+                className='bg-tomar-100 p-4 rounded-xl border-2 border-tomar-300 text-primary min-w-[85%]' 
               />
             </View>
 
             {/* Cidade */}
-            <View>
-              <Text className='mr-auto ml-auto mt-4 font-semibold'>Cidade</Text>
+            <View className='w-full items-center'>
+              <Text className='mt-4 font-bold text-primary'>Cidade</Text>
               <TextInput 
                 value={city} // Certifique-se de criar o state [city, setCity]
                 onChangeText={(text) => setCity(text)}
                 placeholder="Ex: Lisboa"
-                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]' 
+                className='bg-tomar-100 p-4 rounded-xl border-2 border-tomar-300 text-primary min-w-[85%]' 
               />
             </View>
 
             {/*  Role */}
-            <View className="min-w-[75%] mt-4">
-                <Text className="font-semibold mb-1">Cargo</Text>
+            <View className="min-w-[85%] mt-4">
+                <Text className="font-bold mb-1 text-primary text-center">Cargo</Text>
 
                 {/* botão dropdown */}
                 <TouchableOpacity
                   onPress={() => setShowRoles(!showRoles)}
-                  className="bg-primary p-2 border rounded-xl px-4 py-3"
+                  className="bg-tomar-100 border-2 border-tomar-300 rounded-xl px-4 py-4"
                 >
-                  <Text>
+                  <Text className="text-primary text-base">
                     {role
                       ? role === 'cidadao'
                         ? 'Cidadão'
@@ -127,7 +127,7 @@ const Register = () => {
 
               {/* lista */}
               {showRoles && (
-                <View className="border rounded-xl mt-1 bg-white overflow-hidden">
+                <View className="border-2 border-tomar-300 rounded-xl mt-1 bg-white overflow-hidden shadow-lg">
                   {[
                     { label: 'Cidadão', value: 'cidadao' },
                     { label: 'Comerciante', value: 'comerciante' },
@@ -139,9 +139,9 @@ const Register = () => {
                         setRole(item.value);
                         setShowRoles(false);
                       }}
-                      className="px-4 py-3 border-b last:border-b-0"
+                      className="px-4 py-4 border-b border-tomar-100 active:bg-tomar-50"
                     >
-                      <Text>{item.label}</Text>
+                      <Text className="text-primary font-medium">{item.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -150,32 +150,32 @@ const Register = () => {
 
 
             {/*  Password */}
-            <View>
-              <Text className='ml-auto mr-auto mt-4 font-semibold'>Palavra-passe</Text>
+            <View className="w-full items-center">
+              <Text className='mt-4 font-bold text-primary'>Palavra-passe</Text>
               <TextInput
                 secureTextEntry
                 value={password} 
                 onChangeText={(text) => setPassword(text)}
-                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]'
+                className='bg-tomar-100 p-4 rounded-xl border-2 border-tomar-300 text-primary min-w-[85%]'
               />
             </View>
 
             {/*  Confirmar Password */}
-            <View>
-              <Text className='ml-auto mr-auto mt-4 font-semibold'>Confirmar Palavra-passe</Text>
+            <View className="w-full items-center">
+              <Text className='mt-4 font-bold text-primary'>Confirmar Palavra-passe</Text>
               <TextInput 
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={(text) => setConfirmPassword(text)}
-                className='bg-primary p-2 focus:bg-accent rounded-full border ml-auto mr-auto min-w-[75%]'
+                className='bg-tomar-100 p-4 rounded-xl border-2 border-tomar-300 text-primary min-w-[85%]'
               />
             </View>
 
             <TouchableOpacity 
               onPress={handleRegister}
-              className='bg-accent mx-4 h-12 rounded-full w-[50%] justify-center items-center mt-10 ml-auto mr-auto'
+              className='bg-accent h-14 rounded-full min-w-[75%] justify-center items-center mt-12 mb-10'
             >
-              <Text className='font-bold text-lg'>Criar Conta</Text>
+              <Text className='font-bold text-xl text-white'>Criar Conta</Text>
             </TouchableOpacity>
             
           </ScrollView>

@@ -74,7 +74,7 @@ const handleLogin = async () => {
 
 
   return (
-    <SafeAreaView className='flex-1'>
+    <SafeAreaView className='flex-1 bg-tomar-50'>
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}/* 2. Ajusta a altura quando o teclado sobe */
@@ -87,15 +87,12 @@ const handleLogin = async () => {
            
       <View>
         <Text className='
-                            ml-auto
-                            mr-auto
-                            mb-[50%]
+                            mb-12
                             mt-9
-                            min-w-full
-                            justify-center
                             text-center
                             text-5xl
                             font-bold
+                            text-primary
                             '
 
         >Iniciar Sessão</Text>
@@ -103,10 +100,10 @@ const handleLogin = async () => {
 
       <View className=' '>
         <Text className='
-                          ml-auto
-                          mr-auto
                           mt-4
-                          font-semibold'
+                          font-bold
+                          text-center
+                          text-primary'
                           
                           >Email</Text>
 
@@ -114,14 +111,14 @@ const handleLogin = async () => {
                     value={email} 
                     onChangeText={(text)=>setEmail(text)}
                     className='
-                    p-2
-                    bg-primary 
-                    focus:bg-accent 
-                      rounded-full 
-                      border 
-                      ml-auto
-                      mr-auto
-                      min-w-[75%]' 
+                    p-4 
+                    bg-tomar-100 
+                    focus:border-accent 
+                    rounded-xl 
+                    border-2
+                    border-tomar-300
+                    text-primary
+                    min-w-[85%]' 
                     
                     ></TextInput>
       </View>
@@ -129,10 +126,11 @@ const handleLogin = async () => {
       <View className='font-semibold '>
 
         <Text className='
-                          ml-auto
-                          mr-auto
                           mt-4
-                          font-semibold'
+                          font-bold
+                    text-center
+
+                          text-primary'
                         
                         >Palavra-passe</Text>
 
@@ -143,15 +141,14 @@ const handleLogin = async () => {
         secureTextEntry
         value={password}
         onChangeText={(text) => setPassword(text)}
-        className='
-                    p-2
-                    bg-primary 
-                    focus:bg-accent 
-                      rounded-full 
-                      border 
-                      ml-auto
-                      mr-auto
-                      min-w-[75%]' 
+        className='p-4
+                    bg-tomar-100 
+                    focus:border-accent 
+                    rounded-xl 
+                    border-2
+                    border-tomar-300
+                    text-primary
+                    min-w-[85%]' 
                     
                     ></TextInput>
 
@@ -159,11 +156,11 @@ const handleLogin = async () => {
                     <TouchableOpacity
 
                       onPress={handleLogin}
-                      className='bg-accent mx-4 h-12 rounded-full min-w-[50%] justify-center items-center mt-5 ml-auto mr-auto'
+                      className='bg-accent h-14 rounded-full min-w-[75%] justify-center items-center mt-8'
                     
                     >
 
-                      <Text className='font-bold text-lg'>Login</Text>
+                      <Text className='font-bold text-xl text-white'>Login</Text>
 
                     </TouchableOpacity>
 

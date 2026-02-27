@@ -5,8 +5,8 @@ import React from 'react'
 const TabIcon = ({ focused, icon, title }: any) => {
   if (focused) {
     return (
-      <View className="flex flex-row min-w-[20px] min-h-[20px] bg-tabColor rounded-full justify-center items-center">
-        <Image className="size-6" source={icon} />
+      <View className="flex flex-row mt-2 min-w-[40px] min-h-[40px] bg-tabColor rounded-2xl justify-center items-center">
+        <Image className="size-7" source={icon} />
 
 
         <View>
