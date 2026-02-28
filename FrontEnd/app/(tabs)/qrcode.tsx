@@ -50,13 +50,13 @@ export default function ScanScreen() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/reclamarSaldo`, {
+      const response = await fetch(`${API_URL}/lerFatura`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({ token: data }), // O 'data' é o UUID que o comerciante gerou
+        body: JSON.stringify({ QRCodeData: data }), 
       });
 
       const result = await response.json();
@@ -80,6 +80,7 @@ export default function ScanScreen() {
     } catch (error) {
       Alert.alert("Erro", "Falha na ligação ao servidor.")
       isProcessing.current = false;
+      await delay(3000)
       setScanning(true)
       setLoading(false)
     } finally {

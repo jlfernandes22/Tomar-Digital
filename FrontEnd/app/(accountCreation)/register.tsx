@@ -25,10 +25,10 @@ const Register = () => {
 
   const handleRegister = async () => {
 
-     //Alert.alert("Dados",`Email: ${email}\nPassword: ${password}` )
+        //Alert.alert("Dados",`Email: ${email}\nPassword: ${password}` )
     
         //Ligar ao Backend para fazer o login
-    
+        //console.log("A MINHA API URL É:", process.env.EXPO_PUBLIC_API_URL);
         try{
           
           //enviar dados à api
