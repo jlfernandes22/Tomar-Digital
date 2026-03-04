@@ -19,8 +19,7 @@
         "monochromeImage": ""
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.ReactNativeProject"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
