@@ -8,7 +8,7 @@ export default function RootLayout() {
     <AuthProvider>
       <SafeAreaProvider>
         <Stack>
-          <Stack.Screen name="(accountRelated)" options={{ headerShown: false }} />
+          <Stack.Screen name="(accountCreation)" options={{ headerShown: false }} />
           
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>

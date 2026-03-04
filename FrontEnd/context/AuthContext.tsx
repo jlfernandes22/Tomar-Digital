@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: any) => {
     try {
       await SecureStore.deleteItemAsync(STORAGE_KEY);
       setUser(null);
-      router.replace('/(accountRelated)/login')
+      router.replace('/(accountCreation)/login')
     } catch (e) {
       console.error("Erro no logout:", e);
     }

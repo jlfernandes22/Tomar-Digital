@@ -22,12 +22,12 @@ const Index = () => {
       if(token){
         router.replace('/(tabs)/home')
       }else{
-        router.replace('/(accountRelated)/login')
+        router.replace('/(accountCreation)/login')
       }
     
     }catch{
       console.log("Erro rederecionado para pagina de criação de conta")  
-      router.replace('/(accountRelated)/login')
+      router.replace('/(accountCreation)/login')
 
     }
 
