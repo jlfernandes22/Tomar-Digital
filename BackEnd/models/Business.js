@@ -48,6 +48,11 @@ const BusinessSchema = new mongoose.Schema({
         default: null
     }
 
+    NIF: {
+        type: Number,
+        default: null
+    }
+
 })
 
 export default mongoose.model('Business', BusinessSchema);
