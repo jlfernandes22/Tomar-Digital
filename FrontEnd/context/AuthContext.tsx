@@ -8,18 +8,24 @@ export interface User {
   token: string; 
   email: string;
   saldo: number;
-  name?: string;
+  name: string;         
+  city?: string;        
+  NIF?: number | null;   
 }
 
 interface AuthContextData {
   user: User | null;
   updateUser: (updatedData: Partial<User>) => void;
+
   login: (
     id: string, 
     role: string, 
     token: string, 
     email: string, 
-    saldo: number
+    saldo: number,
+    name: string,
+    city?: string,
+    NIF?: number | null
   ) => Promise<void>; 
   logout: () => Promise<void>;
   loading: boolean;
@@ -33,6 +39,7 @@ const STORAGE_KEY = 'user_data';
 export const AuthProvider = ({ children }: any) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
   const updateUser = (updatedData: Partial<User>) => {
   setUser((prev) => {
     if (!prev) return null;
@@ -69,7 +76,16 @@ export const AuthProvider = ({ children }: any) => {
     loadStorageData();
   }, []);
 
-  const login = async (id: string, role: string, token: string, email: string, saldo: number) => {
+  const login = async (
+    id: string, 
+    role: string, 
+    token: string, 
+    email: string, 
+    saldo: number, 
+    name: string, 
+    city?: string, 
+    NIF?: number | null
+  ) => {
     try {
       const userData: User = {
         id,
@@ -77,7 +93,9 @@ export const AuthProvider = ({ children }: any) => {
         token,
         email,
         saldo: Number(saldo) || 0,
-        name: email.split('@')[0] // Atribui um nome logo no login
+        name,  // Now uses the real name from the database!
+        city,
+        NIF
       };
 
       await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(userData));

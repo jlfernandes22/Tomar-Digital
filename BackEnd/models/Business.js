@@ -41,6 +41,11 @@ const BusinessSchema = new mongoose.Schema({
         type: String,
         enum: ['pendente', 'aprovado', 'rejeitado'],
         default: 'pendente' 
+    },
+
+    NIF: {
+        type: Number,
+        default: null
     }
 
 })

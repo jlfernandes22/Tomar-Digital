@@ -41,6 +41,11 @@ const UserSchema = new mongoose.Schema({
         default: 0
     },
 
+    NIF: {
+        type: Number,
+        default: null
+    }
+
 })
 
 export default mongoose.model('User', UserSchema);
