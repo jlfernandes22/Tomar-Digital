@@ -41,7 +41,7 @@ const BusinessSchema = new mongoose.Schema({
         type: String,
         enum: ['pendente', 'aprovado', 'rejeitado'],
         default: 'pendente' 
-    }
+    },
 
 })
 

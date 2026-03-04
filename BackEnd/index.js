@@ -389,35 +389,109 @@ app.post('/gerarQrCode', authorize(['comerciante']), async (req, res) => {
 
 ////////////////////////
 //ler QRcode e ganhar saldo
-app.post('/reclamarSaldo', authorize(['cidadao']), async (req, res) => {
+
+app.post('/lerFatura', authorize(['cidadao']), async (req, res) => {
     try {
-        const { token } = req.body;
+        
 
-        // 1. Procurar a transação (usando o token UUID)
-        // Importante: verificar se o status é 'pendente'
-        const transacao = await Transaction.findOne({ token: token, status: 'pendente' });
+        //pegar nos dados da fatura
+        const {QRCodeData} = req.body
+        const QRCodeFields = QRCodeData.split('*')
+        //console.log(QRCodeFields)
+        //console.log(QRCodeFields[0])
 
-        if (!transacao) {
-            console.log("Transação não encontrada ou já processada.");
-            return res.status(404).json({ message: "Este código já foi usado ou é inválido." });
-        }
+        //pegar nos números individualmente 
+        // A -> NIF do emissor
+        //      QRCodeFields[0]
+        //
+        // B -> NIF do cliente, caso não haja não se pode validar a fatura como sendo da pessoa
+        //      QRCodeFields[1]
+        //
+        // C -> País do cliente
+        //      QRCodeFields[2]
+        //
+        // D -> tipo de documento (FS -> fatura simplificada) (FT -> fatura normal)
+        //      QRCodeFields[3]
+        //
+        // E -> estado do documento, N significa normal
+        //      QRCodeFields[4]
+        //
+        // F -> data de compra aaaa/mm/dd
+        //      QRCodeFields[5]
+        //
+        // G -> número de série do talão, inútil por enquanto
+        //      QRCodeFields[6]
+        //
+        // H -> ATCUD Este código prova que a loja comunicou a série de faturas às Finanças antes de a imprimir (deve ser 
+        //        preciso verificar a autenticidade deste código para poder dar a fatura como válida)
+        //      QRCodeFields[7]
+        //
+        // Q -> um hash de quatro caracters que se liga a fatura passada? como uma chain?
+        //      QRCodeFields[8]
+        //
+        // R -> número do certificado de software de faturação registado na AT
+        //      QRCodeFields[9]
+        //
+        // I1 -> região de imposto
+        //      QRCodeFields[10]
+        //
+        // I3 -> valor sem iva
+        //      QRCodeFields[11]
+        //
+        // I4 -> valor do iva 
+        //      QRCodeFields[12]
+        //    
+        // N -> valor total de todos os impostos
+        //      QRCodeFields[13]
+        //
+        // O -> Valor total a pagar (I3+I4 = valor total)
+        //      QRCodeFields[14]
+        //
+        // S -> informação adicional, indica o valor pago e como foi (metodoDePagamento/valor)
+        //      QRCodeFields[15]
+        const NIFStore = QRCodeFields[0].split(':')[1]
+        const NIFClient = QRCodeFields[1].split(':')[1]
+        const CountryClient = QRCodeFields[2].split(':')[1]
+        const TypeDocument = QRCodeFields[3].split(':')[1]
+        const StateDocument = QRCodeFields[4].split(':')[1]
+        const BoughtDate = QRCodeFields[5].split(':')[1]
+        const SerialNumber = QRCodeFields[6].split(':')[1]
+        const CodeATCUD = QRCodeFields[7].split(':')[1]
+        const hash = QRCodeFields[8].split(':')[1]
+        const SoftCertNumber = QRCodeFields[9].split(':')[1]
+        const RegionTax = QRCodeFields[10].split(':')[1]
+        const NoIVAValue = QRCodeFields[11].split(':')[1]
+        const ValueIVA = QRCodeFields[12].split(':')[1]
+        const AllTaxValue = QRCodeFields[13].split(':')[1]
+        const BoughtValue = QRCodeFields[14].split(':')[1]
+        const AditionalInfo = QRCodeFields[15].split(':')[1]
 
-        // 2. Procurar o utilizador que está a ler o código
+
+
+        //Procurar o utilizador que está a ler o código
         const user = await User.findById(req.user.id);
         if (!user) {
             return res.status(404).json({ message: "Utilizador não encontrado." });
         }
 
-        // 3. Somar o saldo
-        // Usamos parseFloat para garantir que não há concatenação de texto
-        const valorGanho = parseFloat(transacao.saldoGerado);
-        user.saldo = (user.saldo || 0) + valorGanho;
+        //verificar se a fatura tem NIF
+        if(NIFClient == 999999990){
+            return res.status(404).json({ message: "A fatura não tem NIF associado" });
+        }
 
-        // 4. Marcar a transação como concluída ANTES de salvar para evitar re-entradas
-        transacao.status = 'concluido';
-        transacao.clienteId = user._id;
+        //Verificar se o NIF da fatura curresponde ao utilizador
+        if(user.NIF != NIFClient){
+            return res.status(404).json({ message: "O NIF na fatura não coincide com o seu" });
+        }
+        
+        //confirmar se a loja está registada na campanha
 
-        // 5. Salvar as alterações
+
+        //
+
+
+
+        // Salvar as alterações
         await user.save();
         await transacao.save();
 
@@ -425,13 +499,13 @@ app.post('/reclamarSaldo', authorize(['cidadao']), async (req, res) => {
 
         console.log(user.saldo);
         return res.json({ 
-            message: "Saldo adicionado com sucesso!", 
+            message: "Fatura registada com sucesso!", 
             valorGanho, 
             novoSaldoTotal: user.saldo 
         });
 
     } catch (error) {
-        // ISTO VAI MOSTRAR O ERRO REAL NO TEU TERMINAL
+        
         console.error("ERRO CRÍTICO NO BACKEND:", error.message);
         return res.status(500).json({ message: "Erro interno ao processar saldo." });
     }
