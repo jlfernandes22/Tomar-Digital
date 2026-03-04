@@ -19,7 +19,7 @@ const DetalhesBusiness = () => {
 };
 
   const businessId = useLocalSearchParams()
-const [business, setBusiness] = useState<BusinessType | null>(null);
+  const [business, setBusiness] = useState<BusinessType | null>(null);
   const [loading, setLoading] = useState(false)
   const router = useRouter();
 

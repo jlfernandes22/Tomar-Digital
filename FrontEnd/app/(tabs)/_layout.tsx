@@ -144,6 +144,16 @@ const _layout = () => {
             />
           ),
         }}
+      />
+
+      <Tabs.Screen
+        name="editProfile"
+        options={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          href: null
+        }}
+      
       />  
     </Tabs>
   );
