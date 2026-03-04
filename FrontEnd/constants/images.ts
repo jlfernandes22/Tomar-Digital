@@ -9,6 +9,7 @@ import addImg from "@/assets/tabsImages/add.png"
 import compraImg from "@/assets/tabsImages/compra.png"
 import qrCodeImg from "@/assets/tabsImages/qrcode.png"
 import statsImg from "@/assets/tabsImages/statistics.png"
+import editProfileImg from "@/assets/otherIcons/pencil.png"
 
 export const images = {
   profileImg,
@@ -21,5 +22,6 @@ export const images = {
   addImg,
   compraImg,
   qrCodeImg,
-  statsImg
+  statsImg,
+  editProfileImg
 };

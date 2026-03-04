@@ -1,7 +1,9 @@
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
 import React from 'react'
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import TabIcon from './Tabicon';
+import { images } from "@/constants/images";
 
 const profileDetails = () => {
   const { logout, user } = useAuth();
@@ -16,14 +18,21 @@ const profileDetails = () => {
   // Se o user ainda não carregou
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
+
   return (
-    <View className="w-full items-center">
-      <View>
+
+    
+    <View className="w-full items-center relative">
+
         <TouchableOpacity
-        onPress={() => router.replace('/(tabs)/editProfile')}>
-          <Text>editar</Text>
+        onPress={() => router.replace('/(tabs)/editProfile')}
+        className='absolute top-0 right-4 bg-accent p-2 rounded-full z-10 '>
+
+          <Image className="size-6" source={images.editProfileImg} />
+
         </TouchableOpacity>
-      </View>
+
+      
       {/* Avatar */}
       <View className="w-24 h-24 bg-purple-100 rounded-full items-center justify-center mb-4">
         <Text className="text-purple-600 text-3xl font-bold uppercase">

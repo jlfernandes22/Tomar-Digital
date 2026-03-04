@@ -44,18 +44,32 @@ const Login = () => {
       const roleEncontrado = dados.role || dados.userRole || dados.user?.role;
       const tokenEncontrado = dados.token;
       
-      // 🚨 IMPORTANTE: Extrair o email e o saldo que vêm da API
+      
       const emailEncontrado = dados.user?.email || email; // se a API não devolver, usa o do estado
       const saldoEncontrado = dados.user?.saldo || 0;
+      const nomeEncontrado = dados.user?.name || email 
+      const cidadeEncontrada = dados.user?.city 
+      const NIFEncontrado = dados.user?.NIF
 
       if (idEncontrado && tokenEncontrado) {
+        console.log({idEncontrado, 
+          roleEncontrado, 
+          tokenEncontrado, 
+          emailEncontrado, 
+          saldoEncontrado,
+          nomeEncontrado,
+          cidadeEncontrada,
+          NIFEncontrado})
         // Chamada corrigida com os 5 argumentos na ordem certa:
         await login(
           idEncontrado, 
           roleEncontrado, 
           tokenEncontrado, 
           emailEncontrado, 
-          saldoEncontrado
+          saldoEncontrado,
+          nomeEncontrado,
+          cidadeEncontrada,
+          NIFEncontrado
         );
 
         router.replace('/(tabs)/search');
