@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native'
+import { Image,StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_URL } from '@/constants/api';
@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback, 
   Keyboard 
 } from 'react-native';
+import { images } from '@/constants/images';
 
 
 const Register = () => {
@@ -66,7 +67,15 @@ const Register = () => {
   
   
   return (
-    <SafeAreaView className='flex-1 bg-tomar-50'>
+    <View className='flex-1'>
+      <Image
+        source={images.backgroundRegister}
+        className="absolute w-full h-full"
+        resizeMode="cover"
+      />
+        <View className="absolute w-full h-full bg-tomar-900/60" />
+    
+    <SafeAreaView className='flex-1 bg-transparent'>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -79,14 +88,14 @@ const Register = () => {
             overScrollMode="never" 
           >
             <View>
-              <Text className='mb-10 mt-9 text-center text-5xl font-bold text-primary'>
+              <Text className='mb-10 mt-9 text-center text-5xl font-bold text-neutral-300'>
                 Criar conta
               </Text>
             </View>
 
             {/*Email */}
             <View>
-              <Text className='mt-4 font-bold text-primary text-center'>Email</Text>
+              <Text className='mt-4 font-bold text-neutral-300 text-center'>Email</Text>
               <TextInput 
                 value={email}
                 onChangeText={(text) => setEmail(text)}
@@ -96,7 +105,7 @@ const Register = () => {
 
             {/* Cidade */}
             <View className='w-full items-center'>
-              <Text className='mt-4 font-bold text-primary'>Cidade</Text>
+              <Text className='mt-4 font-bold text-neutral-300'>Cidade</Text>
               <TextInput 
                 value={city} // Certifique-se de criar o state [city, setCity]
                 onChangeText={(text) => setCity(text)}
@@ -107,14 +116,14 @@ const Register = () => {
 
             {/*  Role */}
             <View className="min-w-[85%] mt-4">
-                <Text className="font-bold mb-1 text-primary text-center">Cargo</Text>
+                <Text className="font-bold mb-1 text-neutral-300 text-center">Cargo</Text>
 
                 {/* botão dropdown */}
                 <TouchableOpacity
                   onPress={() => setShowRoles(!showRoles)}
                   className="bg-tomar-100 border-2 border-tomar-300 rounded-xl px-4 py-4"
                 >
-                  <Text className="text-primary text-base">
+                  <Text className="text-gray-500 text-base">
                     {role
                       ? role === 'cidadao'
                         ? 'Cidadão'
@@ -151,7 +160,7 @@ const Register = () => {
 
             {/*  Password */}
             <View className="w-full items-center">
-              <Text className='mt-4 font-bold text-primary'>Palavra-passe</Text>
+              <Text className='mt-4 font-bold text-neutral-300'>Palavra-passe</Text>
               <TextInput
                 secureTextEntry
                 value={password} 
@@ -162,7 +171,7 @@ const Register = () => {
 
             {/*  Confirmar Password */}
             <View className="w-full items-center">
-              <Text className='mt-4 font-bold text-primary'>Confirmar Palavra-passe</Text>
+              <Text className='mt-4 font-bold text-neutral-300'>Confirmar Palavra-passe</Text>
               <TextInput 
                 secureTextEntry
                 value={confirmPassword}
@@ -182,6 +191,8 @@ const Register = () => {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
+ </View>
+    
   )
 }
 

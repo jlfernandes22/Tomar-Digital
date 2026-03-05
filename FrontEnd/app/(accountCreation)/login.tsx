@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {Image,Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_URL } from '@/constants/api';
@@ -13,6 +13,7 @@ import {
   Keyboard 
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { images } from '@/constants/images';
 
 const Login = () => {
 
@@ -88,7 +89,16 @@ const Login = () => {
 
 
   return (
-    <SafeAreaView className='flex-1 bg-tomar-50'>
+   <View className="flex-1">
+    <Image 
+      source={images.backgroundLogin}
+      className="absolute w-full h-full"
+      resizeMode="cover"
+    />
+    
+    
+    <View className="absolute w-full h-full bg-tomar-900/60" />
+    <SafeAreaView className='flex-1 bg-transparent'>
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}/* 2. Ajusta a altura quando o teclado sobe */
@@ -106,7 +116,7 @@ const Login = () => {
                             text-center
                             text-5xl
                             font-bold
-                            text-primary
+                            text-neutral-300
                             '
 
         >Iniciar Sessão</Text>
@@ -117,7 +127,8 @@ const Login = () => {
                           mt-4
                           font-bold
                           text-center
-                          text-primary'
+                           text-neutral-300
+'
                           
                           >Email</Text>
 
@@ -142,15 +153,11 @@ const Login = () => {
         <Text className='
                           mt-4
                           font-bold
-                    text-center
+                          text-center
+                        text-neutral-300
+        '>Palavra-passe</Text>
 
-                          text-primary'
-                        
-                        >Palavra-passe</Text>
-
-        
-        
-        
+    
         <TextInput 
         secureTextEntry
         value={password}
@@ -184,6 +191,7 @@ const Login = () => {
     </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   </SafeAreaView>
+  </View>
   )
 }
 
