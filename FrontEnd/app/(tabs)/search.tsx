@@ -115,37 +115,54 @@ const guardarNaLista = async (businessId: string) => {
           },[])
       )
 
-
-  return (
-    <SafeAreaView className="flex-1 bg-whitew">
-      <View className="p-5  rounded-full ml-auto mr-auto border-black border-2 min-w-[95%]">
-        <TextInput
-          className="text-tabColor text-base w-full "
-          placeholder="Procurar negócio..."
-          placeholderTextColor="#946648"
-          value={search}
-          onChangeText={aoEscrever}
-        />
+return (
+    <SafeAreaView className="flex-1 bg-tomar-50"> 
+      
+      {/* Barra de Pesquisa */}
+      <View className="px-4 mt-6 mb-4">
+        <View className="flex-row items-center p-2 bg-tomar-100 rounded-xl border-2 border-tomar-700 shadow-sm">
+          <TextInput
+            className="text-primary text-lg w-full px-2" 
+            placeholder="Procurar negócio..."
+            placeholderTextColor="#503626" 
+            value={search}
+            onChangeText={aoEscrever}
+            //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
+            accessibilityRole="search"
+            accessibilityLabel="Barra de pesquisa de negócios"
+            accessibilityHint="Filtra a lista de resultados abaixo à medida que escreve"
+          />
+        </View>
       </View>
-      {/* Lista de Resultados */}
-      <View style={{ flex: 1}}>
-        {loading ? (
-          <ActivityIndicator size="large" className="mt-20 color-red-600" />
-        ) : (
-              <FlatList
-                data={listaFiltrada}
-                keyExtractor={(item: any) => item._id}
-                renderItem={({ item }) => (
-                <View className="relative">
 
-                <TouchableOpacity onPress={() => {router.push({
-                    pathname: '/components/detalhesBusiness',
-                    params: { id: item._id}
-                    })}}>
+      {/* Lista de Resultados */}
+      <View style={{ flex: 1 }}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#FF6600" className="mt-20" /> 
+        ) : (
+          <FlatList
+            data={listaFiltrada}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+            keyExtractor={(item: any) => item._id}
+            renderItem={({ item }) => (
+              <View className="relative mb-4">
+                {/* Card do Negócio */}
+                <TouchableOpacity 
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/components/detalhesBusiness',
+                      params: { id: item._id }
+                    })
+                  }}
+            //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver detalhes de ${item.name}`}
+                  className="bg-white rounded-2xl border border-tomar-200 shadow-sm overflow-hidden"
+                >
                   <BusinessList
                     name={item.name}
                     category={item.category}
-                    // Se location for um objeto {lat, long}, passamos uma string formatada
                     location={
                       item.location?.lat 
                         ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` 
@@ -154,18 +171,30 @@ const guardarNaLista = async (businessId: string) => {
                   />
                 </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={() => confirmarGuardar(item)}
-        className="absolute right-6 top-6 bg-purple-600 w-10 h-10 rounded-full items-center justify-center shadow-md"
-      >
-        <Text className="text-white font-bold text-xl">+</Text>
-      </TouchableOpacity>
-    </View>
-  )}
-/>
+                {/* Botão Guardar/Adicionar */}
+                <TouchableOpacity 
+                    onPress={() => confirmarGuardar(item)}
+                    //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Adicionar ${item.name} aos favoritos`}
+                    className="absolute right-4 top-4 bg-accent w-12 h-12 rounded-full items-center justify-center shadow-lg"
+                  >
+                    <Text 
+                      className="text-white font-bold text-2xl" 
+                     //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).                     
+                      importantForAccessibility="no-hide-descendants" // Android
+                      accessibilityElementsHidden={true}              // iOS
+                    >
+                      +
+                    </Text>
+                  </TouchableOpacity>
+              </View>
+            )}
+          />
         )}
       </View>
-      </SafeAreaView>
+    </SafeAreaView>
   );
 };
     

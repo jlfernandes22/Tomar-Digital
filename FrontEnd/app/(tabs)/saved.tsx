@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { FlatList, Text, View, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
+import { Image,FlatList, Text, View, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { API_URL } from '@/constants/api';
 import BusinessList from "../components/businessList";
 import { useAuth } from "@/context/AuthContext";
+import { images } from "@/constants/images";
 
 const Saved = () => {
 interface Favorito {
@@ -69,52 +70,87 @@ const retirarFavorito = async (businessId: string) => {
   } catch (error) {
     carregarFavoritos(); // Reverte em caso de erro de rede
   }
-};
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={{ padding: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Os Meus Favoritos</Text>
+};return (
+    <SafeAreaView className="flex-1 bg-tomar-50">
+      <View className="p-6">
+        <Text className="text-3xl font-bold text-primary">Os Meus Favoritos</Text>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="red" />
+        <ActivityIndicator size="large" color="#FF6600" className="mt-20" />
       ) : (
         <FlatList
-  data={favoritos}
-  keyExtractor={(item: any) => item._id} // Agora o TS reconhece o _id
-  renderItem={({ item }) => (
-    <View className="relative">
-      <TouchableOpacity  
-                      onPress={() => {router.push({
-                      pathname: '/components/detalhesBusiness',
-                      params: { id: item.businessId?._id}
-                      })}}>
-
-      <BusinessList
-        // Usamos encadeamento opcional (?.) para segurança
-        name={item.businessId?.name || "Negócio não disponível"}
-        category={item.businessId?.category || "N/A"}
-        location={item.businessId?.location || ""}
-      />
-      
-      {/* Botão de Remover */}
-      <TouchableOpacity 
-        onPress={() => {
-          if(item.businessId) retirarFavorito(item.businessId._id)
-        }}
-        className="absolute right-4 top-5 bg-red-500 p-2 rounded-full shadow-sm"
-      >
-        <Text className="text-white font-bold px-1">Remover</Text>
-      </TouchableOpacity>
-      </TouchableOpacity>
-    </View>
-  )}
-  ListEmptyComponent={() => (
-    <View className="mt-20 items-center">
-      <Text className="text-gray-400">A tua lista de favoritos está vazia.</Text>
-    </View>
-  )}
-/>
+          data={favoritos}
+          contentContainerStyle={{ 
+            paddingHorizontal: 16, 
+            paddingBottom: 20,
+            flexGrow: 1 // Importante para o ListEmptyComponent centrar verticalmente
+          }}
+          keyExtractor={(item: any) => item._id}
+          renderItem={({ item }) => (
+            <View className="relative mb-4">
+              {/* Card Principal */}
+              <TouchableOpacity  
+                activeOpacity={0.7}
+                onPress={() => {
+                  router.push({
+                    pathname: '/components/detalhesBusiness',
+                    params: { id: item.businessId?._id}
+                  })
+                }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver detalhes de ${item.businessId?.name || "negócio"}`}
+                className="bg-white rounded-2xl border border-tomar-200 shadow-sm overflow-hidden"
+              >
+                <BusinessList
+                  name={item.businessId?.name || "Negócio não disponível"}
+                  category={item.businessId?.category || "N/A"}
+                  location={item.businessId?.location || ""}
+                />
+              </TouchableOpacity>
+              
+              {/* Botão de Remover */}
+              <TouchableOpacity 
+                onPress={() => {
+                  if(item.businessId) retirarFavorito(item.businessId._id)
+                }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Remover ${item.businessId?.name} dos favoritos`}
+                className="absolute right-3 top-7 bg-red-600 h-10 px-4 rounded-full shadow-md items-center justify-center"
+              >
+                <Text className="text-white font-bold">Remover</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          ListEmptyComponent={() => (
+            <View className="flex-1 items-center justify-center px-10 pb-20">
+              <Image 
+                source={images.favWaiting}
+                className="w-64 h-64 mb-6"
+                resizeMode="contain"
+                importantForAccessibility="no-hide-descendants"
+                accessibilityElementsHidden={true}
+              />
+              <Text className="text-primary text-2xl font-bold text-center mb-2">
+                Lista vazia
+              </Text>
+              <Text className="text-tomar-600 text-center text-base">
+                Parece que ainda não guardou nenhum dos tesouros de Tomar nos seus favoritos.
+              </Text>
+              
+              <TouchableOpacity 
+                onPress={() => router.push('/search')} // Ajuste para a sua rota de busca
+                className="mt-8 bg-accent px-8 py-4 rounded-full shadow-md"
+                accessibilityRole="button"
+                accessibilityLabel="Ir para a página de pesquisa para adicionar favoritos"
+              >
+                <Text className="text-white font-bold text-lg">Descobrir Negócios</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
       )}
     </SafeAreaView>
   );

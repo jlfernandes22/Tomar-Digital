@@ -12,6 +12,7 @@ import statsImg from "@/assets/tabsImages/statistics.png"
 import editProfileImg from "@/assets/otherIcons/pencil.png"
 import backgroundLogin from "@/assets/backgroundImages/bglogin.webp"
 import backgroundRegister from "@/assets/backgroundImages/bgregister.webp"
+import favWaiting from "@/assets/otherIcons/favWaiting.png"
 
 export const images = {
   profileImg,
@@ -27,5 +28,6 @@ export const images = {
   statsImg,
   editProfileImg,
   backgroundLogin,
-  backgroundRegister
+  backgroundRegister,
+  favWaiting
 };
