@@ -579,14 +579,48 @@ app.get('/dashboard', authorize(['camara']), async (req, res) => {
 
 ///////////////
 //Editar perfil
-app.get('/editar/:id', authorize(['camara','comerciante','cidadao']), async (req, res) => {(
+app.post('/editar/:id', authorize(['camara','comerciante','cidadao']), async (req, res) => {
+
+    try{
+
+        //console.log(req.body)
+
+        const user = await User.findById(req.user.id)
+
+        const receivedName = req.body.name
+        const receivedCity = req.body.city
+        const receivedNIF = req.body.NIF
+
+        console.log(receivedName, receivedCity, receivedNIF)    
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilizador não encontrado." });
+        }
+
+        if(user.name != receivedName){
+            user.name = receivedName
+        }
+
+        if(user.city != receivedCity){
+            user.city = receivedCity
+        }
+
+        if(receivedNIF != null){
+            user.NIF = receivedNIF
+        }
+        
 
 
+        await user.save();
+
+        res.status(201).json({message: "Alterações guardadas"});
+
+    }catch(error){
+        console.error("Erro ao alterar informações", error);
+        res.status(500).json({ message: "Erro ao alterar as informações" });
+    }
    
-
-
-)}
-
+});
 
 app.listen(3000, '0.0.0.0', () => console.log('Servidor ligado'));
 //await Business.deleteMany({}); // Apaga todos os documentos da coleção User
