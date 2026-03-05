@@ -44,7 +44,7 @@ const handleLogin = async () => {
       const roleEncontrado = dados.role || dados.userRole || dados.user?.role;
       const tokenEncontrado = dados.token;
       
-      //Extrair o email e o saldo que vêm da API
+      // 🚨 IMPORTANTE: Extrair o email e o saldo que vêm da API
       const emailEncontrado = dados.user?.email || email; // se a API não devolver, usa o do estado
       const saldoEncontrado = dados.user?.saldo || 0;
 

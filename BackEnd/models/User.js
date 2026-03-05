@@ -31,7 +31,6 @@ const UserSchema = new mongoose.Schema({
         required: false
     },
 
-    //Função
     role: { 
     type: String, 
     enum: ['cidadao', 'comerciante', 'camara'], 
@@ -41,7 +40,6 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-
 
 })
 

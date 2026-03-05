@@ -10,7 +10,6 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(true);
   const [loading, setLoading] = useState(false);
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve,ms));
 
   const isProcessing = useRef(false);
     const { updateUser } = useAuth();
@@ -35,28 +34,20 @@ export default function ScanScreen() {
     );
   }
 
-  const handleBarcodeScanned = async ({ type, data }: any) => {
-    //contéudo do QRCODE vem com o formato A:...*B:....*, que será processado pelo servidor
-    //Alert.alert(
-    //  "QR Code Lido!", 
-    //  `Conteúdo: ${data}`,
-    //  [{ text: "OK" }]
-    //);
-    //await delay(4000)
-    //console.log(data)
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (isProcessing.current) return;    
     isProcessing.current = true;
-    setScanning(false); 
+    setScanning(false); // Para de ler para não repetir o pedido
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/lerFatura`, {
+      const response = await fetch(`${API_URL}/reclamarSaldo`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${user?.token}`,
         },
-        body: JSON.stringify({ QRCodeData: data }), 
+        body: JSON.stringify({ token: data }), // O 'data' é o UUID que o comerciante gerou
       });
 
       const result = await response.json();
@@ -72,19 +63,15 @@ export default function ScanScreen() {
         );
       } else {
         Alert.alert("Erro", result.message || "Não foi possível validar este código.");
-        isProcessing.current = false;
-        await delay(3000)
-        setScanning(true)
-        setLoading(false)
+       isProcessing.current = false;
+        setScanning(true); // Permite tentar ler outro se falhar
       }
     } catch (error) {
-      Alert.alert("Erro", "Falha na ligação ao servidor.")
+      Alert.alert("Erro", "Falha na ligação ao servidor.");
       isProcessing.current = false;
-      await delay(3000)
-      setScanning(true)
-      setLoading(false)
+      setScanning(true);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -100,7 +87,7 @@ export default function ScanScreen() {
       <View className="flex-1 justify-center items-center">
         <View className="w-64 h-64 border-2 border-white rounded-3xl opacity-60 mb-10" />
         <Text className="text-white font-bold text-lg bg-black/50 p-2 rounded-lg">
-          Aponte para o QR Code da Fatura
+          Aponte para o QR Code do comerciante
         </Text>
       </View>
 
