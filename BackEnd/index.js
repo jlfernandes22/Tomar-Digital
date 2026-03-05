@@ -140,8 +140,8 @@ app.get('/utilizadores', async (req, res) => {
 });
 
 
-////////////////////////
-//Lista de utilizadores
+////////////////////////////////////
+//Lista de utilizadores com negócios
 app.get('/utilizador/:id', authorize(['camara']), async (req, res) => {
 
     try {
@@ -575,6 +575,18 @@ app.get('/dashboard', authorize(['camara']), async (req, res) => {
         res.status(500).json({ message: "Erro ao obter as informações" });
     }
 });
+
+
+///////////////
+//Editar perfil
+app.get('/editar/:id', authorize(['camara','comerciante','cidadao']), async (req, res) => {(
+
+
+   
+
+
+)}
+
 
 app.listen(3000, '0.0.0.0', () => console.log('Servidor ligado'));
 //await Business.deleteMany({}); // Apaga todos os documentos da coleção User
