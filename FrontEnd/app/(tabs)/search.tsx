@@ -16,7 +16,7 @@ const Search = () => {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('');
 
-  const { user } = useAuth();
+const { user } = useAuth();
   //carrega a lista do servidor
   const handleNegocios = async () => {
   setLoading(true);

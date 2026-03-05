@@ -18,12 +18,6 @@ const profileDetails = () => {
 
   return (
     <View className="w-full items-center">
-      <View>
-        <TouchableOpacity
-        onPress={() => router.replace('/(tabs)/editProfile')}>
-          <Text>editar</Text>
-        </TouchableOpacity>
-      </View>
       {/* Avatar */}
       <View className="w-24 h-24 bg-purple-100 rounded-full items-center justify-center mb-4">
         <Text className="text-purple-600 text-3xl font-bold uppercase">

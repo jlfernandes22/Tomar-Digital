@@ -24,7 +24,7 @@ const Login = () => {
   const [role, setRole] = useState('');
   const { login } = useAuth();
   
-  const handleLogin = async () => {
+const handleLogin = async () => {
   try {
     console.log("tentar conectar ao servidor");
 
