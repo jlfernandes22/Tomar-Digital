@@ -4,7 +4,7 @@ import MapView, { Marker } from 'react-native-maps'
 
 const Map = ({location}:any) => {
 
-    const { width } = Dimensions.get('window');
+    const { width, height } = Dimensions.get('window');
     const [selectedLocation, setSelectedLocation] = useState({
       latitude: location?.lat || 39.6035,
       longitude: location?.long || -8.4154
@@ -14,7 +14,7 @@ const Map = ({location}:any) => {
     //console.log(selectedLocation.longitude)
 
   return (
-    <View style={{ height: 350, width: width - 40, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
+    <View style={{ height: height, width: width , alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
             <MapView
                 style={{ flex: 1 }}
                 initialRegion={{
