@@ -15,7 +15,6 @@ const _layout = () => {
   screenOptions={{
       tabBarShowLabel: false,
       tabBarItemStyle:{
-        height: "100%",
         justifyContent: "center",
         alignItems: "center"
       },
@@ -26,7 +25,7 @@ const _layout = () => {
         borderRadius: 75,
         shadowOpacity: 0.1,
         shadowColor: "#000",
-        shadowRadius: 4,
+        shadowRadius: 4
       }
   }}
 >

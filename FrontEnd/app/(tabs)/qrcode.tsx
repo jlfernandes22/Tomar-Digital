@@ -27,7 +27,7 @@ export default function ScanScreen() {
     return (
       <View className="flex-1 justify-center items-center p-6 bg-white">
         <Text className="text-center mb-4">Precisamos de acesso à câmara para ler o QR Code.</Text>
-        <TouchableOpacity onPress={requestPermission} className="bg-purple-600 p-4 rounded-xl">
+        <TouchableOpacity onPress={requestPermission} className="bg-warning-500 p-4 rounded-xl">
           <Text className="text-white font-bold">Dar Permissão</Text>
         </TouchableOpacity>
       </View>
@@ -104,7 +104,7 @@ export default function ScanScreen() {
           onPress={() => setScanning(true)}
           className="absolute bottom-10 self-center bg-white p-4 rounded-full"
         >
-          <Text className="text-purple-600 font-bold">Tentar Novamente</Text>
+          <Text className="text-warning-500 font-bold">Tentar Novamente</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -73,7 +73,7 @@ const retirarFavorito = async (businessId: string) => {
 };return (
     <SafeAreaView className="flex-1 bg-tomar-50">
       <View className="p-6">
-        <Text className="text-3xl font-bold text-primary">Os Meus Favoritos</Text>
+        <Text className="text-3xl text-center font-bold text-primary">Os Meus Favoritos</Text>
       </View>
 
       {loading ? (
@@ -142,7 +142,7 @@ const retirarFavorito = async (businessId: string) => {
               
               <TouchableOpacity 
                 onPress={() => router.push('/search')} // Ajuste para a sua rota de busca
-                className="mt-8 bg-accent px-8 py-4 rounded-full shadow-md"
+                className="mt-8 bg-brand-600 px-8 py-4 rounded-full shadow-md active:bg-brand-800"
                 accessibilityRole="button"
                 accessibilityLabel="Ir para a página de pesquisa para adicionar favoritos"
               >

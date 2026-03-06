@@ -70,23 +70,35 @@ export default function PurchaseCode() {
     }
   };
 
-  return (<SafeAreaView className="flex-1 bg-white p-6">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text className="text-2xl font-bold mb-6">Nova Venda</Text>
+  return (
+    <SafeAreaView className="flex-1 bg-tomar-50">
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 24 }}
+      >
+        <Text className="text-3xl font-bold text-primary text-center mb-8">
+          Nova Venda
+        </Text>
 
         {/* DROPDOWN DE SELEÇÃO DE NEGÓCIO */}
         <View className="mb-6">
-          <Text className="text-gray-600 font-medium mb-2">Em qual loja está?</Text>
-          <View className="border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden">
+          <Text className="text-primary mb-2 text-center">Em qual loja está?</Text>
+          <View className="border-2 border-tomar-300 rounded-2xl bg-white overflow-hidden shadow-sm">
             <Picker
               selectedValue={lojaSelecionadaId}
               onValueChange={(itemValue) => {
                 setLojaSelecionadaId(itemValue);
-                setQrToken(null); // Esconde o QR se mudar de loja
+                setQrToken(null);
               }}
+              dropdownIconColor="#2D1F16" 
             >
               {listaNegocios.map((n: any) => (
-                <Picker.Item key={n._id} label={n.name} value={n._id} />
+                <Picker.Item 
+                  key={n._id} 
+                  label={n.name} 
+                  value={n._id} 
+                  color="#2D1F16" 
+                />
               ))}
             </Picker>
           </View>
@@ -94,32 +106,56 @@ export default function PurchaseCode() {
 
         {/* INPUT DE VALOR */}
         <View className="mb-6">
-          <Text className="text-gray-600 font-medium mb-2">Valor Total da Compra (€)</Text>
+          <Text className="text-primary mb-2 text-center">Valor Total da Compra (€)</Text>
           <TextInput
-            className="bg-white border-2 border-purple-100 p-4 rounded-2xl text-3xl font-bold text-purple-600"
+            className="bg-white border-2 border-tomar-300 p-5 rounded-2xl text-4xl font-bold text-tomar-800 text-center"
             placeholder="0.00"
+            placeholderTextColor="#D2B5A3"
             keyboardType="numeric"
             value={amount}
             onChangeText={(v) => {
               setAmount(v);
               setQrToken(null);
             }}
+            accessibilityLabel="Valor total da compra em euros"
           />
         </View>
 
+        {/* BOTÃO GERAR QR */}
         <TouchableOpacity
           onPress={handleGenerateQR}
-          className="bg-purple-600 p-5 rounded-2xl items-center shadow-lg shadow-purple-200"
+          disabled={loading}
+          className="bg-brand-600 p-5 rounded-2xl items-center shadow-md active:bg-tomar-800"
+          accessibilityRole="button"
+          accessibilityLabel="Gerar código QR para atribuição de saldo"
         >
-          {loading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">Gerar QR Code de Saldo</Text>}
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white font-bold text-lg">Gerar QR Code de Saldo</Text>
+          )}
         </TouchableOpacity>
 
         {/* QR CODE GERADO */}
         {qrToken && (
-          <View className="mt-10 items-center p-6 bg-purple-50 rounded-3xl border border-purple-100">
-            <QRCode value={qrToken} size={200} color="#6b21a8" backgroundColor="transparent" />
-            <Text className="mt-4 text-xl font-bold text-purple-900">Bónus: {estimatedBonus}€</Text>
-            <Text className="text-purple-400 text-xs">O cidadão deve ler este código agora</Text>
+          <View className="mt-10 items-center p-8 bg-white rounded-3xl border-2 border-tomar-200 shadow-sm">
+            <View className="p-4 bg-white rounded-xl">
+              <QRCode 
+                value={qrToken} 
+                size={220} 
+                color="#2D1F16" 
+                backgroundColor="transparent" 
+              />
+            </View>
+            
+            <View className="mt-6 items-center">
+              <Text className="text-2xl font-bold text-primary">
+                Bónus: <Text className="text-brand-600">{estimatedBonus}€</Text>
+              </Text>
+              <Text className="text-tomar-600 text-sm mt-1 font-medium text-center">
+                O cidadão deve ler este código agora
+              </Text>
+            </View>
           </View>
         )}
       </ScrollView>

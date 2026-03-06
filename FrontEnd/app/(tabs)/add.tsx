@@ -78,64 +78,92 @@ if (response.ok) {
       setLoading(false);
     }
   };
+return (
+    <SafeAreaView className="flex-1 bg-tomar-50">
+      <ScrollView className="p-4 mr-2">
+        <Text className="text-3xl font-bold text-primary text-center mb-8">
+          Adicionar Negócio
+        </Text>
+        
+          {/* Nome do Negócio */}
+          <View>
+            <Text className="text-primary text-center  mb-2 ">Nome do Negócio:</Text>
+            <TextInput 
+              className="bg-white border-2 border-tomar-300 p-4 rounded-xl text-primary text-lg"
+              placeholder="Ex: Pastelaria Nabão"
+              placeholderTextColor="#946648" 
+              value={name}
+              onChangeText={setName}
+              accessibilityLabel="Introduza o nome do negócio"
+            />
+          </View>
 
-  return (
-    <SafeAreaView className="flex-1 p-6 bg-white">
-      <Text className="text-2xl font-bold mb-6 text-center">Adicionar Negócio</Text>
-      
-      <View className="space-y-4">
-        <TextInput 
-          className="border border-gray-300 p-4 rounded-xl"
-          placeholder="Nome do Negócio"
-          value={name}
-          onChangeText={setName}
-        />
-
-        <View>
-            <Text className="font-semibold mb-2 ml-1 text-gray-700 text-center">Categoria:</Text>
-            
+          {/* Categoria */}
+          <View className="mb-2">
+            <Text className="text-primary mt-4 text-center">Categoria:</Text>
             <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                className="flex-row"
-                contentContainerStyle={{ paddingVertical: 5 }}
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              className="flex-row"
+              contentContainerStyle={{ paddingVertical: 5 }}
             >
-                {categories.map((cat) => {
+              {categories.map((cat) => {
                 const isSelected = category === cat;
                 return (
-                    <TouchableOpacity
+                  <TouchableOpacity
                     key={cat}
                     onPress={() => setCategory(cat)}
-                    // h-9 para ser bem fino, px-4 para largura confortável
-                    className={`mr-2 px-4 h-9 justify-center rounded-full border ${
-                        isSelected 
-                        ? 'bg-purple-600 border-purple-600' 
-                        : 'bg-gray-100 border-gray-200'
+                    className={`mr-3 px-6 h-11 justify-center rounded-full border-2 ${
+                      isSelected 
+                      ? 'bg-accent border-accent' 
+                      : 'bg-white border-tomar-200'
                     }`}
-                    >
-                    <Text className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-600'}`}>
-                        {cat}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`Categoria ${cat}`}
+                  >
+                    <Text className={`text-base font-bold ${isSelected ? 'text-white' : 'text-primary'}`}>
+                      {cat}
                     </Text>
-                    </TouchableOpacity>
+                  </TouchableOpacity>
                 );
-                })}
+              })}
             </ScrollView>
-            </View>
+          </View>
 
-        {/* MAPA INTERATIVO */}
-        <View style={{ height: 350, width: width - 40, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
-            <Map/>
-        </View>
-        
-        <View className="p-4 bg-white">
-        <TouchableOpacity 
-          onPress={handleNewBusiness}
-          className="bg-purple-600 p-4 rounded-2xl items-center shadow-sm"
-        >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Submeter para Aprovação</Text>}
-        </TouchableOpacity>
-      </View>
-      </View>
+          {/* MAPA INTERATIVO */}
+          <View>
+            <Text className="text-primary  mb-2 text-center">Localização no Mapa:</Text>
+            <View 
+              style={{ height: 350, borderRadius: 20, overflow: 'hidden', backgroundColor: '#ebe1da' }}
+              className="border-2 border-tomar-200"
+              accessibilityLabel="Mapa interativo para selecionar localização"
+            >
+              <Map/>
+
+            </View>
+            <Text className="text-tomar-600 text-s mt-2 text-center">
+              Toque no mapa para marcar o local exato do negócio.
+            </Text>
+          </View>
+          
+          {/* Botão Submeter */}
+          <View className="mt-8">
+            <TouchableOpacity 
+              onPress={handleNewBusiness}
+              disabled={loading}
+              className="bg-brand-600 h-16 rounded-2xl items-center justify-center shadow-md active:bg-brand-800"
+              accessibilityRole="button"
+              accessibilityLabel="Submeter negócio para aprovação"
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-bold text-xl">Submeter para Aprovação</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
