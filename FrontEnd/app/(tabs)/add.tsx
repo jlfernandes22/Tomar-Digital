@@ -7,6 +7,7 @@ import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { Dimensions } from "react-native";
 import  Map  from "@/app/components/map"
+
 export default function AddBusinessCamara() {
 
 

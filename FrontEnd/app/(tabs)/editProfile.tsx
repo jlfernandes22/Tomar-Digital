@@ -95,7 +95,7 @@ const EditProfile = () => {
             />
           </View>
 
-          {/* Campo NIF (Condicional) */}
+          {/* Campo NIF */}
           {user.NIF == null && (
             <View>
               <Text className="text-primary font-bold mb-3 mt-4 text-center">NIF</Text>
@@ -124,9 +124,9 @@ const EditProfile = () => {
               <Text className="text-white font-bold text-xl">Confirmar Alterações</Text>
             </TouchableOpacity>
 
-            {/* Link para Cancelar (Opcional, mas boa prática UX) */}
+            {/* Link para Cancelar */}
             <TouchableOpacity 
-              onPress={() => router.back()}
+              onPress={() => router.replace("/(tabs)/profile")}
               className="mt-4 p-2"
             >
               <Text className="text-tomar-600 font-medium">Cancelar</Text>
