@@ -136,7 +136,7 @@ return (
       </View>
 
       {/* Lista de Resultados */}
-      <View style={{ flex: 1 }}>
+      <View className="flex-1">
         {loading ? (
           <ActivityIndicator size="large" color="#FF6600" className="mt-20" /> 
         ) : (

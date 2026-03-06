@@ -135,7 +135,9 @@ const Register = () => {
                     
 
                   </Text>
-                                    <Text className="text-tomar-300">▼</Text>
+                    <Text className="text-tomar-300 text-xs">
+                              {showRoles ? "▲" : "▼"}
+                    </Text>
 
                 </TouchableOpacity>
 

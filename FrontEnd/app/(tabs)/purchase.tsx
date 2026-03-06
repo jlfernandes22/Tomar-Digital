@@ -98,7 +98,9 @@ export default function PurchaseCode() {
               : "Selecione uma loja..."}
             </Text>
            
-            <Text className="text-tomar-300">▼</Text>
+           <Text className="text-tomar-300 text-xs">
+          {showBusinessDropdown ? "▲" : "▼"}
+          </Text>
           </TouchableOpacity>
 
           {/* Lista de Opções (Visível apenas quando showBusinessDropdown é true) */}
