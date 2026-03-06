@@ -121,7 +121,7 @@ const Register = () => {
                 {/* botão dropdown */}
                 <TouchableOpacity
                   onPress={() => setShowRoles(!showRoles)}
-                  className="bg-tomar-100 border-2 border-tomar-300 rounded-xl px-4 py-4"
+                  className="bg-tomar-100 border-2 border-tomar-300 rounded-xl px-4 py-4 flex-row justify-between"
                 >
                   <Text className="text-gray-500 text-base">
                     {role
@@ -130,8 +130,13 @@ const Register = () => {
                         : role === 'comerciante'
                         ? 'Comerciante'
                         : 'Câmara'
-                      : 'Selecione um cargo...'}
+                      : 'Selecione um cargo...'
+                      }
+                    
+
                   </Text>
+                                    <Text className="text-tomar-300">▼</Text>
+
                 </TouchableOpacity>
 
               {/* lista */}

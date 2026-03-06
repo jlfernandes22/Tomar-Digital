@@ -9,6 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 export default function PurchaseCode() {
   const { user } = useAuth();
 
+  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
+  
+
   const [listaNegocios, setListaNegocios] = useState([]);
   const [lojaSelecionadaId, setLojaSelecionadaId] = useState<string | null>(null);
 
@@ -80,28 +83,44 @@ export default function PurchaseCode() {
           Nova Venda
         </Text>
 
-        {/* DROPDOWN DE SELEÇÃO DE NEGÓCIO */}
+         {/* DROPDOWN  DE NEGÓCIO  */}
         <View className="mb-6">
-          <Text className="text-primary mb-2 text-center">Em qual loja está?</Text>
-          <View className="border-2 border-tomar-300 rounded-2xl bg-white overflow-hidden shadow-sm">
-            <Picker
-              selectedValue={lojaSelecionadaId}
-              onValueChange={(itemValue) => {
-                setLojaSelecionadaId(itemValue);
-                setQrToken(null);
-              }}
-              dropdownIconColor="#2D1F16" 
-            >
+          <Text className="text-primary mb-2 text-center font-medium">Em qual loja está?</Text>
+          
+      
+          <TouchableOpacity
+            onPress={() => setShowBusinessDropdown(!showBusinessDropdown)}
+            className="bg-white border-2 border-tomar-300 rounded-2xl px-4 py-4 flex-row justify-between items-center shadow-sm"
+          >
+            <Text className="text-primary text-base">
+            {lojaSelecionadaId 
+              ? (listaNegocios.find((n: any) => n._id === lojaSelecionadaId) as any)?.name 
+              : "Selecione uma loja..."}
+            </Text>
+           
+            <Text className="text-tomar-300">▼</Text>
+          </TouchableOpacity>
+
+          {/* Lista de Opções (Visível apenas quando showBusinessDropdown é true) */}
+          {showBusinessDropdown && (
+            <View className="mt-2 border-2 border-tomar-100 rounded-2xl bg-white overflow-hidden shadow-lg">
               {listaNegocios.map((n: any) => (
-                <Picker.Item 
-                  key={n._id} 
-                  label={n.name} 
-                  value={n._id} 
-                  color="#2D1F16" 
-                />
+                <TouchableOpacity
+                  key={n._id}
+                  onPress={() => {
+                    setLojaSelecionadaId(n._id);
+                    setQrToken(null);
+                    setShowBusinessDropdown(false); // Fecha ao selecionar
+                  }}
+                  className={`px-4 py-4 border-b border-gray-100 ${lojaSelecionadaId === n._id ? 'bg-tomar-50' : ''}`}
+                >
+                  <Text className={`${lojaSelecionadaId === n._id ? 'text-tomar-600 font-bold' : 'text-gray-700'}`}>
+                    {n.name}
+                  </Text>
+                </TouchableOpacity>
               ))}
-            </Picker>
-          </View>
+            </View>
+          )}
         </View>
 
         {/* INPUT DE VALOR */}
