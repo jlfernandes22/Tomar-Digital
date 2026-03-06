@@ -135,11 +135,10 @@ return (
           <View>
             <Text className="text-primary  mb-2 text-center">Localização no Mapa:</Text>
             <View 
-              style={{ height: 350, borderRadius: 20, overflow: 'hidden', backgroundColor: '#ebe1da' }}
-              className="border-2 border-tomar-200"
+              className="border-2 border-tomar-200 rounded-lg h-[20rem] overflow-hidden bg-primary"
               accessibilityLabel="Mapa interativo para selecionar localização"
             >
-              <Map/>
+              <Map showPin={true}/>
 
             </View>
             <Text className="text-tomar-600 text-s mt-2 text-center">

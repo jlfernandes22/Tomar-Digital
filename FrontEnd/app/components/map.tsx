@@ -2,19 +2,19 @@ import { Dimensions, StyleSheet, Text, View } from 'react-native'
 import React, { useState } from 'react'
 import MapView, { Marker } from 'react-native-maps'
 
-const Map = ({location}:any) => {
 
-    const { width, height } = Dimensions.get('window');
+const Map = ({showPin}:{ showPin: boolean}) => {
+
     const [selectedLocation, setSelectedLocation] = useState({
-      latitude: location?.lat || 39.6035,
-      longitude: location?.long || -8.4154
+      latitude:  39.6035,
+      longitude:  -8.4154
     });
 
     //console.log(selectedLocation.latitude)
     //console.log(selectedLocation.longitude)
 
   return (
-    <View style={{ height: height, width: width, alignSelf: 'center', borderRadius: 20, overflow: 'hidden', backgroundColor: '#e5e5e5' }}>
+    <View className='h-full w-full align-middle rounded-lg overflow-hidden bg-primary '>
             <MapView
                 style={{ flex: 1 }}
                 initialRegion={{
@@ -25,7 +25,9 @@ const Map = ({location}:any) => {
                 }}
                 onPress={(e) => setSelectedLocation(e.nativeEvent.coordinate)}
             >
-                <Marker coordinate={selectedLocation} />
+               
+                {showPin && ( <Marker coordinate={selectedLocation} /> )}
+                
             </MapView>
         </View>
   )

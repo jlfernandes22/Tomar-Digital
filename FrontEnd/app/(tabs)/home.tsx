@@ -11,7 +11,7 @@ export default function Index() {
   return (
 
     <SafeAreaView className="flex-1 justify-center items-center">
-      <Map/>
+      <Map showPin={false}/>
     </SafeAreaView>
 
   )
