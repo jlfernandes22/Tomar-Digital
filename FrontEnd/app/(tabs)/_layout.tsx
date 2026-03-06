@@ -95,19 +95,6 @@ const _layout = () => {
           }}
         />
 
-        <Tabs.Screen
-          name="purchase"
-          options={{
-            headerShown: false,
-            href: user?.role === 'comerciante' ? '/purchase' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon 
-                focused={focused} 
-                icon={images.compraImg}   />
-            ),
-          }}
-        />
-
          <Tabs.Screen
           name="qrcode"
           options={{
