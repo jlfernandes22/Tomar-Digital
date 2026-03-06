@@ -42,7 +42,7 @@ const EditProfile = () => {
                 city: city, 
                 NIF: NIF ? Number(NIF) : null 
             });
-          router.back()
+          router.replace("/(tabs)/profile")
         }
 
 
