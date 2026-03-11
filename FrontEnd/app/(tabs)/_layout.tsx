@@ -95,16 +95,15 @@ const _layout = () => {
           }}
         />
 
-         <Tabs.Screen
-          name="qrcode"
+        <Tabs.Screen
+        name="qrcode"
+     
           options={{
-            headerShown: false,
- 
-            href: user?.role === 'cidadao' ? '/qrcode' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.qrCodeImg}   />
-            ),
-          }}
+          headerShown: false,
+          tabBarShowLabel: false,
+          href: null
+        
+        }}
         />
 
         <Tabs.Screen

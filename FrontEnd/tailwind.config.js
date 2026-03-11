@@ -7,7 +7,7 @@ module.exports = {
     extend: {
       colors: {
         // Escala de Castanhos
-        tomar: {
+        convento: {
           50: "#FCFAF9",
           100: "#F4ECE7",
           200: "#E3D1C5", 
@@ -20,7 +20,7 @@ module.exports = {
           900: "#2D1F16", 
         },
         // Escala de Verdes 
-        success: {
+        mata: {
           50: "#EBFFEB",
           100: "#D1FFD2",
           200: "#9EFFA0",
@@ -33,7 +33,7 @@ module.exports = {
           900: "#003801",
         },
         // Escala de Laranjas 
-        brand: {
+        verao: {
           50: "#FFF0E5",
           100: "#FFE0CC",
           200: "#FFC299",
@@ -46,7 +46,7 @@ module.exports = {
           900: "#331400",
         },
         // Escala de Amarelos 
-        warning: {
+        sol: {
           50: "#FFFAEA",
           100: "#FFF3D1",
           200: "#FFE59E",
@@ -59,7 +59,7 @@ module.exports = {
           900: "#382900",
         },
         // Escala de Vermelhos 
-        error: {
+        tabuleiros: {
           50: "#FFE5E5",
           100: "#FFCCCC",
           200: "#FF9999",
