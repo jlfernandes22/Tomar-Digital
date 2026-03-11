@@ -49,7 +49,7 @@ return (
 
       {/* NOME */}
      <Text className="font-bold text-xl text-convento-700">
-          {user.name || user.email.split('@')[0]}
+          {user.email.split('@')[0]}
      </Text>
     
       
