@@ -80,7 +80,7 @@ if (response.ok) {
     }
   };
 return (
-    <SafeAreaView className="flex-1 bg-tomar-50">
+    <SafeAreaView className="flex-1 bg-convento-50">
       <ScrollView className="p-4 mr-2">
         <Text className="text-3xl font-bold text-primary text-center mb-8">
           Adicionar Negócio

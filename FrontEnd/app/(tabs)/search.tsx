@@ -116,11 +116,11 @@ const guardarNaLista = async (businessId: string) => {
       )
 
 return (
-    <SafeAreaView className="flex-1 bg-tomar-50"> 
+    <SafeAreaView className="flex-1 bg-convento-50"> 
       
       {/* Barra de Pesquisa */}
       <View className="px-4 mt-6 mb-4">
-        <View className="flex-row items-center p-2 bg-tomar-100 rounded-xl border-2 border-tomar-700 shadow-sm">
+        <View className="flex-row items-center p-2 bg-convento-100 rounded-xl border-2 border-convento-700 shadow-sm">
           <TextInput
             className="text-primary text-lg w-full px-2" 
             placeholder="Procurar negócio..."
@@ -158,7 +158,7 @@ return (
             //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
                   accessibilityRole="button"
                   accessibilityLabel={`Ver detalhes de ${item.name}`}
-                  className="bg-white rounded-2xl border border-tomar-200 shadow-sm overflow-hidden"
+                  className="bg-white rounded-2xl border border-convento-200 shadow-sm overflow-hidden"
                 >
                   <BusinessList
                     name={item.name}

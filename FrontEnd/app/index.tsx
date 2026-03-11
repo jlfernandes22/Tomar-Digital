@@ -1,7 +1,7 @@
-import { Redirect, router } from "expo-router";
+import {  router } from "expo-router";
 import { useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator, View } from "react-native";
+import {  View } from "react-native";
 
 
 const Index = () => {

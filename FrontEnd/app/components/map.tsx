@@ -3,11 +3,13 @@ import React, { useState } from 'react'
 import MapView, { Marker } from 'react-native-maps'
 
 
-const Map = ({showPin}:{ showPin: boolean}) => {
+const Map = ({showPin, location}:{ location?: any ,showPin: boolean}) => {
 
     const [selectedLocation, setSelectedLocation] = useState({
-      latitude:  39.6035,
-      longitude:  -8.4154
+      // O "?." verifica com segurança se "location" existe antes de tentar ler o "lat"
+      // O "??" garante que as coordenadas de Tomar só são usadas se o valor for null/undefined
+      latitude: location?.lat ?? 39.6035,
+      longitude: location?.long ?? -8.4154
     });
 
     //console.log(selectedLocation.latitude)

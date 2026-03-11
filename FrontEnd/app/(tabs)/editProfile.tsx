@@ -1,133 +1,126 @@
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput, Button } from 'react-native-paper';
+import React, { useState } from 'react';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 const EditProfile = () => {
-
     const { user, updateUser } = useAuth();
-    if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
+    
+    // O useState não pode correr se o user for undefined, por isso guardamos logo o loading aqui
+    if (!user) return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#7c3aed" />
+      </View>
+    );
 
-    //informações possíveis de alterar
-    //const [email,setEmail] = useState(user.email)
-    const [name, setName] = useState(user.name)
-    const [city, setCity] = useState(user.city)
-    const [NIF, setNIF] = useState( user.NIF ? String(user.NIF) : "")
+    const [name, setName] = useState(user.name || "");
+    const [city, setCity] = useState(user.city || "");
+    const [NIF, setNIF] = useState(user.NIF ? String(user.NIF) : "");
+    const [loading, setLoading] = useState(false); // Para o botão de loading
 
     const handleEdit = async () => {
-        try{
-
-          console.log(name, city, NIF)
-
+        setLoading(true);
+        try {
             const response = await fetch(`${API_URL}/editar/${user.id}`, {
-            method: 'POST',
-            headers: { 
-              'Authorization': `Bearer ${user?.token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name : name,
-                city : city,
-                NIF : NIF ? Number(NIF) : null
+              method: 'POST',
+              headers: { 
+                'Authorization': `Bearer ${user.token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  name: name,
+                  city: city,
+                  NIF: NIF ? Number(NIF) : null
+            }),
+          });
 
-          }),
-        });
-
-        if(response.ok){
-          Alert.alert("Aviso","Alteração de dados com sucesso")
-          updateUser({ 
-                name: name, 
-                city: city, 
-                NIF: NIF ? Number(NIF) : null 
-            });
-          router.replace("/(tabs)/profile")
+          if(response.ok){
+            Alert.alert("Sucesso", "Alteração de dados com sucesso");
+            updateUser({ 
+                  name: name, 
+                  city: city, 
+                  NIF: NIF ? Number(NIF) : null 
+              });
+            router.replace("/(tabs)/profile");
+          } else {
+            Alert.alert("Erro", "O servidor rejeitou as alterações.");
+          }
+        } catch(error) {
+            Alert.alert("Erro", "Falha na ligação ao servidor.");
+        } finally {
+            setLoading(false);
         }
-
-
-        }catch{
-            Alert.alert("Erro", "Não foi possível guardar as alterações.");
-        }
-        
     }
 
-    
-
   return (
-    <SafeAreaView className="flex-1 bg-tomar-50">
+    <SafeAreaView className="flex-1 bg-convento-50">
       <ScrollView>
         
-        {/* Cabeçalho Estilizado */}
+        {/* Cabeçalho */}
         <View className="items-center mt-6 mb-8 px-6">
-          <View className="bg-primary w-full py-4 rounded-2xl shadow-sm">
+          <View className="bg-convento-500 w-full py-4 rounded-2xl shadow-sm items-center">
             <Text className="text-white text-2xl font-bold text-center">
               Editar Informações
             </Text>
           </View>
         </View>
 
-        <View className="px-9 space-y-6">
+        <View className="px-9 space-y-4">
           
-          {/* Campo Nome */}
-          <View>
-            <Text className="text-primary font-bold mb-3 text-center">Nome Completo</Text>
-            <TextInput 
-              value={name} 
-              onChangeText={(texto) => setName(texto)} 
-              placeholder="O seu nome"
-              placeholderTextColor="#946648"
-              className="bg-white rounded-xl border-2 border-tomar-200 p-4 text-primary text-lg"
-              accessibilityLabel="Campo de edição de nome"
-            />
-          </View>
+          {/* O TextInput do Paper com a label animada embutida */}
+          <TextInput 
+            mode="outlined"
+            label="Nome Completo"
+            value={name} 
+            onChangeText={setName} 
+            className="bg-white"
+            activeOutlineColor="#7c3aed" 
+          />
 
-          {/* Campo Cidade */}
-          <View>
-            <Text className="text-primary font-bold mb-3 mt-4 text-center">Cidade</Text>
-            <TextInput 
-              value={city} 
-              onChangeText={(texto) => setCity(texto)} 
-              placeholder="Ex: Tomar"
-              placeholderTextColor="#946648"
-              className="bg-white rounded-xl border-2 border-tomar-200 p-4 text-primary text-lg"
-              accessibilityLabel="Campo de edição de cidade"
-            />
-          </View>
+          <TextInput 
+            mode="outlined"
+            label="Cidade"
+            value={city} 
+            onChangeText={setCity} 
+            placeholder="Ex: Tomar"
+            className="bg-white mt-2"
+            activeOutlineColor="#7c3aed"
+          />
 
-          {/* Campo NIF */}
           {user.NIF == null && (
-            <View>
-              <Text className="text-primary font-bold mb-3 mt-4 text-center">NIF</Text>
-              <TextInput 
-                value={NIF} 
-                onChangeText={(texto) => setNIF(texto)} 
-                placeholder="NIF (9 dígitos)"
-                placeholderTextColor="#946648"
-                keyboardType="numeric"
-                maxLength={9}
-                className="bg-white rounded-xl border-2 border-tomar-200 p-4 text-primary text-lg"
-                accessibilityLabel="Campo de edição de NIF"
-              />
-            </View>
+            <TextInput 
+              mode="outlined"
+              label="NIF"
+              value={NIF} 
+              onChangeText={setNIF} 
+              keyboardType="numeric"
+              maxLength={9}
+              className="bg-white mt-2"
+              activeOutlineColor="#7c3aed"
+            />
           )}
 
-          {/* Botão de Confirmação */}
           <View className="items-center mt-10">
-            <TouchableOpacity
+            {/* O Botão Oficial do Material Design com Loading state! */}
+            <Button 
+              mode="contained" 
               onPress={handleEdit}
-              activeOpacity={0.8}
-              className="bg-brand-600 rounded-2xl items-center p-4 w-full shadow-md active:bg-tomar-800"
-              accessibilityRole="button"
-              accessibilityLabel="Confirmar e guardar alterações do perfil"
+              loading={loading}
+              disabled={loading}
+              buttonColor="#7c3aed" // Cor do botão (brand-600)
+              
+              labelStyle={{ fontSize: 18, fontWeight: 'bold' }}
             >
-              <Text className="text-white font-bold text-xl">Confirmar Alterações</Text>
-            </TouchableOpacity>
+              Confirmar Alterações
+            </Button>
 
-            {/* Link para Cancelar */}
             <TouchableOpacity 
               onPress={() => router.replace("/(tabs)/profile")}
-              className="mt-4 p-2"
+              className="mt-6 p-2"
+              disabled={loading}
             >
               <Text className="text-tomar-600 font-medium">Cancelar</Text>
             </TouchableOpacity>
@@ -139,6 +132,4 @@ const EditProfile = () => {
   );
 }
 
-export default EditProfile
-
-const styles = StyleSheet.create({})
+export default EditProfile;

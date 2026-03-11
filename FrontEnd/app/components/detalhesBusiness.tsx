@@ -83,12 +83,12 @@ const DetalhesBusiness = () => {
         </View>
 
         {/* Secção do Mapa */}
-        <View className='mt-2'>
+        <View className='mt-2 '>
           <Text className='text-lg font-bold text-gray-800 mb-3'>Localização</Text>
           
           {/* Caixa com sombra e cantos arredondados para conter o mapa */}
-          <View className='rounded-3xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm'>
-            <Map location={business.location} />
+          <View className='rounded-3xl overflow-hidden border border-gray-200 bg-gray-50 shadow-sm h-[20rem]'>
+            <Map location={business.location} showPin={true} />
           </View>
         </View>
 
