@@ -5,9 +5,8 @@ import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import CustomButton from '../components/CustomButton' 
-import { delay } from '@/app/utils/delay';
-import CustomTextInput from '../components/CustomTextInput';
+import { images } from '@/constants/images';
+import { Button } from 'react-native-paper';
 
 const EditProfile = () => {
     const { user, updateUser } = useAuth();
@@ -118,7 +117,27 @@ const EditProfile = () => {
               </CustomButton>
 
             </View>
+          )}
 
+          <View className="items-center mt-10">
+            {/* O Botão Oficial do Material Design com Loading state! */}
+            <Button 
+              mode="contained" 
+              onPress={handleEdit}
+              className="bg-tabuleiros-600 rounded-2xl items-center p-4 w-full shadow-md active:bg-tabuleiros-800"
+              accessibilityRole="button"
+              accessibilityLabel="Confirmar e guardar alterações do perfil"
+            >
+              Confirmar Alterações
+            </Button>
+
+            <TouchableOpacity 
+              onPress={() => router.replace("/(tabs)/profile")}
+              className="mt-6 p-2"
+              disabled={loading}
+            >
+              <Text className="text-white font-medium bg-convento-500 p-4 rounded-2xl">Cancelar</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
         <Snackbar
