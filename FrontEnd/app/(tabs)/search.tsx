@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { ActivityIndicator, FlatList, View, Alert } from "react-native";
+import { ActivityIndicator, FlatList, View, Alert, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from '@/constants/api';
 import BusinessList from "../components/BusinessList";
@@ -16,6 +16,17 @@ const Search = () => {
   const [search, setSearch] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState("")
   const [snackbarVisible, setSnackbarVisible] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const onRefresh = async () =>
+  {
+    try{
+      await handleNegocios()
+    }catch(err){
+      Alert.alert("erro", "erro: " + err.message)
+    }finally{
+      setRefreshing(false)
+    }
+  }
 
   const { user } = useAuth();
 
@@ -118,6 +129,7 @@ const Search = () => {
             <ActivityIndicator size="large" color="#FF6600" className="mt-20" /> 
           ) : (
             <FlatList
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
               data={listaFiltrada}
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
               keyExtractor={(item: any) => item._id}

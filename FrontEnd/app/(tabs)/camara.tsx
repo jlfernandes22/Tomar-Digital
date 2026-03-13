@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, FlatList, Alert } from "react-native";
+import { View, FlatList, Alert, RefreshControl, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext"; 
@@ -30,6 +30,20 @@ export default function CamaraIndex() {
   // Começamos o loading a true
   const [loading, setLoading] = useState(true); 
   const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false)
+  const onRefresh = async () => {
+    setRefreshing(true)
+
+    try{
+
+      await carregarDados()
+
+    }catch(err){
+      Alert.alert("erro", "erro ao carregar informação")
+    }finally{
+      setRefreshing(false)
+    }
+  }
   
 
   const theme = useTheme()
@@ -133,13 +147,14 @@ export default function CamaraIndex() {
         </Text>
 
         <Divider className="mb-2w"/>
-
+        
         {pendentes.length === 0 ? (
           <Text variant="bodyLarge" className="text-center mt-10 opacity-60">
             Não há novos pedidos de Tomar.
           </Text>
         ) : (
           <FlatList
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             data={pendentes}
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
@@ -197,6 +212,7 @@ export default function CamaraIndex() {
             }}
           />
         )}
+        
       </SafeAreaView>
     </Surface>
   );
