@@ -9,8 +9,8 @@ import { delay } from "@/app/utils/delay";
 export default function ScanScreen() {
   const { user } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
-  const [scanning, setScanning] = useState(true);
-  const [loading, setLoading] = useState(false);
+const [scanning, setScanning] = useState(false); // NÃO abre o scanner de imediato
+const [loading, setLoading] = useState(false);
   
 
   const isProcessing = useRef(false);
@@ -45,7 +45,7 @@ export default function ScanScreen() {
     //);
     //await delay(4000)
     //console.log(data)
-    if (isProcdessing.current) return;    
+    if (isProcessing.current) return;    
     isProcessing.current = true;
     setScanning(false); 
     setLoading(true);

@@ -1,10 +1,9 @@
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import TabIcon from './Tabicon';
 import { images } from "@/constants/images";
-
 const profileDetails = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
@@ -15,16 +14,20 @@ const profileDetails = () => {
     camara: "Câmara Municipal",
   };
 
+
+  
   // Se o user ainda não carregou
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
 return (
-    <View className="w-full items-center relative p-6 ">
+    <View className="w-full items-center relative p-4  ">
       
-      {/* Botão Editar Perfil*/}
+    <Text className='text-center text-2xl font-bold'>Perfil</Text>
+
+      {/* Botão Editar Perfil*/} 
       <TouchableOpacity
         onPress={() => router.replace('/(tabs)/editProfile')}
-        className='absolute top-2 right-4 bg-convento-300 p-3 rounded-full z-10 shadow-md'
+        className='absolute top-2 right-4 bg-tomar-300 p-3 rounded-full z-10 shadow-md bg-convento-300 border-2 border-convento-500'
         accessibilityRole="button"
         accessibilityLabel="Editar informações do meu perfil"
       >
@@ -36,40 +39,72 @@ return (
         />
       </TouchableOpacity>
 
-      {/* Avatar */}
-      <View className="w-28 h-28 bg-white border-4 border-convento-200 rounded-full items-center justify-center mb-6 ">
+      {/* Avatar , FAZER PRA TER IMAGEM */}
+      <View className="w-36 h-36 bg-white border-2 border-convento-200 rounded-full items-center justify-center mt-3 mb-6 ">
         <Text className="text-primary text-3xl font-bold uppercase">
           {(user.name || user.email || "V").charAt(0)}
         </Text>
       </View>
 
-      {/* Saudação */}
-      <Text className="text-2xl text-primary text-center">
-        Olá, <Text className="font-bold text-convento-800">
-          {user.name || user.email.split('@')[0]}
-        </Text>
-      </Text>
+      {/* NOME */}
+     <Text className="font-bold text-xl text-convento-700">
+          {user.email.split('@')[0]}
+     </Text>
+    
       
-      {/* Badge de Função/Role */}
-      <View className="bg-convento-200 px-6 py-1.5 rounded-full mt-3">
-        <Text className="text-convento-800 font-bold text-sm uppercase">
+      {/* Role */}
+      <View className=" p-2 rounded-full">
+        <Text className="text-tabuleiros-500 font-bold text-base text-center">
           {roleLabels[user.role] || "Utilizador"}
         </Text>
       </View>
 
       {/* Saldo*/}
       <View 
-        className="bg-primary px-10 py-4 rounded-3xl mt-20"
+        className="bg-convento-100 w-[27rem] h-[20rem] rounded-xl mt-5 border-2 border-convento-400"
         accessible={true}
-        accessibilityLabel={`O seu saldo atual é de ${Number(user.saldo).toFixed(2)} euros`}
+        accessibilityLabel={`Pontos disponíveis: ${Number(user.saldo).toFixed(2)}`}
       >
-        <Text className="text-convento-100 text-sm font-medium text-center uppercase tracking-widest mb-1">
-          Saldo Disponível
+        <Text className=" text-convento-500 font-bold mt-4 text-lg  ml-4 uppercase tracking-widest mb-1">
+          Pontos Disponíveis
         </Text>
-        <Text className="text-white font-bold text-3xl text-center">
-          {(!isNaN(Number(user.saldo))) ? `${Number(user.saldo).toFixed(2)}€` : "0.00€"}
+        <Text className="text-convento-700 font-bold text-5xl p-4 ml-4 ">
+          {(!isNaN(Number(user.saldo))) ? `${Number(user.saldo).toFixed(2)}` : "0.00"}
         </Text>
+
+        <TouchableOpacity 
+        onPress={() => router.replace('/(tabs)/qrcode')}
+       
+        className="bg-red-500 max-w-[24rem] flex-row h-[5rem] m-auto p-5 rounded-2xl mt-2 items-center shadow-md active:bg-red-800"
+        accessibilityRole="button"
+        accessibilityLabel="Ler QR-Code de fatura"
+      >
+        <Image
+        className="size-16" 
+          source={images.qrCodeImg} 
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+          ></Image>
+        <Text className="text-black font-bold text-lg">Ler QR-Code da sua fatura</Text>
+      </TouchableOpacity>
+      <Text className='text-convento-500 font-light text-center pl-7 pr-7  '>Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar</Text>
+      <Text className='text-convento-500 font-semibold text-lg text-center pb-3'>-Necessário Contribuinte-</Text>
       </View>
+
+         
+   {/*  e-mail */}
+    <View className='bg-convento-100 mt-5 rounded-md border-2 border-convento-400 w-[27rem] h-[5rem] flex-row'>
+    <Image className="size-16 bg-convento-200 rounded-lg mt-1 ml-2" 
+          source={images.emailImg} 
+          accessibilityElementsHidden={true}
+          importantForAccessibility="no-hide-descendants"
+          ></Image>
+      <View className='flex-column'>
+        <Text className='text-convento-500 font-light ml-2 mt-2'>Endereço de E-mail</Text>
+        <Text className='text-convento-800 ml-2 mt-2'>{user.email}</Text>
+      </View>
+    </View>
+
 
       {/* Botão Logout */}
       <TouchableOpacity 
@@ -78,8 +113,9 @@ return (
         accessibilityRole="button"
         accessibilityLabel="Terminar sessão e sair da conta"
       >
-        <Text className="text-white font-bold text-lg">Terminar Sessão</Text>
+        <Text className="text-black font-bold text-lg">Terminar Sessão</Text>
       </TouchableOpacity>
+    
     </View>
   );
 };
