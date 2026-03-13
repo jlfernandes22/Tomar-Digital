@@ -1,204 +1,187 @@
 import React, { useState, useCallback } from "react";
-import {ActivityIndicator, FlatList, Text,TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SearchBar } from "react-native-screens";
 import { API_URL } from '@/constants/api';
-import BusinessList from "../components/businessList";
+import BusinessList from "../components/BusinessList";
 import { router, useFocusEffect } from 'expo-router';
-import { Alert } from "react-native";
 import { useAuth } from "@/context/AuthContext";
+import CustomTextInput from "../components/CustomTextInput";
+import { Surface, TouchableRipple, IconButton } from "react-native-paper";
+import CustomSnackBar from "../components/CustomSnackBar";
 
 const Search = () => {
-
-  //criar estado para guardar a lista de negócios
-  const [listaNegocios, setListaNegocios] = useState([])
-  const [listaFiltrada, setListaFiltrada] = useState([]); // Lista que será exibida
-  const [loading, setLoading] = useState(false)
+  const [listaNegocios, setListaNegocios] = useState([]);
+  const [listaFiltrada, setListaFiltrada] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState("")
+  const [snackbarVisible, setSnackbarVisible] = useState(false)
 
   const { user } = useAuth();
-  //carrega a lista do servidor
+
   const handleNegocios = async () => {
-  setLoading(true);
-  try {
-    const response = await fetch(`${API_URL}/negocios`);
-    const dados = await response.json();
-
-    // FILTRO: Apenas negócios com status 'aprovado' entram na lista
-    // Se o status não existir (negócios antigos), podemos decidir se mostramos ou não
-    const apenasAprovados = dados.filter((item: any) => item.status === 'aprovado');
-
-    setListaNegocios(apenasAprovados);
-    setListaFiltrada(apenasAprovados);
-
-  } catch (error) {
-    console.log("Não foi possível obter a lista de negócios", error);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/negocios`);
+      const dados = await response.json();
+      const apenasAprovados = dados.filter((item: any) => item.status === 'aprovado');
+      setListaNegocios(apenasAprovados);
+      setListaFiltrada(apenasAprovados);
+    } catch (error) {
+      console.log("Não foi possível obter a lista de negócios", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const confirmarGuardar = (negocio: any) => {
-  Alert.alert(
-    "Guardar Negócio",
-    `Deseja guardar "${negocio.name}" na sua lista?`,
-    [
-      { text: "Cancelar", style: "cancel" },
-      { 
-        text: "Sim, guardar", 
-        onPress: () => guardarNaLista(negocio._id) 
-      }
-    ]
-  );
-};
+    Alert.alert(
+      "Guardar Negócio",
+      `Deseja guardar "${negocio.name}" na sua lista?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Sim, guardar", onPress: () => guardarNaLista(negocio._id) }
+      ]
+    );
+  };
 
-const guardarNaLista = async (businessId: string) => {
-  if (!user?.id) {
-    Alert.alert("Aviso", "Tens de ter conta para guardar favoritos!");
-    return;
-  }
-  
-  try {
-    const response = await fetch(`${API_URL}/guardarFavorito`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        userId: user.id, 
-        businessId: businessId 
-      })
-    });
-
-    const data = await response.json(); // Lemos a resposta mesmo que não seja OK
-
-    if (response.ok) {
-      console.log("SUCESSO NO BACKEND:", data);
-      Alert.alert("Sucesso", "Negócio guardado!");
-    } else {
-      // Se o servidor respondeu, mas com erro (ex: 400 ou 500)
-      console.log("ERRO DO SERVIDOR:", response.status, data);
-      Alert.alert("Erro", data.message || "Não foi possível guardar.");
+  const guardarNaLista = async (businessId: string) => {
+    if (!user?.id) {
+      Alert.alert("Aviso", "Tens de ter conta para guardar favoritos!");
+      return;
     }
-
-  } catch (error) {
-    // Se nem sequer conseguiu chegar ao servidor (erro de rede ou URL errada)
-    console.log("ERRO DE CONEXÃO:", error);
-    Alert.alert("Erro de Rede", "Verifica se o servidor está ligado.");
-  }
-};
-// Função chamada sempre que o utilizador escreve
-  const aoEscrever = (texto: string) => {
-  setSearch(texto);
-  console.log("Texto digitado:", texto); // Ver se o texto chega aqui
-  
-  if (texto === "") {
-    setListaFiltrada(listaNegocios);
-  } else {
-    const novaLista = listaNegocios.filter((item: any) => {
-      if (!item.name) return false; // Evita erro se o item não tiver nome
-      
-      const nomeNegocio = item.name.toLowerCase();
-      const textoDigitado = texto.toLowerCase();
-      
-      return nomeNegocio.includes(textoDigitado);
-    });
     
-    console.log("Itens encontrados:", novaLista.length); // Ver se encontrou algo
-    setListaFiltrada(novaLista);
-  }
-};
+    try {
+      const response = await fetch(`${API_URL}/guardarFavorito`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, businessId: businessId })
+      });
 
-   useFocusEffect(
-          useCallback(() =>{
-  
-              handleNegocios()
-  
-          },[])
-      )
+      const data = await response.json();
 
-return (
-    <SafeAreaView className="flex-1 bg-convento-50"> 
-      
-      {/* Barra de Pesquisa */}
-      <View className="px-4 mt-6 mb-4">
-        <View className="flex-row items-center p-2 bg-convento-100 rounded-xl border-2 border-convento-700 shadow-sm">
-          <TextInput
-            className="text-primary text-lg w-full px-2" 
-            placeholder="Procurar negócio..."
-            placeholderTextColor="#503626" 
-            value={search}
-            onChangeText={aoEscrever}
-            //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
+      if (response.ok) {
+        setSnackbarMessage("Negócio guardado com sucesso")
+        setSnackbarVisible(true)
+      } else {
+        setSnackbarMessage("Erro: " + data.message || "Não foi possível guardar")
+        setSnackbarVisible(true)
+      }
+    } catch (error) {
+      setSnackbarMessage("Erro ao comunicar com o servidor")
+      setSnackbarVisible(true)
+
+    }
+  };
+
+  const setSearchBar = (texto: string) => {
+    setSearch(texto);
+    if (texto === "") {
+      setListaFiltrada(listaNegocios);
+    } else {
+      const novaLista = listaNegocios.filter((item: any) => {
+        if (!item.name) return false;
+        return item.name.toLowerCase().includes(texto.toLowerCase());
+      });
+      setListaFiltrada(novaLista);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      handleNegocios();
+    }, [])
+  );
+
+  return (
+    //  Envolvemos tudo num Surface para o fundo do ecrã adaptar-se ao tema (Dark/Light)
+    <Surface style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }}> 
+        
+        {/* Barra de Pesquisa */}
+        <View 
+            className="px-4 mt-6 mb-4"
             accessibilityRole="search"
             accessibilityLabel="Barra de pesquisa de negócios"
             accessibilityHint="Filtra a lista de resultados abaixo à medida que escreve"
+        >
+          <CustomTextInput
+            label="Procurar negócio"
+            value={search}
+            onChangeText={setSearchBar}
           />
         </View>
-      </View>
-
-      {/* Lista de Resultados */}
-      <View className="flex-1">
-        {loading ? (
-          <ActivityIndicator size="large" color="#FF6600" className="mt-20" /> 
-        ) : (
-          <FlatList
-            data={listaFiltrada}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-            keyExtractor={(item: any) => item._id}
-            renderItem={({ item }) => (
-              <View className="relative mb-4">
-                {/* Card do Negócio */}
-                <TouchableOpacity 
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    router.push({
-                      pathname: '/components/detalhesBusiness',
-                      params: { id: item._id }
-                    })
-                  }}
-            //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver detalhes de ${item.name}`}
-                  className="bg-white rounded-2xl border border-convento-200 shadow-sm overflow-hidden"
-                >
-                  <BusinessList
-                    name={item.name}
-                    category={item.category}
-                    location={
-                      item.location?.lat 
-                        ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` 
-                        : "Localização não definida"
-                    }
-                  />
-                </TouchableOpacity>
-
-                {/* Botão Guardar/Adicionar */}
-                <TouchableOpacity 
-                    onPress={() => confirmarGuardar(item)}
-                    //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Adicionar ${item.name} aos favoritos`}
-                    className="absolute right-4 top-4 bg-accent w-12 h-12 rounded-full items-center justify-center shadow-lg"
+      
+        {/* Lista de Resultados */}
+        <View className="flex-1">
+          {loading ? (
+            <ActivityIndicator size="large" color="#FF6600" className="mt-20" /> 
+          ) : (
+            <FlatList
+              data={listaFiltrada}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+              keyExtractor={(item: any) => item._id}
+              renderItem={({ item }) => (
+                <View className="relative mb-4">
+                  
+                  
+                  <Surface 
+                    className="border rounded-xl border-convento-200 " 
+                    elevation={1} 
+                    style={{ borderRadius: 12 }} 
                   >
-                    <Text 
-                      className="text-white font-bold text-2xl" 
-                     //Serve para quando o utilizador ativa o TalkBack (no Android) ou o VoiceOver (no iOS).                     
-                      importantForAccessibility="no-hide-descendants" // Android
-                      accessibilityElementsHidden={true}              // iOS
+                    <TouchableRipple className="overflow-hidden"
+                      onPress={() => {
+                        router.push({
+                          pathname: '/components/BusinessDetails',
+                          params: { id: item._id }
+                        })
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver detalhes de ${item.name}`}
                     >
-                      +
-                    </Text>
-                  </TouchableOpacity>
-              </View>
-            )}
-          />
-        )}
-      </View>
-    </SafeAreaView>
+                      
+                      <View>
+                        <BusinessList
+                          name={item.name}
+                          category={item.category}
+                          location={
+                            item.location?.lat 
+                              ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` 
+                              : "Localização não definida"
+                          }
+                        />
+                      </View>
+                    </TouchableRipple>
+                  </Surface>
+
+                  
+                  <View className="absolute right-2 top-2">
+                    <IconButton
+                      icon="plus" 
+                      mode="contained" 
+                      containerColor="#FF6600"
+                      iconColor="white"
+                      size={24}
+                      onPress={() => confirmarGuardar(item)}
+                      accessibilityLabel={`Adicionar ${item.name} aos favoritos`}
+                    />
+                  </View>
+
+                </View>
+              )}
+            />
+          )}
+        </View>
+        <CustomSnackBar
+          visible={snackbarVisible}
+          message={snackbarMessage}
+          onDismiss={() => setSnackbarVisible(false)}
+        
+        />
+      </SafeAreaView>
+    </Surface>
   );
 };
-    
-
-
 
 export default Search;

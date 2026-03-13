@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native'
 import React from 'react'
-import Dashboard from '../components/dashboard';
+import Dashboard from '../components/Dashboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const dashboardTab = () => {

@@ -1,73 +1,107 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import { Tabs } from 'expo-router'
 import { images } from "@/constants/images";
-import TabIcon from '@/app/components/Tabicon'
-
+import { Tabs } from "expo-router";
+import React from "react";
+import TabIcon from '@/app/components/Tabicon';
+import { useAuth } from "@/context/AuthContext";
+import { BottomNavigation, useTheme } from 'react-native-paper';
+import { CommonActions } from '@react-navigation/native';
 
 const _layout = () => {
+  const { user } = useAuth();
+  const theme = useTheme();
+
   return (
-    
-    <Tabs 
-    screenOptions={{
-      tabBarShowLabel: false,
-      tabBarItemStyle:{
-        height: "100%",
-        justifyContent: "center",
-        alignItems: "center"
-      },
-      tabBarStyle:{
-        borderColor: "#ff0000",
-        backgroundColor: "#FCFAF9",
-        borderTopColor: "#D2B5A3",
-        borderRadius: 75,
-        shadowOpacity: 0.1,
-        shadowColor: "#000",
-        shadowRadius: 4,
-      }
-    }}>
+    <Tabs
+      tabBar={({ navigation, state, descriptors, insets }) => {
+        
+        // FILTRO MANUAL POR ROLE
+        const visibleRoutes = state.routes
 
-      
+        // 2. Como removemos rotas, recalculamos qual é o índice da aba ativa
+        const activeRoute = state.routes[state.index];
+        const activeIndex = visibleRoutes.findIndex(r => r.key === activeRoute.key);
 
-      <Tabs.Screen
-        name='register'
-        options={{
-        headerShown: false,
-        tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              icon={images.registerImg}
-              
+        return (
+          <BottomNavigation.Bar
+            navigationState={{ 
+              index: activeIndex >= 0 ? activeIndex : 0, 
+              routes: visibleRoutes 
+            }}
+            
+            
 
-            />
-          ),
+            safeAreaInsets={insets}
+            
+            style={{ 
+              backgroundColor: theme.colors.elevation.level2,
+              height: 80
+            }} 
+            
+            activeColor="#FF6600" 
+            inactiveColor={theme.colors.onSurfaceVariant}
 
+            activeIndicatorStyle={{ 
+              backgroundColor: 'rgba(255, 102, 0, 0.2)', 
+              width: 64,         
+              height: 44,        
+              borderRadius: 22,  
+            }}
+            
+            labeled={false} 
+            
+            onTabPress={({ route, preventDefault }) => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+
+              if (event.defaultPrevented) {
+                preventDefault();
+              } else {
+                navigation.dispatch({
+                  ...CommonActions.navigate(route.name, route.params),
+                  target: state.key,
+                });
+              }
+            }}
+
+            renderIcon={({ focused, route, color }) => {
+              const { options } = descriptors[route.key];
+              if (options.tabBarIcon) {
+                return options.tabBarIcon({ focused, color, size: 10 }); //embora focused e size estejam não estão a ser usadas
+              }
+              return null;
+            }}
+          />
+        );
       }}
-      
-      />
-
-      <Tabs.Screen
-      
-      name='login'
-      options={{
+      screenOptions={{
         headerShown: false,
-
-        tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              icon={images.loginImg}
-            />
-          ),
-
       }}
-      />
+    >
+      
+      <Tabs.Screen 
+        name="register" 
+        options={{ 
+          tabBarIcon: ({ color }) => 
+          <TabIcon 
+            icon={images.registerImg} 
+            color={color}
+            /> }} />
+      
+      
+      <Tabs.Screen  
+        name="login" 
+        options={{ tabBarIcon: ({ color }) => 
+          <TabIcon 
+            icon={images.loginImg} 
+            color={color}
+            /> }} />
+
 
     </Tabs>
+  );
+};
 
-
-  )
-}
-
-export default _layout
-
-const styles = StyleSheet.create({})
+export default _layout;

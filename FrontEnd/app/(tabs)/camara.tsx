@@ -1,97 +1,82 @@
-import React, { useEffect, useState } from "react";
-import { Text, View, FlatList, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, FlatList, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext"; 
 import { router } from "expo-router";
+// Substituímos os componentes antigos pelos do Paper para suportar Dark Mode
+import { ActivityIndicator, TouchableRipple, Surface, Text, useTheme } from "react-native-paper";
+import CustomButton from "../components/CustomButton";
+
+// 1. Interfaces MOVIDAS PARA FORA do componente
+interface Business {
+  _id: string;
+  name: string;
+  category: string;
+  owner: string;
+  status: string;
+}
+
+interface Owner {
+  _id: string;
+  name: string;
+  email: string;
+}
 
 export default function CamaraIndex() {
 
-  interface Business {
-    _id: string;
-    name: string;
-    category: string;
-    owner: string;
-    status: string;
-  }
-
-  interface Owner {
-    _id: string;
-    name: string;
-    email: string;
-  }
-
   const [pendentes, setPendentes] = useState<Business[]>([]);
-  const [pendOwners, setPendOwners] = useState<Owner[]>([])
-  const [loading, setLoading] = useState(true);
+  const [pendOwners, setPendOwners] = useState<Owner[]>([]);
+  // Começamos o loading a true
+  const [loading, setLoading] = useState(true); 
   const { user } = useAuth();
 
-  // 1. Função para carregar negócios pendentes
-  const fetchPendentes = async () => {
+  const theme = useTheme()
+
+  // 2. FUNÇÃO UNIFICADA: Carrega tudo ao mesmo tempo e gere o loading perfeitamente
+  const carregarDados = useCallback(async () => {
+    // Se não há token, paramos o loading para não ficar preso
+    if (!user?.token) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/business/pendentes`, {
-        method: 'GET', 
-        headers: { 
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-    if (response.ok) {
-        const data = await response.json();
-        setPendentes(data);
-      } else {
-        console.error("Erro na resposta:", response.status);
-      }
+      
+      // O Promise.all faz as duas chamadas ao servidor em simultâneo (mais rápido e seguro)
+      const [resPendentes, resOwners] = await Promise.all([
+        fetch(`${API_URL}/business/pendentes`, {
+          headers: { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch(`${API_URL}/utilizador/negocioPendentes`, {
+          headers: { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' }
+        })
+      ]);
+
+      if (resPendentes.ok) setPendentes(await resPendentes.json());
+      if (resOwners.ok) setPendOwners(await resOwners.json());
+
     } catch (error) {
-      console.log(error)
-      Alert.alert("Erro", "Não foi possível carregar os pedidos.");
+      Alert.alert("Erro", "Não foi possível carregar os dados.");
     } finally {
       setLoading(false);
     }
-  };
-  useEffect(() => { if (user?.token) fetchPendentes(); }, [user?.token]);
+  }, [user?.token]);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
 
 
-  // 1. Função para carregar negócios pendentes
-  const fetchOwner = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/utilizador/negocioPendentes`, {
-        method: 'GET', 
-        headers: { 
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-    if (response.ok) {
-        const data = await response.json();
-        
-        setPendOwners(data);
-      } else {
-        console.error("Erro na resposta:", response.status);
-      }
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar os donos.");
-    } finally {
-      setLoading(false);
-    }
-  };
-    useEffect(() => { if (user?.token) fetchOwner(); }, [user?.token]);
-
-  // para Aprovar
   const handleAprovar = async (id: string) => {
     try {
       const response = await fetch(`${API_URL}/business/aprovar/${id}`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Authorization': `Bearer ${user?.token}`, 'Content-Type': 'application/json' }
       });
 
       if (response.ok) {
-        Alert.alert("Sucesso", "Negócio aprovado!");
         setPendentes(prev => prev.filter(item => item._id !== id));
       } else {
         Alert.alert("Erro", "O servidor recusou a aprovação.");
@@ -102,100 +87,112 @@ export default function CamaraIndex() {
   };
 
   const handleDescartar = async (id: string) => {
-  Alert.alert(
-    "Confirmar",
-    "Tens a certeza que queres descartar este pedido?",
-    [
-      { text: "Cancelar", style: "cancel" },
-      { 
-        text: "Descartar", 
-        style: "destructive",
-        onPress: async () => {
-          try {
-            // Podes usar o método DELETE ou uma rota específica como /rejeitar
-            const response = await fetch(`${API_URL}/business/rejeitar/${id}`, {
-              method: 'DELETE',
-              headers: { 
-                'Authorization': `Bearer ${user?.token}`,
-                'Content-Type': 'application/json'
-              }
-            });
+    Alert.alert(
+      "Confirmar",
+      "Tens a certeza que queres descartar este pedido?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Descartar", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_URL}/business/rejeitar/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${user?.token}`, 'Content-Type': 'application/json' }
+              });
 
-            if (response.ok) {
-              Alert.alert("Sucesso", "Pedido removido.");
-              // Remove da lista local para atualizar a UI na hora
-              setPendentes(prev => prev.filter(item => item._id !== id));
+              if (response.ok) {
+                setPendentes(prev => prev.filter(item => item._id !== id));
+              }
+            } catch (error) {
+              Alert.alert("Erro", "Falha ao descartar.");
             }
-          } catch (error) {
-            Alert.alert("Erro", "Falha ao descartar.");
           }
         }
-      }
-    ]
-  );
-};
+      ]
+    );
+  };
 
-  if (loading) return<ActivityIndicator size="large" className="flex-1" />;
+  if (loading) {
+    return (
+      <Surface style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator animating={true} size="large" color="#FF6600" />
+      </Surface>
+    );
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 p-4">
-      <Text className="text-3xl font-bold text-secondary mb-6">Pedidos Pendentes</Text>
+   
+    <Surface style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} className="p-4">
+        
+        <Text variant="headlineMedium" style={{ color: theme.colors.secondary}}   >
+          Pedidos Pendentes
+        </Text>
 
-      {pendentes.length === 0 ? (
-        <Text className="text-gray-500 text-center mt-10">Não há novos pedidos de Tomar.</Text>
-      ) : (
-        <FlatList
-  data={pendentes}
-  keyExtractor={(item) => item._id}
-  renderItem={({ item }) => {
-    
-    // 1. Procuramos o dono específico deste negócio na lista pendOwners
-    const donoEspecifico = pendOwners.find((dono) => dono._id === item.owner);
+        {pendentes.length === 0 ? (
+          <Text variant="bodyLarge" className="text-center mt-10 opacity-60">
+            Não há novos pedidos de Tomar.
+          </Text>
+        ) : (
+          <FlatList
+            data={pendentes}
+            keyExtractor={(item) => item._id}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => {
+              const donoEspecifico = pendOwners.find((dono) => dono._id === item.owner);
 
-    return (
-      <View className="relative border-2 p-2 rounded-3xl mb-4">
-        <TouchableOpacity  
-          onPress={() => {
-            router.push({
-              pathname: '/components/detalhesBusiness',
-              params: { id: item._id}
-            });
-          }}
-        >
-          <View>
-            <Text className="text-xl font-bold text-dark">{item.name}</Text>
-            <Text className="text-primary italic">{item.category}</Text>
-            
-            {/* 2. Mostramos o nome do dono. Se ainda não existir, mostra 'A carregar...' */}
-            <Text className="text-gray-400 text-xs mt-1">
-              Dono: {donoEspecifico?.name || 'A carregar...'}
-            </Text>
-          </View>
+              return (
+                <Surface 
+                  className="border rounded-xl border-convento-200 mb-4" 
+                  elevation={1} 
+                  style={{ borderRadius: 12 }} 
+                >
+                  
+                  <TouchableRipple  
+                    onPress={() => {
+                      router.push({
+                        pathname: '/components/BusinessDetails',
+                        params: { id: item._id}
+                      });
+                    }}
+                    className="p-4"
+                  >
+                    <View>
+                      <Text variant="titleLarge" className="font-bold">{item.name}</Text>
+                      <Text variant="bodyMedium" className="italic opacity-80">{item.category}</Text>
+                      <Text variant="bodySmall" className="mt-1 opacity-50">
+                        Dono: {donoEspecifico?.name || 'A carregar...'}
+                      </Text>
+                    </View>
+                  </TouchableRipple>
 
-          {/* Contentor dos Botões */}
-          <View className="flex-row gap-x-3 mt-4">
-            {/* Botão Aceitar */}
-            <TouchableOpacity 
-              onPress={() => handleAprovar(item._id)}
-              className="bg-green-500 py-3 rounded-2xl flex-1 items-center"
-            >
-              <Text className="text-white font-bold">Aceitar</Text>
-            </TouchableOpacity>
+                 
+                  <View className="flex-row gap-x-3 px-4 pb-4 mt-2">
+                    
+                    <CustomButton 
+                      className="flex-1"
+                      onPress={() => handleAprovar(item._id)}
+                      buttonColor="#10B981"
+                    >
+                      Aceitar
+                    </CustomButton>
 
-            {/* Botão Descartar */}
-            <TouchableOpacity 
-              onPress={() => handleDescartar(item._id)}
-              className="bg-red-50 py-3 rounded-2xl flex-1 items-center border border-red-200"
-            >
-              <Text className="text-red-600 font-bold">Descartar</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </View>
-    );
-  }}
-/>
-      )}
-    </SafeAreaView>
+                    <CustomButton 
+                      className="flex-1"
+                      onPress={() => handleDescartar(item._id)}
+                      buttonColor="#EF4444"
+                    >
+                      Descartar
+                    </CustomButton>
+                  </View>
+                </Surface>
+              );
+            }}
+          />
+        )}
+      </SafeAreaView>
+    </Surface>
   );
-  }
+}

@@ -1,12 +1,14 @@
-import {Image,Alert, StyleSheet, Text, View } from 'react-native'
-import { Button, TextInput } from 'react-native-paper' 
+import { Text, KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard, Image, StyleSheet, View } from 'react-native';
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_URL } from '@/constants/api';
 import { router } from 'expo-router';
-import { KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { images } from '@/constants/images';
+import CustomButton from '../components/CustomButton';
+import CustomTextField from '../components/CustomTextInput'
+import { delay } from '@/app/utils/delay';
+import CustomSnackBar from '../components/CustomSnackBar';
 
 const Login = () => {
 
@@ -15,8 +17,10 @@ const Login = () => {
   //Guardar os estados das variáveis que queremos obter para fazer o login
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const { login } = useAuth();
+
   
   const handleLogin = async () => {
   try {
@@ -34,6 +38,9 @@ const Login = () => {
     const dados = await response.json();
 
     if (response.ok) {
+      setSnackbarMessage("Sucesso!");
+      setSnackbarVisible(true);
+      await delay(500)
       const idEncontrado = dados.userId;
       const roleEncontrado = dados.role || dados.userRole || dados.user?.role;
       const tokenEncontrado = dados.token;
@@ -66,16 +73,19 @@ const Login = () => {
           NIFEncontrado
         );
 
+        
         router.replace('/(tabs)/search');
       }
     } else {
-    
-      Alert.alert("Erro no Login", dados.message || "Credenciais inválidas");
+      setSnackbarMessage("Erro no Login, " + dados.message);
+      setSnackbarVisible(true);
+      
     }
 
   } catch (error) {
     console.error(error);
-    Alert.alert("Erro de Rede", "Não foi possível contactar o servidor.");
+    setSnackbarMessage("Erro: Não foi possível contactar o servidor.");
+    setSnackbarVisible(true);
   }
 };
 
@@ -92,6 +102,8 @@ const Login = () => {
     <View className="absolute w-full h-full bg-convento-900/60" />
     <SafeAreaView className='flex-1 bg-transparent'>
       
+    
+
       <KeyboardAvoidingView 
         style={{ flex: 1 }}
         // No iOS usamos padding, no Android usamos height para ele empurrar o ecrã
@@ -112,46 +124,50 @@ const Login = () => {
               </Text>
 
               {/* Campo Email */}
-              <TextInput 
-                mode="outlined"
-                label="Email" 
-                value={email} 
+              <CustomTextField
+                label='Email'
+                value={email}
                 onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                activeOutlineColor="#FF6600" 
+                isEmail
+                className='mb-[2rem]'
               />
 
               {/* Campo Palavra-passe */}
-              <TextInput 
-                mode="outlined"
-                label="Palavra-passe"
+              <CustomTextField
+                label='Palavra-passe'
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize='none'
-                activeOutlineColor="#FF6600"
+                isPassword
+                className='mb-[2rem]'
               />
 
               {/* Botão */}
               <View className="mt-8">
-                <Button 
-                  mode="contained" 
-                  buttonColor="#FF6600" 
-                  textColor="#FFFFFF"
-                  onPress={handleLogin}
-                  className="py-1 shadow-md"
-                  labelStyle={{ fontSize: 18, fontWeight: 'bold' }}
-                >
-                  Iniciar Sessão
-                </Button>
+
+                <CustomButton onPress={handleLogin} buttonColor='#FF8533'>
+                    Iniciar Sessão
+                </CustomButton>
+                
+
               </View>
+              
 
             </View>
+            
+            
+
           </TouchableWithoutFeedback>
         </ScrollView>
+        
+        <CustomSnackBar 
+          visible={snackbarVisible} 
+          message={snackbarMessage} 
+          onDismiss={() => setSnackbarVisible(false)} 
+        />
+
       </KeyboardAvoidingView>
     </SafeAreaView>
+    
   </View>
   )
 }

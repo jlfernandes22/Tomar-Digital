@@ -1,8 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import profileDetails from "../components/profileDetails";
-import ProfileDetails from "../components/profileDetails";
+import ProfileDetails from "../components/ProfileDetails";
 
 
 const profile = () => {

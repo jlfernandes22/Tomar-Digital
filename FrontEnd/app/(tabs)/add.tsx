@@ -1,22 +1,25 @@
 import React, { useState } from "react";
-import { Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import MapView, { Marker } from 'react-native-maps'; 
+import { View, ScrollView } from "react-native";
+import { Chip, Surface, Text, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
-import { Dimensions } from "react-native";
-import  Map  from "@/app/components/map"
+import  Map  from "@/app/components/Map"
+import {delay} from "../utils/delay";
+import CustomTextInput from "../components/CustomTextInput";
+import CustomButton from "../components/CustomButton";
+import PortalSnackBar from "../components/CustomSnackBar";
 
 export default function AddBusinessCamara() {
 
 
-  const { user } = useAuth(); // Importa o utilizador da sessão atual
-  const { width } = Dimensions.get('window');
-  const [name, setName] = useState("");
-  const [userName, setUserName] = useState("");
-  const [category, setCategory] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { user } = useAuth() // Importa o utilizador da sessão atual
+  const [name, setName] = useState("")
+  const [category, setCategory] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [snackbarVisible, setSnackbarVisible] = useState(false)
+  const [snackbarMessage,setSnackbarMessage] = useState("")
+  const theme = useTheme()
   const [selectedLocation, setSelectedLocation] = useState({
     latitude: 39.6036, 
     longitude: -8.4151,
@@ -34,13 +37,19 @@ export default function AddBusinessCamara() {
 
 const handleNewBusiness = async () => {
   if (!name) {
-    Alert.alert("Erro", "Por favor, indique o nome do negócio.");
+    setSnackbarMessage("Erro: " + "Por favor indique o nome do negócio")
+    setSnackbarVisible(true)
+    await delay(400)
+    
     return;
   }
 
   // Verificação de segurança: Se não há user ou token, nem vale a pena tentar
   if (!user?.token) {
-    Alert.alert("Erro", "Sessão expirada. Por favor, faça login novamente.");
+    setSnackbarMessage("Erro: " + "Sessão expirada. Por favor, faça login novamente")
+    setSnackbarVisible(true)
+    await delay(400)
+
     return;
   }
 
@@ -66,104 +75,124 @@ const handleNewBusiness = async () => {
       });
 
     
-if (response.ok) {
-        Alert.alert("Sucesso!", "Negócio registado no local escolhido.");
-        setName("");
-      } else {
-        const erro = await response.json();
-        Alert.alert("Aviso", erro.message || "Erro no registo.");
-      }
+  if (response.ok) {
+    setSnackbarMessage("Sucesso!\n " + "Negócio registado no local escolhido.")
+    setSnackbarVisible(true)
+    await delay(400)
+    setName("");
+    } else {
+      const error = await response.json();
+      setSnackbarMessage("Aviso\n " + error.message || "Erro no registo.")
+      setSnackbarVisible(true)
+      await delay(400)
+
+    }
     } catch (error) {
-      Alert.alert("Erro", "Falha na ligação.");
+      setSnackbarMessage("Erro\n " + error.message || "Falha na ligação.")
+      setSnackbarVisible(true)
+      await delay(400)
+
     } finally {
       setLoading(false);
     }
   };
-return (
-    <SafeAreaView className="flex-1 bg-convento-50">
-      <ScrollView className="p-4 mr-2">
-        <Text className="text-3xl font-bold text-primary text-center mb-8">
-          Adicionar Negócio
-        </Text>
-        
-          {/* Nome do Negócio */}
-          <View>
-            <Text className="text-primary text-center  mb-2 ">Nome do Negócio:</Text>
-            <TextInput 
-              className="bg-white border-2 border-tomar-300 p-4 rounded-xl text-primary text-lg"
-              placeholder="Ex: Pastelaria Nabão"
-              placeholderTextColor="#946648" 
-              value={name}
-              onChangeText={setName}
+  return (
+    <Surface className="flex-1">
+      <SafeAreaView >
+        <ScrollView className="p-4 mr-2">
+          <Text className="text-3xl font-bold text-center mb-8">
+            Adicionar Negócio
+          </Text>
+
+            {/* Nome do Negócio */}
+            <View
               accessibilityLabel="Introduza o nome do negócio"
-            />
-          </View>
-
-          {/* Categoria */}
-          <View className="mb-2">
-            <Text className="text-primary mt-4 text-center">Categoria:</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              className="flex-row"
-              contentContainerStyle={{ paddingVertical: 5 }}
             >
-              {categories.map((cat) => {
-                const isSelected = category === cat;
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    onPress={() => setCategory(cat)}
-                    className={`mr-3 px-6 h-11 justify-center rounded-full border-2 ${
-                      isSelected 
-                      ? 'bg-accent border-accent' 
-                      : 'bg-white border-tomar-200'
-                    }`}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={`Categoria ${cat}`}
-                  >
-                    <Text className={`text-base font-bold ${isSelected ? 'text-white' : 'text-primary'}`}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-
-          {/* MAPA INTERATIVO */}
-          <View>
-            <Text className="text-primary  mb-2 text-center">Localização no Mapa:</Text>
-            <View 
-              className="border-2 border-tomar-200 rounded-lg h-[20rem] overflow-hidden bg-primary"
-              accessibilityLabel="Mapa interativo para selecionar localização"
-            >
-              <Map showPin={true}/>
-
+              <CustomTextInput 
+                label="Nome do negócio"
+                value={name}
+                onChangeText={setName}
+              />
             </View>
-            <Text className="text-tomar-600 text-s mt-2 text-center">
-              Toque no mapa para marcar o local exato do negócio.
-            </Text>
-          </View>
-          
-          {/* Botão Submeter */}
-          <View className="mt-8">
-            <TouchableOpacity 
-              onPress={handleNewBusiness}
-              disabled={loading}
-              className="bg-brand-600 h-16 rounded-2xl items-center justify-center shadow-md active:bg-brand-800"
+
+            {/* Categoria */}
+            <View className="mb-2">
+              <Text variant="bodyLarge" className="mt-4 mb-2 text-center opacity-70">
+                Categoria:
+              </Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                className="flex-row"
+                contentContainerStyle={{ paddingVertical: 5, paddingHorizontal: 16 }}
+              >
+                {categories.map((cat) => {
+                  const isSelected = category === cat;
+                  return (
+                    <Chip
+                      key={cat}
+                      mode="outlined" 
+                      selected={isSelected} 
+                      onPress={() => setCategory(cat)}
+                      className="mr-3 mb-2" 
+                      showSelectedCheck={false}
+                      // A MAGIA DAS CORES AQUI:
+                      style={{
+                        backgroundColor: isSelected ? '#FF6600' : 'transparent',
+                        borderColor: isSelected ? '#FF6600' : theme.colors.outline,
+                      }}
+                      textStyle={{
+                        color: isSelected ? 'white' : theme.colors.onSurface,
+                        fontWeight: isSelected ? 'bold' : 'normal',
+                      }}
+                    >
+                      {cat}
+                    </Chip>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* MAPA INTERATIVO */}
+            <View>
+              <Text className="text-primary  mb-2 text-center">Localização no Mapa:</Text>
+              <View 
+                className="border-2 border-tomar-200 rounded-lg h-[20rem] overflow-hidden bg-primary"
+                accessibilityLabel="Mapa interativo para selecionar localização"
+              >
+                <Map 
+                  showPin={true}
+                  onLocationSelect={(location) => setSelectedLocation(location)}
+                />
+
+              </View>
+              <Text className="text-tomar-600 text-s mt-2 text-center">
+                Toque no mapa para marcar o local exato do negócio.
+              </Text>
+            </View>
+              
+            {/* Botão Submeter */}
+            <View 
+              className="mt-8"
               accessibilityRole="button"
               accessibilityLabel="Submeter negócio para aprovação"
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-white font-bold text-xl">Submeter para Aprovação</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-      </ScrollView>
-    </SafeAreaView>
+              <CustomButton 
+                onPress={handleNewBusiness}
+                loading={loading}
+                               
+              >
+                Submeter para Aprovação
+              </CustomButton>
+            </View>
+
+        </ScrollView>
+        <PortalSnackBar 
+          visible={snackbarVisible} 
+          message={snackbarMessage} 
+          onDismiss={() => setSnackbarVisible(false)} 
+        />
+      </SafeAreaView>
+    </Surface>              
   );
 }

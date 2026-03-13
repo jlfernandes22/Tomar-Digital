@@ -4,7 +4,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { router } from "expo-router";
-import { delay } from "@/constants/delay";
+import { delay } from "@/app/utils/delay";
 
 export default function ScanScreen() {
   const { user } = useAuth();
