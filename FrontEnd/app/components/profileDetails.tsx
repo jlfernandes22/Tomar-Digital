@@ -25,10 +25,9 @@ return (
     <Text className='text-center text-2xl font-bold'>Perfil</Text>
 
       {/* Botão Editar Perfil*/} 
-      {/* TROCAR PARA ROLDANA */}
       <TouchableOpacity
         onPress={() => router.replace('/(tabs)/editProfile')}
-        className='absolute top-2 right-4 bg-tomar-300 p-3 rounded-full z-10 shadow-md'
+        className='absolute top-2 right-4 bg-tomar-300 p-3 rounded-full z-10 shadow-md bg-convento-300 border-2 border-convento-500'
         accessibilityRole="button"
         accessibilityLabel="Editar informações do meu perfil"
       >
@@ -41,7 +40,7 @@ return (
       </TouchableOpacity>
 
       {/* Avatar , FAZER PRA TER IMAGEM */}
-      <View className="w-36 h-36 bg-white border-4 border-convento-200 rounded-full items-center justify-center mt-3 mb-6 ">
+      <View className="w-36 h-36 bg-white border-2 border-convento-200 rounded-full items-center justify-center mt-3 mb-6 ">
         <Text className="text-primary text-3xl font-bold uppercase">
           {(user.name || user.email || "V").charAt(0)}
         </Text>
@@ -53,7 +52,7 @@ return (
      </Text>
     
       
-      {/* Badge de Função/Role */}
+      {/* Role */}
       <View className=" p-2 rounded-full">
         <Text className="text-tabuleiros-500 font-bold text-base text-center">
           {roleLabels[user.role] || "Utilizador"}
@@ -105,6 +104,8 @@ return (
         <Text className='text-convento-800 ml-2 mt-2'>{user.email}</Text>
       </View>
     </View>
+
+
       {/* Botão Logout */}
       <TouchableOpacity 
         onPress={logout} 
