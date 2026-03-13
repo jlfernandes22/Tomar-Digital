@@ -77,7 +77,7 @@ const EditProfile = () => {
           </View>
 
           {/* Contentor Principal do Formulário*/}
-          <View className="bg-convento-600 border-2 rounded-xl border-convento-500 items-center mx-4 py-8 px-6">
+          <View className="bg-convento-200 border-2 rounded-xl border-convento-500 items-center mx-4 py-8 px-6">
 
             {/* Zona da Imagem */}
             <View className='relative mb-2'>
@@ -137,7 +137,7 @@ const EditProfile = () => {
               </CustomButton>
 
               <CustomButton 
-                buttonColor="#6B7280" 
+                buttonColor="#724E37" 
                 onPress={() => router.replace("/(tabs)/profile")}
                 className="w-full"
                 disabled={loading} 

@@ -51,7 +51,7 @@ return (
       </View>
 
       {/* NOME */}
-     <Text style={{color:'#724E37'}} className="text-xl">
+     <Text style={{color:'#946648', fontWeight:'bold'}} className="text-xl">
           {user.email.split('@')[0]}
      </Text>
     
