@@ -122,30 +122,30 @@ const EditProfile = () => {
           </View>
         </ScrollView>
         <Snackbar
-                  visible={snackbarVisible}
-                  onDismiss={() => setSnackbarVisible(false)}
-                  duration={3000} // Desaparece sozinho após 3 segundos
-                  style={{
-                    // Lógica simples: Se a mensagem contiver a palavra "Erro" ou "Aviso", fica vermelho. Se não, fica verde.
-                    backgroundColor: snackbarMessage.includes('Erro') || snackbarMessage.includes('Aviso') 
-                      ? '#DC2626' 
-                      : '#16A34A', 
-                    borderRadius: 16, // Mantém a coerência com os botões arredondados
-                    marginHorizontal: 16, // Dá o efeito de flutuação, não colado às margens
-                  }}
-                  action={{
-                    label: 'OK',
-                    textColor: 'white', // Texto da ação a branco para contrastar
-                    onPress: () => {
-                      setSnackbarVisible(false);
-                    },
-                  }}
-                >
-                  {/* O texto do Snackbar */}
-                  <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
-                    {snackbarMessage}
-                  </Text>
-                </Snackbar>
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          duration={3000} // Desaparece sozinho após 3 segundos
+          style={{
+            // Lógica simples: Se a mensagem contiver a palavra "Erro" ou "Aviso", fica vermelho. Se não, fica verde.
+            backgroundColor: snackbarMessage.includes('Erro') || snackbarMessage.includes('Aviso') 
+              ? '#DC2626' 
+              : '#16A34A', 
+            borderRadius: 16, // Mantém a coerência com os botões arredondados
+            marginHorizontal: 16, // Dá o efeito de flutuação, não colado às margens
+          }}
+          action={{
+            label: 'OK',
+            textColor: 'white', // Texto da ação a branco para contrastar
+            onPress: () => {
+              setSnackbarVisible(false);
+            },
+          }}
+        >
+          {/* O texto do Snackbar */}
+          <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
+            {snackbarMessage}
+          </Text>
+        </Snackbar>
       </SafeAreaView>
     </Surface>
 

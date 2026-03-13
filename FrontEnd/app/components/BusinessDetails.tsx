@@ -70,7 +70,7 @@ const DetalhesBusiness = () => {
               
               Voltar
             </CustomButton>
-            <Divider style={{ backgroundColor: theme.colors.outlineVariant }} />
+            <Divider/>
           
 
           {/* --- CORPO DA PÁGINA --- */}
