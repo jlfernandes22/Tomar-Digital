@@ -1,15 +1,18 @@
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ActivityIndicator, Text, TextInput, Button } from 'react-native-paper';
+import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, Text, Snackbar, Surface } from 'react-native-paper';
 import React, { useState } from 'react';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import CustomButton from '../components/CustomButton' 
+import { delay } from '@/app/utils/delay';
+import CustomTextInput from '../components/CustomTextInput';
 
 const EditProfile = () => {
     const { user, updateUser } = useAuth();
     
-    // O useState não pode correr se o user for undefined, por isso guardamos logo o loading aqui
+    
     if (!user) return (
       <View className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#7c3aed" />
@@ -20,6 +23,8 @@ const EditProfile = () => {
     const [city, setCity] = useState(user.city || "");
     const [NIF, setNIF] = useState(user.NIF ? String(user.NIF) : "");
     const [loading, setLoading] = useState(false); // Para o botão de loading
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
     const handleEdit = async () => {
         setLoading(true);
@@ -38,97 +43,113 @@ const EditProfile = () => {
           });
 
           if(response.ok){
-            Alert.alert("Sucesso", "Alteração de dados com sucesso");
+            setSnackbarMessage("Sucesso! :Alteração de dados com sucesso");
+            setSnackbarVisible(true);
+            await delay(300)
             updateUser({ 
                   name: name, 
                   city: city, 
                   NIF: NIF ? Number(NIF) : null 
               });
+
+              
+
             router.replace("/(tabs)/profile");
           } else {
-            Alert.alert("Erro", "O servidor rejeitou as alterações.");
+            setSnackbarMessage("Aviso: O servidor rejeitou as alterações.");
+            setSnackbarVisible(true);
+            
           }
-        } catch(error) {
-            Alert.alert("Erro", "Falha na ligação ao servidor.");
+        } catch(err) {
+            setSnackbarMessage("Erro: Falha na ligação ao servidor\n" + err);
+            setSnackbarVisible(true);
         } finally {
             setLoading(false);
         }
     }
 
   return (
-    <SafeAreaView className="flex-1 bg-convento-50">
-      <ScrollView>
-        
-        {/* Cabeçalho */}
-        <View className="items-center mt-6 mb-8 px-6">
-          <View className="bg-convento-500 w-full py-4 rounded-2xl shadow-sm items-center">
-            <Text className="text-white text-2xl font-bold text-center">
-              Editar Informações
-            </Text>
+    <Surface className='flex-1'>
+      <SafeAreaView className="flex-1 bg-convento-50">
+
+        <ScrollView>
+
+          {/* Cabeçalho */}
+          <View className="items-center mt-6 mb-8 px-6">
+            <View className="bg-convento-300 w-full py-4 rounded-2xl shadow-sm items-center">
+              <Text className="text-white text-2xl font-bold text-center">
+                Editar Informações
+              </Text>
+            </View>
           </View>
-        </View>
 
-        <View className="px-9 space-y-4">
-          
-          {/* O TextInput do Paper com a label animada embutida */}
-          <TextInput 
-            mode="outlined"
-            label="Nome Completo"
-            value={name} 
-            onChangeText={setName} 
-            className="bg-white"
-            activeOutlineColor="#7c3aed" 
-          />
+          <View className="px-9 space-y-4">
 
-          <TextInput 
-            mode="outlined"
-            label="Cidade"
-            value={city} 
-            onChangeText={setCity} 
-            placeholder="Ex: Tomar"
-            className="bg-white mt-2"
-            activeOutlineColor="#7c3aed"
-          />
-
-          {user.NIF == null && (
-            <TextInput 
-              mode="outlined"
-              label="NIF"
-              value={NIF} 
-              onChangeText={setNIF} 
-              keyboardType="numeric"
-              maxLength={9}
-              className="bg-white mt-2"
-              activeOutlineColor="#7c3aed"
+            <CustomTextInput 
+              label="Nome Completo"
+              value={name} 
+              onChangeText={setName}  
             />
-          )}
 
-          <View className="items-center mt-10">
-            {/* O Botão Oficial do Material Design com Loading state! */}
-            <Button 
-              mode="contained" 
-              onPress={handleEdit}
-              loading={loading}
-              disabled={loading}
-              buttonColor="#7c3aed" // Cor do botão (brand-600)
-              
-              labelStyle={{ fontSize: 18, fontWeight: 'bold' }}
-            >
-              Confirmar Alterações
-            </Button>
+            <CustomTextInput 
+              label="Cidade"
+              value={city} 
+              onChangeText={setCity} 
+            />
 
-            <TouchableOpacity 
-              onPress={() => router.replace("/(tabs)/profile")}
-              className="mt-6 p-2"
-              disabled={loading}
-            >
-              <Text className="text-tomar-600 font-medium">Cancelar</Text>
-            </TouchableOpacity>
+            {user.NIF == null && (
+              <CustomTextInput 
+                label="NIF"
+                value={NIF} 
+                onChangeText={setNIF} 
+                isNIF
+                
+              />
+            )}
+
+            <View className="items-center mt-10">
+
+              <CustomButton onPress={handleEdit} buttonColor='#FF6600' loading={loading} className='mb-[3rem]'>
+                Confirmar Alterações
+              </CustomButton>
+
+              <CustomButton onPress={ () => router.replace("/(tabs)/profile")} buttonColor='#FF3333'>
+                Cancelar
+              </CustomButton>
+
+            </View>
+
           </View>
+        </ScrollView>
+        <Snackbar
+                  visible={snackbarVisible}
+                  onDismiss={() => setSnackbarVisible(false)}
+                  duration={3000} // Desaparece sozinho após 3 segundos
+                  style={{
+                    // Lógica simples: Se a mensagem contiver a palavra "Erro" ou "Aviso", fica vermelho. Se não, fica verde.
+                    backgroundColor: snackbarMessage.includes('Erro') || snackbarMessage.includes('Aviso') 
+                      ? '#DC2626' 
+                      : '#16A34A', 
+                    borderRadius: 16, // Mantém a coerência com os botões arredondados
+                    marginHorizontal: 16, // Dá o efeito de flutuação, não colado às margens
+                  }}
+                  action={{
+                    label: 'OK',
+                    textColor: 'white', // Texto da ação a branco para contrastar
+                    onPress: () => {
+                      setSnackbarVisible(false);
+                    },
+                  }}
+                >
+                  {/* O texto do Snackbar */}
+                  <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
+                    {snackbarMessage}
+                  </Text>
+                </Snackbar>
+      </SafeAreaView>
+    </Surface>
 
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    
   );
 }
 

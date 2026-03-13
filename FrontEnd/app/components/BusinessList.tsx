@@ -1,5 +1,7 @@
-import { Text, View } from 'react-native'
+import { Text } from 'react-native-paper'
+import { View } from 'react-native'
 import React from 'react'
+
 
 const BusinessList = ({ name, category, location }: any) => {
   
@@ -16,15 +18,27 @@ const BusinessList = ({ name, category, location }: any) => {
   };
 
   return (
-    <View className="p-4 border-b border-gray-100 bg-white">
+    <View className="p-4 ">
       <View className="flex-row justify-between items-start">
         <View className="flex-1">
-          <Text className="text-lg font-bold text-gray-800">{name}</Text>
-          <Text className=" italic mb-1">{category}</Text>
+          
+         
+          <Text variant="titleLarge" className="font-bold">
+            {name}
+          </Text>
+          
+          
+          <Text variant="bodyMedium" className="italic mb-1 opacity-80">
+            {category}
+          </Text>
           
           <View className="flex-row items-center">
-            <Text className="text-gray-400 text-xs">{formatLocation()}</Text>
+            
+            <Text variant="bodySmall" className="opacity-60">
+              {formatLocation()}
+            </Text>
           </View>
+          
         </View>
       </View>
     </View>
