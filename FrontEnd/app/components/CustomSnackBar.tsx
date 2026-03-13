@@ -17,8 +17,7 @@ const CustomSnackBar = ({ visible, message, onDismiss }: { visible: boolean, mes
             style={{
               backgroundColor: isError ? '#DC2626' : '#16A34A', 
               borderRadius: 16, 
-              marginHorizontal: 16, 
-              marginBottom: 20, // Margem de segurança
+              marginHorizontal: 16 // Margem de segurança
             }}
             action={{
               label: 'OK',

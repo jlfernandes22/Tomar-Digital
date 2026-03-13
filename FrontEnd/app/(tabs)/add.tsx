@@ -98,8 +98,8 @@ const handleNewBusiness = async () => {
   };
   return (
     <Surface style={{flex:1}}>
-      <SafeAreaView >
-        <ScrollView className="p-4 mr-2">
+      <SafeAreaView style={{flex:1}} className="p-4">
+          
           <Text className="text-3xl font-bold text-center mb-8">
             Adicionar Negócio
           </Text>
@@ -186,13 +186,14 @@ const handleNewBusiness = async () => {
               </CustomButton>
             </View>
 
-        </ScrollView>
+      
+      </SafeAreaView>
         <PortalSnackBar 
           visible={snackbarVisible} 
           message={snackbarMessage} 
           onDismiss={() => setSnackbarVisible(false)} 
         />
-      </SafeAreaView>
-    </Surface>              
+    </Surface>    
+              
   );
 }
