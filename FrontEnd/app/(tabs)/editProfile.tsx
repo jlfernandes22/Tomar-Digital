@@ -71,7 +71,7 @@ const EditProfile = () => {
 
           {/* Cabeçalho */}
           <View className="items-center mt-6 mb-8 px-6">
-            <Text variant='headlineSmall' className="font-bold">
+            <Text variant='headlineSmall' >
               Editar Informações do Perfil
             </Text>
           </View>

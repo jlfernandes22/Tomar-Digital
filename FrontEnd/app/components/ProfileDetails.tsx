@@ -1,12 +1,16 @@
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View, Image, ScrollView } from 'react-native'
 import React, { useState } from 'react'
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import TabIcon from './Tabicon';
 import { images } from "@/constants/images";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Surface, Text, useTheme } from 'react-native-paper';
+
 const profileDetails = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
+  const theme = useTheme();
 
   const roleLabels: Record<string, string> = {
     cidadao: "Cidadão",
@@ -20,9 +24,9 @@ const profileDetails = () => {
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
 return (
-    <View className="w-full items-center relative p-4  ">
-      
-    <Text className='text-center text-2xl font-bold'>Perfil</Text>
+  <Surface>
+    <SafeAreaView className="w-full items-center relative h-full ">
+  
 
       {/* Botão Editar Perfil*/} 
       <TouchableOpacity
@@ -40,35 +44,35 @@ return (
       </TouchableOpacity>
 
       {/* Avatar , FAZER PRA TER IMAGEM */}
-      <View className="w-36 h-36 bg-white border-2 border-convento-200 rounded-full items-center justify-center mt-3 mb-6 ">
-        <Text className="text-primary text-3xl font-bold uppercase">
+      <View className="w-32 h-32  bg-white border-2 border-convento-200 rounded-full items-center justify-center mb-3 ">
+        <Text className="text-primary text-3xl  font-bold uppercase">
           {(user.name || user.email || "V").charAt(0)}
         </Text>
       </View>
 
       {/* NOME */}
-     <Text className="font-bold text-xl text-convento-700">
+     <Text style={{color:'#724E37'}} className="text-xl">
           {user.email.split('@')[0]}
      </Text>
     
       
       {/* Role */}
       <View className=" p-2 rounded-full">
-        <Text className="text-tabuleiros-500 font-bold text-base text-center">
+        <Text style={{color:'#FF3333'}} className=" text-base text-center">
           {roleLabels[user.role] || "Utilizador"}
         </Text>
       </View>
 
       {/* Saldo*/}
-      <View 
-        className="bg-convento-100 w-[27rem] h-[20rem] rounded-xl mt-5 border-2 border-convento-400"
+      <ScrollView 
+        className="bg-convento-100 w-full h-[20rem] rounded-xl mt-5 border-2 border-convento-400"
         accessible={true}
         accessibilityLabel={`Pontos disponíveis: ${Number(user.saldo).toFixed(2)}`}
-      >
-        <Text className=" text-convento-500 font-bold mt-4 text-lg  ml-4 uppercase tracking-widest mb-1">
+        >
+        <Text style={{color: '#724E37', fontWeight:'bold'}}className="mt-4 text-lg  ml-4 uppercase tracking-widest mb-1">
           Pontos Disponíveis
         </Text>
-        <Text className="text-convento-700 font-bold text-5xl p-4 ml-4 ">
+        <Text style={{color: '#724E37', fontWeight:'bold'}} className=" text-5xl p-4 ml-4 ">
           {(!isNaN(Number(user.saldo))) ? `${Number(user.saldo).toFixed(2)}` : "0.00"}
         </Text>
 
@@ -78,30 +82,32 @@ return (
         className="bg-red-500 max-w-[24rem] flex-row h-[5rem] m-auto p-5 rounded-2xl mt-2 items-center shadow-md active:bg-red-800"
         accessibilityRole="button"
         accessibilityLabel="Ler QR-Code de fatura"
-      >
+        >
         <Image
         className="size-16" 
           source={images.qrCodeImg} 
           accessibilityElementsHidden={true}
           importantForAccessibility="no-hide-descendants"
           ></Image>
-        <Text className="text-black font-bold text-lg">Ler QR-Code da sua fatura</Text>
-      </TouchableOpacity>
-      <Text className='text-convento-500 font-light text-center pl-7 pr-7  '>Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar</Text>
-      <Text className='text-convento-500 font-semibold text-lg text-center pb-3'>-Necessário Contribuinte-</Text>
-      </View>
+        <Text style={{fontWeight:'bold'}} className="text-black text-lg">Ler QR-Code da sua fatura</Text>
+        </TouchableOpacity>
+        <View className='flex-1 items-center'>
+          <Text style={{color:'#C29A80', fontWeight:'light'}} className=' pl-7 pr-7 pt-3  '>Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar</Text>
+          <Text style={{color:'#B17E5E', fontWeight:'bold'}} className=' text-lg pb-3'>-Necessário Contribuinte-</Text>
+        </View>
+      </ScrollView>
 
          
    {/*  e-mail */}
-    <View className='bg-convento-100 mt-5 rounded-md border-2 border-convento-400 w-[27rem] h-[5rem] flex-row'>
+    <View className='bg-convento-100 mt-5 rounded-md border-2 border-convento-400 w-full h-[5rem] flex-row'>
     <Image className="size-16 bg-convento-200 rounded-lg mt-1 ml-2" 
           source={images.emailImg} 
           accessibilityElementsHidden={true}
           importantForAccessibility="no-hide-descendants"
           ></Image>
       <View className='flex-column'>
-        <Text className='text-convento-500 font-light ml-2 mt-2'>Endereço de E-mail</Text>
-        <Text className='text-convento-800 ml-2 mt-2'>{user.email}</Text>
+        <Text style={{color:'#C29A80', fontWeight:'light'}} className=' ml-2 mt-2'>Endereço de E-mail</Text>
+        <Text style={{color: '#724E37'}} className=' ml-2 mt-2'>{user.email}</Text>
       </View>
     </View>
 
@@ -109,14 +115,15 @@ return (
       {/* Botão Logout */}
       <TouchableOpacity 
         onPress={logout} 
-        className="bg-red-500 w-full max-w-[280px] py-4 rounded-2xl mt-16 items-center shadow-md active:bg-red-800"
+        className="bg-red-500 w-full max-w-[280px] py-4 rounded-2xl mt-2 items-center shadow-md active:bg-red-800"
         accessibilityRole="button"
         accessibilityLabel="Terminar sessão e sair da conta"
       >
-        <Text className="text-black font-bold text-lg">Terminar Sessão</Text>
+        <Text style={{fontWeight:'bold'}} className="text-black text-lg">Terminar Sessão</Text>
       </TouchableOpacity>
     
-    </View>
+    </SafeAreaView>
+    </Surface>
   );
 };
 export default profileDetails;
