@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { images } from '@/constants/images';
+import { Button } from 'react-native-paper';
 
 const EditProfile = () => {
     const { user, updateUser } = useAuth();
@@ -134,7 +135,6 @@ const EditProfile = () => {
             <Button 
               mode="contained" 
               onPress={handleEdit}
-              activeOpacity={0.8}
               className="bg-tabuleiros-600 rounded-2xl items-center p-4 w-full shadow-md active:bg-tabuleiros-800"
               accessibilityRole="button"
               accessibilityLabel="Confirmar e guardar alterações do perfil"
