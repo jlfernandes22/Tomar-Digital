@@ -1,4 +1,3 @@
-import { validatePathConfig } from 'expo-router/build/fork/getPathFromState-forks';
 import React from 'react';
 import { View } from 'react-native';
 import { TextInput } from 'react-native-paper';

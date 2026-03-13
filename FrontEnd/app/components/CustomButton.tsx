@@ -11,9 +11,12 @@ interface PrimaryButtonProps {
   buttonColor?: string;
   icon?: any;
   labelStyle?: any;
+  accessibilityRole?: any;
+  accessibilityLabel?: any;
+  disabled?: boolean
 }
 
-const CustomButton = ({ children, onPress, className, loading, buttonColor, icon, labelStyle }: PrimaryButtonProps) => {
+const CustomButton = ({ children, onPress, className, loading, buttonColor, icon, labelStyle, accessibilityRole, accessibilityLabel, disabled }: PrimaryButtonProps) => {
   return (
     <View className={` ${className || ''}`}>
       <Button
@@ -25,6 +28,9 @@ const CustomButton = ({ children, onPress, className, loading, buttonColor, icon
         labelStyle={[{ fontSize: 18, fontWeight: 'bold' }, labelStyle]}
         rippleColor={"#D2B5A3"}
         icon={icon}
+        accessibilityRole={accessibilityRole}
+        accessibilityLabel={accessibilityLabel}
+        disabled={disabled}
       >
         {children}
       </Button>

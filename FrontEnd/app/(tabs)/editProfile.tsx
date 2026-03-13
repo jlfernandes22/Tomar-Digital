@@ -1,16 +1,17 @@
-import { ScrollView, View } from 'react-native';
-import { ActivityIndicator, Text, Snackbar, Surface } from 'react-native-paper';
-import React, { useState } from 'react';
+import { ActivityIndicator, Alert, View, Image, ScrollView } from 'react-native'
+import React, { useState } from 'react'
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { images } from '@/constants/images';
-import { Button } from 'react-native-paper';
+import { Surface, Text } from 'react-native-paper';
+import CustomTextInput from '../components/CustomTextInput';
+import CustomButton from '../components/CustomButton';
+
 
 const EditProfile = () => {
     const { user, updateUser } = useAuth();
-    
     
     if (!user) return (
       <View className="flex-1 justify-center items-center">
@@ -21,9 +22,7 @@ const EditProfile = () => {
     const [name, setName] = useState(user.name || "");
     const [city, setCity] = useState(user.city || "");
     const [NIF, setNIF] = useState(user.NIF ? String(user.NIF) : "");
-    const [loading, setLoading] = useState(false); // Para o botão de loading
-    const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [loading, setLoading] = useState(false); 
 
     const handleEdit = async () => {
         setLoading(true);
@@ -42,133 +41,116 @@ const EditProfile = () => {
           });
 
           if(response.ok){
-            setSnackbarMessage("Sucesso! :Alteração de dados com sucesso");
-            setSnackbarVisible(true);
-            await delay(300)
+            Alert.alert("Sucesso", "Alteração de dados com sucesso");
             updateUser({ 
                   name: name, 
                   city: city, 
                   NIF: NIF ? Number(NIF) : null 
               });
-
-              
-
             router.replace("/(tabs)/profile");
           } else {
-            setSnackbarMessage("Aviso: O servidor rejeitou as alterações.");
-            setSnackbarVisible(true);
-            
+            Alert.alert("Erro", "O servidor rejeitou as alterações.");
           }
-        } catch(err) {
-            setSnackbarMessage("Erro: Falha na ligação ao servidor\n" + err);
-            setSnackbarVisible(true);
+        } catch(error) {
+            Alert.alert("Erro", "Falha na ligação ao servidor.");
         } finally {
             setLoading(false);
         }
     }
 
   return (
-    <Surface className='flex-1'>
-      <SafeAreaView className="flex-1 bg-convento-50">
-
-        <ScrollView>
+    // 1. Flex-1 na Surface e SafeAreaView para ocuparem o ecrã todo
+    <Surface style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        
+        {/* ScrollView adicionada para ecrãs pequenos e para quando o teclado abre */}
+        <ScrollView 
+          contentContainerStyle={{ paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
 
           {/* Cabeçalho */}
           <View className="items-center mt-6 mb-8 px-6">
-            <View className="bg-convento-300 w-full py-4 rounded-2xl shadow-sm items-center">
-              <Text className="text-white text-2xl font-bold text-center">
-                Editar Informações
-              </Text>
-            </View>
+            <Text variant='headlineSmall' className="font-bold">
+              Editar Informações do Perfil
+            </Text>
           </View>
 
-          <View className="px-9 space-y-4">
+          {/* Contentor Principal do Formulário*/}
+          <View className="bg-convento-600 border-2 rounded-xl border-convento-500 items-center mx-4 py-8 px-6">
 
-            <CustomTextInput 
-              label="Nome Completo"
-              value={name} 
-              onChangeText={setName}  
-            />
+            {/* Zona da Imagem */}
+            <View className='relative mb-2'>
+                <View className="w-32 h-32 bg-white border-2 border-convento-700 rounded-full items-center justify-center">
+                    <Text className="text-primary text-4xl font-bold uppercase">
+                      {(user.name || user.email || "V").charAt(0)}
+                    </Text>
+                </View>
+               
+                <Image
+                  className="absolute size-8 bottom-0 right-2 bg-convento-300 rounded-full border-2 border-convento-400"  
+                  source={images.editProfileImg} 
+                  accessibilityElementsHidden={true}
+                  importantForAccessibility="no-hide-descendants"
+                />   
+            </View>
+            <Text className='text-convento-700 text-center mb-8 font-medium'>Mudar a Foto de Perfil</Text>
 
-            <CustomTextInput 
-              label="Cidade"
-              value={city} 
-              onChangeText={setCity} 
-            />
 
-            {user.NIF == null && (
+           
+            <View className="w-full">
               <CustomTextInput 
-                label="NIF"
-                value={NIF} 
-                onChangeText={setNIF} 
-                isNIF
-                
+                value={name} 
+                onChangeText={setName} 
+                label="Nome"
+                className='w-full mb-4'
               />
-            )}
 
-            <View className="items-center mt-10">
+              <CustomTextInput 
+                label='Cidade'
+                value={city} 
+                onChangeText={setCity} 
+                className="w-full mb-4"
+              />
 
-              <CustomButton onPress={handleEdit} buttonColor='#FF6600' loading={loading} className='mb-[3rem]'>
+              {user.NIF == null && (
+                <CustomTextInput 
+                  label='NIF'
+                  value={NIF} 
+                  onChangeText={setNIF}
+                  isNIF
+                  className="w-full mb-4"
+                />
+              )}
+            </View>
+
+
+            
+            <View className="w-full mt-6">
+              <CustomButton 
+                buttonColor='#EF4444' 
+                onPress={handleEdit}
+                loading={loading}
+                className="w-full mb-3"
+              >
                 Confirmar Alterações
               </CustomButton>
 
-              <CustomButton onPress={ () => router.replace("/(tabs)/profile")} buttonColor='#FF3333'>
+              <CustomButton 
+                buttonColor="#6B7280" 
+                onPress={() => router.replace("/(tabs)/profile")}
+                className="w-full"
+                disabled={loading} 
+              >
                 Cancelar
               </CustomButton>
-
             </View>
-          )}
 
-          <View className="items-center mt-10">
-            {/* O Botão Oficial do Material Design com Loading state! */}
-            <Button 
-              mode="contained" 
-              onPress={handleEdit}
-              className="bg-tabuleiros-600 rounded-2xl items-center p-4 w-full shadow-md active:bg-tabuleiros-800"
-              accessibilityRole="button"
-              accessibilityLabel="Confirmar e guardar alterações do perfil"
-            >
-              Confirmar Alterações
-            </Button>
-
-            <TouchableOpacity 
-              onPress={() => router.replace("/(tabs)/profile")}
-              className="mt-6 p-2"
-              disabled={loading}
-            >
-              <Text className="text-white font-medium bg-convento-500 p-4 rounded-2xl">Cancelar</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
-        <Snackbar
-          visible={snackbarVisible}
-          onDismiss={() => setSnackbarVisible(false)}
-          duration={3000} // Desaparece sozinho após 3 segundos
-          style={{
-            // Lógica simples: Se a mensagem contiver a palavra "Erro" ou "Aviso", fica vermelho. Se não, fica verde.
-            backgroundColor: snackbarMessage.includes('Erro') || snackbarMessage.includes('Aviso') 
-              ? '#DC2626' 
-              : '#16A34A', 
-            borderRadius: 16, // Mantém a coerência com os botões arredondados
-            marginHorizontal: 16, // Dá o efeito de flutuação, não colado às margens
-          }}
-          action={{
-            label: 'OK',
-            textColor: 'white', // Texto da ação a branco para contrastar
-            onPress: () => {
-              setSnackbarVisible(false);
-            },
-          }}
-        >
-          {/* O texto do Snackbar */}
-          <Text style={{ color: 'white', fontSize: 15, fontWeight: '500' }}>
-            {snackbarMessage}
-          </Text>
-        </Snackbar>
+
       </SafeAreaView>
     </Surface>
-
-    
   );
 }
 
