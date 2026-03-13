@@ -97,7 +97,7 @@ const handleNewBusiness = async () => {
     }
   };
   return (
-    <Surface className="flex-1">
+    <Surface style={{flex:1}}>
       <SafeAreaView >
         <ScrollView className="p-4 mr-2">
           <Text className="text-3xl font-bold text-center mb-8">
