@@ -7,12 +7,6 @@ import ProfileDetails from "../components/profileDetails";
 
 const profile = () => {
   
-  
-  
-  
-  
-  
-  
   return (
     <SafeAreaView>
       <ProfileDetails/>
