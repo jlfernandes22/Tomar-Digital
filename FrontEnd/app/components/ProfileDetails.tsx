@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import TabIcon from './Tabicon';
 import { images } from "@/constants/images";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Surface, Text, useTheme } from 'react-native-paper';
+import { Surface, Text, TouchableRipple, useTheme } from 'react-native-paper';
 
 const profileDetails = () => {
   const { logout, user } = useAuth();
@@ -24,14 +24,14 @@ const profileDetails = () => {
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
 return (
-  <Surface>
-    <SafeAreaView className="w-full items-center relative h-full ">
+  <Surface style={{flex:1}}>
+    <SafeAreaView style={{flex:1}} className="items-center">
   
-
+    <View className='items-center bottom-10'>
       {/* Botão Editar Perfil*/} 
-      <TouchableOpacity
+      <TouchableRipple
         onPress={() => router.replace('/(tabs)/editProfile')}
-        className='absolute top-2 right-4 bg-tomar-300 p-3 rounded-full z-10 shadow-md bg-convento-300 border-2 border-convento-500'
+        className='absolute top-2 right-4 bg-tomar-300 p-3 rounded-full z-10 shadow-md bg-convento-300 border-2 border-convento-500 '
         accessibilityRole="button"
         accessibilityLabel="Editar informações do meu perfil"
       >
@@ -41,7 +41,7 @@ return (
           accessibilityElementsHidden={true}
           importantForAccessibility="no-hide-descendants"
         />
-      </TouchableOpacity>
+      </TouchableRipple>
 
       {/* Avatar , FAZER PRA TER IMAGEM */}
       <View className="w-32 h-32  bg-white border-2 border-convento-200 rounded-full items-center justify-center mb-3 ">
@@ -64,7 +64,7 @@ return (
       </View>
 
       {/* Saldo*/}
-      <ScrollView 
+      <View 
         className="bg-convento-100 w-full h-[20rem] rounded-xl mt-5 border-2 border-convento-400"
         accessible={true}
         accessibilityLabel={`Pontos disponíveis: ${Number(user.saldo).toFixed(2)}`}
@@ -95,11 +95,11 @@ return (
           <Text style={{color:'#C29A80', fontWeight:'light'}} className=' pl-7 pr-7 pt-3  '>Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar</Text>
           <Text style={{color:'#B17E5E', fontWeight:'bold'}} className=' text-lg pb-3'>-Necessário Contribuinte-</Text>
         </View>
-      </ScrollView>
+      </View>
 
          
    {/*  e-mail */}
-    <View className='bg-convento-100 mt-5 rounded-md border-2 border-convento-400 w-full h-[5rem] flex-row'>
+    <View className='bg-convento-100 mt-5 rounded-md border-2 border-convento-400 min-w-[100%] h-[5rem] flex-row'>
     <Image className="size-16 bg-convento-200 rounded-lg mt-1 ml-2" 
           source={images.emailImg} 
           accessibilityElementsHidden={true}
@@ -113,15 +113,15 @@ return (
 
 
       {/* Botão Logout */}
-      <TouchableOpacity 
+      <TouchableRipple 
         onPress={logout} 
-        className="bg-red-500 w-full max-w-[280px] py-4 rounded-2xl mt-2 items-center shadow-md active:bg-red-800"
+        className="bg-red-500 w-full min-w-[50%] py-4 rounded-2xl mt-14 items-center shadow-md active:bg-red-800"
         accessibilityRole="button"
         accessibilityLabel="Terminar sessão e sair da conta"
       >
         <Text style={{fontWeight:'bold'}} className="text-black text-lg">Terminar Sessão</Text>
-      </TouchableOpacity>
-    
+      </TouchableRipple>
+    </View>  
     </SafeAreaView>
     </Surface>
   );
