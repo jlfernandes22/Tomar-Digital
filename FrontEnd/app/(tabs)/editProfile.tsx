@@ -59,7 +59,7 @@ const EditProfile = () => {
     }
 
   return (
-    // 1. Flex-1 na Surface e SafeAreaView para ocuparem o ecrã todo
+    //Flex-1 na Surface e SafeAreaView para ocuparem o ecrã todo
     <Surface style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         

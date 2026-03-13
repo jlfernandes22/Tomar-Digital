@@ -5,7 +5,7 @@ import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext"; 
 import { router } from "expo-router";
 // Substituímos os componentes antigos pelos do Paper para suportar Dark Mode
-import { ActivityIndicator, TouchableRipple, Surface, Text, useTheme } from "react-native-paper";
+import { ActivityIndicator, TouchableRipple, Surface, Text, useTheme, Divider } from "react-native-paper";
 import CustomButton from "../components/CustomButton";
 
 // 1. Interfaces MOVIDAS PARA FORA do componente
@@ -30,6 +30,7 @@ export default function CamaraIndex() {
   // Começamos o loading a true
   const [loading, setLoading] = useState(true); 
   const { user } = useAuth();
+  
 
   const theme = useTheme()
 
@@ -131,6 +132,8 @@ export default function CamaraIndex() {
           Pedidos Pendentes
         </Text>
 
+        <Divider className="mb-2w"/>
+
         {pendentes.length === 0 ? (
           <Text variant="bodyLarge" className="text-center mt-10 opacity-60">
             Não há novos pedidos de Tomar.
@@ -144,50 +147,52 @@ export default function CamaraIndex() {
               const donoEspecifico = pendOwners.find((dono) => dono._id === item.owner);
 
               return (
-                <Surface 
-                  className="border rounded-xl border-convento-200 mb-4" 
-                  elevation={1} 
-                  style={{ borderRadius: 12 }} 
-                >
-                  
-                  <TouchableRipple  
-                    onPress={() => {
-                      router.push({
-                        pathname: '/components/BusinessDetails',
-                        params: { id: item._id}
-                      });
-                    }}
-                    className="p-4"
+                <View className="relative mt-4">
+                  <Surface 
+                    className="border border-convento-200" 
+                    elevation={1} 
+                    style={{ borderRadius: 12 }} 
                   >
-                    <View>
-                      <Text variant="titleLarge" className="font-bold">{item.name}</Text>
-                      <Text variant="bodyMedium" className="italic opacity-80">{item.category}</Text>
-                      <Text variant="bodySmall" className="mt-1 opacity-50">
-                        Dono: {donoEspecifico?.name || 'A carregar...'}
-                      </Text>
-                    </View>
-                  </TouchableRipple>
+                  
+                    <TouchableRipple  
+                      onPress={() => {
+                        router.push({
+                          pathname: '/components/BusinessDetails',
+                          params: { id: item._id}
+                        });
+                      }}
+                      className="p-4"
+                    >
+                      <View>
+                        <Text variant="titleLarge" className="font-bold">{item.name}</Text>
+                        <Text variant="bodyMedium" className="italic opacity-80">{item.category}</Text>
+                        <Text variant="bodySmall" className="mt-1 opacity-50">
+                          Dono: {donoEspecifico?.name || 'A carregar...'}
+                        </Text>
+                      </View>
+                    </TouchableRipple>
 
-                 
-                  <View className="flex-row gap-x-3 px-4 pb-4 mt-2">
                     
-                    <CustomButton 
-                      className="flex-1"
-                      onPress={() => handleAprovar(item._id)}
-                      buttonColor="#10B981"
-                    >
-                      Aceitar
-                    </CustomButton>
+                    <View className="flex-row gap-x-3 px-4 pb-4 mt-2">
 
-                    <CustomButton 
-                      className="flex-1"
-                      onPress={() => handleDescartar(item._id)}
-                      buttonColor="#EF4444"
-                    >
-                      Descartar
-                    </CustomButton>
-                  </View>
-                </Surface>
+                      <CustomButton 
+                        className="flex-1"
+                        onPress={() => handleAprovar(item._id)}
+                        buttonColor="#10B981"
+                      >
+                        Aceitar
+                      </CustomButton>
+
+                      <CustomButton 
+                        className="flex-1"
+                        onPress={() => handleDescartar(item._id)}
+                        buttonColor="#EF4444"
+                      >
+                        Descartar
+                      </CustomButton>
+                    </View>
+                  </Surface>
+                </View>
               );
             }}
           />

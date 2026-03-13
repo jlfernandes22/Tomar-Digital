@@ -53,9 +53,9 @@ const DetalhesBusiness = () => {
   if(business){
     return (
 
-      <Surface className='flex-1'>
+      <Surface style={{flex: 1}}>
         {/* O flex-1 na SafeAreaView é essencial para ocupar o ecrã todo */}
-        <SafeAreaView className='flex-1'>
+        <SafeAreaView style={{flex: 1}}>
           <Stack.Screen options={{ headerShown: false }} />
 
           {/* --- CABEÇALHO (Botão Voltar) --- */}
@@ -75,7 +75,7 @@ const DetalhesBusiness = () => {
 
           {/* --- CORPO DA PÁGINA --- */}
           {/* Usar ScrollView é mais seguro caso o ecrã seja pequeno */}
-          <ScrollView className='flex-1 px-5 pt-6' contentContainerStyle={{ paddingBottom: 40 }}>
+          <ScrollView className='px-5 pt-6'>
 
             {/* Título e Categoria */}
             <View className='mb-6'>
@@ -85,8 +85,8 @@ const DetalhesBusiness = () => {
                 {business.name}
               </Text>
 
-              <View className='flex-row items-center mt-1'>
-                <Ionicons name="pricetag-outline" size={16} color="#6B7280" />
+              <View className='flex-row items-start mt-1'>
+                <Ionicons name="pricetag-outline" size={16} color={theme.colors.outlineVariant} />
                 <Text className='text-base text-gray-500 font-medium ml-2'>
                   {business.category}
                 </Text>

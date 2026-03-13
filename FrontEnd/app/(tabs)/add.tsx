@@ -8,7 +8,7 @@ import  Map  from "@/app/components/Map"
 import {delay} from "../utils/delay";
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
-import PortalSnackBar from "../components/CustomSnackBar";
+import CustomSnackBar from "../components/CustomSnackBar";
 
 export default function AddBusinessCamara() {
 
@@ -187,7 +187,7 @@ const handleNewBusiness = async () => {
             </View>
 
         </ScrollView>
-        <PortalSnackBar 
+        <CustomSnackBar 
           visible={snackbarVisible} 
           message={snackbarMessage} 
           onDismiss={() => setSnackbarVisible(false)} 

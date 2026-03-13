@@ -126,7 +126,7 @@ const Search = () => {
                   
                   
                   <Surface 
-                    className="border rounded-xl border-convento-200 " 
+                    className="border border-convento-200 " 
                     elevation={1} 
                     style={{ borderRadius: 12 }} 
                   >
