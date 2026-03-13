@@ -1,17 +1,10 @@
-import {Image,Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {Image,Alert, StyleSheet, Text, View } from 'react-native'
+import { Button, TextInput } from 'react-native-paper' 
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { API_URL } from '@/constants/api';
 import { router } from 'expo-router';
-import { saveToken } from '@/services/tokenService';
-import * as SecureStore from 'expo-secure-store';
-import { 
-  KeyboardAvoidingView, 
-  Platform, 
-  ScrollView, 
-  TouchableWithoutFeedback, 
-  Keyboard 
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { images } from '@/constants/images';
 
@@ -96,101 +89,69 @@ const Login = () => {
       resizeMode="cover"
     />
     
-    
-    <View className="absolute w-full h-full bg-tomar-900/60" />
+    <View className="absolute w-full h-full bg-convento-900/60" />
     <SafeAreaView className='flex-1 bg-transparent'>
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}/* 2. Ajusta a altura quando o teclado sobe */
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} /*3. Fecha teclado ao tocar fora */ >
-        <ScrollView 
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
-          keyboardShouldPersistTaps="handled"
-        >
-           
-      <View>
-        <Text className='
-                            mb-12
-                            mt-9
-                            text-center
-                            text-5xl
-                            font-bold
-                            text-neutral-300
-                            '
-
-        >Iniciar Sessão</Text>
-      </View>
-
-      <View className=' '>
-        <Text className='
-                          mt-4
-                          font-bold
-                          text-center
-                           text-neutral-300
-'
-                          
-                          >Email</Text>
-
-        <TextInput 
-                    value={email} 
-                    onChangeText={(text)=>setEmail(text)}
-                    className='
-                    p-4 
-                    bg-tomar-100 
-                    focus:border-accent 
-                    rounded-xl 
-                    border-2
-                    border-tomar-300
-                    text-primary
-                    min-w-[85%]' 
-                    
-                    ></TextInput>
-      </View>
-
-      <View className='font-semibold '>
-
-        <Text className='
-                          mt-4
-                          font-bold
-                          text-center
-                        text-neutral-300
-        '>Palavra-passe</Text>
-
-    
-        <TextInput 
-        secureTextEntry
-        value={password}
-        onChangeText={(text) => setPassword(text)}
-        className='p-4
-                    bg-tomar-100 
-                    focus:border-accent 
-                    rounded-xl 
-                    border-2
-                    border-tomar-300
-                    text-primary
-                    min-w-[85%]' 
-                    
-                    ></TextInput>
-
-
-                    <TouchableOpacity
-
-                      onPress={handleLogin}
-                      className='bg-accent h-14 rounded-full min-w-[75%] justify-center items-center mt-8'
-                    
-                    >
-
-                      <Text className='font-bold text-xl text-white'>Login</Text>
-
-                    </TouchableOpacity>
-
-      </View>
       
-    </ScrollView>
-    </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        // No iOS usamos padding, no Android usamos height para ele empurrar o ecrã
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        
+      >
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingBottom: 30 }}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            
+            <View className="w-[85%] self-center">
+
+              <Text className='mb-10 text-center text-5xl font-bold text-neutral-300'>
+                Iniciar Sessão
+              </Text>
+
+              {/* Campo Email */}
+              <TextInput 
+                mode="outlined"
+                label="Email" 
+                value={email} 
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                activeOutlineColor="#FF6600" 
+              />
+
+              {/* Campo Palavra-passe */}
+              <TextInput 
+                mode="outlined"
+                label="Palavra-passe"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize='none'
+                activeOutlineColor="#FF6600"
+              />
+
+              {/* Botão */}
+              <View className="mt-8">
+                <Button 
+                  mode="contained" 
+                  buttonColor="#FF6600" 
+                  textColor="#FFFFFF"
+                  onPress={handleLogin}
+                  className="py-1 shadow-md"
+                  labelStyle={{ fontSize: 18, fontWeight: 'bold' }}
+                >
+                  Iniciar Sessão
+                </Button>
+              </View>
+
+            </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   </View>
   )
 }

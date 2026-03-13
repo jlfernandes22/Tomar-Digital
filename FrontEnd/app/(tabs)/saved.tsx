@@ -71,7 +71,7 @@ const retirarFavorito = async (businessId: string) => {
     carregarFavoritos(); // Reverte em caso de erro de rede
   }
 };return (
-    <SafeAreaView className="flex-1 bg-tomar-50">
+    <SafeAreaView className="flex-1 bg-convento-50">
       <View className="p-6">
         <Text className="text-3xl text-center font-bold text-primary">Os Meus Favoritos</Text>
       </View>

@@ -7,59 +7,59 @@ import { router } from 'expo-router';
 import { images } from '@/constants/images';
 
 const EditProfile = () => {
-
     const { user, updateUser } = useAuth();
-    if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
+    
+    // O useState não pode correr se o user for undefined, por isso guardamos logo o loading aqui
+    if (!user) return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#7c3aed" />
+      </View>
+    );
 
-    //informações possíveis de alterar
-    //const [email,setEmail] = useState(user.email)
-    const [name, setName] = useState(user.name)
-    const [city, setCity] = useState(user.city)
-    const [NIF, setNIF] = useState( user.NIF ? String(user.NIF) : "")
+    const [name, setName] = useState(user.name || "");
+    const [city, setCity] = useState(user.city || "");
+    const [NIF, setNIF] = useState(user.NIF ? String(user.NIF) : "");
+    const [loading, setLoading] = useState(false); // Para o botão de loading
 
     const handleEdit = async () => {
-        try{
-
-          console.log(name, city, NIF)
-
+        setLoading(true);
+        try {
             const response = await fetch(`${API_URL}/editar/${user.id}`, {
-            method: 'POST',
-            headers: { 
-              'Authorization': `Bearer ${user?.token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name : name,
-                city : city,
-                NIF : NIF ? Number(NIF) : null
+              method: 'POST',
+              headers: { 
+                'Authorization': `Bearer ${user.token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  name: name,
+                  city: city,
+                  NIF: NIF ? Number(NIF) : null
+            }),
+          });
 
-          }),
-        });
-
-        if(response.ok){
-          Alert.alert("Aviso","Alteração de dados com sucesso")
-          updateUser({ 
-                name: name, 
-                city: city, 
-                NIF: NIF ? Number(NIF) : null 
-            });
-          router.replace("/(tabs)/profile")
+          if(response.ok){
+            Alert.alert("Sucesso", "Alteração de dados com sucesso");
+            updateUser({ 
+                  name: name, 
+                  city: city, 
+                  NIF: NIF ? Number(NIF) : null 
+              });
+            router.replace("/(tabs)/profile");
+          } else {
+            Alert.alert("Erro", "O servidor rejeitou as alterações.");
+          }
+        } catch(error) {
+            Alert.alert("Erro", "Falha na ligação ao servidor.");
+        } finally {
+            setLoading(false);
         }
-
-
-        }catch{
-            Alert.alert("Erro", "Não foi possível guardar as alterações.");
-        }
-        
     }
-
-    
 
   return (
     <SafeAreaView>
       <View className='absolute top-14 right-5'>
         
-        {/* Cabeçalho Estilizado */}
+        {/* Cabeçalho */}
         <View className="items-center mt-6 mb-8 px-6">
           <View className=" w-full py-4 rounded-2xl">
             <Text className="text-black text-2xl font-bold text-center">
@@ -129,22 +129,23 @@ const EditProfile = () => {
             </View>
           )}
 
-          {/* Botão de Confirmação */}
           <View className="items-center mt-10">
-            <TouchableOpacity
+            {/* O Botão Oficial do Material Design com Loading state! */}
+            <Button 
+              mode="contained" 
               onPress={handleEdit}
               activeOpacity={0.8}
               className="bg-tabuleiros-600 rounded-2xl items-center p-4 w-full shadow-md active:bg-tabuleiros-800"
               accessibilityRole="button"
               accessibilityLabel="Confirmar e guardar alterações do perfil"
             >
-              <Text className="text-white font-bold text-xl">Confirmar Alterações</Text>
-            </TouchableOpacity>
+              Confirmar Alterações
+            </Button>
 
-            {/* Link para Cancelar */}
             <TouchableOpacity 
               onPress={() => router.replace("/(tabs)/profile")}
-              className="mt-4 p-2"
+              className="mt-6 p-2"
+              disabled={loading}
             >
               <Text className="text-white font-medium bg-convento-500 p-4 rounded-2xl">Cancelar</Text>
             </TouchableOpacity>
@@ -156,6 +157,4 @@ const EditProfile = () => {
   );
 }
 
-export default EditProfile
-
-const styles = StyleSheet.create({})
+export default EditProfile;
