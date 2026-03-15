@@ -1,227 +1,240 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import User from './models/User.js'
-import Business from './models/Business.js';
-import Favorite from './models/Favorite.js';
-import Transaction from './models/Transaction.js';
-import { authorize } from './middleware/auth.js';
-import { v4 as uuidv4 } from 'uuid';
-import 'dotenv/config';
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "./models/User.js";
+import Business from "./models/Business.js";
+import Favorite from "./models/Favorite.js";
+import Transaction from "./models/Transaction.js";
+import { authorize } from "./middleware/auth.js";
+import { v4 as uuidv4 } from "uuid";
+import "dotenv/config";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-
 //////////////////////////////
 //Conectar à mongoDb no docker
-mongoose.connect('mongodb://localhost:27017/tomar_db')
-    .then(() => console.log('Conectado a base de dados'))
-    .catch(err => console.error('Erro: ',err))
+mongoose
+  .connect("mongodb://localhost:27017/tomar_db")
+  .then(() => console.log("Conectado a base de dados"))
+  .catch((err) => console.error("Erro: ", err));
 
+//////////////////////////////////////////////////
+//Registar utilizador teste para usar no postman//
+//////////////////////////////////////////////////
+app.post("/registar-teste", async (req, res) => {
+  console.log("Recebido pedido do Postman para registo de teste:", req.body);
 
+  // Retiramos o confirmPassword para ser mais rápido escrever o JSON no Postman
+  const { name, email, password, city, role } = req.body;
+
+  try {
+    // Verificar se já existe
+    const user = await User.findOne({ email: email });
+    if (user) {
+      return res
+        .status(400)
+        .json({ message: "Este utilizador de teste já existe" });
+    }
+
+    const salt = 10;
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Definir utilizador com password em hash
+    const newUser = new User({
+      name: name || "Utilizador de Teste", // Se não enviares nome, ele assume este
+      email: email,
+      password: hashedPassword,
+      role: role,
+      city: city || "Tomar", // Se não enviares cidade, ele assume Tomar
+    });
+
+    await newUser.save();
+    res.status(201).json({
+      message: "Utilizador de teste criado com sucesso via Postman!",
+      dados: { email: newUser.email, name: newUser.name },
+    });
+  } catch (err) {
+    console.error("Erro na criação via Postman:", err);
+    res.status(500).json({ message: "Erro ao criar conta de teste" });
+  }
+});
 
 //////////////////////
 //Registar utilizador
-app.post('/registar',async (req, res) => {
+app.post("/registar", async (req, res) => {
+  console.log("Recebido pedido de registo:", req.body);
 
-    console.log("Recebido pedido de registo:", req.body);
-   
-    const {email, password, confirmPassword, role, city} = req.body
+  const { email, password, confirmPassword, city } = req.body;
 
-    try{
-
-
-        //verificar se já existe
-        const user = await User.findOne({email: email})
-        if(user){
-            return res.status(400).json({message: "Utilizador já existe"})
-        }
-
-        //verificar se as passowrds coincidem
-        if(password != confirmPassword){
-            return res.status(400).json({message: "Palavra-passe não coincide"})
-        }
-
-        const salt = 10;
-        const hashedPassword = await bcrypt.hash(password, salt)        
-
-        //Definir utilizador com password em hash
-        const newUser = new User({
-            name: email,
-            email: email,
-            password: hashedPassword,
-            role: role,
-            city: city
-
-        });
-
-        await newUser.save();
-        res.status(201).json({message: "Utilizador criado com sucesso"})
-    }catch(err){
-        res.status(400).json({message: "Erro ao criar conta"})
+  try {
+    //verificar se já existe
+    const user = await User.findOne({ email: email });
+    if (user) {
+      return res.status(400).json({ message: "Utilizador já existe" });
     }
 
+    //verificar se as passowrds coincidem
+    if (password != confirmPassword) {
+      return res.status(400).json({ message: "Palavra-passe não coincide" });
+    }
 
+    const salt = 10;
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    //Definir utilizador com password em hash
+    const newUser = new User({
+      name: email,
+      email: email,
+      password: hashedPassword,
+      city: city,
+    });
+
+    await newUser.save();
+    res.status(201).json({ message: "Utilizador criado com sucesso" });
+  } catch (err) {
+    res.status(400).json({ message: "Erro ao criar conta" });
+  }
 });
-
-
 
 /////////////////
 //Iniciar Sessão
-app.post('/iniciarSessao', async (req, res) => {
-    
-    
+app.post("/iniciarSessao", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    //procurar o utilizador pelo email
+    const user = await User.findOne({ email: email });
 
-    const {email, password} = req.body
-    try{
-
-        //procurar o utilizador pelo email
-        const user = await User.findOne({email: email })
-        
-        //se não existir utilizador
-        if (!user){
-            return res.status(400).json({message: "Conta não existe"})
-        }
-
-        const rightPassword = await bcrypt.compare(password, user.password)
-        //se não fizer match de password
-        if(!rightPassword){
-            return res.status(400).json({message: "Palavra-passe errada"})
-        }
-
-        const token = jwt.sign(
-            { 
-                id: user._id, 
-                role: user.role 
-            }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '1d' }
-        );
-
-        
-
-        //gerar token
-           res.json({
-                token,
-                userId: user._id,
-                user: {
-                    name: user.name,
-                    email: user.email,
-                    saldo: user.saldo,
-                    role: user.role,
-                    city: user.city,
-                    NIF: user.NIF 
-                }
-    });
-
-
-    }catch(err){
-        console.error("Erro ao inciar sessão: ",err)
-        res.status(400).json({
-            message: "Erro ao iniciar sessão"}
-            
-            
-        )
+    //se não existir utilizador
+    if (!user) {
+      return res.status(400).json({ message: "Conta não existe" });
     }
-})
 
+    const rightPassword = await bcrypt.compare(password, user.password);
+    //se não fizer match de password
+    if (!rightPassword) {
+      return res.status(400).json({ message: "Palavra-passe errada" });
+    }
 
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    //gerar token
+    res.json({
+      token,
+      userId: user._id,
+      user: {
+        name: user.name,
+        email: user.email,
+        saldo: user.saldo,
+        role: user.role,
+        city: user.city,
+        NIF: user.NIF,
+      },
+    });
+  } catch (err) {
+    console.error("Erro ao inciar sessão: ", err);
+    res.status(400).json({
+      message: "Erro ao iniciar sessão",
+    });
+  }
+});
 
 ////////////////////////
 //Lista de utilizadores
-app.get('/utilizadores', async (req, res) => {
-
-    const users = await User.find()
-    res.json(users)
-
+app.get("/utilizadores", async (req, res) => {
+  const users = await User.find();
+  res.json(users);
 });
-
 
 ////////////////////////////////////
 //Lista de utilizadores com negócios
-app.get('/utilizador/:id', authorize(['camara']), async (req, res) => {
+app.get("/utilizador/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const pendentes = await Business.find({ status: "pendente" });
 
-    try {
-        
-        const pendentes = await Business.find({ status: 'pendente' });
-        
-        
-        const ownerIds = pendentes.map(negocio => negocio.owner);
+    const ownerIds = pendentes.map((negocio) => negocio.owner);
 
+    const owners = await User.find({ _id: { $in: ownerIds } });
 
-        const owners = await User.find({ _id: { $in: ownerIds } });
+    console.log("Donos encontrados:", owners.length);
 
-        console.log("Donos encontrados:", owners.length);
-
-
-        res.json(owners);
-
-    } catch (error) {
-        console.error("Erro ao procurar donos:", error);
-        res.status(500).json({ message: "Erro interno do servidor" });
-    }
-
+    res.json(owners);
+  } catch (error) {
+    console.error("Erro ao procurar donos:", error);
+    res.status(500).json({ message: "Erro interno do servidor" });
+  }
 });
-
-
 
 ///////////////////
 //Registar negócio
 // comerciante propor ou a camara registar
-app.post('/registarNegocio', authorize(['comerciante', 'camara']), async (req, res) => {
+app.post(
+  "/registarNegocio",
+  authorize(["comerciante", "camara"]),
+  async (req, res) => {
     try {
-        const { name, category, location, owner } = req.body;
+      const { name, category, location, owner } = req.body;
 
-        if (!name || !category || !location) {
-            return res.status(400).json({ message: "Dados incompletos (Nome, Categoria e Localização são obrigatórios)." });
-        }
-
-        const ownerId = req.user.role === 'camara' ? (owner || req.user.id) : req.user.id;
-        //Verificar se já existe um negócio com o mesmo nome para este dono
-        const existe = await Business.findOne({ name, owner: ownerId });
-
-        if (existe) {
-            return res.status(400).json({ 
-                message: "Já tens um negócio registado com este nome." 
-            });
-        }
-
-        // Se for o comerciante a criar, o status deve ser 'pendente'
-        // Se for a camara, podes definir logo como 'aprovado'
-        const novoNegocio = new Business({
-            name,
-            category,
-            location: {
-                lat: Number(location.lat), // Forçamos a conversão para número por segurança
-                long: Number(location.long)
-            },
-            owner: ownerId,
-            status: req.user.role === 'camara' ? 'aprovado' : 'pendente'
+      if (!name || !category || !location) {
+        return res.status(400).json({
+          message:
+            "Dados incompletos (Nome, Categoria e Localização são obrigatórios).",
         });
+      }
 
-        await novoNegocio.save();
+      const ownerId =
+        req.user.role === "camara" ? owner || req.user.id : req.user.id;
+      //Verificar se já existe um negócio com o mesmo nome para este dono
+      const existe = await Business.findOne({ name, owner: ownerId });
 
-        res.status(201).json({ 
-            message: "Negocio registado com sucesso!", 
-            business: novoNegocio 
+      if (existe) {
+        return res.status(400).json({
+          message: "Já tens um negócio registado com este nome.",
         });
+      }
 
+      // Se for o comerciante a criar, o status deve ser 'pendente'
+      // Se for a camara, podes definir logo como 'aprovado'
+      const novoNegocio = new Business({
+        name,
+        category,
+        location: {
+          lat: Number(location.lat), // Forçamos a conversão para número por segurança
+          long: Number(location.long),
+        },
+        owner: ownerId,
+        status: req.user.role === "camara" ? "aprovado" : "pendente",
+      });
+
+      await novoNegocio.save();
+
+      res.status(201).json({
+        message: "Negocio registado com sucesso!",
+        business: novoNegocio,
+      });
     } catch (error) {
-        console.error("Erro no registo:", error);
-        res.status(500).json({ message: "Erro interno ao guardar o negócio." });
+      console.error("Erro no registo:", error);
+      res.status(500).json({ message: "Erro interno ao guardar o negócio." });
     }
-});
+  },
+);
 
 ////////////////////////
 //Lista de negócios
-app.get('/negocios', async (req, res) => {
+app.get("/negocios", async (req, res) => {
   try {
-    const negocios = await Business.find({ status: 'aprovado' });
+    const negocios = await Business.find({ status: "aprovado" });
     res.json(negocios);
   } catch (error) {
     res.status(500).json({ message: "Erro ao procurar lojas." });
@@ -230,13 +243,12 @@ app.get('/negocios', async (req, res) => {
 
 ////////////////////////
 //negocio por id
-app.get('/negocios/:id', async (req, res) => {
+app.get("/negocios/:id", async (req, res) => {
   try {
-    console.log(req.params.id)
+    console.log(req.params.id);
     const negocio = await Business.findById(req.params.id);
     console.log(negocio);
     res.json(negocio);
-    
   } catch (error) {
     res.status(500).json({ message: "Erro ao encontrar id." });
   }
@@ -244,8 +256,8 @@ app.get('/negocios/:id', async (req, res) => {
 
 ////////////////////////
 //guardar comércio
-app.post('/guardarFavorito', async (req, res) => {
-  const { userId, businessId } = req.body; 
+app.post("/guardarFavorito", async (req, res) => {
+  const { userId, businessId } = req.body;
 
   try {
     // 1. Verifica se já existe para não duplicar
@@ -264,7 +276,7 @@ app.post('/guardarFavorito', async (req, res) => {
 
 ////////////////////////
 //retirar favorito
-app.post('/retirarFavorito', async (req, res) => {
+app.post("/retirarFavorito", async (req, res) => {
   const { userId, businessId } = req.body;
 
   try {
@@ -282,334 +294,321 @@ app.post('/retirarFavorito', async (req, res) => {
   }
 });
 
-
 ////////////////////////
 //meus favoritos
-app.get('/meusFavoritos/:userId', async (req, res) => {
+app.get("/meusFavoritos/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // Procura todos os favoritos deste user
-    const favoritos = await Favorite.find({ userId: userId }).populate('businessId');
-    
+    const favoritos = await Favorite.find({ userId: userId }).populate(
+      "businessId",
+    );
+
     // Forçamos o envio de um ARRAY, mesmo que esteja vazio []
     res.status(200).json(Array.isArray(favoritos) ? favoritos : []);
-    
   } catch (err) {
     res.status(500).json([]); // Envia array vazio em caso de erro para não quebrar o app
   }
 });
 
 ////////////////////////
-//aprovação 
-app.post('/business/aprovar/:id',authorize(['camara']), async (req, res) => {
-    try {
-        const business = await Business.findByIdAndUpdate(
-            req.params.id, 
-            { status: 'aprovado' }, 
-            { new: true } // Retorna o documento já atualizado
-        );
+//aprovação
+app.post("/business/aprovar/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const business = await Business.findByIdAndUpdate(
+      req.params.id,
+      { status: "aprovado" },
+      { new: true }, // Retorna o documento já atualizado
+    );
 
-        if (!business) {
-            return res.status(404).json({ message: "Negócio não encontrado." });
-        }
-
-        res.json({ 
-            message: "Loja aprovada com sucesso!", 
-            business 
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Erro ao aprovar loja." });
+    if (!business) {
+      return res.status(404).json({ message: "Negócio não encontrado." });
     }
+
+    res.json({
+      message: "Loja aprovada com sucesso!",
+      business,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erro ao aprovar loja." });
+  }
 });
 
 ////////////////////////
 //rejeitar
-app.delete('/business/rejeitar/:id', authorize(['camara']), async (req, res) => {
+app.delete(
+  "/business/rejeitar/:id",
+  authorize(["camara"]),
+  async (req, res) => {
     try {
-        await Business.findByIdAndDelete(req.params.id);
-        res.status(200).json({ message: "Negócio descartado com sucesso." });
+      await Business.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: "Negócio descartado com sucesso." });
     } catch (error) {
-        res.status(500).json({ message: "Erro ao descartar." });
+      res.status(500).json({ message: "Erro ao descartar." });
     }
-});
+  },
+);
 
 ////////////////////////
 //pedidos negócios pendentes
-app.get('/business/pendentes', authorize(['camara']), async (req, res) => {
-    try {
-        
-        const lista = await Business.find({ status: 'pendente' });
-        
-        res.status(200).json(lista);
-    } catch (error) {
-        console.error("Erro ao buscar pendentes:", error);
-        res.status(500).json({ message: "Erro ao carregar lista da Câmara." });
-    }
+app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
+  try {
+    const lista = await Business.find({ status: "pendente" });
+
+    res.status(200).json(lista);
+  } catch (error) {
+    console.error("Erro ao buscar pendentes:", error);
+    res.status(500).json({ message: "Erro ao carregar lista da Câmara." });
+  }
 });
 
 ////////////////////////
 //gerar QRcode
-app.post('/gerarQrCode', authorize(['comerciante']), async (req, res) => {
-    try {
-        const { valorOriginal, lojaId } = req.body;
+app.post("/gerarQrCode", authorize(["comerciante"]), async (req, res) => {
+  try {
+    const { valorOriginal, lojaId } = req.body;
 
-        if (!valorOriginal || valorOriginal <= 0) {
-            return res.status(400).json({ message: "Valor de venda inválido." });
-        }
-
-        // Regra de negócio: 10% de saldo (exemplo)
-        const percentagem = 0.10; 
-        const saldoGerado = (valorOriginal * percentagem).toFixed(2);
-
-        // Gerar um token único e curto para o QR Code
-        // Usamos uuid para ser impossível de adivinhar
-        const tokenUnico = uuidv4();
-
-        const novaTransacao = new Transaction({
-            lojaId: lojaId,
-            valorOriginal,
-            saldoGerado,
-            token: tokenUnico,
-            status: 'pendente'
-        });
-
-        await novaTransacao.save();
-
-        // Enviamos o token para o Frontend gerar o QR Code
-        res.status(201).json({ 
-            token: tokenUnico, 
-            saldoParaOCliente: saldoGerado 
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Erro ao gerar token de saldo." });
+    if (!valorOriginal || valorOriginal <= 0) {
+      return res.status(400).json({ message: "Valor de venda inválido." });
     }
+
+    // Regra de negócio: 10% de saldo (exemplo)
+    const percentagem = 0.1;
+    const saldoGerado = (valorOriginal * percentagem).toFixed(2);
+
+    // Gerar um token único e curto para o QR Code
+    // Usamos uuid para ser impossível de adivinhar
+    const tokenUnico = uuidv4();
+
+    const novaTransacao = new Transaction({
+      lojaId: lojaId,
+      valorOriginal,
+      saldoGerado,
+      token: tokenUnico,
+      status: "pendente",
+    });
+
+    await novaTransacao.save();
+
+    // Enviamos o token para o Frontend gerar o QR Code
+    res.status(201).json({
+      token: tokenUnico,
+      saldoParaOCliente: saldoGerado,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erro ao gerar token de saldo." });
+  }
 });
 
 ////////////////////////
 //ler QRcode e ganhar saldo
-app.post('/lerFatura', authorize(['cidadao']), async (req, res) => {
+app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
+  try {
+    const { token } = req.body;
 
-     try {
-        
-        const { token } = req.body;
- 
-        //pegar nos dados da fatura
-        const {QRCodeData} = req.body
-        const QRCodeFields = QRCodeData.split('*')
-        //console.log(QRCodeFields)
-        //console.log(QRCodeFields[0])
+    //pegar nos dados da fatura
+    const { QRCodeData } = req.body;
+    const QRCodeFields = QRCodeData.split("*");
+    //console.log(QRCodeFields)
+    //console.log(QRCodeFields[0])
 
-        //pegar nos números individualmente 
-        // A -> NIF do emissor
-        //      QRCodeFields[0]
-        //
-        // B -> NIF do cliente, caso não haja não se pode validar a fatura como sendo da pessoa
-        //      QRCodeFields[1]
-        //
-        // C -> País do cliente
-        //      QRCodeFields[2]
-        //
-        // D -> tipo de documento (FS -> fatura simplificada) (FT -> fatura normal)
-        //      QRCodeFields[3]
-        //
-        // E -> estado do documento, N significa normal
-        //      QRCodeFields[4]
-        //
-        // F -> data de compra aaaa/mm/dd
-        //      QRCodeFields[5]
-        //
-        // G -> número de série do talão, inútil por enquanto
-        //      QRCodeFields[6]
-        //
-        // H -> ATCUD Este código prova que a loja comunicou a série de faturas às Finanças antes de a imprimir (deve ser 
-        //        preciso verificar a autenticidade deste código para poder dar a fatura como válida)
-        //      QRCodeFields[7]
-        //
-        // Q -> um hash de quatro caracters que se liga a fatura passada? como uma chain?
-        //      QRCodeFields[8]
-        //
-        // R -> número do certificado de software de faturação registado na AT
-        //      QRCodeFields[9]
-        //
-        // I1 -> região de imposto
-        //      QRCodeFields[10]
-        //
-        // I3 -> valor sem iva
-        //      QRCodeFields[11]
-        //
-        // I4 -> valor do iva 
-        //      QRCodeFields[12]
-        //    
-        // N -> valor total de todos os impostos
-        //      QRCodeFields[13]
-        //
-        // O -> Valor total a pagar (I3+I4 = valor total)
-        //      QRCodeFields[14]
-        //
-        // S -> informação adicional, indica o valor pago e como foi (metodoDePagamento/valor)
-        //      QRCodeFields[15]
-        const NIFStore = QRCodeFields[0].split(':')[1]
-        const NIFClient = QRCodeFields[1].split(':')[1]
-        const CountryClient = QRCodeFields[2].split(':')[1]
-        const TypeDocument = QRCodeFields[3].split(':')[1]
-        const StateDocument = QRCodeFields[4].split(':')[1]
-        const BoughtDate = QRCodeFields[5].split(':')[1]
-        const SerialNumber = QRCodeFields[6].split(':')[1]
-        const CodeATCUD = QRCodeFields[7].split(':')[1]
-        const hash = QRCodeFields[8].split(':')[1]
-        const SoftCertNumber = QRCodeFields[9].split(':')[1]
-        const RegionTax = QRCodeFields[10].split(':')[1]
-        const NoIVAValue = QRCodeFields[11].split(':')[1]
-        const ValueIVA = QRCodeFields[12].split(':')[1]
-        const AllTaxValue = QRCodeFields[13].split(':')[1]
-        const BoughtValue = QRCodeFields[14].split(':')[1]
-        const AditionalInfo = QRCodeFields[15].split(':')[1]
+    //pegar nos números individualmente
+    // A -> NIF do emissor
+    //      QRCodeFields[0]
+    //
+    // B -> NIF do cliente, caso não haja não se pode validar a fatura como sendo da pessoa
+    //      QRCodeFields[1]
+    //
+    // C -> País do cliente
+    //      QRCodeFields[2]
+    //
+    // D -> tipo de documento (FS -> fatura simplificada) (FT -> fatura normal)
+    //      QRCodeFields[3]
+    //
+    // E -> estado do documento, N significa normal
+    //      QRCodeFields[4]
+    //
+    // F -> data de compra aaaa/mm/dd
+    //      QRCodeFields[5]
+    //
+    // G -> número de série do talão, inútil por enquanto
+    //      QRCodeFields[6]
+    //
+    // H -> ATCUD Este código prova que a loja comunicou a série de faturas às Finanças antes de a imprimir (deve ser
+    //        preciso verificar a autenticidade deste código para poder dar a fatura como válida)
+    //      QRCodeFields[7]
+    //
+    // Q -> um hash de quatro caracters que se liga a fatura passada? como uma chain?
+    //      QRCodeFields[8]
+    //
+    // R -> número do certificado de software de faturação registado na AT
+    //      QRCodeFields[9]
+    //
+    // I1 -> região de imposto
+    //      QRCodeFields[10]
+    //
+    // I3 -> valor sem iva
+    //      QRCodeFields[11]
+    //
+    // I4 -> valor do iva
+    //      QRCodeFields[12]
+    //
+    // N -> valor total de todos os impostos
+    //      QRCodeFields[13]
+    //
+    // O -> Valor total a pagar (I3+I4 = valor total)
+    //      QRCodeFields[14]
+    //
+    // S -> informação adicional, indica o valor pago e como foi (metodoDePagamento/valor)
+    //      QRCodeFields[15]
+    const NIFStore = QRCodeFields[0].split(":")[1];
+    const NIFClient = QRCodeFields[1].split(":")[1];
+    const CountryClient = QRCodeFields[2].split(":")[1];
+    const TypeDocument = QRCodeFields[3].split(":")[1];
+    const StateDocument = QRCodeFields[4].split(":")[1];
+    const BoughtDate = QRCodeFields[5].split(":")[1];
+    const SerialNumber = QRCodeFields[6].split(":")[1];
+    const CodeATCUD = QRCodeFields[7].split(":")[1];
+    const hash = QRCodeFields[8].split(":")[1];
+    const SoftCertNumber = QRCodeFields[9].split(":")[1];
+    const RegionTax = QRCodeFields[10].split(":")[1];
+    const NoIVAValue = QRCodeFields[11].split(":")[1];
+    const ValueIVA = QRCodeFields[12].split(":")[1];
+    const AllTaxValue = QRCodeFields[13].split(":")[1];
+    const BoughtValue = QRCodeFields[14].split(":")[1];
+    const AditionalInfo = QRCodeFields[15].split(":")[1];
 
+    //Procurar o utilizador que está a ler o código
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizador não encontrado." });
+    }
 
+    //verificar se a fatura tem NIF
+    if (NIFClient == 999999990) {
+      return res
+        .status(404)
+        .json({ message: "A fatura não tem NIF associado" });
+    }
 
-        //Procurar o utilizador que está a ler o código
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: "Utilizador não encontrado." });
-        }
+    //Verificar se o NIF da fatura curresponde ao utilizador
+    if (user.NIF != NIFClient) {
+      return res
+        .status(404)
+        .json({ message: "O NIF na fatura não coincide com o seu" });
+    }
 
-        //verificar se a fatura tem NIF
-        if(NIFClient == 999999990){
-            return res.status(404).json({ message: "A fatura não tem NIF associado" });
-        }
-            
-        //Verificar se o NIF da fatura curresponde ao utilizador
-        if(user.NIF != NIFClient){
-            return res.status(404).json({ message: "O NIF na fatura não coincide com o seu" });
-        }
-        
-        //confirmar se a loja está registada na campanha
+    //confirmar se a loja está registada na campanha
 
- 
-        // Salvar as alterações
-         await user.save();
-         await transacao.save();
- 
-     } catch (error) {
-
-     }
- });
-
+    // Salvar as alterações
+    await user.save();
+    await transacao.save();
+  } catch (error) {}
+});
 
 ////////////////////////
 //negócios do comerciante
-app.get('/meusNegocios', authorize(['comerciante']), async (req, res) => {
-    try {
-        console.log("A procurar lojas para o dono:", req.user.id);
+app.get("/meusNegocios", authorize(["comerciante"]), async (req, res) => {
+  try {
+    console.log("A procurar lojas para o dono:", req.user.id);
 
-        const negocios = await Business.find({ 
-            owner: req.user.id 
-        });
+    const negocios = await Business.find({
+      owner: req.user.id,
+    });
 
-        console.log("Lojas encontradas:", negocios.length);
+    console.log("Lojas encontradas:", negocios.length);
 
-        if (!negocios || negocios.length === 0) {
-            return res.status(200).json([]); // Devolve array vazio se não houver lojas
-        }
-
-        res.status(200).json(negocios);
-    } catch (error) {
-        console.error("Erro na rota /meusNegocios:", error);
-        res.status(500).json({ message: "Erro ao procurar lojas." });
+    if (!negocios || negocios.length === 0) {
+      return res.status(200).json([]); // Devolve array vazio se não houver lojas
     }
-});
 
+    res.status(200).json(negocios);
+  } catch (error) {
+    console.error("Erro na rota /meusNegocios:", error);
+    res.status(500).json({ message: "Erro ao procurar lojas." });
+  }
+});
 
 ////////////////////////
 //dashboard
-app.get('/dashboard', authorize(['camara']), async (req, res) => {
-    try {
-        
-        // 1. Agregação para contar utilizadores por Cidade
-        // O $group agrupa documentos que tenham o mesmo valor em "$city"
-        const usersByCity = await User.aggregate([
-            {
-                $group: {
-                    _id: "$city",
-                    total : {$sum: 1}
-                }
-            }
-        ])
+app.get("/dashboard", authorize(["camara"]), async (req, res) => {
+  try {
+    // 1. Agregação para contar utilizadores por Cidade
+    // O $group agrupa documentos que tenham o mesmo valor em "$city"
+    const usersByCity = await User.aggregate([
+      {
+        $group: {
+          _id: "$city",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
 
-        // 2. Agregação para contar negócios por Categoria
-        const businessByCategory = await Business.aggregate([
-            {
-                $group:{
-                    _id: "$category",
-                    total : {$sum : 1}
-                }
-            }
-        ])
-        
-        
-        res.status(200).json({
+    // 2. Agregação para contar negócios por Categoria
+    const businessByCategory = await Business.aggregate([
+      {
+        $group: {
+          _id: "$category",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
 
-            cities: usersByCity,
-            categories: businessByCategory
-
-        });
-
-    } catch (error) {
-        console.error("Erro ao obter as informações", error);
-        res.status(500).json({ message: "Erro ao obter as informações" });
-    }
+    res.status(200).json({
+      cities: usersByCity,
+      categories: businessByCategory,
+    });
+  } catch (error) {
+    console.error("Erro ao obter as informações", error);
+    res.status(500).json({ message: "Erro ao obter as informações" });
+  }
 });
-
 
 ///////////////
 //Editar perfil
-app.post('/editar/:id', authorize(['camara','comerciante','cidadao']), async (req, res) => {
+app.post(
+  "/editar/:id",
+  authorize(["camara", "comerciante", "cidadao"]),
+  async (req, res) => {
+    try {
+      //console.log(req.body)
 
-    try{
+      const user = await User.findById(req.user.id);
 
-        //console.log(req.body)
+      const receivedName = req.body.name;
+      const receivedCity = req.body.city;
+      const receivedNIF = req.body.NIF;
 
-        const user = await User.findById(req.user.id)
+      console.log(receivedName, receivedCity, receivedNIF);
 
-        const receivedName = req.body.name
-        const receivedCity = req.body.city
-        const receivedNIF = req.body.NIF
+      if (!user) {
+        return res.status(404).json({ message: "Utilizador não encontrado." });
+      }
 
-        console.log(receivedName, receivedCity, receivedNIF)    
+      if (user.name != receivedName) {
+        user.name = receivedName;
+      }
 
-        if (!user) {
-            return res.status(404).json({ message: "Utilizador não encontrado." });
-        }
+      if (user.city != receivedCity) {
+        user.city = receivedCity;
+      }
 
-        if(user.name != receivedName){
-            user.name = receivedName
-        }
+      if (receivedNIF != null) {
+        user.NIF = receivedNIF;
+      }
 
-        if(user.city != receivedCity){
-            user.city = receivedCity
-        }
+      await user.save();
 
-        if(receivedNIF != null){
-            user.NIF = receivedNIF
-        }
-        
-
-
-        await user.save();
-
-        res.status(201).json({message: "Alterações guardadas"});
-
-    }catch(error){
-        console.error("Erro ao alterar informações", error);
-        res.status(500).json({ message: "Erro ao alterar as informações" });
+      res.status(201).json({ message: "Alterações guardadas" });
+    } catch (error) {
+      console.error("Erro ao alterar informações", error);
+      res.status(500).json({ message: "Erro ao alterar as informações" });
     }
-   
-});
+  },
+);
 
-
-app.listen(3000, '0.0.0.0', () => console.log('Servidor ligado'));
+app.listen(3000, "0.0.0.0", () => console.log("Servidor ligado"));
 //await Business.deleteMany({}); // Apaga todos os documentos da coleção User

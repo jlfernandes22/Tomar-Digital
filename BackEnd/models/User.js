@@ -1,51 +1,46 @@
-import mongoose from 'mongoose'
-
+import mongoose from "mongoose";
 
 //Tabela dos utilizadores
 const UserSchema = new mongoose.Schema({
+  //Nome do utilizador
+  name: {
+    type: String,
+    required: true,
+  },
 
-    //Nome do utilizador
-    name: {
-        type: String,
-        required: true
-    },
+  //Email
+  email: {
+    type: String,
+    required: true,
+  },
 
-    //Email
-    email: {
-        type: String,
-        required: true
+  //Password
+  password: {
+    type: String,
+    required: true,
+  },
 
-    },
-    
-    //Password
-    password: {
+  //Cidade
+  city: {
+    type: String,
+    required: false,
+  },
 
-        type: String,
-        required: true
+  role: {
+    type: String,
+    enum: ["cidadao", "comerciante", "camara"],
+    default: "cidadao",
+  },
 
-    },
+  saldo: {
+    type: Number,
+    default: 0,
+  },
 
-    //Cidade
-    city:  {
-        type: String,
-        required: false
-    },
+  NIF: {
+    type: Number,
+    default: null,
+  },
+});
 
-    role: { 
-    type: String, 
-    enum: ['cidadao', 'comerciante', 'camara'], 
-    }, 
-
-    saldo: {
-        type: Number,
-        default: 0
-    },
-
-    NIF: {
-        type: Number,
-        default: null
-    }
-
-})
-
-export default mongoose.model('User', UserSchema);
+export default mongoose.model("User", UserSchema);

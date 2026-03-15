@@ -1,9 +1,9 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Serviço da Base de Dados
   mongo_db:
-    image: mongo:latest
+    image: mongo:7.0
     container_name: tomar_mongo
     ports:
       - "27017:27017" # Abre a porta para o teu PC aceder
