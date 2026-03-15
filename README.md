@@ -217,7 +217,7 @@ FrontEnd/
 
 Se o telemóvel não conseguir ligar ao servidor ou ficar preso no ecrã de carregamento:
 
-### Firewall no Linux (Nobara / Fedora)
+### Firewall no Linux (edora / Archlinux)
 
 Abra as portas necessárias no `firewalld`:
 
