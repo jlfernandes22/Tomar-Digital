@@ -1,50 +1,41 @@
-# Welcome to your Expo app 👋
+# 📍 Tomar Digital
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+O **Tomar Digital** é uma plataforma completa com um ecossistema moderno de Backend (Node.js + MongoDB) e Frontend Mobile (React Native + Expo). Este projeto utiliza autenticação via JWT e gestão de bases de dados através de Docker.
 
-## Get started
+---
 
-1. Install dependencies
+## 📑 Índice
+1. [Pré-requisitos](#-pré-requisitos)
+2. [Configuração do Ambiente](#-configuração-do-ambiente)
+    - [Linux (Nobara/Fedora/Ubuntu)](#linux-nobara-fedora-ubuntu)
+    - [Windows](#windows)
+3. [Instalação e Execução](#-instalação-e-execução)
+    - [Backend (API & Base de Dados)](#1-backend-api--base-de-dados)
+    - [Frontend (Mobile Expo)](#2-frontend-mobile-expo)
+4. [Variáveis de Ambiente](#-variáveis-de-ambiente)
+5. [Resolução de Problemas (Firewall e Rede)](#-resolução-de-problemas-firewall-e-rede)
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## 📋 Pré-requisitos
 
-   ```bash
-   npx expo start
-   ```
+Independentemente do sistema operativo, vais precisar de:
+* **Node.js** (v18 ou superior)
+* **Docker & Docker Compose**
+* **Git**
+* **Expo Go** (instalado no teu telemóvel Android/iOS)
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🛠 Configuração do Ambiente
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Linux (Nobara/Fedora/Ubuntu/Archlinux)
 
-## Get a fresh project
+1. [Instalar o Docker]
 
-When you're ready, run:
+# Reinicia a sessão para aplicar
 
+-No terminal, garante que o teu utilizador tem permissões para o Docker:
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+sudo usermod -aG docker $USER
+# Reinicia a sessão para aplicar
