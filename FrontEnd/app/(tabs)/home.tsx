@@ -8,6 +8,7 @@ import Map from "../components/Map";
 import BusinessList from "../components/BusinessList";
 import CustomSnackBar from "../components/CustomSnackBar";
 import { useAuth } from "@/context/AuthContext";
+import { LayoutAnimation } from 'react-native';
 
 export default function Index() {
   const [listaNegocios, setListaNegocios] = useState([]);
@@ -45,6 +46,7 @@ export default function Index() {
   };
 
   const onChangeSearch = (query: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSearchQuery(query);
     if (query === "") {
       setListaFiltrada([]);
