@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
-import { View, ActivityIndicator, StyleSheet, FlatList, RefreshControl, Alert } from "react-native";
+import { View, ActivityIndicator, StyleSheet, FlatList, RefreshControl, Alert, ScrollView } from "react-native";
 import { Surface, Searchbar, IconButton, TouchableRipple, useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
@@ -9,12 +9,14 @@ import BusinessList from "../components/BusinessList";
 import CustomSnackBar from "../components/CustomSnackBar";
 import { useAuth } from "@/context/AuthContext";
 import { LayoutAnimation } from 'react-native';
+import CustomChip from "../components/CustomChip";
 
 export default function Index() {
   const [listaNegocios, setListaNegocios] = useState([]);
   const [listaFiltrada, setListaFiltrada] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [category, setCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const theme = useTheme();
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -22,6 +24,16 @@ export default function Index() {
 
   const mapRef = useRef<any>(null);
   const { user } = useAuth();
+
+  const categories = [
+    "Património & Museus", // Para o Convento, Sinagoga, Mata dos Sete Montes
+    "Restauração", // Restaurantes e Tabernas
+    "Cafés & Pastelarias", // Essencial para as "Fatias de Tomar"
+    "Alojamento", // Hotéis e ALs
+    "Comércio Local", // Lojas do centro histórico
+    "Lazer & Natureza", // Rio Nabão, Parque do Mouchão
+    "Serviços",
+  ];
 
   const fetchNegocios = async () => {
     setLoading(true);
@@ -95,89 +107,84 @@ export default function Index() {
       }
     };
 
-  return (
+    const filteredPins = listaNegocios.filter((pin: any) => {
+      if (category === "") return true; 
+      // Caso contrário, mostra apenas os que coincidem
+      return pin.category === category;
+    });
+
+return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       
-      {/* MAPA - todo o fundo */}
+      {/* MAPA - Fundo total */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-        <Map ref={mapRef} showPin={false} businesses={listaNegocios} />
+        <Map ref={mapRef} showPin={false} businesses={filteredPins} />
       </View>
 
-      {/* negocios */}
+      {/* Interface por cima do mapa */}
       <SafeAreaView 
-        style={{ flex: 1, paddingHorizontal: 16 }} 
-        pointerEvents="box-none"
+        style={{ flex: 1 }} 
+        pointerEvents="box-none" // Permite clicar no mapa através dos espaços vazios
       >
-        <View style={{ marginTop: 10, width: '100%' }}>
+        {/* Container da Searchbar e Categorias */}
+        <View style={{ paddingHorizontal: 12, marginTop: 10 }}>
           
           <Searchbar
             placeholder="Procurar negócio..."
             onChangeText={onChangeSearch}
             value={searchQuery}
-            style={{ 
-              borderRadius: 12, 
-            }}
+            style={{ borderRadius: 12 }}
           />
 
+          {/* LISTA DE RESULTADOS DA PESQUISA (Suspensa) */}
           {listaFiltrada.length > 0 && (
-            <View style={{ marginTop: 8 }}>
-              {loading ? (
-                <ActivityIndicator size="large" color="#FF6600" style={{ marginTop: 20 }} />
-              ) : (
-                <FlatList
-                  data={listaFiltrada}
-                  keyExtractor={(item: any) => item._id}
-                  style={{ maxHeight: 400 }}
-                  keyboardShouldPersistTaps="handled"
-                  renderItem={({ item }) => (
-                    <View style={{ position: 'relative', marginBottom: 12 }}>
-                      <Surface 
-                        elevation={2} 
-                        style={{ 
-                          borderRadius: 12, 
-                          overflow: 'hidden'
-                        }}
-                      >
-                        <TouchableRipple
-                          onPress={() => focarNoMapa(item)}
-                          onLongPress={() => {
-                            router.push({ 
-                              pathname: "/components/DetalhesBusiness", 
-                              params: { id: item._id } 
-                            });
-                          }}
-                        >
-                          <BusinessList
-                            name={item.name}
-                            category={item.category}
-                            location={item.location?.lat ? `${item.location.lat.toFixed(3)}, ${item.location.long.toFixed(3)}` : "N/D"}
-                          />
-                        </TouchableRipple>
-                      </Surface>
-
-                      <View style={{ position: 'absolute', right: 8, top: 8 }}>
-                        <IconButton
-                          icon="plus"
-                          mode="contained"
-                          containerColor="#FF6600"
-                          iconColor="white"
-                          size={20}
-                          onPress={() => Alert.alert("Guardar", item.name)}
-                        />
-                      </View>
-                    </View>
-                  )}
-                />
-              )}
+            <View style={{ marginTop: 8, maxHeight: 300 }}>
+              <FlatList
+                data={listaFiltrada}
+                keyExtractor={(item: any) => item._id}
+                renderItem={({ item }) => (
+                  <Surface elevation={2} style={{ borderRadius: 12, marginBottom: 8, overflow: 'hidden'}}>
+                    <TouchableRipple onPress={() => focarNoMapa(item)}>
+                       <BusinessList name={item.name} category={item.category} />
+                    </TouchableRipple>
+                  </Surface>
+                )}
+              />
             </View>
           )}
+
+          {/* BARRA DE CATEGORIAS */}
+          <View style={{ height: 60, marginTop: 8 }}> 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                alignItems: 'center', 
+                paddingRight: 20 
+              }}
+            >
+              {categories.map((cat) => (
+                <CustomChip
+                  key={cat}
+                  isSelected={category === cat}
+                  onPress={() => {
+                    setCategory(category === cat ? "" : cat);
+                  }}
+                  className="mx-1" 
+                >
+                  {cat}
+                </CustomChip>
+              ))}
+            </ScrollView>
+          </View>
         </View>
+
       </SafeAreaView>
 
       <CustomSnackBar 
         visible={snackbarVisible} 
         onDismiss={() => setSnackbarVisible(false)} 
-        message="Negócio guardado!" 
+        message={snackbarMessage} 
       />
     </View>
   );

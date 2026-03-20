@@ -51,9 +51,7 @@ const Map = forwardRef(({
 
   // focusOnLocation para o componente pai
   useImperativeHandle(ref, () => ({
-    
     focusOnLocation: (lat: number, lng: number) => {
-      if (!lat || !lng) return;
       mapRef.current?.animateToRegion({
         latitude: lat,
         longitude: lng,
@@ -63,59 +61,45 @@ const Map = forwardRef(({
     }
   }));
 
-  return (<View style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
+  
+  return (
+    <View style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
       <MapView
-        ref={mapRef}
+        ref={mapRef} // Conectar a referência
         style={{ flex: 1 }}
-        // USAR VALORES GARANTIDOS AQUI:
         initialRegion={{
-          latitude: selectedLocation.latitude || 39.6035,
-          longitude: selectedLocation.longitude || -8.4154,
+          latitude: selectedLocation.latitude,
+          longitude: selectedLocation.longitude,
           latitudeDelta: 0.05, 
           longitudeDelta: 0.05,
         }}
         scrollEnabled={!readOnly}
+        onPress={(e) => {
+          if (readOnly) return;
+          const novasCoordenadas = e.nativeEvent.coordinate;
+          setSelectedLocation(novasCoordenadas);
+          if (onLocationSelect) onLocationSelect(novasCoordenadas);
+        }}
         customMapStyle={theme.dark ? darkMapStyle : []}
       >
+        {/* Pino de seleção (ex: quando estás a criar um novo negócio) */}
         {showPin && <Marker coordinate={selectedLocation} />}
         
-        {/* Renderizar pins apenas se businesses for um array válido */}
-        {Array.isArray(businesses) && businesses.map((item) => {
-          // Extração segura: se falhar aqui, o item é ignorado
-          const itemLat = item?.location?.lat;
-          const itemLng = item?.location?.long;
-
-          if (!itemLat || !itemLng) return null;
-
-          return (
-            <Marker
-              key={item._id}
-              coordinate={{ latitude: itemLat, longitude: itemLng }}
-              pinColor="#FF6600"
-            >
-              <Callout
-                tooltip 
-                onPress={() => {
-                  if (item?._id) {
-                    router.push({
-                      pathname: "/components/DetalhesBusiness", 
-                      params: { id: item._id } 
-                    });
-                  }
-                }}
-              >
-                <Surface elevation={2} style={{ padding: 12, borderRadius: 12, backgroundColor: theme.colors.surface, minWidth: 150 }}>
-                  <Text variant="titleSmall" style={{ fontWeight: "bold" }}>{item.name}</Text>
-                  <Text variant="bodySmall">{item.category}</Text>
-                  <Text variant="labelSmall" style={{ color: "#FF6600", marginTop: 4 }}>Ver detalhes →</Text>
-                </Surface>
-              </Callout>
-            </Marker>
-          );
-        })}
+        {/* Renderizar os negócios filtrados pela barra de pesquisa */}
+        {businesses.map((item) => (
+          <Marker
+            key={item._id}
+            coordinate={{
+              latitude: item.location?.lat ,
+              longitude: item.location?.long ,
+            }}
+            pinColor="#FF6600"
+          >
+          </Marker>
+        ))}
       </MapView>
     </View>
-    );
+  );
 });
 
 export default Map;

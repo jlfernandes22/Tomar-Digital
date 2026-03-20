@@ -19,13 +19,11 @@ export default function AddBusinessCamara() {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const theme = useTheme();
-    const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLocation, setSelectedLocation] = useState({
     latitude: 39.6036,
     longitude: -8.4151,
   });
 
-  // Categorias vindas do seu Schema
   const categories = [
     "Património & Museus", // Para o Convento, Sinagoga, Mata dos Sete Montes
     "Restauração", // Restaurantes e Tabernas
