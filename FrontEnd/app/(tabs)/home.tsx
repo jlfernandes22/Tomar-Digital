@@ -114,7 +114,6 @@ export default function Index() {
             value={searchQuery}
             style={{ 
               borderRadius: 12, 
-              backgroundColor: theme.colors.surface
             }}
           />
 
@@ -134,7 +133,6 @@ export default function Index() {
                         elevation={2} 
                         style={{ 
                           borderRadius: 12, 
-                          backgroundColor: theme.colors.surface,
                           overflow: 'hidden'
                         }}
                       >
