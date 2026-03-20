@@ -1,17 +1,15 @@
 import { View } from "react-native";
 import React, { useState, forwardRef, useImperativeHandle, useRef } from "react";
 import MapView, { Callout, Marker } from "react-native-maps";
-// Importar Text aqui em baixo
-import { Surface, useTheme, Text } from "react-native-paper";
+import { useTheme, Text, Surface } from "react-native-paper";
 import { router } from "expo-router";
 
-// 1. Definir a Interface para o TypeScript não reclamar
 interface MapProps {
   location?: { lat: number; long: number };
   showPin: boolean;
   onLocationSelect?: (coords: { latitude: number; longitude: number }) => void;
   readOnly?: boolean;
-  businesses?: any[];
+  businesses?: any[]; // Array de negócios que vem do Index
 }
 
 const darkMapStyle = [
@@ -33,7 +31,6 @@ const darkMapStyle = [
   { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] },
 ];
 
-// Adicionado forwardRef para permitir o controlo remoto pelo Index
 const Map = forwardRef(({
   showPin,
   location,
@@ -42,14 +39,13 @@ const Map = forwardRef(({
   businesses = [], 
 }: MapProps, ref) => {
   const theme = useTheme();
-  const mapRef = useRef<MapView>(null); // Referência interna para o MapView
+  const mapRef = useRef<MapView>(null);
 
   const [selectedLocation, setSelectedLocation] = useState({
     latitude: location?.lat ?? 39.6035,
     longitude: location?.long ?? -8.4154,
   });
 
-  // focusOnLocation para o componente pai
   useImperativeHandle(ref, () => ({
     focusOnLocation: (lat: number, lng: number) => {
       mapRef.current?.animateToRegion({
@@ -61,11 +57,10 @@ const Map = forwardRef(({
     }
   }));
 
-  
   return (
     <View style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
       <MapView
-        ref={mapRef} // Conectar a referência
+        ref={mapRef} 
         style={{ flex: 1 }}
         initialRegion={{
           latitude: selectedLocation.latitude,
@@ -82,19 +77,20 @@ const Map = forwardRef(({
         }}
         customMapStyle={theme.dark ? darkMapStyle : []}
       >
-        {/* Pino de seleção (ex: quando estás a criar um novo negócio) */}
+        {/* Pino de seleção manual */}
         {showPin && <Marker coordinate={selectedLocation} />}
-        
-        {/* Renderizar os negócios filtrados pela barra de pesquisa */}
-        {businesses.map((item) => (
+
+        {/* --- NOVOS PINS DOS NEGÓCIOS --- */}
+        {businesses.map((biz) => (
           <Marker
-            key={item._id}
+            key={biz._id || Math.random().toString()} 
             coordinate={{
-              latitude: item.location?.lat ,
-              longitude: item.location?.long ,
+              latitude: biz.location.lat,
+              longitude: biz.location.long,
             }}
-            pinColor="#FF6600"
+           
           >
+          
           </Marker>
         ))}
       </MapView>
