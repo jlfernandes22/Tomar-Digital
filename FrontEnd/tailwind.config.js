@@ -10,16 +10,16 @@ module.exports = {
         convento: {
           50: "#FCFAF9",
           100: "#F4ECE7",
-          200: "#E3D1C5", 
+          200: "#E3D1C5",
           300: "#D2B5A3",
           400: "#C29A80",
           500: "#B17E5E",
           600: "#946648",
           700: "#724E37",
           800: "#503626",
-          900: "#2D1F16", 
+          900: "#2D1F16",
         },
-        // Escala de Verdes 
+        // Escala de Verdes
         mata: {
           50: "#EBFFEB",
           100: "#D1FFD2",
@@ -32,25 +32,25 @@ module.exports = {
           800: "#006B02",
           900: "#003801",
         },
-        // Escala de Laranjas 
+        // Escala de Laranjas
         verao: {
           50: "#FFF0E5",
           100: "#FFE0CC",
           200: "#FFC299",
           300: "#FFA366",
-          400: "#FF8533", // Atual 'accent'
+          400: "#FF8533",
           500: "#FF6600",
           600: "#CC5200",
           700: "#993D00",
           800: "#662900",
           900: "#331400",
         },
-        // Escala de Amarelos 
+        // Escala de Amarelos
         sol: {
           50: "#FFFAEA",
           100: "#FFF3D1",
           200: "#FFE59E",
-          300: "#FFD76B", 
+          300: "#FFD76B",
           400: "#FFCA38",
           500: "#FFBC05",
           600: "#D19900",
@@ -58,7 +58,7 @@ module.exports = {
           800: "#6B4E00",
           900: "#382900",
         },
-        // Escala de Vermelhos 
+        // Escala de Vermelhos
         tabuleiros: {
           50: "#FFE5E5",
           100: "#FFCCCC",
@@ -73,7 +73,7 @@ module.exports = {
         },
         primary: "#2D1F16",
         accent: "#FF6600",
-        tabColor: "#FFBC05"
+        tabColor: "#FFBC05",
       },
     },
   },

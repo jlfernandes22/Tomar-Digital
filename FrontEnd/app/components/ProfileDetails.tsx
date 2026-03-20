@@ -1,129 +1,189 @@
-import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View, Image, ScrollView } from 'react-native'
-import React, { useState } from 'react'
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
-import TabIcon from './Tabicon';
+import { ActivityIndicator, View, Image, ScrollView } from "react-native";
+import React from "react";
+import { router } from "expo-router"; // Simplificado, apenas o router chega
+import { useAuth } from "@/context/AuthContext";
 import { images } from "@/constants/images";
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Surface, Text, TouchableRipple, useTheme } from 'react-native-paper';
+import { Surface, Text, TouchableRipple, useTheme } from "react-native-paper";
+import CustomButton from "./CustomButton";
 
-const profileDetails = () => {
+const roleLabels: Record<string, string> = {
+  cidadao: "Cidadão",
+  comerciante: "Comerciante",
+  camara: "Câmara Municipal",
+};
+
+const ProfileDetails = () => {
   const { logout, user } = useAuth();
-  const router = useRouter();
   const theme = useTheme();
 
-  const roleLabels: Record<string, string> = {
-    cidadao: "Cidadão",
-    comerciante: "Comerciante",
-    camara: "Câmara Municipal",
-  };
-
-
-  
-  // Se o user ainda não carregou
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
-return (
-  <Surface style={{flex:1}}>
-    <SafeAreaView style={{flex:1}} className="items-center">
-  
-    <View className='items-center bottom-10'>
-      {/* Botão Editar Perfil*/} 
-      <TouchableRipple
-        onPress={() => router.replace('/(tabs)/editProfile')}
-        className='absolute top-2 right-4 bg-tomar-300 p-3 rounded-full z-10 shadow-md bg-convento-300 border-2 border-convento-500 '
-        accessibilityRole="button"
-        accessibilityLabel="Editar informações do meu perfil"
+  return (
+    <Surface style={{ flex: 1 }}>
+      {/* 2. o ScrollView para ecrãs pequenos */}
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 20,
+          alignItems: "center",
+        }}
+        showsVerticalScrollIndicator={false}
       >
-        <Image 
-          className="size-6" 
-          source={images.editProfileImg} 
-          accessibilityElementsHidden={true}
-          importantForAccessibility="no-hide-descendants"
-        />
-      </TouchableRipple>
-
-      {/* Avatar , FAZER PRA TER IMAGEM */}
-      <View className="w-32 h-32  bg-white border-2 border-convento-200 rounded-full items-center justify-center mb-3 ">
-        <Text className="text-primary text-3xl  font-bold uppercase">
-          {(user.name || user.email || "V").charAt(0)}
-        </Text>
-      </View>
-
-      {/* NOME */}
-     <Text style={{color:'#946648', fontWeight:'bold'}} className="text-xl">
-          {user.email.split('@')[0]}
-     </Text>
-    
-      
-      {/* Role */}
-      <View className=" p-2 rounded-full">
-        <Text style={{color:'#FF3333'}} className=" text-base text-center">
-          {roleLabels[user.role] || "Utilizador"}
-        </Text>
-      </View>
-
-      {/* Saldo*/}
-      <View 
-        className="bg-convento-100 w-full h-[20rem] rounded-xl mt-5 border-2 border-convento-400"
-        accessible={true}
-        accessibilityLabel={`Pontos disponíveis: ${Number(user.saldo).toFixed(2)}`}
-        >
-        <Text style={{color: '#724E37', fontWeight:'bold'}}className="mt-4 text-lg  ml-4 uppercase tracking-widest mb-1">
-          Pontos Disponíveis
-        </Text>
-        <Text style={{color: '#724E37', fontWeight:'bold'}} className=" text-5xl p-4 ml-4 ">
-          {(!isNaN(Number(user.saldo))) ? `${Number(user.saldo).toFixed(2)}` : "0.00"}
-        </Text>
-
-        <TouchableOpacity 
-        onPress={() => router.replace('/(tabs)/qrcode')}
-       
-        className="bg-red-500 max-w-[24rem] flex-row h-[5rem] m-auto p-5 rounded-2xl mt-2 items-center shadow-md active:bg-red-800"
-        accessibilityRole="button"
-        accessibilityLabel="Ler QR-Code de fatura"
-        >
-        <Image
-        className="size-16" 
-          source={images.qrCodeImg} 
-          accessibilityElementsHidden={true}
-          importantForAccessibility="no-hide-descendants"
-          ></Image>
-        <Text style={{fontWeight:'bold'}} className="text-black text-lg">Ler QR-Code da sua fatura</Text>
-        </TouchableOpacity>
-        <View className='flex-1 items-center'>
-          <Text style={{color:'#C29A80', fontWeight:'light'}} className=' pl-7 pr-7 pt-3  '>Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar</Text>
-          <Text style={{color:'#B17E5E', fontWeight:'bold'}} className=' text-lg pb-3'>-Necessário Contribuinte-</Text>
+        {/* Botão Editar Perfil*/}
+        <View className="w-full flex-row justify-end mt-4 mb-2">
+          <TouchableRipple
+            key={theme.dark ? "dark-theme" : "light-theme"}
+            onPress={() => router.replace("/(tabs)/editProfile")}
+            style={{
+              padding: 6,
+              borderRadius: 26,
+              borderWidth: 2,
+              backgroundColor: theme.colors.background,
+              borderColor: theme.colors.outline,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Editar informações do meu perfil"
+          >
+            <Image
+              className="size-6"
+              source={images.editProfileImg}
+              accessibilityElementsHidden={true}
+              tintColor={theme.colors.onBackground}
+              importantForAccessibility="no-hide-descendants"
+            />
+          </TouchableRipple>
         </View>
-      </View>
 
-         
-   {/*  e-mail */}
-    <View className='bg-convento-100 mt-5 rounded-md border-2 border-convento-400 min-w-[100%] h-[5rem] flex-row'>
-    <Image className="size-16 bg-convento-200 rounded-lg mt-1 ml-2" 
-          source={images.emailImg} 
-          accessibilityElementsHidden={true}
-          importantForAccessibility="no-hide-descendants"
-          ></Image>
-      <View className='flex-column'>
-        <Text style={{color:'#C29A80', fontWeight:'light'}} className=' ml-2 mt-2'>Endereço de E-mail</Text>
-        <Text style={{color: '#724E37'}} className=' ml-2 mt-2'>{user.email}</Text>
-      </View>
-    </View>
+        {/* Avatar */}
+        <View
+          className="w-32 h-32 border-2 rounded-full items-center justify-center mb-3"
+          style={{
+            backgroundColor: theme.colors.background,
+            borderColor: theme.colors.outline,
+          }}
+        >
+          <Text className="text-primary text-4xl font-bold uppercase">
+            {(user.name || user.email || "V").charAt(0)}
+          </Text>
+        </View>
 
+        {/* NOME */}
+        <Text
+          style={{ color: theme.colors.primary, fontWeight: "bold" }}
+          className="text-xl mb-2"
+        >
+          {user.email.split("@")[0]}
+        </Text>
 
-      {/* Botão Logout */}
-      <TouchableRipple 
-        onPress={logout} 
-        className="bg-red-500 w-full min-w-[50%] py-4 rounded-2xl mt-14 items-center shadow-md active:bg-red-800"
-        accessibilityRole="button"
-        accessibilityLabel="Terminar sessão e sair da conta"
-      >
-        <Text style={{fontWeight:'bold'}} className="text-black text-lg">Terminar Sessão</Text>
-      </TouchableRipple>
-    </View>  
-    </SafeAreaView>
+        {/* Role */}
+        <View
+          className="p-2 rounded-full border-2 mb-2"
+          style={{
+            backgroundColor: theme.colors.background,
+            borderColor: theme.colors.outline,
+          }}
+        >
+          <Text
+            style={{ color: theme.colors.onBackground }}
+            className="text-base text-center"
+          >
+            {roleLabels[user.role] || "Utilizador"}
+          </Text>
+        </View>
+
+        {/* Saldo */}
+        <View
+          className=" w-full py-6 rounded-xl mt-5 border-2 items-center px-4"
+          style={{
+            backgroundColor: theme.colors.background,
+            borderColor: theme.colors.outline,
+          }}
+          accessible={true}
+          accessibilityLabel={`Pontos disponíveis: ${Number(user.saldo).toFixed(2)}`}
+        >
+          <Text
+            style={{ fontWeight: "bold" }}
+            className="text-lg uppercase tracking-widest mb-1 text-center"
+          >
+            Pontos Disponíveis
+          </Text>
+          <Text
+            style={{ fontWeight: "bold" }}
+            className="text-5xl mb-6 text-center"
+          >
+            {!isNaN(Number(user.saldo))
+              ? `${Number(user.saldo).toFixed(2)}`
+              : "0.00"}
+          </Text>
+
+          <CustomButton
+            onPress={() => router.replace("/(tabs)/qrcode")}
+            className="w-full mt-2 shadow-md"
+            buttonColor="#EF4444" // Este é o código hexadecimal exato do bg-red-500 do Tailwind
+            accessibilityRole="button"
+            accessibilityLabel="Ler QR-Code de fatura"
+            // Passamos a imagem diretamente para a propriedade icon do seu CustomButton
+            icon={() => (
+              <Image
+                className="w-8 h-8" // O size-8 às vezes falha aqui dentro, w-8 h-8 é mais seguro
+                source={images.qrCodeImg}
+                accessibilityElementsHidden={true}
+                importantForAccessibility="no"
+              />
+            )}
+          >
+            Ler QR-Code
+          </CustomButton>
+          <View className="items-center mt-4">
+            <Text style={{ fontWeight: "300" }} className="text-center mb-2">
+              Acumula pontos por cada compra efetuada nas lojas aderentes de
+              Tomar
+            </Text>
+            <Text
+              style={{ color: theme.colors.error, fontWeight: "bold" }}
+              className="text-base text-center"
+            >
+              - Necessário Contribuinte -
+            </Text>
+          </View>
+        </View>
+
+        {/* e-mail */}
+        <View
+          className="w-full mt-5 flex-row items-center p-3"
+          style={{
+            backgroundColor: theme.colors.background,
+            borderWidth: 2,
+            borderColor: theme.colors.outline,
+          }}
+        >
+          <Image
+            className="size-14 bg-convento-200 rounded-lg"
+            source={images.emailImg}
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+          />
+          <View className="flex-col ml-4 flex-1">
+            <Text style={{ fontWeight: "bold" }}>Endereço de E-mail</Text>
+            <Text className="font-bold text-base" numberOfLines={1}>
+              {user.email}
+            </Text>
+          </View>
+        </View>
+
+        {/* Botão Logout */}
+        <CustomButton
+          onPress={logout}
+          className="w-full mt-10 mb-6 shadow-md"
+          buttonColor={theme.colors.error}
+          accessibilityRole="button"
+          accessibilityLabel="Terminar sessão e sair da conta"
+        >
+          Terminar Sessão
+        </CustomButton>
+      </ScrollView>
     </Surface>
   );
 };
-export default profileDetails;
+
+export default ProfileDetails;
