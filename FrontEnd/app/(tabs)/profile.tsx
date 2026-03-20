@@ -1,13 +1,17 @@
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ProfileDetails from "../components/ProfileDetails";
+import { Surface, useTheme } from "react-native-paper";
 
-const profile = () => {
+const Profile = () => {
+  const theme = useTheme();
   return (
-    <SafeAreaView>
-      <ProfileDetails />
-    </SafeAreaView>
+    <Surface style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ProfileDetails />
+      </SafeAreaView>
+    </Surface>
   );
 };
 
-export default profile;
+export default Profile;

@@ -26,11 +26,14 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
       console.log("tentar conectar ao servidor");
+      setLoading(true);
 
       const response = await fetch(`${API_URL}/iniciarSessao`, {
         method: "POST",
@@ -83,10 +86,14 @@ const Login = () => {
           router.replace("/(tabs)/search");
         }
       } else {
+        setLoading(false);
+
         setSnackbarMessage("Erro no Login, " + dados.message);
         setSnackbarVisible(true);
       }
     } catch (error) {
+      setLoading(false);
+
       console.error(error);
       setSnackbarMessage("Erro: Não foi possível contactar o servidor.");
       setSnackbarVisible(true);
@@ -143,7 +150,11 @@ const Login = () => {
 
                 {/* Botão */}
                 <View className="mt-8">
-                  <CustomButton onPress={handleLogin} buttonColor="#FF8533">
+                  <CustomButton
+                    onPress={handleLogin}
+                    buttonColor="#FF8533"
+                    loading={loading}
+                  >
                     Iniciar Sessão
                   </CustomButton>
                 </View>

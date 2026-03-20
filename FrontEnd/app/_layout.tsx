@@ -15,9 +15,10 @@ const lightTheme = {
     secondary: "#FF6600", // Verão 500 (Accent)
     onSecondary: "#FFFFFF",
     background: "#FCFAF9", // Convento 50
+    onBackground: "#B17E5E", // convento 500
     surface: "#FFFFFF",
     surfaceVariant: "#F4ECE7", // Convento 100
-    error: "#CC0000", // Tabuleiros 600
+    error: "#FF3333", // Tabuleiros 400
     outline: "#946648", // Convento 600
     primaryContainer: "#E3D1C5", // Convento 200
     onPrimaryContainer: "#2D1F16",
@@ -38,12 +39,13 @@ const darkTheme = {
     onSecondary: "#FFFFFF",
 
     // Fundos ficam com os teus tons de castanho mais escuros
-    background: "#2D1F16", // Convento 900 (O fundo geral da app)
-    surface: "#503626", // Convento 800 (Fundo dos cartões e inputs)
+    background: "#2D1F16", // Convento 900
+    onBackground: "#FCFAF9", // Convento 50
+    surface: "#724E37", // Convento 800
     surfaceVariant: "#724E37", // Convento 700
 
     // Alertas precisam de ser mais brilhantes no escuro
-    error: "#FF6666", // Tabuleiros 300
+    error: "#FF3333", // Tabuleiros 400
 
     outline: "#D2B5A3", // Convento 300
     outlineVariant: "#D2B5A3",

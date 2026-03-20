@@ -54,9 +54,10 @@ const DetalhesBusiness = () => {
 
   if (business) {
     return (
-      <Surface style={{ flex: 1 }}>
+
+      <Surface style={{flex:1}}>
         {/* O flex-1 na SafeAreaView é essencial para ocupar o ecrã todo */}
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{flex:1}}>
           <Stack.Screen options={{ headerShown: false }} />
 
           {/* --- CABEÇALHO (Botão Voltar) --- */}
