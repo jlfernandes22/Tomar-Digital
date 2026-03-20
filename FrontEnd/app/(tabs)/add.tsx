@@ -9,6 +9,7 @@ import { delay } from "../utils/delay";
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
+import CustomChip from "../components/CustomChip";
 
 export default function AddBusinessCamara() {
   const { user } = useAuth(); // Importa o utilizador da sessão atual
@@ -18,6 +19,7 @@ export default function AddBusinessCamara() {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const theme = useTheme();
+    const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLocation, setSelectedLocation] = useState({
     latitude: 39.6036,
     longitude: -8.4151,
@@ -128,32 +130,16 @@ export default function AddBusinessCamara() {
                 paddingHorizontal: 16,
               }}
             >
-              {categories.map((cat) => {
-                const isSelected = category === cat;
-                return (
-                  <Chip
+              {categories.map((cat) => (
+                  <CustomChip
+                  className="m-1"
                     key={cat}
-                    mode="outlined"
-                    selected={isSelected}
+                    isSelected={category === cat} // <-- AQUI: compara com a variável 'category'
                     onPress={() => setCategory(cat)}
-                    className="mr-3 mb-2"
-                    showSelectedCheck={false}
-                    // A MAGIA DAS CORES AQUI:
-                    style={{
-                      backgroundColor: isSelected ? "#FF6600" : "transparent",
-                      borderColor: isSelected
-                        ? "#FF6600"
-                        : theme.colors.outline,
-                    }}
-                    textStyle={{
-                      color: isSelected ? "white" : theme.colors.onSurface,
-                      fontWeight: isSelected ? "bold" : "normal",
-                    }}
                   >
                     {cat}
-                  </Chip>
-                );
-              })}
+                  </CustomChip>
+                ))}
             </ScrollView>
           </View>
 
