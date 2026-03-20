@@ -1,23 +1,19 @@
-import { StyleSheet } from 'react-native'
-import React from 'react'
-import Dashboard from '../components/Dashboard';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet } from "react-native";
+import React from "react";
+import Dashboard from "../components/Dashboard";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const dashboardTab = () => {
-  
-    return(
+  return (
+    <SafeAreaView
+      className="flex-1 justify-center items-center"
+      edges={["top", "left", "right"]}
+    >
+      <Dashboard />
+    </SafeAreaView>
+  );
+};
 
-        <SafeAreaView className='flex-1 justify-center items-center' edges={['top', 'left', 'right']} >
+export default dashboardTab;
 
-            <Dashboard/>
-
-        </SafeAreaView>
-      
-    )
-
-
-}
-
-export default dashboardTab
-
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({});

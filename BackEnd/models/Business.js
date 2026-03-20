@@ -1,53 +1,49 @@
-import mongoose from 'mongoose'
-
+import mongoose from "mongoose";
 
 const BusinessSchema = new mongoose.Schema({
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
 
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', 
-        required: true
-    },
+  //Nome do negócio
+  name: {
+    type: String,
+    required: true,
+  },
 
-    //Nome do negócio
-    name: {
-        type:String,
-        required: true
-
-    },
-
-    //Categoria do negócio baseado na cidade de Tomar
-    category: {
+  //Categoria do negócio baseado na cidade de Tomar
+  category: {
     type: String,
     enum: [
-        'Património & Museus', // Para o Convento, Sinagoga, Mata dos Sete Montes
-        'Restauração',         // Restaurantes e Tabernas
-        'Cafés & Pastelarias', // Essencial para as "Fatias de Tomar"
-        'Alojamento',          // Hotéis e ALs
-        'Comércio Local',      // Lojas do centro histórico
-        'Lazer & Natureza',    // Rio Nabão, Parque do Mouchão
-        'Serviços'             // Farmácias, Bancos, etc.
+      "Património & Museus", // Para o Convento, Sinagoga, Mata dos Sete Montes
+      "Restauração", // Restaurantes e Tabernas
+      "Cafés & Pastelarias", // Essencial para as "Fatias de Tomar"
+      "Alojamento", // Hotéis e ALs
+      "Comércio Local", // Lojas do centro histórico
+      "Lazer & Natureza", // Rio Nabão, Parque do Mouchão
+      "Serviços", // Farmácias, Bancos, etc.
     ],
-    required: true
-},
+    required: true,
+  },
 
-    //locatização no mapa (temporário ou definitivo dependendo do mapa que será usado Google Maps ou outro)
-    location: {
-        lat:Number,
-        long:Number
-    },
+  //locatização no mapa (temporário ou definitivo dependendo do mapa que será usado Google Maps ou outro)
+  location: {
+    lat: Number,
+    long: Number,
+  },
 
-    status: {
-        type: String,
-        enum: ['pendente', 'aprovado', 'rejeitado'],
-        default: 'pendente' 
-    },
+  status: {
+    type: String,
+    enum: ["pendente", "aprovado", "rejeitado"],
+    default: "pendente",
+  },
 
-    NIF: {
-        type: Number,
-        default: null
-    }
+  NIF: {
+    type: Number,
+    default: null,
+  },
+});
 
-})
-
-export default mongoose.model('Business', BusinessSchema);
+export default mongoose.model("Business", BusinessSchema);
