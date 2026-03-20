@@ -73,17 +73,24 @@ export default function Index() {
   useFocusEffect(useCallback(() => { fetchNegocios(); }, []));
 
   const onChangeSearch = (query: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setSearchQuery(query);
-    if (query === "") {
-      setListaFiltrada([]);
-    } else {
-      const filtrados = listaNegocios.filter((item) =>
-        item.name?.toLowerCase().includes(query.toLowerCase())
-      );
-      setListaFiltrada(filtrados);
-    }
-  };
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  setSearchQuery(query);
+
+  if (query === "") {
+    setListaFiltrada([]);
+  } else {
+    const filtrados = listaNegocios.filter((item) => {
+
+      const coincideNome = item.name?.toLowerCase().includes(query.toLowerCase());
+
+      const coincideCategoria = category === "" || item.category === category;
+
+      return coincideNome && coincideCategoria;
+    });
+
+    setListaFiltrada(filtrados);
+  }
+};
 
   const focarNoMapa = (item: Negocio) => {
     setListaFiltrada([]); 
