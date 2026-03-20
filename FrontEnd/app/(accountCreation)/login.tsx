@@ -80,7 +80,7 @@ const Login = () => {
             NIFEncontrado,
           );
 
-          router.replace("/(tabs)/search");
+          router.replace("/(tabs)/home");
         }
       } else {
         setSnackbarMessage("Erro no Login, " + dados.message);

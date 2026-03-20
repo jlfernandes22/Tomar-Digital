@@ -88,7 +88,6 @@ export default function AddBusinessCamara() {
         await delay(400);
       }
     } catch (error) {
-      setSnackbarMessage("Erro\n " + error.message || "Falha na ligação.");
       setSnackbarVisible(true);
       await delay(400);
     } finally {
@@ -96,8 +95,8 @@ export default function AddBusinessCamara() {
     }
   };
   return (
-    <Surface className="flex-1">
-      <SafeAreaView>
+    <Surface style={{flex:1}}>
+      <SafeAreaView >
         <ScrollView className="p-4 mr-2">
           <Text className="text-3xl font-bold text-center mb-8">
             Adicionar Negócio

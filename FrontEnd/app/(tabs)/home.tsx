@@ -142,7 +142,7 @@ export default function Index() {
                           onPress={() => focarNoMapa(item)}
                           onLongPress={() => {
                             router.push({ 
-                              pathname: "/components/BusinessDetails", 
+                              pathname: "/components/DetalhesBusiness", 
                               params: { id: item._id } 
                             });
                           }}
