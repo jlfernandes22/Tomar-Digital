@@ -83,7 +83,7 @@ const Login = () => {
             NIFEncontrado,
           );
 
-          router.replace("/(tabs)/search");
+          router.replace("/(tabs)/Home");
         }
       } else {
         setLoading(false);

@@ -14,13 +14,13 @@ const Index = () => {
       const token = await AsyncStorage.getItem("userToken");
 
       if (token) {
-        router.replace("/(tabs)/home");
+        router.replace("/(tabs)/Home");
       } else {
-        router.replace("/(accountCreation)/login");
+        router.replace("/(accountCreation)/Login");
       }
     } catch {
       console.log("Erro rederecionado para pagina de criação de conta");
-      router.replace("/(accountCreation)/login");
+      router.replace("/(accountCreation)/Login");
     }
   };
 

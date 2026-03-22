@@ -51,7 +51,7 @@ const EditProfile = () => {
           city: city,
           NIF: NIF ? Number(NIF) : null,
         });
-        router.replace("/(tabs)/profile");
+        router.replace("/(tabs)/Profile");
       } else {
         Alert.alert("Erro", "O servidor rejeitou as alterações.");
       }
@@ -163,7 +163,7 @@ const EditProfile = () => {
 
               <CustomButton
                 buttonColor="#724E37"
-                onPress={() => router.replace("/(tabs)/profile")}
+                onPress={() => router.replace("/(tabs)/Profile")}
                 className="w-full"
                 disabled={loading}
               >

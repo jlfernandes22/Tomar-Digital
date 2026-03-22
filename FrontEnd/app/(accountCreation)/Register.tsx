@@ -66,7 +66,7 @@ const Register = () => {
         setSnackbarVisible(true);
         await delay(500);
 
-        router.replace("/login");
+        router.replace("/Login");
       } else {
         setSnackbarMessage(
           "Erro: " + dados.message || "Erro: Não foi possível criar a conta.",

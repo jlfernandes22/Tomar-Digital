@@ -44,6 +44,25 @@ const BusinessSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
+
+  campaigns: [
+    {
+      campaign: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Campaign",
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ["pendente", "aprovado", "rejeitado"],
+        default: "pendente",
+      },
+      requestDate: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 export default mongoose.model("Business", BusinessSchema);

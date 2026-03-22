@@ -6,9 +6,8 @@ import jwt from "jsonwebtoken";
 import User from "./models/User.js";
 import Business from "./models/Business.js";
 import Favorite from "./models/Favorite.js";
-import Transaction from "./models/Transaction.js";
 import { authorize } from "./middleware/auth.js";
-import { v4 as uuidv4 } from "uuid";
+import Campaign from "./models/Campaign.js";
 import "dotenv/config";
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -143,7 +142,7 @@ app.post("/iniciarSessao", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Erro ao inciar sessão: ", err);
+    console.error("Erro ao iniciar sessão: ", err);
     res.status(400).json({
       message: "Erro ao iniciar sessão",
     });
@@ -184,7 +183,7 @@ app.post(
   authorize(["comerciante", "camara"]),
   async (req, res) => {
     try {
-      const { name, category, location, owner } = req.body;
+      const { owner, name, category, location, NIF } = req.body;
 
       if (!name || !category || !location) {
         return res.status(400).json({
@@ -205,7 +204,7 @@ app.post(
       }
 
       // Se for o comerciante a criar, o status deve ser 'pendente'
-      // Se for a camara, podes definir logo como 'aprovado'
+      // Se for a camara, definir logo como 'aprovado'
       const novoNegocio = new Business({
         name,
         category,
@@ -215,6 +214,7 @@ app.post(
         },
         owner: ownerId,
         status: req.user.role === "camara" ? "aprovado" : "pendente",
+        NIF: NIF,
       });
 
       await novoNegocio.save();
@@ -251,6 +251,25 @@ app.get("/negocios/:id", async (req, res) => {
     res.json(negocio);
   } catch (error) {
     res.status(500).json({ message: "Erro ao encontrar id." });
+  }
+});
+
+////////////////////////
+//Apagar negócio por id
+app.delete("/apagarNegocio/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({ erro: "Negócio não encontrado." });
+    }
+
+    await business.deleteOne();
+
+    res.status(200).json({ sucesso: "Negócio apagado com sucesso!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: "Falha ao apagar o negócio." });
   }
 });
 
@@ -365,45 +384,6 @@ app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
 });
 
 ////////////////////////
-//gerar QRcode
-app.post("/gerarQrCode", authorize(["comerciante"]), async (req, res) => {
-  try {
-    const { valorOriginal, lojaId } = req.body;
-
-    if (!valorOriginal || valorOriginal <= 0) {
-      return res.status(400).json({ message: "Valor de venda inválido." });
-    }
-
-    // Regra de negócio: 10% de saldo (exemplo)
-    const percentagem = 0.1;
-    const saldoGerado = (valorOriginal * percentagem).toFixed(2);
-
-    // Gerar um token único e curto para o QR Code
-    // Usamos uuid para ser impossível de adivinhar
-    const tokenUnico = uuidv4();
-
-    const novaTransacao = new Transaction({
-      lojaId: lojaId,
-      valorOriginal,
-      saldoGerado,
-      token: tokenUnico,
-      status: "pendente",
-    });
-
-    await novaTransacao.save();
-
-    // Enviamos o token para o Frontend gerar o QR Code
-    res.status(201).json({
-      token: tokenUnico,
-      saldoParaOCliente: saldoGerado,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Erro ao gerar token de saldo." });
-  }
-});
-
-////////////////////////
 //ler QRcode e ganhar saldo
 app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
   try {
@@ -412,7 +392,7 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     //pegar nos dados da fatura
     const { QRCodeData } = req.body;
     const QRCodeFields = QRCodeData.split("*");
-    //console.log(QRCodeFields)
+    //console.log(QRCodeFields);
     //console.log(QRCodeFields[0])
 
     //pegar nos números individualmente
@@ -481,32 +461,137 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     const BoughtValue = QRCodeFields[14].split(":")[1];
     const AditionalInfo = QRCodeFields[15].split(":")[1];
 
-    //Procurar o utilizador que está a ler o código
+    const faturaRepetida = await Invoice.findOne({
+      ATCUD: CodeATCUD,
+      hash: hash,
+    });
+    if (faturaRepetida) {
+      return res.status(400).json({
+        erro: "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente.",
+      });
+    }
+
+    // 1. Procurar o utilizador
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "Utilizador não encontrado." });
     }
 
-    //verificar se a fatura tem NIF
-    if (NIFClient == 999999990) {
+    // 2. Verificar se a fatura tem NIF e se corresponde ao cidadão
+    if (NIFClient == "999999990") {
       return res
-        .status(404)
-        .json({ message: "A fatura não tem NIF associado" });
+        .status(400)
+        .json({ message: "A fatura não tem NIF associado." });
     }
-
-    //Verificar se o NIF da fatura curresponde ao utilizador
     if (user.NIF != NIFClient) {
       return res
-        .status(404)
-        .json({ message: "O NIF na fatura não coincide com o seu" });
+        .status(400)
+        .json({ message: "O NIF na fatura não coincide com o seu." });
     }
 
-    //confirmar se a loja está registada na campanha
+    // 3. Verificar quantidade gasta
+    if (BoughtValue < 1) {
+      return res.status(400).json({ erro: "O valor gasto é inferior a 1€." });
+    }
 
-    // Salvar as alterações
+    // 4. Procurar a loja e "puxar" os dados das campanhas dela ao mesmo tempo!
+    const store = await Business.findOne({ NIF: Number(NIFStore) }).populate(
+      "campaigns.campaign",
+    );
+    if (!store) {
+      return res
+        .status(404)
+        .json({ erro: "Esta loja não está registada na aplicação." });
+    }
+
+    // 5. Confirmar se a loja tem alguma campanha ATIVA e APROVADA
+    const activeCampaignEntry = store.campaigns.find((entry) => {
+      // O comerciante foi aprovado pela Câmara para esta campanha?
+      if (entry.status !== "aprovado") return false;
+
+      // A campanha ainda existe e o seu estado global é "ativa"?
+      const camp = entry.campaign;
+      if (!camp || camp.status !== "ativa") return false;
+
+      // A campanha ainda está dentro da validade?
+      const hoje = new Date();
+      if (hoje > camp.expirationDate) return false;
+
+      return true;
+    });
+
+    if (!activeCampaignEntry) {
+      return res.status(400).json({
+        erro: "Esta loja não tem nenhuma campanha de pontos ativa no momento.",
+      });
+    }
+
+    // 6. Verificar Data da Fatura
+    // O QRCode AT usa "YYYYMMDD"
+    const invoiceYear = parseInt(BoughtDate.substring(0, 4));
+    const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1; // Os meses em JS começam no 0
+    const invoiceDay = parseInt(BoughtDate.substring(6, 8));
+    const dataDaFatura = new Date(invoiceYear, invoiceMonth, invoiceDay);
+
+    // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
+
+    // 7. Fazer atribuição dos pontos (1 euro = 1 ponto)
+    const pointsDeserved = Math.trunc(BoughtValue);
+    user.Points += pointsDeserved;
     await user.save();
-    await transacao.save();
+
+    await Invoice.create({
+      user: user._id,
+      business: store._id,
+      ATCUD: CodeATCUD,
+      hash: hash,
+      amount: BoughtValue,
+      purchaseDate: BoughtDate,
+    });
+
+    // 8. Responder com sucesso
+    return res.status(200).json({
+      sucesso: "Fatura lida com sucesso!",
+      pontosGanhos: pointsDeserved,
+      saldoAtual: user.Points,
+    });
   } catch (error) {}
+});
+
+////////////////////////
+//Criar Campanha
+app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    //console.log(user);
+    //receber variáveis, eventualmente uma imagem que será guardada no servidor
+    const { title, description, packs, expirationDate } = req.body;
+
+    const newCampaign = new Campaign({
+      createdBy: user,
+      title: title,
+      description: description,
+      packs: packs,
+      expirationDate: expirationDate,
+    });
+
+    await newCampaign.save();
+
+    console.log("Campanha criada com sucesso");
+    console.log(
+      "Dados da campanha: \nTítulo: " +
+        title +
+        "\nDescrição: " +
+        description +
+        "\nPacotes: " +
+        packs +
+        "\nData de expiração: " +
+        expirationDate,
+    );
+    return res.status(200).json("Sucesso");
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 ////////////////////////

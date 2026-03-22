@@ -10,7 +10,7 @@ import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
 
-export default function AddBusinessCamara() {
+export default function AddBusiness() {
   const { user } = useAuth(); // Importa o utilizador da sessão atual
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");

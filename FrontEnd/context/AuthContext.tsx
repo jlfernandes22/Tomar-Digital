@@ -1,16 +1,16 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
-import { router } from 'expo-router';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import * as SecureStore from "expo-secure-store";
+import { router } from "expo-router";
 
 export interface User {
   id: string;
   role: string;
-  token: string; 
+  token: string;
   email: string;
   saldo: number;
-  name: string;         
-  city?: string;        
-  NIF?: number | null;   
+  name: string;
+  city?: string;
+  NIF?: number | null;
 }
 
 interface AuthContextData {
@@ -18,15 +18,15 @@ interface AuthContextData {
   updateUser: (updatedData: Partial<User>) => void;
 
   login: (
-    id: string, 
-    role: string, 
-    token: string, 
-    email: string, 
+    id: string,
+    role: string,
+    token: string,
+    email: string,
     saldo: number,
     name: string,
     city?: string,
-    NIF?: number | null
-  ) => Promise<void>; 
+    NIF?: number | null,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -34,38 +34,39 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 // Definimos a chave como uma constante para não haver erros de escrita
-const STORAGE_KEY = 'user_data';
+const STORAGE_KEY = "user_data";
 
 export const AuthProvider = ({ children }: any) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const updateUser = (updatedData: Partial<User>) => {
-  setUser((prev) => {
-    if (!prev) return null;
+    setUser((prev) => {
+      if (!prev) return null;
 
-    // Criamos o novo objeto fundindo o antigo com o novo
-    const newUser = { 
-      ...prev, 
-      ...updatedData,
-      // Se o saldo for NaN, ele volta para o saldo anterior ou 0
-      saldo: updatedData.saldo !== undefined && !isNaN(Number(updatedData.saldo)) 
-             ? Number(updatedData.saldo) 
-             : prev.saldo 
-    };
+      // Criamos o novo objeto fundindo o antigo com o novo
+      const newUser = {
+        ...prev,
+        ...updatedData,
+        // Se o saldo for NaN, ele volta para o saldo anterior ou 0
+        saldo:
+          updatedData.saldo !== undefined && !isNaN(Number(updatedData.saldo))
+            ? Number(updatedData.saldo)
+            : prev.saldo,
+      };
 
-    // Usar a chave constante 'user_data'
-    SecureStore.setItemAsync('user_data', JSON.stringify(newUser));
-    return newUser;
-  });
-};
+      // Usar a chave constante 'user_data'
+      SecureStore.setItemAsync("user_data", JSON.stringify(newUser));
+      return newUser;
+    });
+  };
   useEffect(() => {
     const loadStorageData = async () => {
       try {
         const savedUser = await SecureStore.getItemAsync(STORAGE_KEY);
         if (savedUser) {
           const userData = JSON.parse(savedUser);
-          setUser(userData); 
+          setUser(userData);
         }
       } catch (e) {
         console.error("Erro ao carregar dados", e);
@@ -77,14 +78,14 @@ export const AuthProvider = ({ children }: any) => {
   }, []);
 
   const login = async (
-    id: string, 
-    role: string, 
-    token: string, 
-    email: string, 
-    saldo: number, 
-    name: string, 
-    city?: string, 
-    NIF?: number | null
+    id: string,
+    role: string,
+    token: string,
+    email: string,
+    saldo: number,
+    name: string,
+    city?: string,
+    NIF?: number | null,
   ) => {
     try {
       const userData: User = {
@@ -93,9 +94,9 @@ export const AuthProvider = ({ children }: any) => {
         token,
         email,
         saldo: Number(saldo) || 0,
-        name,  // Now uses the real name from the database!
+        name,
         city,
-        NIF
+        NIF,
       };
 
       await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(userData));
@@ -110,7 +111,7 @@ export const AuthProvider = ({ children }: any) => {
     try {
       await SecureStore.deleteItemAsync(STORAGE_KEY);
       setUser(null);
-      router.replace('/(accountCreation)/login')
+      router.replace("/(accountCreation)/Login");
     } catch (e) {
       console.error("Erro no logout:", e);
     }
