@@ -73,7 +73,7 @@ const _layout = () => {
       }}
     >
       <Tabs.Screen
-        name="register"
+        name="Register"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.registerImg} color={color} />
@@ -82,7 +82,7 @@ const _layout = () => {
       />
 
       <Tabs.Screen
-        name="login"
+        name="Login"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.loginImg} color={color} />

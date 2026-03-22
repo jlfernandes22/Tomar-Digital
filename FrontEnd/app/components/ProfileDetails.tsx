@@ -33,7 +33,7 @@ const ProfileDetails = () => {
         <View className="w-full flex-row justify-end mt-4 mb-2">
           <TouchableRipple
             key={theme.dark ? "dark-theme" : "light-theme"}
-            onPress={() => router.replace("/(tabs)/editProfile")}
+            onPress={() => router.replace("/(tabs)/EditProfile")}
             style={{
               padding: 6,
               borderRadius: 26,
@@ -117,15 +117,14 @@ const ProfileDetails = () => {
           </Text>
 
           <CustomButton
-            onPress={() => router.replace("/(tabs)/qrcode")}
+            onPress={() => router.replace("/(tabs)/ScanScreen")}
             className="w-full mt-2 shadow-md"
-            buttonColor="#EF4444" // Este é o código hexadecimal exato do bg-red-500 do Tailwind
+            buttonColor="#EF4444"
             accessibilityRole="button"
             accessibilityLabel="Ler QR-Code de fatura"
-            // Passamos a imagem diretamente para a propriedade icon do seu CustomButton
             icon={() => (
               <Image
-                className="w-8 h-8" // O size-8 às vezes falha aqui dentro, w-8 h-8 é mais seguro
+                className="w-8 h-8"
                 source={images.qrCodeImg}
                 accessibilityElementsHidden={true}
                 importantForAccessibility="no"
