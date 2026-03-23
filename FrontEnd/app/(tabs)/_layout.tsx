@@ -134,9 +134,9 @@ const _layout = () => {
       />
 
       <Tabs.Screen
-        name="AddBusinessCamara"
+        name="AddBusiness"
         options={{
-          href: user?.role === "comerciante" ? "/AddBusinessCamara" : null,
+          href: user?.role === "comerciante" ? "/AddBusiness" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.addImg} color={color} />
           ),

@@ -1,0 +1,162 @@
+import { MD3LightTheme, MD3DarkTheme } from "react-native-paper";
+
+const defaultRoundness = 5;
+
+export const appThemes = {
+  light: {
+    convento: {
+      ...MD3LightTheme,
+      roundness: defaultRoundness,
+      colors: {
+        ...MD3LightTheme.colors,
+        primary: "#8d4a00",
+        onPrimary: "#fff0e7",
+        primaryContainer: "#ff8a00",
+        onPrimaryContainer: "#fff5ed",
+        background: "#fff5ed",
+        onBackground: "#462800",
+        surface: "#fff5ed",
+        onSurface: "#462800",
+        surfaceVariant: "#ffeedf",
+        onSurfaceVariant: "#7a5427",
+        secondaryContainer: "#ffe3ca",
+        onSecondaryContainer: "#462800",
+        tertiaryContainer: "#facd34",
+        onTertiaryContainer: "#462800",
+        outline: "#d5a470",
+        outlineVariant: "#d5a470",
+        error: "#ba1a1a",
+      },
+    },
+
+    mata: {
+      ...MD3LightTheme,
+      roundness: defaultRoundness,
+      colors: {
+        ...MD3LightTheme.colors,
+        primary: "#2e5c1e",
+        onPrimary: "#f0fdf0",
+        primaryContainer: "#4c8b35",
+        onPrimaryContainer: "#f0fdf0",
+        background: "#f4f9f3",
+        onBackground: "#1a3311",
+        surface: "#f4f9f3",
+        onSurface: "#1a3311",
+        surfaceVariant: "#e8f3e6",
+        onSurfaceVariant: "#3b5930",
+        secondaryContainer: "#d1e8ce",
+        onSecondaryContainer: "#1a3311",
+        tertiaryContainer: "#facd34",
+        onTertiaryContainer: "#462800",
+        outline: "#9cb595",
+        outlineVariant: "#9cb595",
+        error: "#ba1a1a",
+      },
+    },
+
+    tabuleiros: {
+      ...MD3LightTheme,
+      roundness: defaultRoundness,
+      colors: {
+        ...MD3LightTheme.colors,
+        primary: "#902828",
+        onPrimary: "#fff0f0",
+        primaryContainer: "#c44545",
+        onPrimaryContainer: "#fff0f0",
+        background: "#fff6f6",
+        onBackground: "#4a1212",
+        surface: "#fff6f6",
+        onSurface: "#4a1212",
+        surfaceVariant: "#ffeded",
+        onSurfaceVariant: "#803535",
+        secondaryContainer: "#ffd6d6",
+        onSecondaryContainer: "#4a1212",
+        tertiaryContainer: "#facd34",
+        onTertiaryContainer: "#462800",
+        outline: "#d69898",
+        outlineVariant: "#d69898",
+        error: "#ba1a1a",
+      },
+    },
+  },
+
+  dark: {
+    convento: {
+      ...MD3DarkTheme,
+      roundness: defaultRoundness,
+      colors: {
+        ...MD3DarkTheme.colors,
+        primary: "#ffb776",
+        onPrimary: "#4d2600",
+        primaryContainer: "#6b3700",
+        onPrimaryContainer: "#ffdcc0",
+        background: "#201308",
+        onBackground: "#ffeedf",
+        surface: "#201308",
+        onSurface: "#ffeedf",
+        surfaceVariant: "#362211",
+        onSurfaceVariant: "#dcbba0",
+        secondaryContainer: "#4a301a",
+        onSecondaryContainer: "#ffeedf",
+        tertiaryContainer: "#75590c",
+        onTertiaryContainer: "#ffeedf",
+        outline: "#835d3c",
+        outlineVariant: "#835d3c",
+      },
+    },
+
+    /* Implementação do modo escuro para a paleta Mata. 
+       Utilizam-se fundos verdes ultra-profundos e clareia-se o texto e os botões 
+       para garantir contraste sem perder a identidade botânica. */
+    mata: {
+      ...MD3DarkTheme,
+      roundness: defaultRoundness,
+      colors: {
+        ...MD3DarkTheme.colors,
+        primary: "#8bcf70",
+        onPrimary: "#153805",
+        primaryContainer: "#2c5c16",
+        onPrimaryContainer: "#a6efa8",
+        background: "#111a0e",
+        onBackground: "#e2f0df",
+        surface: "#111a0e",
+        onSurface: "#e2f0df",
+        surfaceVariant: "#21331c",
+        onSurfaceVariant: "#b1cbb0",
+        secondaryContainer: "#294522",
+        onSecondaryContainer: "#e2f0df",
+        tertiaryContainer: "#5c5114",
+        onTertiaryContainer: "#e2f0df",
+        outline: "#5c7558",
+        outlineVariant: "#5c7558",
+      },
+    },
+
+    /* Implementação do modo escuro para a paleta Tabuleiros. 
+       A base transita para tons borgonha muito fechados, enquanto os alertas e 
+       ações principais assumem tons coral/rosa pastel para sobressair no fundo escuro. */
+    tabuleiros: {
+      ...MD3DarkTheme,
+      roundness: defaultRoundness,
+      colors: {
+        ...MD3DarkTheme.colors,
+        primary: "#ffb4a9",
+        onPrimary: "#561d1d",
+        primaryContainer: "#752b2b",
+        onPrimaryContainer: "#ffdad5",
+        background: "#200f0f",
+        onBackground: "#fadddd",
+        surface: "#200f0f",
+        onSurface: "#fadddd",
+        surfaceVariant: "#381e1e",
+        onSurfaceVariant: "#d6b6b6",
+        secondaryContainer: "#4d2727",
+        onSecondaryContainer: "#fadddd",
+        tertiaryContainer: "#664917",
+        onTertiaryContainer: "#fadddd",
+        outline: "#856060",
+        outlineVariant: "#856060",
+      },
+    },
+  },
+};
