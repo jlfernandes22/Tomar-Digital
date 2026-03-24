@@ -154,33 +154,41 @@ export default function CamaraIndex() {
   if (loading) {
     return (
       <Surface
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" , backgroundColor: theme.colors.surface }}
       >
         <ActivityIndicator animating={true} size="large" color="#FF6600" />
       </Surface>
     );
   }
-
-  return (
-    <Surface style={{ flex: 1 }}>
+return (
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaView style={{ flex: 1 }} className="p-4">
         <Text
           variant="headlineMedium"
-          style={{ color: theme.colors.secondary }}
+          style={{ color: theme.colors.primary, fontWeight: "bold", marginBottom: 10 }}
         >
           Pedidos Pendentes
         </Text>
 
-        <Divider className="mb-2w" />
+        <Divider style={{ backgroundColor: theme.colors.outlineVariant, marginBottom: 16 }} />
 
         {pendentes.length === 0 ? (
-          <Text variant="bodyLarge" className="text-center mt-10 opacity-60">
+          <Text 
+            variant="bodyLarge" 
+            style={{ color: theme.colors.onSurfaceVariant }} 
+            className="text-center mt-10"
+          >
             Não há novos pedidos de Tomar.
           </Text>
         ) : (
           <FlatList
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                colors={[theme.colors.primary]} // Android
+                tintColor={theme.colors.primary} // iOS
+              />
             }
             data={pendentes}
             keyExtractor={(item) => item._id}
@@ -191,56 +199,61 @@ export default function CamaraIndex() {
               );
 
               return (
-                <View className="relative mt-4">
-                  <Surface
-                    className="border border-convento-200"
-                    elevation={1}
-                    style={{ borderRadius: 12 }}
+                <Surface
+                  style={{
+                    backgroundColor: theme.colors.elevation.level1,
+                    borderRadius: 12,
+                    marginBottom: 16,
+                    borderWidth: 1,
+                    borderColor: theme.colors.outlineVariant,
+                    overflow: 'hidden'
+                  }}
+                  elevation={1}
+                >
+                  <TouchableRipple
+                    onPress={() => {
+                      router.push({
+                        pathname: "/components/BusinessDetails",
+                        params: { id: item._id },
+                      });
+                    }}
                   >
-                    <TouchableRipple
-                      onPress={() => {
-                        router.push({
-                          pathname: "/components/BusinessDetails",
-                          params: { id: item._id },
-                        });
-                      }}
-                      className="p-4"
-                    >
-                      <View>
-                        <Text variant="titleLarge" className="font-bold">
-                          {item.name}
-                        </Text>
-                        <Text
-                          variant="bodyMedium"
-                          className="italic opacity-80"
-                        >
-                          {item.category}
-                        </Text>
-                        <Text variant="bodySmall" className="mt-1 opacity-50">
-                          Dono: {donoEspecifico?.name || "A carregar..."}
-                        </Text>
-                      </View>
-                    </TouchableRipple>
-
-                    <View className="flex-row gap-x-3 px-4 pb-4 mt-2">
-                      <CustomButton
-                        className="flex-1"
-                        onPress={() => handleAprovar(item._id)}
-                        buttonColor="#10B981"
+                    <View className="p-4">
+                      <Text variant="titleLarge" style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}>
+                        {item.name}
+                      </Text>
+                      <Text
+                        variant="bodyMedium"
+                        style={{ color: theme.colors.secondary, fontStyle: 'italic' }}
                       >
-                        Aceitar
-                      </CustomButton>
-
-                      <CustomButton
-                        className="flex-1"
-                        onPress={() => handleDescartar(item._id)}
-                        buttonColor="#EF4444"
-                      >
-                        Descartar
-                      </CustomButton>
+                        {item.category}
+                      </Text>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                        Dono: {donoEspecifico?.name || "A carregar..."}
+                      </Text>
                     </View>
-                  </Surface>
-                </View>
+                  </TouchableRipple>
+
+                  <View className="flex-row gap-x-3 px-4 pb-4">
+                    <CustomButton
+                      className="flex-1"
+                      onPress={() => handleAprovar(item._id)}
+                      buttonColor={theme.colors.primary}
+                      textColor={theme.colors.onPrimary}
+                    >
+                      Aceitar
+                    </CustomButton>
+
+                    <CustomButton
+                      className="flex-1"
+                      onPress={() => handleDescartar(item._id)}
+                      buttonColor={theme.colors.error}
+                      textColor={theme.colors.onError}
+                    >
+                      Descartar
+                    </CustomButton>
+                  </View>
+                </Surface>
               );
             }}
           />

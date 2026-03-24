@@ -9,6 +9,7 @@ interface PrimaryButtonProps {
   className?: string; // Para adicionar margens extra
   loading?: boolean; // para mostrar a rodinha de carregamento
   buttonColor?: string;
+  textColor?: string;
   icon?: any;
   labelStyle?: any;
   accessibilityRole?: any;
@@ -22,6 +23,7 @@ const CustomButton = ({
   className,
   loading,
   buttonColor,
+  textColor,
   icon,
   labelStyle,
   accessibilityRole,
@@ -32,7 +34,7 @@ const CustomButton = ({
       <Button
         mode="contained"
         buttonColor={buttonColor ? buttonColor : "#FF8533"}
-        textColor="#FFFFFF"
+        textColor={textColor ? textColor :"#FFFFFF"}
         onPress={loading ? () => {} : onPress}
         loading={loading}
         labelStyle={[{ fontSize: 18, fontWeight: "bold" }, labelStyle]}

@@ -153,7 +153,8 @@ const EditProfile = () => {
 
             <View className="w-full mt-6">
               <CustomButton
-                buttonColor="#FF3333"
+                buttonColor={theme.colors.error}
+                textColor={theme.colors.onError}
                 onPress={handleEdit}
                 loading={loading}
                 className="w-full mb-3"
@@ -162,7 +163,8 @@ const EditProfile = () => {
               </CustomButton>
 
               <CustomButton
-                buttonColor="#724E37"
+                buttonColor={theme.colors.onBackground}
+                textColor={theme.colors.onPrimary}
                 onPress={() => router.replace("/(tabs)/Profile")}
                 className="w-full"
                 disabled={loading}

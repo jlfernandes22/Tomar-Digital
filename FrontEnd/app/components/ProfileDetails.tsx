@@ -19,7 +19,7 @@ const ProfileDetails = () => {
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
   return (
-    <Surface style={{ flex: 1 }}>
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background}}>
       {/* 2. o ScrollView para ecrãs pequenos */}
       <ScrollView
         contentContainerStyle={{
@@ -62,7 +62,7 @@ const ProfileDetails = () => {
             borderColor: theme.colors.outline,
           }}
         >
-          <Text className="text-primary text-4xl font-bold uppercase">
+          <Text  style={{color: theme.colors.primary, fontSize: 40}} >
             {(user.name || user.email || "V").charAt(0)}
           </Text>
         </View>
@@ -119,7 +119,9 @@ const ProfileDetails = () => {
           <CustomButton
             onPress={() => router.replace("/(tabs)/ScanScreen")}
             className="w-full mt-2 shadow-md"
-            buttonColor="#EF4444"
+            buttonColor={theme.colors.primary}    
+            textColor={theme.colors.onPrimary}
+
             accessibilityRole="button"
             accessibilityLabel="Ler QR-Code de fatura"
             icon={() => (
@@ -139,7 +141,7 @@ const ProfileDetails = () => {
               Tomar
             </Text>
             <Text
-              style={{ color: theme.colors.error, fontWeight: "bold" }}
+              style={{ color: theme.colors.onSurface, fontWeight: "bold" }}
               className="text-base text-center"
             >
               - Necessário Contribuinte -
@@ -174,6 +176,7 @@ const ProfileDetails = () => {
         <CustomButton
           onPress={logout}
           className="w-full mt-10 mb-6 shadow-md"
+          textColor={theme.colors.onError}
           buttonColor={theme.colors.error}
           accessibilityRole="button"
           accessibilityLabel="Terminar sessão e sair da conta"
