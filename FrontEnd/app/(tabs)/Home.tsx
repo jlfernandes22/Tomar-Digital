@@ -40,6 +40,9 @@ export default function Index() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
 
+const [isFavorite, setIsFavorite] = useState(false);
+  const [loadingFav, setLoadingFav] = useState(false);
+
   const [negocioSelecionado, setNegocioSelecionado] = useState<Negocio | null>(null);
 
   const mapRef = useRef<any>(null);
@@ -70,8 +73,58 @@ export default function Index() {
     }
   };
 
-  useFocusEffect(useCallback(() => { fetchNegocios(); }, []));
 
+const checkFavorite = async () => {
+    if (!user?.id || !negocioSelecionado?._id) return;
+    try {
+    const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`);
+    const dados = await response.json();
+    const lista = Array.isArray(dados) ? dados : dados.favoritos || [];
+    
+    // Verificamos se o ID do negócio selecionado está na lista de favoritos
+    const existe = lista.some((fav: any) => 
+      (fav.businessId?._id || fav.businessId) === negocioSelecionado._id
+    );
+    
+    setIsFavorite(existe);
+  } catch (error) {
+    console.log("Erro ao verificar favorito no mapa:", error);
+  }
+  };
+
+  // 3. Alternar Favorito (Guardar/Retirar)
+  const toggleFavorite = async () => {
+    if (!user?.id) {
+      Alert.alert("Aviso", "Tens de ter sessão iniciada para guardar favoritos.");
+      return;
+    }
+
+    setLoadingFav(true);
+    const endpoint = isFavorite ? "/retirarFavorito" : "/guardarFavorito";
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, businessId: negocioSelecionado?._id }),
+      });
+
+      if (response.ok) {
+        setIsFavorite(!isFavorite);
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível atualizar os favoritos.");
+    } finally {
+      setLoadingFav(false);
+    }
+  };
+
+useFocusEffect(
+  useCallback(() => {
+    fetchNegocios();
+    checkFavorite(); // Esta função vai à API ver a lista atualizada
+  }, [user?.id, negocioSelecionado?._id]) // ou id nos Detalhes
+);
   const onChangeSearch = (query: string) => {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   setSearchQuery(query);
@@ -174,38 +227,69 @@ export default function Index() {
             <View style={{ marginVertical: 15, borderTopWidth: 0.5, borderColor: '#eee', paddingTop: 15 }}>
               <Text style={{color: theme.colors.onBackground, marginBottom: 5 }}>📍 Lat: {negocioSelecionado.location.lat} | Long: {negocioSelecionado.location.long}</Text>
             </View>
+<View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+  {/* Botão de Favoritos */}
+  <TouchableRipple
+    disabled={loadingFav}
+    style={{ 
+      backgroundColor: isFavorite ? theme.colors.errorContainer : theme.colors.surfaceVariant, 
+      paddingHorizontal: 15, 
+      borderRadius: 12, 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: isFavorite ? theme.colors.error : theme.colors.outlineVariant
+    }}
+    onPress={toggleFavorite}
+  >
+    {loadingFav ? (
+      <ActivityIndicator size={24} color={theme.colors.primary} />
+    ) : (
+      <IconButton 
+        icon={isFavorite ? "heart" : "heart-outline"} 
+        iconColor={isFavorite ? theme.colors.error : theme.colors.onSurfaceVariant} 
+        size={24}
+        style={{ margin: 0 }}
+      />
+    )}
+  </TouchableRipple>
 
-            <TouchableRipple
-              style={{ backgroundColor: theme.colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}
-              onPress={() => {
-  if (!negocioSelecionado) return;
-
+  {/* Botão de Navegação (Mapa Externo) */}
+  <TouchableRipple
+    style={{ 
+      flex: 1, 
+      backgroundColor: theme.colors.primary, 
+      paddingVertical: 14, 
+      borderRadius: 12, 
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}
+    onPress={() => {
+      if (!negocioSelecionado) return;
       const { lat, long } = negocioSelecionado.location;
 
       if (Platform.OS === 'ios') {
-              // Esqueleto de URL para Apple Maps (iOS)
-              // sll = lat/long do marcador
-              const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;              
-              Linking.openURL(url).catch(err => 
-                Alert.alert("Erro", "Não foi possível abrir o Apple Maps")
-          );
-
+        const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;              
+        Linking.openURL(url).catch(() => 
+          Alert.alert("Erro", "Não foi possível abrir o Apple Maps")
+        );
+      } else {
+        const url = `geo:${lat},${long}?q=${lat},${long}(${negocioSelecionado.name})`;
+        Linking.canOpenURL(url).then(supported => {
+          if (supported) {
+            Linking.openURL(url);
           } else {
-            // Esqueleto de URL para Google Maps (Android)
-            const url = `geo:${lat},${long}?q=${lat},${long}(${negocioSelecionado.name})`;
-            Linking.canOpenURL(url).then(supported => {
-              if (supported) {
-                Linking.openURL(url);
-              } else {
-                // Fallback para o browser caso não tenha a App instalada
-                Linking.openURL(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${long}`);
-              }
-            });
+            Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${long}`);
           }
-          }}
-         >
-              <Text style={{color: theme.colors.background, fontWeight: 'bold', fontSize: 16 }}>VER STREET VIEW</Text>
-            </TouchableRipple>
+        });
+      }
+    }}
+  >
+    <Text style={{ color: theme.colors.onPrimary, fontWeight: 'bold', fontSize: 16 }}>
+      VER NO MAPA
+    </Text>
+  </TouchableRipple>
+</View>
           </Surface>
         )}
       </SafeAreaView>
