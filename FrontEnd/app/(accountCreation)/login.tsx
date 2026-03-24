@@ -79,7 +79,7 @@ const Login = () => {
             cidadeEncontrada,
             NIFEncontrado,
           );
-
+          console.log(roleEncontrado, nomeEncontrado)
           router.replace("/(tabs)/home");
         }
       } else {
