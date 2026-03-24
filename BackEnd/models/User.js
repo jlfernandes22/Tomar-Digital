@@ -32,7 +32,7 @@ const UserSchema = new mongoose.Schema({
     default: "cidadao",
   },
 
-  saldo: {
+  Points: {
     type: Number,
     default: 0,
   },

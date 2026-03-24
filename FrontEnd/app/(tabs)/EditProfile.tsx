@@ -11,25 +11,23 @@ import { useAuth } from "@/context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { images } from "@/constants/images";
-import { Surface, Text } from "react-native-paper";
+import { Surface, Text, useTheme } from "react-native-paper";
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
-
   if (!user)
     return (
       <View className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#7c3aed" />
       </View>
     );
-
   const [name, setName] = useState(user.name || "");
   const [city, setCity] = useState(user.city || "");
   const [NIF, setNIF] = useState(user.NIF ? String(user.NIF) : "");
   const [loading, setLoading] = useState(false);
-
+  const theme = useTheme();
   const handleEdit = async () => {
     setLoading(true);
     try {
@@ -53,7 +51,7 @@ const EditProfile = () => {
           city: city,
           NIF: NIF ? Number(NIF) : null,
         });
-        router.replace("/(tabs)/profile");
+        router.replace("/(tabs)/Profile");
       } else {
         Alert.alert("Erro", "O servidor rejeitou as alterações.");
       }
@@ -75,29 +73,55 @@ const EditProfile = () => {
         >
           {/* Cabeçalho */}
           <View className="items-center mt-6 mb-8 px-6">
-            <Text variant="headlineSmall" className="font-bold">
-              Editar Informações do Perfil
-            </Text>
+            <Text variant="headlineSmall">Editar Informações do Perfil</Text>
           </View>
 
           {/* Contentor Principal do Formulário*/}
-          <View className="bg-convento-600 border-2 rounded-xl border-convento-500 items-center mx-4 py-8 px-6">
+          <View
+            className=" items-center mx-4 py-8 px-6 rounded-xl"
+            style={{
+              backgroundColor: theme.colors.background,
+              borderColor: theme.colors.outline,
+              borderWidth: 2,
+            }}
+          >
             {/* Zona da Imagem */}
             <View className="relative mb-2">
-              <View className="w-32 h-32 bg-white border-2 border-convento-700 rounded-full items-center justify-center">
+              <View
+                className="w-32 h-32 rounded-full items-center justify-center"
+                style={{
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.outline,
+                  borderWidth: 2,
+                }}
+              >
                 <Text className="text-primary text-4xl font-bold uppercase">
                   {(user.name || user.email || "V").charAt(0)}
                 </Text>
               </View>
 
-              <Image
-                className="absolute size-8 bottom-0 right-2 bg-convento-300 rounded-full border-2 border-convento-400"
-                source={images.editProfileImg}
-                accessibilityElementsHidden={true}
-                importantForAccessibility="no-hide-descendants"
-              />
+              {/* Será trocado por uma touchable opacity para poder trocar foto de perfil */}
+              <View
+                className="absolute bottom-0 right-2  rounded-full border-2 "
+                style={{
+                  padding: 4,
+                  borderRadius: 26,
+                  borderWidth: 2,
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.outline,
+                }}
+              >
+                <Image
+                  key={theme.dark ? "dark-theme" : "light-theme"}
+                  className="size-4"
+                  tintColor={theme.colors.onBackground}
+                  source={images.editProfileImg}
+                  accessibilityElementsHidden={true}
+                  importantForAccessibility="no-hide-descendants"
+                />
+              </View>
             </View>
-            <Text className="text-convento-700 text-center mb-8 font-medium">
+            <Text className="text-center mb-8" variant="bodyLarge">
               Mudar a Foto de Perfil
             </Text>
 
@@ -129,7 +153,7 @@ const EditProfile = () => {
 
             <View className="w-full mt-6">
               <CustomButton
-                buttonColor="#EF4444"
+                buttonColor="#FF3333"
                 onPress={handleEdit}
                 loading={loading}
                 className="w-full mb-3"
@@ -138,8 +162,8 @@ const EditProfile = () => {
               </CustomButton>
 
               <CustomButton
-                buttonColor="#6B7280"
-                onPress={() => router.replace("/(tabs)/profile")}
+                buttonColor="#724E37"
+                onPress={() => router.replace("/(tabs)/Profile")}
                 className="w-full"
                 disabled={loading}
               >

@@ -11,7 +11,7 @@ import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
 import CustomChip from "../components/CustomChip";
 
-export default function AddBusinessCamara() {
+export default function AddBusiness() {
   const { user } = useAuth(); // Importa o utilizador da sessão atual
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -95,19 +95,77 @@ export default function AddBusinessCamara() {
     }
   };
   return (
-    <Surface style={{flex:1}}>
-      <SafeAreaView >
-        <ScrollView className="p-4 mr-2">
-          <Text className="text-3xl font-bold text-center mb-8">
-            Adicionar Negócio
-          </Text>
+    <Surface style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} className="p-4">
+        <Text className="text-3xl font-bold text-center mb-8">
+          Adicionar Negócio
+        </Text>
 
-          {/* Nome do Negócio */}
-          <View accessibilityLabel="Introduza o nome do negócio">
-            <CustomTextInput
-              label="Nome do negócio"
-              value={name}
-              onChangeText={setName}
+        {/* Nome do Negócio */}
+        <View accessibilityLabel="Introduza o nome do negócio">
+          <CustomTextInput
+            label="Nome do negócio"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+
+        {/* Categoria */}
+        <View className="mb-2">
+          <Text
+            variant="bodyLarge"
+            className="mt-4 mb-2 text-center opacity-70"
+          >
+            Categoria:
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="flex-row"
+            contentContainerStyle={{
+              paddingVertical: 5,
+              paddingHorizontal: 16,
+            }}
+          >
+            {categories.map((cat) => {
+              const isSelected = category === cat;
+              return (
+                <Chip
+                  key={cat}
+                  mode="outlined"
+                  selected={isSelected}
+                  onPress={() => setCategory(cat)}
+                  className="mr-3 mb-2"
+                  showSelectedCheck={false}
+                  // A MAGIA DAS CORES AQUI:
+                  style={{
+                    backgroundColor: isSelected ? "#FF6600" : "transparent",
+                    borderColor: isSelected ? "#FF6600" : theme.colors.outline,
+                  }}
+                  textStyle={{
+                    color: isSelected ? "white" : theme.colors.onSurface,
+                    fontWeight: isSelected ? "bold" : "normal",
+                  }}
+                >
+                  {cat}
+                </Chip>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* MAPA INTERATIVO */}
+        <View>
+          <Text className="text-primary  mb-2 text-center">
+            Localização no Mapa:
+          </Text>
+          <View
+            className="border-2 border-tomar-200 rounded-lg h-[20rem] overflow-hidden bg-primary"
+            accessibilityLabel="Mapa interativo para selecionar localização"
+          >
+            <Map
+              showPin={true}
+              onLocationSelect={(location) => setSelectedLocation(location)}
             />
           </View>
 
@@ -170,13 +228,13 @@ export default function AddBusinessCamara() {
               Submeter para Aprovação
             </CustomButton>
           </View>
-        </ScrollView>
-        <CustomSnackBar
-          visible={snackbarVisible}
-          message={snackbarMessage}
-          onDismiss={() => setSnackbarVisible(false)}
-        />
+        </View>
       </SafeAreaView>
+      <CustomSnackBar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
     </Surface>
   );
 }

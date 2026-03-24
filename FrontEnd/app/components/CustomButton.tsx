@@ -26,7 +26,6 @@ const CustomButton = ({
   labelStyle,
   accessibilityRole,
   accessibilityLabel,
-  disabled,
 }: PrimaryButtonProps) => {
   return (
     <View className={` ${className || ""}`}>
@@ -34,14 +33,13 @@ const CustomButton = ({
         mode="contained"
         buttonColor={buttonColor ? buttonColor : "#FF8533"}
         textColor="#FFFFFF"
-        onPress={onPress}
+        onPress={loading ? () => {} : onPress}
         loading={loading}
         labelStyle={[{ fontSize: 18, fontWeight: "bold" }, labelStyle]}
         rippleColor={"#D2B5A3"}
         icon={icon}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
-        disabled={disabled}
       >
         {children}
       </Button>
