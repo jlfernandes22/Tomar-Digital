@@ -203,7 +203,7 @@ const CreateCampaign = () => {
                   value={expirationDate}
                   mode="date"
                   display="default"
-                  onChange={onChangeDate}
+                  onValueChange={onChangeDate}
                   minimumDate={new Date()}
                 />
               )}
