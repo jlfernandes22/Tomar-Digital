@@ -94,17 +94,93 @@ const _layout = () => {
       }}
       screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen name="home" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.homeImg} color={color} /> }} />
-      <Tabs.Screen name="saved" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.bookmarkImg} color={color} /> }} />
-      <Tabs.Screen name="camara" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.camaraImg} color={color} /> }} />
-      <Tabs.Screen name="add" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.addImg} color={color} /> }} />
-      <Tabs.Screen name="qrcode" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.qrCodeImg} color={color} /> }} />
-      <Tabs.Screen name="dashboardTab" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.statsImg} color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ tabBarIcon: ({ color }) => <TabIcon icon={images.profileImg} color={color} /> }} />
-      
-      {/* Escondidos */}
-      <Tabs.Screen name="editProfile" options={{ href: null }} />
-      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen
+        name="Home"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.homeImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Search"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.searchImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Saved"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.bookmarkImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="CamaraIndex"
+        options={{
+          href: user?.role === "camara" ? "/CamaraIndex" : null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.camaraImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="AddBusiness"
+        options={{
+          href: user?.role === "comerciante" ? "/AddBusiness" : null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.addImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="ScanScreen"
+        options={{
+          href: user?.role === "cidadao" ? "/ScanScreen" : null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.qrCodeImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="CreateCampaign"
+        options={{
+          href: user?.role === "camara" ? "/CreateCampaign" : null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.camaraImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="DashboardTab"
+        options={{
+          href: user?.role === "camara" ? "/DashboardTab" : null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.statsImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Profile"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.profileImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen name="EditProfile" options={{ href: null }} />
     </Tabs>
   );
 };
