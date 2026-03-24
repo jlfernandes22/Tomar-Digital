@@ -23,11 +23,11 @@ const _layout = () => {
           if (!options.tabBarIcon || options.href === null) return false;
 
           // Regras de Negócio
-          if (route.name === "camara" && user?.role !== "camara") return false;
-          if (route.name === "dashboardTab" && user?.role !== "camara") return false;
-          if (route.name === "add" && user?.role !== "comerciante") return false;
-          if (route.name === "qrcode" && user?.role !== "cidadao") return false;
-          if (route.name === "editProfile") return false;
+          if (route.name === "CamaraIndex" && user?.role !== "camara") return false;
+          if (route.name === "DashboardTab" && user?.role !== "camara") return false;
+          if (route.name === "AddBusiness" && user?.role !== "comerciante") return false;
+          if (route.name === "ScanScreen" && user?.role !== "cidadao") return false;
+          if (route.name === "EditProfile") return false;
 
           return true;
         });

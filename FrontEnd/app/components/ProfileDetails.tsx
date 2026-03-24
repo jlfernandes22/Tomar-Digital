@@ -13,8 +13,8 @@ const roleLabels: Record<string, string> = {
 };
 
 const ProfileDetails = () => {
-  const { logout, user } = useAuth();
   const theme = useTheme();
+  const { logout, user } = useAuth();
 
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
