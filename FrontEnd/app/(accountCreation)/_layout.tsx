@@ -13,19 +13,29 @@ const _layout = () => {
   return (
     <Tabs
       tabBar={({ navigation, state, descriptors, insets }) => {
-        // FILTRO MANUAL POR ROLE
-        const visibleRoutes = state.routes;
+        // FILTRO REFORÇADO: 
+        // 1. Remove rotas que o Expo Router esconde (href: null)
+        // 2. Remove rotas que não têm ícone definido (os "fantasmas")
+        // 3. Remove rotas internas como o próprio "_layout" ou "index"
+        const visibleRoutes = state.routes.filter((route) => {
+          const options = descriptors[route.key].options as any;
+          const isHidden = options.href === null;
+          const hasIcon = options.tabBarIcon !== undefined;
+          
+          // Só mostra se NÃO for escondido E tiver um ícone definido
+          return !isHidden && hasIcon;
+        });
 
-        // 2. Como removemos rotas, recalculamos qual é o índice da aba ativa
+        // Localiza qual das rotas VISÍVEIS corresponde à rota ATUAL do sistema
         const activeRoute = state.routes[state.index];
         const activeIndex = visibleRoutes.findIndex(
-          (r) => r.key === activeRoute.key,
+          (r) => r.key === activeRoute.key
         );
 
         return (
           <BottomNavigation.Bar
             navigationState={{
-              index: activeIndex >= 0 ? activeIndex : 0,
+              index: activeIndex === -1 ? 0 : activeIndex,
               routes: visibleRoutes,
             }}
             safeAreaInsets={insets}
@@ -75,6 +85,7 @@ const _layout = () => {
       <Tabs.Screen
         name="Register"
         options={{
+
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.registerImg} color={color} />
           ),
