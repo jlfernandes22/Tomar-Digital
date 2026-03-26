@@ -153,6 +153,7 @@ const CreateCampaign = () => {
               style={{
                 backgroundColor: theme.colors.surfaceVariant,
                 borderRadius: 24,
+                marginBottom: 14
               }}
               elevation={0}
             >
@@ -191,10 +192,12 @@ const CreateCampaign = () => {
                   Expira a: {expirationDate.toLocaleDateString("pt-PT")}
                 </Text>
                 <CustomButton
+                
                   onPress={() => setShowDatePicker(true)}
                   buttonColor={theme.colors.secondaryContainer}
+                  textColor={theme.colors.onSecondaryContainer}
                 >
-                  <Text>Alterar data limite</Text>
+                  Alterar data limite
                 </CustomButton>
               </View>
 
@@ -258,6 +261,7 @@ const CreateCampaign = () => {
                 onPress={addPack}
                 loading={loading}
                 buttonColor={theme.colors.secondaryContainer}
+                textColor={theme.colors.onSecondaryContainer}
               >
                 Adicionar Pacote
               </CustomButton>
