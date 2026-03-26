@@ -642,9 +642,14 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
       },
     ]);
 
+    const totalUsersCount = await User.countDocuments();
+    const totalBusinessesCount = await Business.countDocuments();
+
     res.status(200).json({
       cities: usersByCity,
       categories: businessByCategory,
+      totalUsers: totalUsersCount, // Variável injetada pela API
+      totalBusinesses: totalBusinessesCount, // Variável injetada pela API
     });
   } catch (error) {
     console.error("Erro ao obter as informações", error);

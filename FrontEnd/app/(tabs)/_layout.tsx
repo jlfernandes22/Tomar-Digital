@@ -1,4 +1,3 @@
-
 import { images } from "@/constants/images";
 import { Tabs } from "expo-router";
 import React from "react";
@@ -18,23 +17,31 @@ const _layout = () => {
         // 1. FILTRAGEM TOTAL (Whitelist + Roles)
         const visibleRoutes = state.routes.filter((route) => {
           const options = descriptors[route.key].options as any;
-          
+
           // Se não tem ícone ou é oculto, tchau.
           if (!options.tabBarIcon || options.href === null) return false;
 
           // Regras de Negócio
-          if (route.name === "CamaraIndex" && user?.role !== "camara") return false;
-          if (route.name === "DashboardTab" && user?.role !== "camara") return false;
-          if (route.name === "AddBusiness" && user?.role !== "comerciante") return false;
-          if (route.name === "ScanScreen" && user?.role !== "cidadao") return false;
+          if (route.name === "CamaraIndex" && user?.role !== "camara")
+            return false;
+          if (route.name === "DashboardTab" && user?.role !== "camara")
+            return false;
+          if (route.name === "AddBusiness" && user?.role !== "comerciante")
+            return false;
+          if (route.name === "ScanScreen") return false;
           if (route.name === "EditProfile") return false;
+
+          if (route.name === "CreateCampaign" && user?.role !== "camara")
+            return false;
 
           return true;
         });
 
         // 2. Localizar índice ativo
         const activeRoute = state.routes[state.index];
-        const activeIndex = visibleRoutes.findIndex((r) => r.key === activeRoute.key);
+        const activeIndex = visibleRoutes.findIndex(
+          (r) => r.key === activeRoute.key,
+        );
 
         return (
           <BottomNavigation.Bar
@@ -43,9 +50,10 @@ const _layout = () => {
               // Adicionamos 'name' aqui para o TS não reclamar no onTabPress
               routes: visibleRoutes.map((r) => ({
                 key: r.key,
-                title: (descriptors[r.key].options.tabBarLabel as string) || r.name,
+                title:
+                  (descriptors[r.key].options.tabBarLabel as string) || r.name,
                 focusedIcon: r.name,
-                name: r.name, 
+                name: r.name,
               })),
             }}
             safeAreaInsets={insets}
@@ -82,8 +90,18 @@ const _layout = () => {
               const descriptor = descriptors[route.key];
               if (descriptor?.options.tabBarIcon) {
                 return (
-                  <View style={{ width: 30, alignItems: 'center', justifyContent: 'center' }}>
-                    {descriptor.options.tabBarIcon({ focused, color, size: 24 })}
+                  <View
+                    style={{
+                      width: 30,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {descriptor.options.tabBarIcon({
+                      focused,
+                      color,
+                      size: 24,
+                    })}
                   </View>
                 );
               }
@@ -99,15 +117,6 @@ const _layout = () => {
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.homeImg} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="Search"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <TabIcon icon={images.searchImg} color={color} />
           ),
         }}
       />
