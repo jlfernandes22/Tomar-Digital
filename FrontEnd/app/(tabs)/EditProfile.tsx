@@ -1,33 +1,49 @@
-import {
-  ActivityIndicator,
-  Alert,
-  View,
-  Image,
-  ScrollView,
-} from "react-native";
-import React, { useState } from "react";
+import { ActivityIndicator, View, Image, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { images } from "@/constants/images";
-import { Surface, Text, useTheme } from "react-native-paper";
+import { Dialog, Portal, Surface, Text, useTheme } from "react-native-paper";
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
+import delay from "../utils/delay";
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
-  if (!user)
+  const [name, setName] = useState(user?.name || "");
+  const [city, setCity] = useState(user?.city || "");
+  const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : "");
+  const [loading, setLoading] = useState(false);
+  const theme = useTheme();
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogText, setDialogText] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setCity(user.city || "");
+      setNIF(user.NIF ? String(user.NIF) : "");
+    }
+  }, [user]);
+
+  if (!user) {
     return (
       <View className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#7c3aed" />
       </View>
     );
-  const [name, setName] = useState(user.name || "");
-  const [city, setCity] = useState(user.city || "");
-  const [NIF, setNIF] = useState(user.NIF ? String(user.NIF) : "");
-  const [loading, setLoading] = useState(false);
-  const theme = useTheme();
+  }
+
+  const hideDialog = async () => {
+    setDialogVisible(false);
+    if (success) {
+      router.replace("/(tabs)/Profile");
+    }
+  };
+
   const handleEdit = async () => {
     setLoading(true);
     try {
@@ -45,18 +61,24 @@ const EditProfile = () => {
       });
 
       if (response.ok) {
-        Alert.alert("Sucesso", "Alteração de dados com sucesso");
+        setSuccess(true);
+        //console.log(success);
+        setDialogText("Alteração de dados com sucesso");
+        setDialogVisible(true);
         updateUser({
           name: name,
           city: city,
           NIF: NIF ? Number(NIF) : null,
         });
-        router.replace("/(tabs)/Profile");
       } else {
-        Alert.alert("Erro", "O servidor rejeitou as alterações.");
+        setDialogText("O servidor rejeitou as alterações.");
+        setDialogVisible(true);
+        setSuccess(false);
       }
     } catch (error) {
-      Alert.alert("Erro", "Falha na ligação ao servidor.");
+      setDialogText("Falha na ligação ao servidor.");
+      setDialogVisible(true);
+      setSuccess(false);
     } finally {
       setLoading(false);
     }
@@ -171,6 +193,16 @@ const EditProfile = () => {
               >
                 Cancelar
               </CustomButton>
+              <Portal>
+                <Dialog visible={dialogVisible} onDismiss={hideDialog}>
+                  <Dialog.Title>{success ? "Sucesso" : "Erro"}</Dialog.Title>
+                  <Dialog.Content>
+                    <Text variant="bodyMedium">{dialogText}</Text>
+                  </Dialog.Content>
+
+                  <CustomButton onPress={hideDialog}>Ok</CustomButton>
+                </Dialog>
+              </Portal>
             </View>
           </View>
         </ScrollView>

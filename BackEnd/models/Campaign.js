@@ -25,7 +25,14 @@ const CampaignSchema = new mongoose.Schema({
     required: true,
   },
 
-  image: {
+  //logo e flysheet teram de ser required no futuro
+
+  logo: {
+    type: String,
+    default: "",
+  },
+
+  flysheet: {
     type: String,
     default: "",
   },

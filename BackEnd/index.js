@@ -25,43 +25,43 @@ mongoose
 //////////////////////////////////////////////////
 //Registar utilizador teste para usar no postman//
 //////////////////////////////////////////////////
-app.post("/registar-teste", async (req, res) => {
-  console.log("Recebido pedido do Postman para registo de teste:", req.body);
-
-  // Retiramos o confirmPassword para ser mais rápido escrever o JSON no Postman
-  const { name, email, password, city, role } = req.body;
-
-  try {
-    // Verificar se já existe
-    const user = await User.findOne({ email: email });
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: "Este utilizador de teste já existe" });
-    }
-
-    const salt = 10;
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Definir utilizador com password em hash
-    const newUser = new User({
-      name: name || "Utilizador de Teste", // Se não enviares nome, ele assume este
-      email: email,
-      password: hashedPassword,
-      role: role,
-      city: city || "Tomar", // Se não enviares cidade, ele assume Tomar
-    });
-
-    await newUser.save();
-    res.status(201).json({
-      message: "Utilizador de teste criado com sucesso via Postman!",
-      dados: { email: newUser.email, name: newUser.name },
-    });
-  } catch (err) {
-    console.error("Erro na criação via Postman:", err);
-    res.status(500).json({ message: "Erro ao criar conta de teste" });
-  }
-});
+//app.post("/registar-teste", async (req, res) => {
+//  console.log("Recebido pedido do Postman para registo de teste:", req.body);
+//
+//  // Retiramos o confirmPassword para ser mais rápido escrever o JSON no Postman
+//  const { name, email, password, city, role } = req.body;
+//
+//  try {
+//    // Verificar se já existe
+//    const user = await User.findOne({ email: email });
+//    if (user) {
+//      return res
+//        .status(400)
+//        .json({ message: "Este utilizador de teste já existe" });
+//    }
+//
+//    const salt = 10;
+//    const hashedPassword = await bcrypt.hash(password, salt);
+//
+//    // Definir utilizador com password em hash
+//    const newUser = new User({
+//      name: name || "Utilizador de Teste", // Se não enviares nome, ele assume este
+//      email: email,
+//      password: hashedPassword,
+//      role: role,
+//      city: city || "Tomar", // Se não enviares cidade, ele assume Tomar
+//    });
+//
+//    await newUser.save();
+//    res.status(201).json({
+//      message: "Utilizador de teste criado com sucesso via Postman!",
+//      dados: { email: newUser.email, name: newUser.name },
+//    });
+//  } catch (err) {
+//    console.error("Erro na criação via Postman:", err);
+//    res.status(500).json({ message: "Erro ao criar conta de teste" });
+//  }
+//});
 
 //////////////////////
 //Registar utilizador
