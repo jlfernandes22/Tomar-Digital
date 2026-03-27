@@ -111,7 +111,9 @@ export const AuthProvider = ({ children }: any) => {
     try {
       await SecureStore.deleteItemAsync(STORAGE_KEY);
       setUser(null);
-      router.replace("/(accountCreation)/Login");
+      router.push({
+                          pathname: "/(accountCreation)/Login",
+                      });
     } catch (e) {
       console.error("Erro no logout:", e);
     }
