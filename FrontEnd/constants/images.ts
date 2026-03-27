@@ -13,6 +13,7 @@ import backgroundLogin from "@/assets/backgroundImages/bglogin.webp"
 import backgroundRegister from "@/assets/backgroundImages/bgregister.webp"
 import favWaiting from "@/assets/otherIcons/favWaiting.png"
 import emailImg from "@/assets/otherIcons/email.png"
+import campanhaImg from "@/assets/tabsImages/campanha.png"
 
 export const images = {
   profileImg,
@@ -29,4 +30,5 @@ export const images = {
   backgroundLogin,
   backgroundRegister,
   favWaiting,
-emailImg};
+emailImg,
+campanhaImg};

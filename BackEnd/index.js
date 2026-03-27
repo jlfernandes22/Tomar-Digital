@@ -568,7 +568,7 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
     const { title, description, packs, expirationDate } = req.body;
 
     const newCampaign = new Campaign({
-      createdBy: user,
+      createdBy: user._id,
       title: title,
       description: description,
       packs: packs,
@@ -591,6 +591,26 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
     return res.status(200).json("Sucesso");
   } catch (err) {
     console.log(err);
+  }
+});
+
+
+////Lista das Campanhas
+app.get("/listaCampanhas", async (req, res) => {
+  try {
+    const campanhas = await Campaign.find().lean();
+
+    const formatadas = campanhas.map(c => ({
+          ...c,
+          _id: c._id.toString(),
+          // Se createdBy for um objeto, enviamos apenas o nome ou string
+          createdBy: typeof c.createdBy === 'object' ? (c.createdBy.username || "Admin") : c.createdBy
+        }));
+
+    res.status(200).json(formatadas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json("Erro ao listar as campanhas");
   }
 });
 
