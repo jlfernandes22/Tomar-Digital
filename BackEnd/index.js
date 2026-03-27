@@ -135,7 +135,7 @@ app.post("/iniciarSessao", async (req, res) => {
       user: {
         name: user.name,
         email: user.email,
-        saldo: user.saldo,
+        Points: user.Points,
         role: user.role,
         city: user.city,
         NIF: user.NIF,

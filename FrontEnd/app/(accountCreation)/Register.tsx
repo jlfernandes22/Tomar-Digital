@@ -2,14 +2,12 @@ import {
   Image,
   Text,
   View,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { Snackbar, TextInput } from "react-native-paper";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";

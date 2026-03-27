@@ -7,7 +7,7 @@ export interface User {
   role: string;
   token: string;
   email: string;
-  saldo: number;
+  Points: number;
   name: string;
   city?: string;
   NIF?: number | null;
@@ -22,7 +22,7 @@ interface AuthContextData {
     role: string,
     token: string,
     email: string,
-    saldo: number,
+    Points: number,
     name: string,
     city?: string,
     NIF?: number | null,
@@ -49,10 +49,10 @@ export const AuthProvider = ({ children }: any) => {
         ...prev,
         ...updatedData,
         // Se o saldo for NaN, ele volta para o saldo anterior ou 0
-        saldo:
-          updatedData.saldo !== undefined && !isNaN(Number(updatedData.saldo))
-            ? Number(updatedData.saldo)
-            : prev.saldo,
+        Points:
+          updatedData.Points !== undefined && !isNaN(Number(updatedData.Points))
+            ? Number(updatedData.Points)
+            : prev.Points,
       };
 
       // Usar a chave constante 'user_data'
@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: any) => {
     role: string,
     token: string,
     email: string,
-    saldo: number,
+    Points: number,
     name: string,
     city?: string,
     NIF?: number | null,
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: any) => {
         role,
         token,
         email,
-        saldo: Number(saldo) || 0,
+        Points: Number(Points) || 0,
         name,
         city,
         NIF,

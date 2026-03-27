@@ -55,10 +55,12 @@ const Login = () => {
         const tokenEncontrado = dados.token;
 
         const emailEncontrado = dados.user?.email || email; // se a API não devolver, usa o do estado
-        const saldoEncontrado = dados.user?.saldo || 0;
+        const saldoEncontrado = dados.user?.Points || 0;
         const nomeEncontrado = dados.user?.name || email;
         const cidadeEncontrada = dados.user?.city;
         const NIFEncontrado = dados.user?.NIF;
+
+        console.log(dados.user?.Points);
 
         if (idEncontrado && tokenEncontrado) {
           console.log({

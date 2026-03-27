@@ -19,7 +19,7 @@ const ProfileDetails = () => {
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
   return (
-    <Surface style={{ flex: 1, backgroundColor: theme.colors.background}}>
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {/* 2. o ScrollView para ecrãs pequenos */}
       <ScrollView
         contentContainerStyle={{
@@ -62,7 +62,7 @@ const ProfileDetails = () => {
             borderColor: theme.colors.outline,
           }}
         >
-          <Text  style={{color: theme.colors.primary, fontSize: 40}} >
+          <Text style={{ color: theme.colors.primary, fontSize: 40 }}>
             {(user.name || user.email || "V").charAt(0)}
           </Text>
         </View>
@@ -99,7 +99,7 @@ const ProfileDetails = () => {
             borderColor: theme.colors.outline,
           }}
           accessible={true}
-          accessibilityLabel={`Pontos disponíveis: ${Number(user.saldo).toFixed(2)}`}
+          accessibilityLabel={`Pontos disponíveis: ${user.Points}`}
         >
           <Text
             style={{ fontWeight: "bold" }}
@@ -111,17 +111,14 @@ const ProfileDetails = () => {
             style={{ fontWeight: "bold" }}
             className="text-5xl mb-6 text-center"
           >
-            {!isNaN(Number(user.saldo))
-              ? `${Number(user.saldo).toFixed(2)}`
-              : "0.00"}
+            {!isNaN(Number(user.Points)) ? `${Number(user.Points)}` : "0"}
           </Text>
 
           <CustomButton
             onPress={() => router.replace("/(tabs)/ScanScreen")}
             className="w-full mt-2 shadow-md"
-            buttonColor={theme.colors.primary}    
+            buttonColor={theme.colors.primary}
             textColor={theme.colors.onPrimary}
-
             accessibilityRole="button"
             accessibilityLabel="Ler QR-Code de fatura"
             icon={() => (

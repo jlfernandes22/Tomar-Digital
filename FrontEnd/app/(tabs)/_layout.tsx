@@ -5,7 +5,6 @@ import TabIcon from "@/app/components/Tabicon";
 import { useAuth } from "@/context/AuthContext";
 import { BottomNavigation, useTheme } from "react-native-paper";
 import { CommonActions } from "@react-navigation/native";
-import { Platform, View } from "react-native";
 
 const _layout = () => {
   const { user } = useAuth();
@@ -14,14 +13,17 @@ const _layout = () => {
   return (
     <Tabs
       tabBar={({ navigation, state, descriptors, insets }) => {
-        // 1. FILTRAGEM TOTAL (Whitelist + Roles)
+        /* 1. FILTRAGEM HÍBRIDA: 
+          Combina a limpeza de rotas ocultas do ecrã de login 
+          com as regras de negócio de acessos da aplicação principal.
+        */
         const visibleRoutes = state.routes.filter((route) => {
           const options = descriptors[route.key].options as any;
 
-          // Se não tem ícone ou é oculto, tchau.
+          // Se a rota está marcada como oculta ou não tem ícone, é filtrada
           if (!options.tabBarIcon || options.href === null) return false;
 
-          // Regras de Negócio
+          // Regras de acesso restrito baseadas no Role do utilizador
           if (route.name === "CamaraIndex" && user?.role !== "camara")
             return false;
           if (route.name === "DashboardTab" && user?.role !== "camara")
@@ -30,14 +32,12 @@ const _layout = () => {
             return false;
           if (route.name === "ScanScreen") return false;
           if (route.name === "EditProfile") return false;
-
           if (route.name === "CreateCampaign" && user?.role !== "camara")
             return false;
 
           return true;
         });
 
-        // 2. Localizar índice ativo
         const activeRoute = state.routes[state.index];
         const activeIndex = visibleRoutes.findIndex(
           (r) => r.key === activeRoute.key,
@@ -46,25 +46,22 @@ const _layout = () => {
         return (
           <BottomNavigation.Bar
             navigationState={{
-              index: activeIndex >= 0 ? activeIndex : 0,
-              // Adicionamos 'name' aqui para o TS não reclamar no onTabPress
-              routes: visibleRoutes.map((r) => ({
-                key: r.key,
-                title:
-                  (descriptors[r.key].options.tabBarLabel as string) || r.name,
-                focusedIcon: r.name,
-                name: r.name,
-              })),
+              index: activeIndex === -1 ? 0 : activeIndex,
+              /* Passagem direta do array visibleRoutes sem fazer .map() 
+                Isto preserva a integridade da rota para o React Native Paper
+              */
+              routes: visibleRoutes,
             }}
             safeAreaInsets={insets}
             style={{
               backgroundColor: theme.colors.elevation.level2,
-              height: Platform.OS === "ios" ? 85 : 75,
+              height: 80, // Altura estática e segura proveniente do layout funcional
             }}
-            activeColor="#FF6600"
+            /* Aplicação direta das cores dinâmicas do Design System */
+            activeColor={"white"}
             inactiveColor={theme.colors.onSurfaceVariant}
             activeIndicatorStyle={{
-              backgroundColor: "rgba(255, 102, 0, 0.2)",
+              backgroundColor: theme.colors.primaryContainer,
               width: 64,
               height: 44,
               borderRadius: 22,
@@ -77,40 +74,28 @@ const _layout = () => {
                 canPreventDefault: true,
               });
 
-              if (!event.defaultPrevented) {
+              if (event.defaultPrevented) {
+                preventDefault();
+              } else {
                 navigation.dispatch({
-                  // Agora 'route.name' existe no objeto mapeado!
                   ...CommonActions.navigate(route.name, (route as any).params),
                   target: state.key,
                 });
               }
             }}
-            renderIcon={({ route, focused, color }) => {
-              // Buscamos o ícone no descritor original pela KEY
-              const descriptor = descriptors[route.key];
-              if (descriptor?.options.tabBarIcon) {
-                return (
-                  <View
-                    style={{
-                      width: 30,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {descriptor.options.tabBarIcon({
-                      focused,
-                      color,
-                      size: 24,
-                    })}
-                  </View>
-                );
+            renderIcon={({ focused, route, color }) => {
+              const { options } = descriptors[route.key];
+              if (options.tabBarIcon) {
+                return options.tabBarIcon({ focused, color, size: 24 });
               }
               return null;
             }}
           />
         );
       }}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+      }}
     >
       <Tabs.Screen
         name="Home"
@@ -139,7 +124,6 @@ const _layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen
         name="AddBusiness"
         options={{
@@ -149,7 +133,6 @@ const _layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen
         name="ScanScreen"
         options={{
@@ -159,7 +142,6 @@ const _layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen
         name="CreateCampaign"
         options={{
@@ -169,7 +151,6 @@ const _layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen
         name="DashboardTab"
         options={{
@@ -188,7 +169,6 @@ const _layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen name="EditProfile" options={{ href: null }} />
     </Tabs>
   );

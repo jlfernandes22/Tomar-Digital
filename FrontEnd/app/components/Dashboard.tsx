@@ -1,10 +1,4 @@
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Alert, ScrollView, View, useWindowDimensions } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/constants/api";
@@ -77,7 +71,9 @@ const Dashboard = () => {
 
   const formatBarData = (dataArray: any[]) => {
     return {
-      labels: dataArray.map((item) => item._id.substring(0, 10)),
+      labels: dataArray.map((item) =>
+        item._id.length > 8 ? item._id.substring(0, 8) + "..." : item._id,
+      ),
       datasets: [
         {
           data: dataArray.map((item) => item.total),
@@ -85,6 +81,14 @@ const Dashboard = () => {
       ],
     };
   };
+
+  const maxCategoryValue =
+    allInfo.categories.length > 0
+      ? Math.max(...allInfo.categories.map((item: any) => item.total))
+      : 1;
+
+  // Garante que desenha pelo menos 1 linha, mas nunca mais do que 4 para não poluir o ecrã
+  const yAxisSegments = Math.max(1, Math.min(4, maxCategoryValue));
 
   const chartConfig = {
     backgroundGradientFrom: theme.colors.surfaceVariant,
@@ -96,6 +100,7 @@ const Dashboard = () => {
     fillShadowGradientFromOpacity: 0.8,
     fillShadowGradientTo: theme.colors.primaryContainer,
     fillShadowGradientToOpacity: 0.8,
+    decimalPlaces: 0,
   };
 
   if (loading) {
@@ -112,7 +117,7 @@ const Dashboard = () => {
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 10 }}>
           <Text
             variant="headlineMedium"
             style={{
@@ -125,21 +130,23 @@ const Dashboard = () => {
           </Text>
 
           {/* Secção de KPIs */}
-          <View className="flex-row justify-between mb-6">
+          <View className="flex-row mb-6">
             <Surface
-              className="p-4 flex-1 mr-2"
+              className="p-4"
               style={{
                 backgroundColor: theme.colors.primaryContainer,
                 borderRadius: 24,
+                marginRight: 20,
+                flex: 1,
               }}
-              elevation={0}
+              elevation={2}
             >
               <Text
                 variant="titleMedium"
                 style={{
                   color: theme.colors.onPrimaryContainer,
                   opacity: 0.8,
-                  marginLeft: 8,
+                  alignSelf: "center",
                 }}
               >
                 Cidadãos
@@ -149,7 +156,7 @@ const Dashboard = () => {
                 style={{
                   color: theme.colors.onPrimaryContainer,
                   fontWeight: "bold",
-                  marginLeft: 8,
+                  alignSelf: "center",
                 }}
               >
                 {summary.totalUsers}
@@ -157,19 +164,20 @@ const Dashboard = () => {
             </Surface>
 
             <Surface
-              className="p-4 flex-1 ml-2"
+              className="p-4"
               style={{
                 backgroundColor: theme.colors.secondaryContainer,
                 borderRadius: 24,
+                flex: 1,
               }}
-              elevation={0}
+              elevation={2}
             >
               <Text
                 variant="titleMedium"
                 style={{
                   color: theme.colors.onSecondaryContainer,
+                  alignSelf: "center",
                   opacity: 0.8,
-                  marginLeft: 8,
                 }}
               >
                 Negócios
@@ -179,7 +187,7 @@ const Dashboard = () => {
                 style={{
                   color: theme.colors.onSecondaryContainer,
                   fontWeight: "bold",
-                  marginLeft: 8,
+                  alignSelf: "center",
                 }}
               >
                 {summary.totalBusinesses}
@@ -189,10 +197,11 @@ const Dashboard = () => {
 
           {/* Secção Gráfica 1 - Distribuição Demográfica (PieChart Ajustado) */}
           <Surface
-            className="p-4 mb-6"
+            className="p-4"
             style={{
               backgroundColor: theme.colors.surfaceVariant,
               borderRadius: 24,
+              marginBottom: 20,
             }}
             elevation={0}
           >
@@ -248,12 +257,15 @@ const Dashboard = () => {
               <BarChart
                 data={formatBarData(allInfo.categories)}
                 width={chartWidth}
-                height={chartHeight}
+                height={450}
                 chartConfig={chartConfig}
                 yAxisLabel=""
                 yAxisSuffix=""
                 withInnerLines={false}
                 showValuesOnTopOfBars={true}
+                segments={yAxisSegments}
+                fromZero={true}
+                verticalLabelRotation={45}
                 style={{ borderRadius: 16 }}
               />
             ) : (

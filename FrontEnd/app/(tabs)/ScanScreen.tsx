@@ -74,7 +74,7 @@ export default function ScanScreen() {
       const result = await response.json();
 
       if (response.ok) {
-        updateUser({ saldo: result.novoSaldoTotal });
+        updateUser({ Points: result.novoSaldoTotal });
         Alert.alert(
           "Sucesso!",
           `Ganhaste ${result.valorGanho}€ de saldo!\nNovo saldo: ${result.novoSaldoTotal}€`,
@@ -83,7 +83,7 @@ export default function ScanScreen() {
               text: "OK",
               onPress: () => {
                 isProcessing.current = false;
-                router.push("/home");
+                router.push("/Home");
               },
             },
           ],

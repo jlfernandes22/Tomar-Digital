@@ -154,28 +154,42 @@ export default function CamaraIndex() {
   if (loading) {
     return (
       <Surface
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" , backgroundColor: theme.colors.surface }}
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.colors.surface,
+        }}
       >
         <ActivityIndicator animating={true} size="large" color="#FF6600" />
       </Surface>
     );
   }
-return (
+  return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaView style={{ flex: 1 }} className="p-4">
         <Text
           variant="headlineMedium"
-          style={{ color: theme.colors.primary, fontWeight: "bold", marginBottom: 10 }}
+          style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+          }}
         >
           Pedidos Pendentes
         </Text>
 
-        <Divider style={{ backgroundColor: theme.colors.outlineVariant, marginBottom: 16 }} />
+        <Divider
+          style={{
+            backgroundColor: theme.colors.outlineVariant,
+            marginBottom: 16,
+          }}
+        />
 
         {pendentes.length === 0 ? (
-          <Text 
-            variant="bodyLarge" 
-            style={{ color: theme.colors.onSurfaceVariant }} 
+          <Text
+            variant="bodyLarge"
+            style={{ color: theme.colors.onSurfaceVariant }}
             className="text-center mt-10"
           >
             Não há novos pedidos de Tomar.
@@ -183,9 +197,9 @@ return (
         ) : (
           <FlatList
             refreshControl={
-              <RefreshControl 
-                refreshing={refreshing} 
-                onRefresh={onRefresh} 
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
                 colors={[theme.colors.primary]} // Android
                 tintColor={theme.colors.primary} // iOS
               />
@@ -206,29 +220,44 @@ return (
                     marginBottom: 16,
                     borderWidth: 1,
                     borderColor: theme.colors.outlineVariant,
-                    overflow: 'hidden'
+                    overflow: "hidden",
                   }}
                   elevation={1}
                 >
                   <TouchableRipple
                     onPress={() => {
                       router.push({
-                        pathname: "/components/BusinessDetails",
+                        pathname: "../components/DetalhesBusiness.tsx",
                         params: { id: item._id },
                       });
                     }}
                   >
                     <View className="p-4">
-                      <Text variant="titleLarge" style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}>
+                      <Text
+                        variant="titleLarge"
+                        style={{
+                          color: theme.colors.onSurface,
+                          fontWeight: "bold",
+                        }}
+                      >
                         {item.name}
                       </Text>
                       <Text
                         variant="bodyMedium"
-                        style={{ color: theme.colors.secondary, fontStyle: 'italic' }}
+                        style={{
+                          color: theme.colors.secondary,
+                          fontStyle: "italic",
+                        }}
                       >
                         {item.category}
                       </Text>
-                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                      <Text
+                        variant="bodySmall"
+                        style={{
+                          color: theme.colors.onSurfaceVariant,
+                          marginTop: 4,
+                        }}
+                      >
                         Dono: {donoEspecifico?.name || "A carregar..."}
                       </Text>
                     </View>

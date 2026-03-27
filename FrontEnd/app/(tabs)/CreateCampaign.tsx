@@ -135,7 +135,7 @@ const CreateCampaign = () => {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <ScrollView
-            contentContainerStyle={{ paddingBottom: 60, paddingHorizontal: 16 }}
+            contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 16 }}
             keyboardShouldPersistTaps="handled"
           >
             <View className="mt-4">
@@ -149,11 +149,11 @@ const CreateCampaign = () => {
 
             {/* Secção 1: Dados Gerais da Campanha */}
             <Surface
-              className="mt-6 p-6"
               style={{
                 backgroundColor: theme.colors.surfaceVariant,
                 borderRadius: 24,
-                marginBottom: 14
+                marginBottom: 14,
+                marginTop: 15,
               }}
               elevation={0}
             >
@@ -162,7 +162,7 @@ const CreateCampaign = () => {
                 style={{
                   color: theme.colors.onSurfaceVariant,
                   marginBottom: 16,
-                  marginTop: 16,
+                  marginTop: 15,
                   alignSelf: "center",
                 }}
               >
@@ -192,7 +192,6 @@ const CreateCampaign = () => {
                   Expira a: {expirationDate.toLocaleDateString("pt-PT")}
                 </Text>
                 <CustomButton
-                
                   onPress={() => setShowDatePicker(true)}
                   buttonColor={theme.colors.secondaryContainer}
                   textColor={theme.colors.onSecondaryContainer}
@@ -214,10 +213,10 @@ const CreateCampaign = () => {
 
             {/* Secção 2: Criação e Adição de Pacotes */}
             <Surface
-              className="p-6 mt-6"
               style={{
                 backgroundColor: theme.colors.surfaceVariant,
                 borderRadius: 24,
+                marginTop: 20,
               }}
               elevation={0}
             >
@@ -226,7 +225,8 @@ const CreateCampaign = () => {
                 style={{
                   color: theme.colors.onSurfaceVariant,
                   marginBottom: 16,
-                  marginTop: 16,
+                  marginTop: 32,
+
                   alignSelf: "center",
                 }}
               >
