@@ -191,7 +191,16 @@ export default function Index() {
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
         {/* 3. MUDAR showPin PARA TRUE (Se estiver false, os pins não aparecem) */}
-        <Map ref={mapRef} showPin={true} businesses={filteredPins} readOnly />
+        <Map
+          ref={mapRef}
+          showPin={true}
+          businesses={filteredPins}
+          readOnly
+          onMarkerPress={(biz) => {
+            setNegocioSelecionado(biz);
+            setListaFiltrada([]);
+          }}
+        />
       </View>
 
       <SafeAreaView style={{ flex: 1 }} pointerEvents="box-none">

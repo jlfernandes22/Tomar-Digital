@@ -4,9 +4,12 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useEffect,
 } from "react";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Callout, Circle } from "react-native-maps";
 import { useTheme } from "react-native-paper";
+import * as Location from "expo-location";
+import { subscribe } from "expo-router/build/link/linking";
 
 interface MapProps {
   location?: { lat: number; long: number };
@@ -14,6 +17,7 @@ interface MapProps {
   onLocationSelect?: (coords: { latitude: number; longitude: number }) => void;
   readOnly?: boolean;
   businesses?: any[];
+  onMarkerPress?: (business: any) => void;
 }
 
 // 1. Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
@@ -95,16 +99,63 @@ const darkMapStyle = [
 // 2. Adicionamos <MapRefType, MapProps>
 const Map = forwardRef<MapRefType, MapProps>(
   (
-    { showPin, location, onLocationSelect, readOnly = false, businesses = [] },
+    {
+      showPin,
+      location,
+      onLocationSelect,
+      readOnly = false,
+      businesses = [],
+      onMarkerPress,
+    },
     ref,
   ) => {
     const theme = useTheme();
     const mapRef = useRef<MapView>(null);
-
+    //localização do utilizador
+    const [userLocation, setUserLocation] = useState<{
+      latitude: number;
+      longitude: number;
+    } | null>(null);
     const [selectedLocation, setSelectedLocation] = useState({
       latitude: location?.lat ?? 39.6035,
       longitude: location?.long ?? -8.4154,
     });
+
+    useEffect(() => {
+      let subscription: Location.LocationSubscription | null = null;
+
+      const tracking = async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          //dizer ao utilizador que é necessário localização para usar todas as funcionalidades
+          return;
+        }
+
+        subscription = await Location.watchPositionAsync(
+          {
+            //precisão da localização
+            accuracy: Location.Accuracy.High,
+            //distância necessária para atualizar localização
+            distanceInterval: 10,
+          },
+          (locationUpdate) => {
+            setUserLocation({
+              latitude: locationUpdate.coords.latitude,
+              longitude: locationUpdate.coords.longitude,
+            });
+          },
+        );
+      };
+
+      //ativar o tracking da localização
+      tracking();
+
+      return () => {
+        if (subscription) {
+          subscription.remove();
+        }
+      };
+    }, []);
 
     useImperativeHandle(ref, () => ({
       focusOnLocation: (lat: number, lng: number) => {
@@ -123,6 +174,7 @@ const Map = forwardRef<MapRefType, MapProps>(
     return (
       <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
         <MapView
+          provider="google"
           ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={{
@@ -131,6 +183,8 @@ const Map = forwardRef<MapRefType, MapProps>(
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
           scrollEnabled={true}
           onPress={(e) => {
             if (readOnly) return;
@@ -140,16 +194,48 @@ const Map = forwardRef<MapRefType, MapProps>(
           }}
           customMapStyle={theme.dark ? darkMapStyle : []}
         >
+          {userLocation && (
+            <>
+              <Circle
+                center={userLocation}
+                radius={250}
+                strokeWidth={2}
+                strokeColor={theme.colors.primary}
+                fillColor={theme.colors.primaryContainer + "80"}
+              ></Circle>
+            </>
+          )}
+
           {showPin && <Marker coordinate={selectedLocation} />}
 
           {businesses.map((biz) => (
             <Marker
+              tappable={true}
               key={biz._id || Math.random().toString()}
               coordinate={{
                 latitude: biz.location.lat,
                 longitude: biz.location.long,
               }}
-            ></Marker>
+              onPress={() => {
+                //Faz o zoom no mapa
+                mapRef.current?.animateToRegion(
+                  {
+                    latitude: biz.location.lat,
+                    longitude: biz.location.long,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                  },
+                  1000,
+                );
+
+                // Avisa o ecrã Index qual foi o negócio clicado
+                if (onMarkerPress) {
+                  onMarkerPress(biz);
+                }
+              }}
+            >
+              <Callout tooltip={true}></Callout>
+            </Marker>
           ))}
         </MapView>
       </View>
