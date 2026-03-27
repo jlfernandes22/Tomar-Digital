@@ -227,8 +227,8 @@ export default function CamaraIndex() {
                   <TouchableRipple
                     onPress={() => {
                       router.push({
-                        pathname: "../components/DetalhesBusiness.tsx",
-                        params: { id: item._id },
+                          pathname: "/components/DetalhesBusiness",
+                          params: { id: item._id },
                       });
                     }}
                   >
