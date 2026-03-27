@@ -13,7 +13,12 @@ interface MapProps {
   showPin: boolean;
   onLocationSelect?: (coords: { latitude: number; longitude: number }) => void;
   readOnly?: boolean;
-  businesses?: any[]; // Array de negócios que vem do Index
+  businesses?: any[];
+}
+
+// 1. Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
+export interface MapRefType {
+  focusOnLocation: (lat: number, lng: number) => void;
 }
 
 const darkMapStyle = [
@@ -87,15 +92,10 @@ const darkMapStyle = [
   },
 ];
 
-const Map = forwardRef(
+// 2. Adicionamos <MapRefType, MapProps>
+const Map = forwardRef<MapRefType, MapProps>(
   (
-    {
-      showPin,
-      location,
-      onLocationSelect,
-      readOnly = false,
-      businesses = [],
-    }: MapProps,
+    { showPin, location, onLocationSelect, readOnly = false, businesses = [] },
     ref,
   ) => {
     const theme = useTheme();
@@ -131,7 +131,7 @@ const Map = forwardRef(
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
-          scrollEnabled={!readOnly}
+          scrollEnabled={true}
           onPress={(e) => {
             if (readOnly) return;
             const novasCoordenadas = e.nativeEvent.coordinate;
@@ -140,10 +140,8 @@ const Map = forwardRef(
           }}
           customMapStyle={theme.dark ? darkMapStyle : []}
         >
-          {/* Pino de seleção manual */}
           {showPin && <Marker coordinate={selectedLocation} />}
 
-          {/* --- NOVOS PINS DOS NEGÓCIOS --- */}
           {businesses.map((biz) => (
             <Marker
               key={biz._id || Math.random().toString()}
@@ -158,5 +156,7 @@ const Map = forwardRef(
     );
   },
 );
+
+Map.displayName = "Map";
 
 export default Map;
