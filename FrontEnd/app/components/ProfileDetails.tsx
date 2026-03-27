@@ -72,7 +72,7 @@ const ProfileDetails = () => {
           style={{ color: theme.colors.primary, fontWeight: "bold" }}
           className="text-xl mb-2"
         >
-          {user.email.split("@")[0]}
+          {user.name}
         </Text>
 
         {/* Role */}
