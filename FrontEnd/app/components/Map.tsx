@@ -7,9 +7,10 @@ import React, {
   useEffect,
 } from "react";
 import MapView, { Marker, Callout, Circle } from "react-native-maps";
-import { useTheme } from "react-native-paper";
+import { Dialog, FAB, Portal, useTheme } from "react-native-paper";
 import * as Location from "expo-location";
 import { subscribe } from "expo-router/build/link/linking";
+import CustomSnackBar from "./CustomSnackBar";
 
 interface MapProps {
   location?: { lat: number; long: number };
@@ -20,11 +21,12 @@ interface MapProps {
   onMarkerPress?: (business: any) => void;
 }
 
-// 1. Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
+// Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
 export interface MapRefType {
   focusOnLocation: (lat: number, lng: number) => void;
 }
 
+//Estilo escuro do mapa fornecido pela IA
 const darkMapStyle = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
@@ -96,7 +98,7 @@ const darkMapStyle = [
   },
 ];
 
-// 2. Adicionamos <MapRefType, MapProps>
+// Adicionamos <MapRefType, MapProps>
 const Map = forwardRef<MapRefType, MapProps>(
   (
     {
@@ -125,26 +127,35 @@ const Map = forwardRef<MapRefType, MapProps>(
       let subscription: Location.LocationSubscription | null = null;
 
       const tracking = async () => {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          //dizer ao utilizador que é necessário localização para usar todas as funcionalidades
-          return;
-        }
+        try {
+          setLoading(true);
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== "granted") {
+            //dizer ao utilizador que é necessário localização para usar todas as funcionalidades
+            return;
+          }
 
-        subscription = await Location.watchPositionAsync(
-          {
-            //precisão da localização
-            accuracy: Location.Accuracy.High,
-            //distância necessária para atualizar localização
-            distanceInterval: 10,
-          },
-          (locationUpdate) => {
-            setUserLocation({
-              latitude: locationUpdate.coords.latitude,
-              longitude: locationUpdate.coords.longitude,
-            });
-          },
-        );
+          subscription = await Location.watchPositionAsync(
+            {
+              //precisão da localização
+              accuracy: Location.Accuracy.High,
+              //distância necessária para atualizar localização
+              distanceInterval: 10,
+            },
+            (locationUpdate) => {
+              setUserLocation({
+                latitude: locationUpdate.coords.latitude,
+                longitude: locationUpdate.coords.longitude,
+              });
+            },
+          );
+        } catch (err) {
+          console.log(err);
+          setSnackbarMessage("Erro\nNão foi possível obter a sua localização");
+          setSnackbarVisible(true);
+        } finally {
+          setLoading(false);
+        }
       };
 
       //ativar o tracking da localização
@@ -171,8 +182,14 @@ const Map = forwardRef<MapRefType, MapProps>(
       },
     }));
 
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+
     return (
-      <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
+      <View
+        style={{ flex: 1, width: "100%", overflow: "hidden", elevation: 10 }}
+      >
         <MapView
           provider="google"
           ref={mapRef}
@@ -225,7 +242,7 @@ const Map = forwardRef<MapRefType, MapProps>(
                     latitudeDelta: 0.005,
                     longitudeDelta: 0.005,
                   },
-                  1000,
+                  1500,
                 );
 
                 // Avisa o ecrã Index qual foi o negócio clicado
@@ -233,11 +250,88 @@ const Map = forwardRef<MapRefType, MapProps>(
                   onMarkerPress(biz);
                 }
               }}
-            >
-              <Callout tooltip={true}></Callout>
-            </Marker>
+            ></Marker>
           ))}
         </MapView>
+
+        <FAB
+          style={{
+            position: "absolute",
+            margin: 16,
+            right: 0,
+            bottom: 70,
+          }}
+          loading={loading}
+          icon="crosshairs-gps"
+          onPress={async () => {
+            console.log("get localization");
+            try {
+              setLoading(true);
+              const gpsSignal = await Location.hasServicesEnabledAsync();
+
+              if (!gpsSignal) {
+                setSnackbarMessage("Aviso\nTem o GPS desativado");
+                setSnackbarVisible(true);
+                setLoading(false);
+                return;
+              }
+
+              // Corrigi um pequeno typo (corrent -> current)
+              const currentLocation = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High,
+              });
+
+              // Atualiza o estado (para o pino mexer no mapa)
+              setUserLocation({
+                latitude: currentLocation.coords.latitude,
+                longitude: currentLocation.coords.longitude,
+              });
+
+              // Usa diretamente a constante "currentLocation"
+              mapRef.current?.animateToRegion(
+                {
+                  latitude: currentLocation.coords.latitude,
+                  longitude: currentLocation.coords.longitude,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                },
+                1500,
+              );
+
+              setTimeout(() => {
+                setLoading(false);
+              }, 1500);
+            } catch (error) {
+              console.log("get localization error", error);
+              setSnackbarMessage(
+                "Erro\nTem de ativar o GPS para aceder a todas as funcionalidades",
+              );
+              setSnackbarVisible(true);
+              setLoading(false); // Desliga se der erro
+            }
+          }}
+        />
+
+        <Portal>
+          <View
+            style={{
+              position: "absolute",
+              bottom: 90, // Passa por cima do FAB (Temas)
+              left: 0, // Fixa à esquerda
+              right: 0, // Fixa à direita (dá a largura de 100%)
+              zIndex: 10000,
+            }}
+            // CRÍTICO: "box-none" diz à View invisível para deixar passar os cliques
+            // para o mapa e para os botões que estão por trás dela!
+            pointerEvents="box-none"
+          >
+            <CustomSnackBar
+              visible={snackbarVisible}
+              message={snackbarMessage}
+              onDismiss={() => setSnackbarVisible(false)}
+            />
+          </View>
+        </Portal>
       </View>
     );
   },

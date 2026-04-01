@@ -25,6 +25,8 @@ const CustomSnackBar = ({
         borderRadius: 16,
         marginHorizontal: 16,
         marginBottom: 20, // Margem de segurança
+        zIndex: 9999,
+        elevation: 9999,
       }}
       action={{
         label: "OK",

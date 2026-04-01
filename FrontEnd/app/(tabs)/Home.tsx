@@ -2,14 +2,13 @@ import React, { useState, useCallback, useRef } from "react";
 import {
   View,
   ActivityIndicator,
-  StyleSheet,
   FlatList,
-  RefreshControl,
   Alert,
   ScrollView,
   Linking,
   Platform,
-} from "react-native"; // Adicionado Linking aqui
+  LayoutAnimation,
+} from "react-native";
 import {
   Surface,
   Searchbar,
@@ -17,18 +16,18 @@ import {
   TouchableRipple,
   useTheme,
   Text,
+  FAB,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { API_URL } from "@/constants/api";
 import Map from "../components/Map";
 import BusinessList from "../components/BusinessList";
 import CustomSnackBar from "../components/CustomSnackBar";
 import { useAuth } from "@/context/AuthContext";
-import { LayoutAnimation } from "react-native";
 import CustomChip from "../components/CustomChip";
 
-// 1. MOVER AS INTERFACES PARA FORA DA FUNÇÃO (Boa prática e evita erros de escopo)
+// INTERFACES
 interface BusinessLocation {
   lat: number;
   long: number;
@@ -46,7 +45,7 @@ interface Negocio {
 }
 
 export default function Index() {
-  // 2. INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
+  // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
   const [listaNegocios, setListaNegocios] = useState<Negocio[]>([]);
   const [listaFiltrada, setListaFiltrada] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState(false);
@@ -190,7 +189,7 @@ export default function Index() {
       <View
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       >
-        {/* 3. MUDAR showPin PARA TRUE (Se estiver false, os pins não aparecem) */}
+        {/* showPin TRUE (Se estiver false, os pins não aparecem) */}
         <Map
           ref={mapRef}
           showPin={true}
@@ -399,6 +398,7 @@ export default function Index() {
         )}
       </SafeAreaView>
 
+      
       <CustomSnackBar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}

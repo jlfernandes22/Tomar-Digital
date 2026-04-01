@@ -26,14 +26,15 @@ const ThemeSelectorFAB = () => {
         <Modal
           visible={visible}
           onDismiss={hideModal}
-          contentContainerStyle={styles.modalContainer}
+          contentContainerStyle={{ padding: 20 }}
         >
           {/* Surface utiliza a cor de fundo apropriada do tema atual */}
           <Surface
-            style={[
-              styles.surface,
-              { backgroundColor: theme.colors.surfaceVariant },
-            ]}
+            style={{
+              backgroundColor: theme.colors.surfaceVariant,
+              padding: 24,
+              borderRadius: 16,
+            }}
           >
             <Text
               variant="titleLarge"
@@ -56,7 +57,7 @@ const ThemeSelectorFAB = () => {
                 { value: "light", label: "Claro" },
                 { value: "dark", label: "Escuro" },
               ]}
-              style={styles.segmentedControl}
+              style={{ marginBottom: 24 }}
             />
 
             <Text
@@ -73,7 +74,7 @@ const ThemeSelectorFAB = () => {
                 { value: "mata", label: "Mata" },
                 { value: "tabuleiros", label: "Tabuleiros" },
               ]}
-              style={styles.segmentedControl}
+              style={{ marginBottom: 24 }}
             />
           </Surface>
         </Modal>
@@ -82,7 +83,7 @@ const ThemeSelectorFAB = () => {
       {/* Botão flutuante fixado no canto inferior direito do ecrã */}
       <FAB
         icon="palette"
-        style={styles.fab}
+        style={{ position: "absolute", margin: 16, right: 0, bottom: 80 }}
         onPress={showModal}
         color={theme.colors.onPrimaryContainer}
         theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
@@ -90,24 +91,5 @@ const ThemeSelectorFAB = () => {
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  fab: {
-    position: "absolute",
-    margin: 16,
-    right: 0,
-    bottom: 80, // Elevado para não colidir com barras de navegação inferiores
-  },
-  modalContainer: {
-    padding: 20,
-  },
-  surface: {
-    padding: 24,
-    borderRadius: 16,
-  },
-  segmentedControl: {
-    marginBottom: 24,
-  },
-});
 
 export default ThemeSelectorFAB;
