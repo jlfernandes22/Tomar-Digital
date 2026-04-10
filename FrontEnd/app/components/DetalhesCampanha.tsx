@@ -9,19 +9,18 @@ interface DetalhesProps {
   campaign: any;
   onClose: () => void;
 }
-
 const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
   const theme = useTheme();
 
   if (!campaign) return null;
-return (
+
+  return (
     <Modal 
       visible={visible} 
       animationType="fade" 
       transparent={true} 
       onRequestClose={onClose}
     >
-      {/* Overlay para escurecer o fundo */}
       <View style={{ 
         flex: 1, 
         backgroundColor: 'rgba(0,0,0,0.6)', 
@@ -30,7 +29,6 @@ return (
         padding: 20 
       }}>
         
-        {/* Janela Principal (Retângulo) */}
         <Surface style={{ 
           width: '100%', 
           backgroundColor: theme.colors.elevation.level3, 
@@ -39,7 +37,6 @@ return (
           elevation: 10 
         }}>
           
-          {/* Header Fixo */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>Detalhes</Text>
             <IconButton icon="close" size={24} onPress={onClose} />
@@ -47,21 +44,21 @@ return (
 
           <Divider style={{ marginVertical: 10 }} />
 
-          {/* Área com Scroll para conteúdo longo */}
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={{ paddingVertical: 10 }}>
               
+              {/* 1. CORREÇÃO: title -> titulo */}
               <Text variant="headlineSmall" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                {String(campaign.title || "Sem título")}
+                {String(campaign.titulo || "Sem título")}
               </Text>
               
+              {/* 2. CORREÇÃO: description -> descricao */}
               <Text variant="bodyMedium" style={{ marginVertical: 15, color: theme.colors.onSurfaceVariant, lineHeight: 22 }}>
-                {String(campaign.description || "Sem descrição disponível")}
+                {String(campaign.descricao || "Sem descrição disponível")}
               </Text>
 
               <Divider style={{ marginVertical: 15 }} />
 
-              {/* Listagem de Packs */}
               <Text variant="titleMedium" style={{ fontWeight: 'bold', marginBottom: 15 }}>
                 Packs Disponíveis:
               </Text>
@@ -81,15 +78,21 @@ return (
                   >
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <View style={{ flex: 1 }}>
+                        {/* 3. CORREÇÃO: pack.title -> pack.rewardDescription */}
                         <Text variant="bodyLarge" style={{ fontWeight: 'bold' }}>
-                          {String(pack.title || "Pack " + (index + 1))}
+                          {String(pack.rewardDescription || "Pack " + (index + 1))}
                         </Text>
+                        
+                        {/* Se tiveres um campo de descrição no pack, ajusta aqui, 
+                            senão podes remover este Text de baixo */}
                         <Text variant="bodySmall" style={{ marginTop: 4 }}>
-                          {String(pack.description || "Sem descrição")}
+                          Stock: {pack.stock} unidades
                         </Text>
                       </View>
+                      
+                      {/* 4. CORREÇÃO: pack.price -> pack.pointsCost */}
                       <Text variant="titleMedium" style={{ color: theme.colors.primary, marginLeft: 10 }}>
-                        {String(pack.price || 0)}€
+                        {String(pack.pointsCost || 0)} pts
                       </Text>
                     </View>
                   </Surface>
@@ -100,18 +103,17 @@ return (
                 </Text>
               )}
 
-              {/* Data de Expiração */}
+              {/* 5. CORREÇÃO: expirationDate -> DataExpiracao */}
               <View style={{ marginTop: 20, flexDirection: 'row', alignItems: 'center' }}>
                 <Text variant="labelLarge" style={{ color: theme.colors.error }}>
-                  📅 Expira em: {campaign.expirationDate ? new Date(campaign.expirationDate).toLocaleDateString() : 'N/A'}
+                  📅 Expira em: {campaign.DataExpiracao ? new Date(campaign.DataExpiracao).toLocaleDateString() : 'N/A'}
                 </Text>
               </View>
             </View>
           </ScrollView>
 
-          {/* Footer Fixo */}
           <View style={{ marginTop: 20 }}>
-            <CustomButton mode="contained" onPress={() => console.log("Aderir", campaign._id)}>
+            <CustomButton  onPress={() => console.log("Aderir", campaign._id)}>
               Aderir à Campanha
             </CustomButton>
           </View>
@@ -121,5 +123,4 @@ return (
     </Modal>
   );
 };
-
 export default DetalhesCampanha;

@@ -1,41 +1,44 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import PackSchema from "./Packs.js";
 
 const CampaignSchema = new mongoose.Schema({
+  
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
 
-  title: {
-    type: String,
-    required: true,
-  },
+  titulo: { type: String, required: true },
 
-  description: {
+  slogan: { type: String },
+
+  descricao: { type: String, required: true },
+  
+  estado: {
     type: String,
-    required: true,
+    enum: ["rascunho", "ativa", "em pausa", "expirada"],
+    default: "rascunho",
   },
 
   packs: [PackSchema],
 
-  expirationDate: {
+  DataInicio: { 
+    type: Date, 
+    default: Date.now 
+  },
+
+  DataExpiracao: {
     type: Date,
     required: true,
   },
 
-  //logo e flysheet teram de ser required no futuro
+  logo: { type: String, default: "" },
 
-  logo: {
-    type: String,
-    default: "",
-  },
+  panfleto: { type: String, default: "" },
+  
+  normas: { type: String }, 
+}, { timestamps: true }); // Adiciona createdAt e updatedAt automaticamente
 
-  flysheet: {
-    type: String,
-    default: "",
-  },
-});
-
-export default mongoose.model("Campaign", CampaignSchema);
+const Campaign = mongoose.models.Campaign || mongoose.model("Campaign", CampaignSchema);
+export default Campaign;

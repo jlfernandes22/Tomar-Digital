@@ -22,41 +22,43 @@ export default function JoinCampaign() {
         };
 
     const fetchCampaigns = async () => {
-        try {
-            setLoading(true);
-            const response = await fetch(`${API_URL}/listaCampanhas`);
-            const dados = await response.json();
+    try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/listaCampanhas`);
+        const dados = await response.json();
+        
+        console.log("CAMPANHAS RECEBIDAS:", dados[0]); // Vê no terminal as chaves que existem
 
-            setListCampaign(dados);
-        } catch (error) {
-            console.error("Erro ao carregar campanhas:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        setListCampaign(dados);
+    } catch (error) {
+        console.error("Erro ao carregar campanhas:", error);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const renderItem = ({ item }: { item: any }) => (
     <Card 
         style={{ marginBottom: 16, marginHorizontal: 4, marginTop: 16 }}
-        // 1. Adicionamos a ação de clique aqui
         onPress={() => handleOpenDetails(item)} 
     >
         <Card.Content>
-            {/* O seu design atual continua igual */}
+            {/* 1. MUDAR DE item.title PARA item.titulo */}
             <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-                {String(item.title || "Sem título")}
+                {String(item.titulo || "Sem título")}
             </Text>
           
+            {/* 2. MUDAR DE item.description PARA item.descricao */}
             <Text variant="bodyMedium" style={{ marginTop: 8 }}>
-                {String(item.description || "Sem descrição")}
+                {String(item.descricao || "Sem descrição")}
             </Text>
 
             <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
+                {/* 3. MUDAR DE item.expirationDate PARA item.DataExpiracao (ou dataExpiracao) */}
                 <Text variant="labelSmall">
-                    Expira: {item.expirationDate ? new Date(item.expirationDate).toLocaleDateString() : 'N/A'}
+                    Expira: {item.DataExpiracao ? new Date(item.DataExpiracao).toLocaleDateString() : 'N/A'}
                 </Text>
                 
-                {/* Dica: Adicionar um pequeno texto ou ícone ajuda o usuário a saber que é clicável */}
                 <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
                     Ver mais...
                 </Text>
