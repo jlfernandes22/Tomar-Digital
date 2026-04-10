@@ -9,6 +9,7 @@ import Favorite from "./models/Favorite.js";
 import { authorize } from "./middleware/auth.js";
 import Campaign from "./models/Campaign.js";
 import "dotenv/config";
+import multer from "multer";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
@@ -668,9 +669,12 @@ app.post(
 
       const user = await User.findById(req.user.id);
 
+      console.log(req.file);
+
       const receivedName = req.body.name;
       const receivedCity = req.body.city;
       const receivedNIF = req.body.NIF;
+      const avatar = req.file;
 
       console.log(receivedName, receivedCity, receivedNIF);
 
