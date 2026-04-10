@@ -143,7 +143,7 @@ const Register = () => {
                 {/* Botão de Registo */}
                 <CustomButton
                   onPress={handleRegister}
-                  buttonColor={theme.colors.primary}
+                  buttonColor={theme.colors.primaryContainer}
                   className="mt-8"
                 >
                   Criar Conta

@@ -215,7 +215,7 @@ export default function CamaraIndex() {
               return (
                 <Surface
                   style={{
-                    backgroundColor: theme.colors.elevation.level1,
+                    backgroundColor: theme.colors.secondaryContainer,
                     borderRadius: 12,
                     marginBottom: 16,
                     borderWidth: 1,
@@ -227,8 +227,8 @@ export default function CamaraIndex() {
                   <TouchableRipple
                     onPress={() => {
                       router.push({
-                          pathname: "/components/DetalhesBusiness",
-                          params: { id: item._id },
+                        pathname: "/components/DetalhesBusiness",
+                        params: { id: item._id },
                       });
                     }}
                   >

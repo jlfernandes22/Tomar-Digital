@@ -16,7 +16,6 @@ import {
   TouchableRipple,
   useTheme,
   Text,
-  FAB,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
@@ -262,7 +261,7 @@ export default function Index() {
               bottom: 30,
               left: 20,
               right: 20,
-              backgroundColor: theme.colors.background,
+              backgroundColor: theme.colors.secondaryContainer,
               borderRadius: 20,
               padding: 20,
               zIndex: 1000,
@@ -398,7 +397,6 @@ export default function Index() {
         )}
       </SafeAreaView>
 
-      
       <CustomSnackBar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}

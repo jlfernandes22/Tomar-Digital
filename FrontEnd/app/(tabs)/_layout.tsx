@@ -54,11 +54,11 @@ const _layout = () => {
             }}
             safeAreaInsets={insets}
             style={{
-              backgroundColor: theme.colors.elevation.level2,
-              height: 80, // Altura estática e segura proveniente do layout funcional
+              backgroundColor: theme.colors.secondaryContainer,
+              height: 80,
             }}
             /* Aplicação direta das cores dinâmicas do Design System */
-            activeColor={"white"}
+
             inactiveColor={theme.colors.onSurfaceVariant}
             activeIndicatorStyle={{
               backgroundColor: theme.colors.primaryContainer,
@@ -101,7 +101,7 @@ const _layout = () => {
         name="Home"
         options={{
           tabBarIcon: ({ color }) => (
-            <TabIcon icon={images.homeImg} color={color} />
+            <TabIcon icon={images.mapImg} color={color} />
           ),
         }}
       />
@@ -147,7 +147,7 @@ const _layout = () => {
         options={{
           href: user?.role === "camara" ? "/CreateCampaign" : null,
           tabBarIcon: ({ color }) => (
-            <TabIcon icon={images.camaraImg} color={color} />
+            <TabIcon icon={images.campaignImg} color={color} />
           ),
         }}
       />

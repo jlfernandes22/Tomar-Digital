@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import { Button } from "react-native-paper";
+import { Button, useTheme } from "react-native-paper";
 
 // Definimos o que o botão pode receber
 interface PrimaryButtonProps {
@@ -29,16 +29,18 @@ const CustomButton = ({
   accessibilityRole,
   accessibilityLabel,
 }: PrimaryButtonProps) => {
+  const theme = useTheme();
+
   return (
     <View className={` ${className || ""}`}>
       <Button
         mode="contained"
         buttonColor={buttonColor ? buttonColor : "#FF8533"}
-        textColor={textColor ? textColor :"#FFFFFF"}
+        textColor={textColor ? textColor : "#FFFFFF"}
         onPress={loading ? () => {} : onPress}
         loading={loading}
         labelStyle={[{ fontSize: 18, fontWeight: "bold" }, labelStyle]}
-        rippleColor={"#D2B5A3"}
+        rippleColor={theme.colors.onSecondary}
         icon={icon}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}

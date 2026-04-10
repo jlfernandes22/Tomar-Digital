@@ -278,7 +278,7 @@ const Map = forwardRef<MapRefType, MapProps>(
 
               // Corrigi um pequeno typo (corrent -> current)
               const currentLocation = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
+                accuracy: Location.Accuracy.Low,
               });
 
               // Atualiza o estado (para o pino mexer no mapa)

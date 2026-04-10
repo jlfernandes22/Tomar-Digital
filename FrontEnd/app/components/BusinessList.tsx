@@ -1,8 +1,9 @@
-import { Text } from "react-native-paper";
+import { Text, useTheme } from "react-native-paper";
 import { View } from "react-native";
 import React from "react";
 
 const BusinessList = ({ name, category, location }: any) => {
+  const theme = useTheme();
   const formatLocation = () => {
     if (!location) return "Localização indisponível";
 
@@ -16,22 +17,23 @@ const BusinessList = ({ name, category, location }: any) => {
   };
 
   return (
-    <View className="p-4 ">
-      <View className="flex-row justify-between items-start">
-        <View className="flex-1">
-          <Text variant="titleLarge" className="font-bold">
-            {name}
-          </Text>
+    <View
+      className="flex-row justify-between items-start p-4"
+      
+    >
+      <View className="flex-1">
+        <Text variant="titleLarge" className="font-bold">
+          {name}
+        </Text>
 
-          <Text variant="bodyMedium" className="italic mb-1 opacity-80">
-            {category}
-          </Text>
+        <Text variant="bodyMedium" className="italic mb-1 opacity-80">
+          {category}
+        </Text>
 
-          <View className="flex-row items-center">
-            <Text variant="bodySmall" className="opacity-60">
-              {formatLocation()}
-            </Text>
-          </View>
+        <View className="flex-row items-center">
+          <Text variant="bodySmall" className="opacity-60">
+            {formatLocation()}
+          </Text>
         </View>
       </View>
     </View>
