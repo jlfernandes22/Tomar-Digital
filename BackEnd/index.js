@@ -183,20 +183,31 @@ app.post(
   authorize(["comerciante", "camara"]),
   async (req, res) => {
     try {
-      const { owner, name, category, location, NIF } = req.body;
+      const { 
+        nomeNegocio, 
+        NIFnegocio, 
+        categoriaNegocio, 
+        logotipoNegocio, 
+        moradaNegocio, 
+        freguesiaNegocio, 
+        localizacao, 
+        telefoneDono, 
+        emailDono, 
+        descricaoNegocio, 
+        galeriaFotos,
+        owner // Caso a câmara esteja a registar por outro
+      } = req.body;
 
-      if (!name || !category || !location) {
+      if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
         return res.status(400).json({
-          message:
-            "Dados incompletos (Nome, Categoria e Localização são obrigatórios).",
+          message: "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
         });
       }
 
       const ownerId =
         req.user.role === "camara" ? owner || req.user.id : req.user.id;
       //Verificar se já existe um negócio com o mesmo nome para este dono
-      const existe = await Business.findOne({ name, owner: ownerId });
-
+      const existe = await Business.findOne({ nomeNegocio, owner: ownerId });
       if (existe) {
         return res.status(400).json({
           message: "Já tens um negócio registado com este nome.",
@@ -206,15 +217,24 @@ app.post(
       // Se for o comerciante a criar, o status deve ser 'pendente'
       // Se for a camara, definir logo como 'aprovado'
       const novoNegocio = new Business({
-        name,
-        category,
+        name: nomeNegocio,
+        category: categoriaNegocio,
+        NIF: NIFnegocio,
+        logo: logotipoNegocio, 
+        address: moradaNegocio,
+        parish: freguesiaNegocio,
         location: {
-          lat: Number(location.lat), // Forçamos a conversão para número por segurança
-          long: Number(location.long),
+          lat: Number(localizacao.latitude), 
+          long: Number(localizacao.longitude),
         },
+        
+        phone: telefoneDono,
+        email: emailDono,
+        description: descricaoNegocio,
+        gallery: galeriaFotos, 
         owner: ownerId,
         status: req.user.role === "camara" ? "aprovado" : "pendente",
-        NIF: NIF,
+        createdAt: new Date(),
       });
 
       await novoNegocio.save();

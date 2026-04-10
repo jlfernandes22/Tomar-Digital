@@ -32,9 +32,9 @@ const CustomChip = ({
         // ESTILO DO CONTAINER
         style={{
           // Se selecionado: Laranja. Se não: Branco.
-          backgroundColor: isSelected ? "#FF8533" : theme.colors.background,
+          backgroundColor: isSelected ? theme.colors.onBackground : theme.colors.background,
           // Se selecionado: Laranja. Se não: mantém a borda do tema (ou use 'white' para esconder)
-          borderColor: isSelected ? "#FF8533" : theme.colors.outline,
+          borderColor: isSelected ? theme.colors.onBackground : theme.colors.outline,
           borderRadius: 12,
           height: 40,
           justifyContent: "center",
@@ -42,7 +42,7 @@ const CustomChip = ({
         // ESTILO DO TEXTO
         textStyle={{
           // Se selecionado: Branco. Se não: Cor de texto padrão do tema (escuro)
-          color: isSelected ? "white" : theme.colors.onSurface,
+          color: isSelected ? theme.colors.background : theme.colors.onSurface,
           fontWeight: isSelected ? "bold" : "500",
           fontSize: 14,
           marginVertical: 0,
