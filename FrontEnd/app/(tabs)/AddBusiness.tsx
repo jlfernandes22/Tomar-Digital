@@ -1,0 +1,198 @@
+import React, { useState } from "react";
+import { View, ScrollView } from "react-native";
+import { Chip, Surface, Text, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { API_URL } from "@/constants/api";
+import { useAuth } from "@/context/AuthContext";
+import Map from "@/app/components/Map";
+import { delay } from "../utils/delay";
+import CustomTextInput from "../components/CustomTextInput";
+import CustomButton from "../components/CustomButton";
+import CustomSnackBar from "../components/CustomSnackBar";
+import CustomChip from "../components/CustomChip";
+
+export default function AddBusiness() {
+  const { user } = useAuth(); // Importa o utilizador da sessão atual
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const theme = useTheme();
+  
+  const [selectedLocation, setSelectedLocation] = useState({
+    latitude: 39.6036,
+    longitude: -8.4151,
+  });
+
+  const categories = [
+    "Património & Museus", // Para o Convento, Sinagoga, Mata dos Sete Montes
+    "Restauração", // Restaurantes e Tabernas
+    "Cafés & Pastelarias", // Essencial para as "Fatias de Tomar"
+    "Alojamento", // Hotéis e ALs
+    "Comércio Local", // Lojas do centro histórico
+    "Lazer & Natureza", // Rio Nabão, Parque do Mouchão
+    "Serviços",
+  ];
+
+  const handleNewBusiness = async () => {
+    if (!name) {
+      setSnackbarMessage("Erro: " + "Por favor indique o nome do negócio");
+      setSnackbarVisible(true);
+      await delay(400);
+
+      return;
+    }
+
+    // Verificação de segurança: Se não há user ou token, nem vale a pena tentar
+    if (!user?.token) {
+      setSnackbarMessage(
+        "Erro: " + "Sessão expirada. Por favor, faça login novamente",
+      );
+      setSnackbarVisible(true);
+      await delay(400);
+
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/registarNegocio`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          name,
+          category,
+          owner: user?.id,
+          location: {
+            lat: selectedLocation.latitude,
+            long: selectedLocation.longitude,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        setSnackbarMessage(
+          "Sucesso!\n " + "Negócio registado no local escolhido.",
+        );
+        setSnackbarVisible(true);
+        await delay(400);
+        setName("");
+      } else {
+        const error = await response.json();
+        setSnackbarMessage("Aviso\n " + error.message || "Erro no registo.");
+        setSnackbarVisible(true);
+        await delay(400);
+      }
+    } catch (error) {
+      setSnackbarVisible(true);
+      await delay(400);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <SafeAreaView style={{ flex: 1 }} className="p-4">
+        <Text style={{fontWeight: "bold", fontSize: 30, color: theme.colors.primary}}>
+          Adicionar Negócio
+        </Text>
+
+        {/* Nome do Negócio */}
+        <View accessibilityLabel="Introduza o nome do negócio">
+          <CustomTextInput
+            label="Nome do negócio"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+
+        {/* Categoria */}
+        <View className="mb-2">
+          <Text
+            variant="bodyLarge"
+            className="mt-4 mb-2 text-center opacity-70"
+          >
+            Categoria:
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="flex-row"
+            contentContainerStyle={{
+              paddingVertical: 5,
+              paddingHorizontal: 16,
+            }}
+          >
+            {categories.map((cat) => {
+              const isSelected = category === cat;
+              return (
+                <Chip
+                  key={cat}
+                  mode="outlined"
+                  selected={isSelected}
+                  onPress={() => setCategory(cat)}
+                  className="p-1 m-1"
+                  showSelectedCheck={false}
+                  // A MAGIA DAS CORES AQUI:
+                  style={{
+                    backgroundColor: isSelected ? theme.colors.primary : "transparent",
+                    borderColor: isSelected ? "transparent": theme.colors.outline,
+                  }}
+                  textStyle={{
+                    color: isSelected ? theme.colors.onPrimary : theme.colors.onSurface,
+                    fontWeight: isSelected ? "bold" : "normal",
+                  }}
+                >
+                  {cat}
+                </Chip>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* MAPA INTERATIVO */}
+        <View>
+          <Text className="text-primary  mb-2 text-center">
+            Localização no Mapa:
+          </Text>
+          <View
+            className="border-2 border-tomar-200 rounded-lg h-[20rem] overflow-hidden bg-primary"
+            accessibilityLabel="Mapa interativo para selecionar localização"
+          >
+            <Map
+              showPin={true}
+              onLocationSelect={(location) => setSelectedLocation(location)}
+            />
+          </View>
+
+        
+
+          {/* Botão Submeter */}
+          <View
+            className="mt-8"
+            accessibilityRole="button"
+            accessibilityLabel="Submeter negócio para aprovação"
+          >
+            <CustomButton 
+            onPress={handleNewBusiness}
+             loading={loading}
+             buttonColor={theme.colors.primary}
+             textColor={theme.colors.onPrimary}>
+              Submeter para Aprovação
+            </CustomButton>
+          </View>
+        </View>
+      </SafeAreaView>
+      <CustomSnackBar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
+    </Surface>
+  );
+}

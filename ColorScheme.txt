@@ -1,0 +1,39 @@
+1. Estrutura Base e Ecrãs
+
+Os fundos da aplicação rejeitam o branco puro e o preto puro, utilizando os tons mais recuados da paleta selecionada para garantir conforto visual.
+Componente / Elemento	Propriedade de Cor	Descrição do Uso
+SafeAreaView / View (Raiz)	background	Cor de fundo principal de qualquer ecrã inteiro.
+Text (Títulos Principais)	primary	Títulos de grande destaque ou cabeçalhos de secção (displaySmall, headlineMedium).
+Text (Corpo Base)	onBackground	Texto de leitura geral (parágrafos) que assenta diretamente sobre o fundo principal do ecrã.
+2. Cartões e Agrupamento de Conteúdo
+
+A separação de secções não utiliza linhas (borderWidth). A hierarquia visual é construída através da sobreposição de superfícies com diferentes tons.
+Componente / Elemento	Propriedade de Cor	Descrição do Uso
+Surface (Base Layer)	surface	Utilizado para blocos neutros que se fundem quase na totalidade com o fundo, criando uma elevação invisível.
+Surface (Separação/Blocos)	surfaceVariant	Utilizado para agrupar formulários, definições ou grandes blocos de informação. Substitui as linhas de divisão.
+Text (Em Blocos Variant)	onSurfaceVariant	Cor do texto principal, subtítulos e ícones que habitam dentro de uma Surface com a cor surfaceVariant.
+Surface (Cartões Interativos)	secondaryContainer	Utilizado para cartões de listagem (ex: pacotes de uma campanha), itens clicáveis e áreas de alto contraste.
+Text (Em Cartões Interativos)	onSecondaryContainer	Cor do texto e ícones que habitam dentro do secondaryContainer.
+3. Entradas de Dados e Formulários (CustomTextInput)
+
+Os campos de texto assumem um estilo preenchido, garantindo consistência térmica com o resto do ecrã e um contraste legível durante a escrita.
+Elemento do TextInput	Propriedade de Cor	Descrição do Uso
+Fundo Inativo	surfaceVariant	O fundo da caixa de texto quando o utilizador não está a interagir com ela.
+Borda Inativa	outlineVariant	A linha de contorno subtil quando o campo não está focado.
+Borda Focada / Label Ativa	primary	A cor que o campo e o título (label) assumem no momento em que o utilizador clica para escrever.
+Texto Escrito / Placeholder	onSurfaceVariant	A cor do texto inserido pelo utilizador.
+4. Botões e Chamadas de Ação (CTAs)
+
+As ações são separadas por prioridade. Botões primários puxam o foco absoluto do ecrã, enquanto ações secundárias se integram organicamente nos cartões.
+Tipo de Botão	Propriedade de Cor	Descrição do Uso
+Botão Primário (Fundo)	primary	Fundo para a ação mais importante do ecrã (ex: "Publicar Campanha", "Gravar"). Requer borderRadius: 9999px.
+Botão Primário (Texto)	onPrimary	Cor do texto e dos ícones dentro do botão primário.
+Botão Secundário (Fundo)	secondaryContainer	Fundo para ações de apoio (ex: "Alterar Data", "Cancelar").
+Botão Secundário (Texto)	onSecondaryContainer	Cor do texto e dos ícones dentro do botão secundário.
+Botão Flutuante (FAB)	primaryContainer	Fundo do botão circular flutuante (ex: Seletor de Temas).
+5. Elementos de Interface Específicos
+Componente / Elemento	Propriedade de Cor	Descrição do Uso
+Vibe Chips (Tags/Etiquetas)	tertiaryContainer	Fundo para pequenas etiquetas de categoria (ex: "Histórico", "Natureza"). Possuem um tom distinto (geralmente amarelado/mostarda).
+Texto das Vibe Chips	onTertiaryContainer	Texto dentro das etiquetas de categoria.
+Bordas (Ghost Borders)	outline	Apenas utilizadas quando estritamente exigidas por acessibilidade. Devem ser aplicadas com opacidade máxima de 15%.
+Alertas e Erros (SnackBar)	error	Fundos de mensagens de erro, validações falhadas ou botões de eliminação destrutiva.
