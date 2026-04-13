@@ -391,76 +391,54 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 
     //pegar nos dados da fatura
     const { QRCodeData } = req.body;
-    const QRCodeFields = QRCodeData.split("*");
-    //console.log(QRCodeFields);
-    //console.log(QRCodeFields[0])
+    console.log(QRCodeData);
 
-    //pegar nos números individualmente
-    // A -> NIF do emissor
-    //      QRCodeFields[0]
-    //
-    // B -> NIF do cliente, caso não haja não se pode validar a fatura como sendo da pessoa
-    //      QRCodeFields[1]
-    //
-    // C -> País do cliente
-    //      QRCodeFields[2]
-    //
-    // D -> tipo de documento (FS -> fatura simplificada) (FT -> fatura normal)
-    //      QRCodeFields[3]
-    //
-    // E -> estado do documento, N significa normal
-    //      QRCodeFields[4]
-    //
-    // F -> data de compra aaaa/mm/dd
-    //      QRCodeFields[5]
-    //
-    // G -> número de série do talão, inútil por enquanto
-    //      QRCodeFields[6]
-    //
-    // H -> ATCUD Este código prova que a loja comunicou a série de faturas às Finanças antes de a imprimir (deve ser
-    //        preciso verificar a autenticidade deste código para poder dar a fatura como válida)
-    //      QRCodeFields[7]
-    //
-    // Q -> um hash de quatro caracters que se liga a fatura passada? como uma chain?
-    //      QRCodeFields[8]
-    //
-    // R -> número do certificado de software de faturação registado na AT
-    //      QRCodeFields[9]
-    //
-    // I1 -> região de imposto
-    //      QRCodeFields[10]
-    //
-    // I3 -> valor sem iva
-    //      QRCodeFields[11]
-    //
-    // I4 -> valor do iva
-    //      QRCodeFields[12]
-    //
-    // N -> valor total de todos os impostos
-    //      QRCodeFields[13]
-    //
-    // O -> Valor total a pagar (I3+I4 = valor total)
-    //      QRCodeFields[14]
-    //
-    // S -> informação adicional, indica o valor pago e como foi (metodoDePagamento/valor)
-    //      QRCodeFields[15]
-    const NIFStore = QRCodeFields[0].split(":")[1];
-    const NIFClient = QRCodeFields[1].split(":")[1];
-    const CountryClient = QRCodeFields[2].split(":")[1];
-    const TypeDocument = QRCodeFields[3].split(":")[1];
-    const StateDocument = QRCodeFields[4].split(":")[1];
-    const BoughtDate = QRCodeFields[5].split(":")[1];
-    const SerialNumber = QRCodeFields[6].split(":")[1];
-    const CodeATCUD = QRCodeFields[7].split(":")[1];
-    const hash = QRCodeFields[8].split(":")[1];
-    const SoftCertNumber = QRCodeFields[9].split(":")[1];
-    const RegionTax = QRCodeFields[10].split(":")[1];
-    const NoIVAValue = QRCodeFields[11].split(":")[1];
-    const ValueIVA = QRCodeFields[12].split(":")[1];
-    const AllTaxValue = QRCodeFields[13].split(":")[1];
-    const BoughtValue = QRCodeFields[14].split(":")[1];
-    const AditionalInfo = QRCodeFields[15].split(":")[1];
+    //função para pegar nos campos de forma dinâmica pois existe a possibilidade de existir campos opcionais
+    const parseQRCodeFields = (data) => {
+      const parts = data.split("*");
 
+      const fields = {};
+
+      parts.forEach((part) => {
+        const [code, ...valueParts] = part.split(":");
+        const value = valueParts.join(":");
+
+        if (code) {
+          fields[code] = value;
+        }
+      });
+      return fields;
+    };
+    // Extração dinâmica de todos os campos da fatura lida
+    const QRCodeFields = parseQRCodeFields(QRCodeData);
+
+    // Mapeamento dos campos segundo as especificações técnicas da Autoridade Tributária
+    const NIFStore = QRCodeFields["A"]; // NIF do comerciante/emitente
+    const NIFClient = QRCodeFields["B"]; // NIF do adquirente (cliente)
+    const CountryClient = QRCodeFields["C"]; // País do adquirente
+    const TypeDocument = QRCodeFields["D"]; // Tipo de documento (FT: Fatura, FS: Fatura Simplificada, etc.)
+    const StateDocument = QRCodeFields["E"]; // Estado do documento (N: Normal, etc.)
+    const BoughtDate = QRCodeFields["F"]; // Data do documento (Formato: YYYYMMDD)
+    const SerialNumber = QRCodeFields["G"]; // Identificação única do documento pela loja
+    const CodeATCUD = QRCodeFields["H"]; // ATCUD - Código Único do Documento (Validação central da AT)
+    const hash = QRCodeFields["Q"]; // Assinatura digital do documento (Hash de 4 caracteres)
+    const SoftCertNumber = QRCodeFields["R"]; // Número do certificado do software de faturação
+
+    // Campos Fiscais e Financeiros
+    const RegionTax = QRCodeFields["11"]; // Espaço fiscal (ex: PT, PT-MA, PT-AC)
+    const NoIVAValue = QRCodeFields["L"]; // Valor total não sujeito a IVA / isento
+    const AllTaxValue = QRCodeFields["N"]; // Valor total de todos os impostos cobrados (IVA + Selo)
+    const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
+    const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
+
+
+
+    
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
+     * Bloqueia a operação se a mesma combinação de ATCUD e Hash já existir na base de dados.
+     * Isto impede que o mesmo talão seja lido várias vezes por pessoas diferentes.
+     */
     const faturaRepetida = await Invoice.findOne({
       ATCUD: CodeATCUD,
       hash: hash,
