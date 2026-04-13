@@ -1,14 +1,15 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   ActivityIndicator,
-  FlatList,
   Alert,
-  ScrollView,
   Linking,
   Platform,
   LayoutAnimation,
+  FlatList,
+  ScrollView,
 } from "react-native";
+
 import {
   Surface,
   Searchbar,
@@ -25,6 +26,7 @@ import BusinessList from "../components/BusinessList";
 import CustomSnackBar from "../components/CustomSnackBar";
 import { useAuth } from "@/context/AuthContext";
 import CustomChip from "../components/CustomChip";
+import { calcularDistancia } from "../utils/locationUtils";
 
 // INTERFACES
 interface BusinessLocation {
@@ -54,6 +56,12 @@ export default function Index() {
   const theme = useTheme();
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [bizInArea, setBizInArea] = useState<Negocio[]>([]);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [loadingFav, setLoadingFav] = useState(false);
@@ -171,6 +179,55 @@ export default function Index() {
     }
   };
 
+  //Função para verificar se o negócio está na área do utilizador
+  const inRange = () => {
+    if (!userLocation) return;
+
+    const closeBiz = listaNegocios.filter((negocio) => {
+      const distancia = calcularDistancia(
+        negocio.location.lat,
+        negocio.location.long,
+        userLocation?.latitude,
+        userLocation?.longitude,
+      );
+
+      return distancia <= 250;
+    });
+
+    //console.log(closeBiz)
+    //console.log(negocioSelecionado)
+
+    setBizInArea(closeBiz);
+  };
+
+  //vair ser usado para fazer zoom em qual dos negócios estiver perto do utilizador
+  const [itemVisivelId, setItemVisivelId] = useState<string | null>(null);
+  //significa que se o item estiver 50% visivel fica selecionado
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: any[] }) => {
+      // viewableItems é um array com todos os itens que estão visíveis neste momento
+      if (viewableItems.length > 0) {
+        // Como o carrossel mostra um de cada vez, o primeiro do array é o que está em destaque
+        const itemVisivel = viewableItems[0].item;
+        setItemVisivelId(itemVisivel._id);
+
+        //aqui é feito o zoom conforme qual está selecionado
+        mapRef.current?.focusOnLocation(
+          itemVisivel.location.lat,
+          itemVisivel.location.long,
+        );
+      }
+    },
+  ).current;
+
+  useEffect(() => {
+    inRange();
+  }, [userLocation, listaNegocios]);
+
   const focarNoMapa = (item: Negocio) => {
     setListaFiltrada([]);
     if (mapRef.current?.focusOnLocation) {
@@ -198,6 +255,7 @@ export default function Index() {
             setNegocioSelecionado(biz);
             setListaFiltrada([]);
           }}
+          onUserLocationUpdate={(coord) => setUserLocation(coord)}
         />
       </View>
 
@@ -252,10 +310,23 @@ export default function Index() {
             </ScrollView>
           </View>
         </View>
+      </SafeAreaView>
 
-        {negocioSelecionado && (
-          <Surface
-            elevation={5}
+      {negocioSelecionado && (
+        <Surface
+          elevation={5}
+          style={{
+            position: "absolute",
+            bottom: 30,
+            left: 20,
+            right: 20,
+            backgroundColor: theme.colors.secondaryContainer,
+            borderRadius: 20,
+            padding: 20,
+            zIndex: 1000,
+          }}
+        >
+          <View
             style={{
               position: "absolute",
               bottom: 30,
@@ -267,135 +338,322 @@ export default function Index() {
               zIndex: 1000,
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    color: theme.colors.onBackground,
-                    fontSize: 22,
-                    fontWeight: "bold",
-                  }}
-                >
-                  {negocioSelecionado.name}
-                </Text>
-                <Text
-                  style={{ color: theme.colors.onBackground, fontSize: 14 }}
-                >
-                  {negocioSelecionado.category}
-                </Text>
-              </View>
-              <IconButton
-                icon="close"
-                onPress={() => setNegocioSelecionado(null)}
-              />
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: theme.colors.onBackground,
+                  fontSize: 22,
+                  fontWeight: "bold",
+                }}
+              >
+                {negocioSelecionado.name}
+              </Text>
+              <Text style={{ color: theme.colors.onBackground, fontSize: 14 }}>
+                {negocioSelecionado.category}
+              </Text>
             </View>
+            <IconButton
+              icon="close"
+              onPress={() => setNegocioSelecionado(null)}
+            />
+          </View>
 
-            <View
+          <View
+            style={{
+              marginVertical: 15,
+              borderTopWidth: 0.5,
+              borderColor: "#eee",
+              paddingTop: 15,
+            }}
+          >
+            <Text style={{ color: theme.colors.onBackground, marginBottom: 5 }}>
+              📍 Lat: {negocioSelecionado.location.lat} | Long:{" "}
+              {negocioSelecionado.location.long}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+            {/* Botão de Favoritos */}
+            <TouchableRipple
+              disabled={loadingFav}
               style={{
-                marginVertical: 15,
-                borderTopWidth: 0.5,
-                borderColor: "#eee",
-                paddingTop: 15,
+                backgroundColor: isFavorite
+                  ? theme.colors.errorContainer
+                  : theme.colors.surfaceVariant,
+                paddingHorizontal: 15,
+                borderRadius: 12,
+                justifyContent: "center",
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: isFavorite
+                  ? theme.colors.error
+                  : theme.colors.outlineVariant,
+              }}
+              onPress={toggleFavorite}
+            >
+              {loadingFav ? (
+                <ActivityIndicator size={24} color={theme.colors.primary} />
+              ) : (
+                <IconButton
+                  icon={isFavorite ? "heart" : "heart-outline"}
+                  iconColor={
+                    isFavorite
+                      ? theme.colors.error
+                      : theme.colors.onSurfaceVariant
+                  }
+                  size={24}
+                  style={{ margin: 0 }}
+                />
+              )}
+            </TouchableRipple>
+
+            {/* Botão de Navegação (Mapa Externo) */}
+            <TouchableRipple
+              style={{
+                flex: 1,
+                backgroundColor: theme.colors.primary,
+                paddingVertical: 14,
+                borderRadius: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onPress={() => {
+                if (!negocioSelecionado) return;
+                const { lat, long } = negocioSelecionado.location;
+
+                if (Platform.OS === "ios") {
+                  const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;
+                  Linking.openURL(url).catch(() =>
+                    Alert.alert("Erro", "Não foi possível abrir o Apple Maps"),
+                  );
+                } else {
+                  const url = `geo:${lat},${long}?q=${lat},${long}(${negocioSelecionado.name})`;
+                  Linking.canOpenURL(url).then((supported) => {
+                    if (supported) {
+                      Linking.openURL(url);
+                    } else {
+                      Linking.openURL(
+                        `https://www.google.com/maps/search/?api=1&query=${lat},${long}`,
+                      );
+                    }
+                  });
+                }
               }}
             >
               <Text
-                style={{ color: theme.colors.onBackground, marginBottom: 5 }}
+                style={{
+                  color: theme.colors.onPrimary,
+                  fontWeight: "bold",
+                  fontSize: 16,
+                }}
               >
-                📍 Lat: {negocioSelecionado.location.lat} | Long:{" "}
-                {negocioSelecionado.location.long}
+                VER NO MAPA
               </Text>
-            </View>
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-              {/* Botão de Favoritos */}
-              <TouchableRipple
-                disabled={loadingFav}
-                style={{
-                  backgroundColor: isFavorite
-                    ? theme.colors.errorContainer
-                    : theme.colors.surfaceVariant,
-                  paddingHorizontal: 15,
-                  borderRadius: 12,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderWidth: 1,
-                  borderColor: isFavorite
-                    ? theme.colors.error
-                    : theme.colors.outlineVariant,
-                }}
-                onPress={toggleFavorite}
-              >
-                {loadingFav ? (
-                  <ActivityIndicator size={24} color={theme.colors.primary} />
-                ) : (
-                  <IconButton
-                    icon={isFavorite ? "heart" : "heart-outline"}
-                    iconColor={
-                      isFavorite
-                        ? theme.colors.error
-                        : theme.colors.onSurfaceVariant
-                    }
-                    size={24}
-                    style={{ margin: 0 }}
-                  />
-                )}
-              </TouchableRipple>
+            </TouchableRipple>
+          </View>
+        </Surface>
+      )}
 
-              {/* Botão de Navegação (Mapa Externo) */}
-              <TouchableRipple
-                style={{
-                  flex: 1,
-                  backgroundColor: theme.colors.primary,
-                  paddingVertical: 14,
-                  borderRadius: 12,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onPress={() => {
-                  if (!negocioSelecionado) return;
-                  const { lat, long } = negocioSelecionado.location;
-
-                  if (Platform.OS === "ios") {
-                    const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;
-                    Linking.openURL(url).catch(() =>
-                      Alert.alert(
-                        "Erro",
-                        "Não foi possível abrir o Apple Maps",
-                      ),
-                    );
-                  } else {
-                    const url = `geo:${lat},${long}?q=${lat},${long}(${negocioSelecionado.name})`;
-                    Linking.canOpenURL(url).then((supported) => {
-                      if (supported) {
-                        Linking.openURL(url);
-                      } else {
-                        Linking.openURL(
-                          `https://www.google.com/maps/search/?api=1&query=${lat},${long}`,
-                        );
-                      }
-                    });
-                  }
-                }}
-              >
-                <Text
+      {bizInArea.length > 0 && !negocioSelecionado && (
+        <View
+          style={{
+            position: "absolute",
+            bottom: 30,
+            left: 0,
+            right: 0,
+            /* * Configuração crítica para sobreposição em componentes nativos (react-native-maps).
+             * É obrigatório definir uma altura estrita (height) e uma elevação (elevation)
+             * para garantir que o motor de gestos do Android reconheça a hierarquia de toques.
+             */
+            height: 250,
+            elevation: 10,
+            zIndex: 1000,
+          }}
+          /*
+           * pointerEvents="box-none" permite que as áreas transparentes/vazias desta View
+           * não retenham os eventos de toque, delegando-os para o mapa subjacente.
+           */
+          pointerEvents="box-none"
+        >
+          <FlatList
+            data={bizInArea}
+            keyExtractor={(item) => item._id}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingBottom: 10,
+            }}
+            //props para fazer as animações conforme o id selecionado
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            /* * Configuração de paginação (snapping) do carrossel.
+             * O valor 335 é a soma da largura do item (320) + margem direita (15).
+             */
+            snapToInterval={335}
+            decelerationRate="fast"
+            snapToAlignment="start"
+            renderItem={({ item }) => {
+              return (
+                <Surface
+                  elevation={5}
                   style={{
-                    color: theme.colors.onPrimary,
-                    fontWeight: "bold",
-                    fontSize: 16,
+                    /* * Largura fixa deliberada (320px) para garantir que o próximo item
+                     * do array fique parcialmente visível, induzindo a ação de scroll horizontal.
+                     */
+                    width: 320,
+                    marginRight: 15,
+                    backgroundColor: theme.colors.secondaryContainer,
+                    borderRadius: 20,
+                    padding: 20,
                   }}
                 >
-                  VER NO MAPA
-                </Text>
-              </TouchableRipple>
-            </View>
-          </Surface>
-        )}
-      </SafeAreaView>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          color: theme.colors.onBackground,
+                          fontSize: 22,
+                          fontWeight: "bold",
+                        }}
+                        numberOfLines={1}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={{
+                          color: theme.colors.onBackground,
+                          fontSize: 14,
+                        }}
+                      >
+                        {item.category}
+                      </Text>
+                    </View>
+                    <IconButton
+                      icon="close"
+                      // Esvazia o array de resultados de proximidade, o que desmonta este componente da UI
+                      onPress={() => setBizInArea([])}
+                    />
+                  </View>
+
+                  <View
+                    style={{
+                      marginVertical: 15,
+                      borderTopWidth: 0.5,
+                      borderColor: "#eee",
+                      paddingTop: 15,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: theme.colors.onBackground,
+                        marginBottom: 5,
+                      }}
+                    >
+                      📍 Perto de ti!
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{ flexDirection: "row", gap: 10, marginTop: 10 }}
+                  >
+                    {/* Controlo de estado para adicionar/remover o negócio aos favoritos do utilizador */}
+                    <TouchableRipple
+                      disabled={loadingFav}
+                      style={{
+                        backgroundColor: isFavorite
+                          ? theme.colors.errorContainer
+                          : theme.colors.surfaceVariant,
+                        paddingHorizontal: 15,
+                        borderRadius: 12,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderWidth: 1,
+                        borderColor: isFavorite
+                          ? theme.colors.error
+                          : theme.colors.outlineVariant,
+                      }}
+                      onPress={toggleFavorite}
+                    >
+                      {loadingFav ? (
+                        <ActivityIndicator
+                          size={24}
+                          color={theme.colors.primary}
+                        />
+                      ) : (
+                        <IconButton
+                          icon={isFavorite ? "heart" : "heart-outline"}
+                          iconColor={
+                            isFavorite
+                              ? theme.colors.error
+                              : theme.colors.onSurfaceVariant
+                          }
+                          size={24}
+                          style={{ margin: 0 }}
+                        />
+                      )}
+                    </TouchableRipple>
+
+                    {/* Ação de Deep Linking para aplicações de navegação externas */}
+                    <TouchableRipple
+                      style={{
+                        flex: 1,
+                        backgroundColor: theme.colors.primary,
+                        paddingVertical: 14,
+                        borderRadius: 12,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      onPress={() => {
+                        const { lat, long } = item.location;
+
+                        if (Platform.OS === "ios") {
+                          // Protocolo URL Scheme nativo para o Apple Maps
+                          const url = `maps://?q=${item.name}&ll=${lat},${long}`;
+                          Linking.openURL(url).catch(() =>
+                            Alert.alert(
+                              "Erro",
+                              "Não foi possível abrir o Apple Maps",
+                            ),
+                          );
+                        } else {
+                          // Protocolo Geo URI para integração com Google Maps no Android
+                          const url = `geo:${lat},${long}?q=${lat},${long}(${item.name})`;
+                          Linking.canOpenURL(url).then((supported) => {
+                            if (supported) {
+                              Linking.openURL(url);
+                            } else {
+                              // Fallback genérico web caso a app do Google Maps não esteja instalada
+                              Linking.openURL(
+                                `http://maps.google.com/?q=${lat},${long}`,
+                              );
+                            }
+                          });
+                        }
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: theme.colors.onPrimary,
+                          fontWeight: "bold",
+                          fontSize: 16,
+                        }}
+                      >
+                        VER NO MAPA
+                      </Text>
+                    </TouchableRipple>
+                  </View>
+                </Surface>
+              );
+            }}
+          />
+        </View>
+      )}
 
       <CustomSnackBar
         visible={snackbarVisible}

@@ -1,4 +1,5 @@
 import React from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../context/AuthContext";
@@ -29,9 +30,9 @@ export default function RootLayout() {
             </Stack>
 
             {/* Injeção do FAB ao nível da raiz. 
-              Ao ser colocado fora do Stack mas dentro do SafeAreaProvider e PaperProvider, 
-              ele sobrepõe-se a qualquer ecrã ativo sem perder a formatação do tema.
-            */}
+                Ao ser colocado fora do Stack mas dentro do SafeAreaProvider e PaperProvider, 
+                ele sobrepõe-se a qualquer ecrã ativo sem perder a formatação do tema.
+              */}
             <ThemeSelectorFAB />
           </SafeAreaProvider>
         </ThemeSelector>
