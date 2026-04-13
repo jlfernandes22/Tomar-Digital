@@ -17,7 +17,6 @@ import {
   TouchableRipple,
   useTheme,
   Text,
-  FAB,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
@@ -329,9 +328,14 @@ export default function Index() {
         >
           <View
             style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
+              position: "absolute",
+              bottom: 30,
+              left: 20,
+              right: 20,
+              backgroundColor: theme.colors.secondaryContainer,
+              borderRadius: 20,
+              padding: 20,
+              zIndex: 1000,
             }}
           >
             <View style={{ flex: 1 }}>

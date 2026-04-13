@@ -100,11 +100,10 @@ const EditProfile = () => {
 
           {/* Contentor Principal do Formulário*/}
           <View
-            className=" items-center mx-4 py-8 px-6 rounded-xl"
+            className=" items-center mx-4 py-8 px-6 rounded-xl border-2"
             style={{
-              backgroundColor: theme.colors.background,
+              backgroundColor: theme.colors.secondaryContainer,
               borderColor: theme.colors.outline,
-              borderWidth: 2,
             }}
           >
             {/* Zona da Imagem */}

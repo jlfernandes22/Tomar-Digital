@@ -155,7 +155,7 @@ const Login = () => {
                 {/* Botão */}
                 <View className="mt-8">
                   <CustomButton
-                    buttonColor={theme.colors.primary}
+                    buttonColor={theme.colors.primaryContainer}
                     onPress={handleLogin}
                     loading={loading}
                   >

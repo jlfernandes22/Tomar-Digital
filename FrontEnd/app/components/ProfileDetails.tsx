@@ -79,7 +79,7 @@ const ProfileDetails = () => {
         <View
           className="p-2 rounded-full border-2 mb-2"
           style={{
-            backgroundColor: theme.colors.background,
+            backgroundColor: theme.colors.secondaryContainer,
             borderColor: theme.colors.outline,
           }}
         >
@@ -95,7 +95,7 @@ const ProfileDetails = () => {
         <View
           className=" w-full py-6 rounded-xl mt-5 border-2 items-center px-4"
           style={{
-            backgroundColor: theme.colors.background,
+            backgroundColor: theme.colors.secondaryContainer,
             borderColor: theme.colors.outline,
           }}
           accessible={true}
@@ -117,18 +117,11 @@ const ProfileDetails = () => {
           <CustomButton
             onPress={() => router.replace("/(tabs)/ScanScreen")}
             className="w-full mt-2 shadow-md"
-            buttonColor={theme.colors.primary}
+            buttonColor={theme.colors.onSecondaryContainer}
             textColor={theme.colors.onPrimary}
             accessibilityRole="button"
             accessibilityLabel="Ler QR-Code de fatura"
-            icon={() => (
-              <Image
-                className="w-8 h-8"
-                source={images.qrCodeImg}
-                accessibilityElementsHidden={true}
-                importantForAccessibility="no"
-              />
-            )}
+            icon={images.qrCodeImg}
           >
             Ler QR-Code
           </CustomButton>
@@ -148,22 +141,31 @@ const ProfileDetails = () => {
 
         {/* e-mail */}
         <View
-          className="w-full mt-5 flex-row items-center p-3"
+          className=" w-full flex-row p-3 rounded-xl mt-5 border-2 items-center px-4"
+          //className="w-full mt-5 flex-row items-center p-3"
           style={{
-            backgroundColor: theme.colors.background,
-            borderWidth: 2,
+            backgroundColor: theme.colors.secondaryContainer,
             borderColor: theme.colors.outline,
           }}
         >
           <Image
-            className="size-14 bg-convento-200 rounded-lg"
+            style={{
+              width: 44,
+              height: 44,
+            }}
             source={images.emailImg}
+            tintColor={theme.colors.onSecondaryContainer}
             accessibilityElementsHidden={true}
             importantForAccessibility="no-hide-descendants"
           />
-          <View className="flex-col ml-4 flex-1">
-            <Text style={{ fontWeight: "bold" }}>Endereço de E-mail</Text>
-            <Text className="font-bold text-base" numberOfLines={1}>
+          <View style={{ marginLeft: 20 }}>
+            <Text style={{ fontWeight: "bold", fontSize: 15 }}>
+              Endereço de E-mail
+            </Text>
+            <Text
+              style={{ fontWeight: "bold", fontSize: 13 }}
+              numberOfLines={1}
+            >
               {user.email}
             </Text>
           </View>
@@ -172,11 +174,12 @@ const ProfileDetails = () => {
         {/* Botão Logout */}
         <CustomButton
           onPress={logout}
-          className="w-full mt-10 mb-6 shadow-md"
+          className="mt-10 mb-6 shadow-md"
           textColor={theme.colors.onError}
           buttonColor={theme.colors.error}
           accessibilityRole="button"
           accessibilityLabel="Terminar sessão e sair da conta"
+          icon={images.logoutImg}
         >
           Terminar Sessão
         </CustomButton>

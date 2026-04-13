@@ -9,6 +9,8 @@ import Favorite from "./models/Favorite.js";
 import { authorize } from "./middleware/auth.js";
 import Campaign from "./models/Campaign.js";
 import "dotenv/config";
+import Invoice from "./models/Invoice.js";
+import multer from "multer";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
@@ -431,9 +433,6 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
     const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
 
-
-
-    
     /**
      * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
      * Bloqueia a operação se a mesma combinação de ATCUD e Hash já existir na base de dados.
@@ -445,17 +444,25 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     });
     if (faturaRepetida) {
       return res.status(400).json({
-        erro: "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente.",
+        message:
+          "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente.",
       });
     }
 
-    // 1. Procurar o utilizador
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 2: Autenticação do Utilizador
+     * Garante que quem está a fazer o pedido é um utilizador válido no sistema.
+     */
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "Utilizador não encontrado." });
     }
 
-    // 2. Verificar se a fatura tem NIF e se corresponde ao cidadão
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 3: Propriedade da Fatura (Anti-Fraude)
+     * Regra 1: Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
+     * Regra 2: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
+     */
     if (NIFClient == "999999990") {
       return res
         .status(400)
@@ -467,45 +474,63 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
         .json({ message: "O NIF na fatura não coincide com o seu." });
     }
 
-    // 3. Verificar quantidade gasta
+    //Adicionar verificação dos valores da fatura, pegando em todos e somando para verificar se dá igual ao valor total
+
+    /**
+     * VERIFICAÇÃO DE REGRA DE NEGÓCIO: Valor Mínimo
+     * Apenas faturas com um valor elegível (ex: superior a 1 euro) dão direito a pontos.
+     * Usa-se Number() para garantir a correta comparação matemática de strings.
+     */
     if (BoughtValue < 1) {
-      return res.status(400).json({ erro: "O valor gasto é inferior a 1€." });
+      return res
+        .status(400)
+        .json({ message: "O valor gasto é inferior a 1€." });
     }
 
-    // 4. Procurar a loja e "puxar" os dados das campanhas dela ao mesmo tempo!
+    /**
+     * VALIDAÇÃO DO COMERCIANTE E CAMPANHA
+     * Localiza o comerciante na base de dados e faz o "populate" das campanhas para avaliar a elegibilidade.
+     */
     const store = await Business.findOne({ NIF: Number(NIFStore) }).populate(
       "campaigns.campaign",
     );
     if (!store) {
       return res
         .status(404)
-        .json({ erro: "Esta loja não está registada na aplicação." });
+        .json({ message: "Esta loja não está registada na aplicação." });
     }
 
-    // 5. Confirmar se a loja tem alguma campanha ATIVA e APROVADA
+    // Procura na lista de campanhas da loja se existe alguma que cumpra todos os requisitos
     const activeCampaignEntry = store.campaigns.find((entry) => {
-      // O comerciante foi aprovado pela Câmara para esta campanha?
+      // 1. O comerciante foi formalmente aprovado para participar nesta campanha?
       if (entry.status !== "aprovado") return false;
 
-      // A campanha ainda existe e o seu estado global é "ativa"?
+      // 2. A campanha subjacente existe e está globalmente marcada como "ativa"?
       const camp = entry.campaign;
       if (!camp || camp.status !== "ativa") return false;
 
-      // A campanha ainda está dentro da validade?
+      // 3. A campanha ainda está dentro da validade temporal?
       const hoje = new Date();
       if (hoje > camp.expirationDate) return false;
 
+      // Se passou todos os filtros, esta é a campanha elegível
       return true;
     });
 
+    // Se nenhuma campanha válida foi encontrada, interrompe o processo
     if (!activeCampaignEntry) {
       return res.status(400).json({
-        erro: "Esta loja não tem nenhuma campanha de pontos ativa no momento.",
+        message:
+          "Esta loja não tem nenhuma campanha de pontos ativa no momento.",
       });
     }
 
-    // 6. Verificar Data da Fatura
-    // O QRCode AT usa "YYYYMMDD"
+    /**
+     * PROCESSAMENTO DA DATA DA FATURA
+     * O formato oficial da AT é uma string contínua "YYYYMMDD".
+     * Extraímos os fragmentos com substring() para montar um objeto Date no JavaScript.
+     * Nota: O JavaScript indexa os meses de 0 (Janeiro) a 11 (Dezembro).
+     */
     const invoiceYear = parseInt(BoughtDate.substring(0, 4));
     const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1; // Os meses em JS começam no 0
     const invoiceDay = parseInt(BoughtDate.substring(6, 8));
@@ -513,11 +538,17 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 
     // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
 
-    // 7. Fazer atribuição dos pontos (1 euro = 1 ponto)
+    /**
+     * ATRIBUIÇÃO DE PONTOS E PERSISTÊNCIA DE DADOS
+     * Regra de conversão atual: 1 euro gasto = 1 ponto.
+     * Math.trunc() corta as casas decimais (ex: 10.99€ -> 10 pontos).
+     */
     const pointsDeserved = Math.trunc(BoughtValue);
+    // Atualiza o saldo do utilizador e guarda na base de dados
     user.Points += pointsDeserved;
     await user.save();
 
+    // Regista a fatura no histórico para auditoria e prevenção de futuros bloqueios de duplicados
     await Invoice.create({
       user: user._id,
       business: store._id,
@@ -527,13 +558,22 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
       purchaseDate: BoughtDate,
     });
 
-    // 8. Responder com sucesso
+    /**
+     * RESPOSTA DE SUCESSO
+     * Retorna os detalhes da transação para que o front-end possa apresentar a notificação (Snackbar/Modal).
+     */
     return res.status(200).json({
       sucesso: "Fatura lida com sucesso!",
       pontosGanhos: pointsDeserved,
       saldoAtual: user.Points,
     });
-  } catch (error) {}
+  } catch (error) {
+    // Interceta falhas de servidor, base de dados ou parse mal formatado
+    console.error("Erro no processamento da fatura:", error);
+    return res.status(500).json({
+      erro: "Ocorreu um erro interno no servidor ao processar a fatura.",
+    });
+  }
 });
 
 ////////////////////////
