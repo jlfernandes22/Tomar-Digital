@@ -18,7 +18,9 @@ interface MapProps {
   readOnly?: boolean;
   businesses?: any[];
   onMarkerPress?: (business: any) => void;
-  onUserLocationUpdate?: (coords: { latitude: number; longitude: number } | null) => void;
+  onUserLocationUpdate?: (
+    coords: { latitude: number; longitude: number } | null,
+  ) => void;
 }
 
 // Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
@@ -108,7 +110,7 @@ const Map = forwardRef<MapRefType, MapProps>(
       readOnly = false,
       businesses = [],
       onMarkerPress,
-      onUserLocationUpdate
+      onUserLocationUpdate,
     },
     ref,
   ) => {
@@ -193,7 +195,6 @@ const Map = forwardRef<MapRefType, MapProps>(
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [loading, setLoading] = useState(false);
 
-
     return (
       <View
         style={{ flex: 1, width: "100%", overflow: "hidden", elevation: 10 }}
@@ -267,7 +268,7 @@ const Map = forwardRef<MapRefType, MapProps>(
             position: "absolute",
             margin: 16,
             right: 0,
-            bottom: 70,
+            bottom: 80,
           }}
           loading={loading}
           icon="crosshairs-gps"
@@ -283,7 +284,6 @@ const Map = forwardRef<MapRefType, MapProps>(
                 setLoading(false);
                 return;
               }
-
 
               const currentLocation = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Low,

@@ -17,6 +17,7 @@ import {
   TouchableRipple,
   useTheme,
   Text,
+  FAB,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
@@ -56,14 +57,18 @@ export default function Index() {
   const theme = useTheme();
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [showCloseBusiness, setShowCloseBusiness] = useState(false);
+  //vair ser usado para fazer zoom em qual dos negócios estiver perto do utilizador
+  const [itemVisivelId, setItemVisivelId] = useState<string | null>(null);
 
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
+
   const [bizInArea, setBizInArea] = useState<Negocio[]>([]);
 
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [idsFavorite, setIdsFavorite] = useState<string[]>([]);
   const [loadingFav, setLoadingFav] = useState(false);
 
   const [negocioSelecionado, setNegocioSelecionado] = useState<Negocio | null>(
@@ -100,28 +105,36 @@ export default function Index() {
     }
   };
 
-  const checkFavorite = async () => {
+  //checkFavorite
+  const fetchFavorite = async () => {
     if (!user?.id || !negocioSelecionado?._id) return;
+
     try {
       const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`);
       const dados = await response.json();
       const lista = Array.isArray(dados) ? dados : dados.favoritos || [];
 
       // Verificamos se o ID do negócio selecionado está na lista de favoritos
-      const existe = lista.some(
-        (fav: any) =>
-          (fav.businessId?._id || fav.businessId) === negocioSelecionado._id,
+      //const existe = lista.some(
+      //  (fav: any) =>
+      //    (fav.businessId?._id || fav.businessId) === negocioSelecionado._id,
+      //);
+      console.log(lista);
+      const ids = lista.map(
+        (fav: any) => fav.businessId?._id || fav.businessId._id,
       );
 
-      setIsFavorite(existe);
+      console.log(ids);
+      setIdsFavorite(ids);
     } catch (error) {
-      console.log("Erro ao verificar favorito no mapa:", error);
+      console.log("Erro ao obter favoritos:", error);
     }
   };
 
   // 3. Alternar Favorito (Guardar/Retirar)
-  const toggleFavorite = async () => {
+  const toggleFavorite = async (businessId: string) => {
     if (!user?.id) {
+      //trocar para snackbar
       Alert.alert(
         "Aviso",
         "Tens de ter sessão iniciada para guardar favoritos.",
@@ -130,8 +143,13 @@ export default function Index() {
     }
 
     setLoadingFav(true);
-    const endpoint = isFavorite ? "/retirarFavorito" : "/guardarFavorito";
+    const currentFav = idsFavorite.includes(businessId);
+    const endpoint = currentFav ? "/retirarFavorito" : "/guardarFavorito";
 
+    //console.log(isFavorite);
+    //console.log(user.id);
+    //quando se usa os negócios perto não está a ser selecionado negócio o que causa problema
+    console.log(negocioSelecionado?._id);
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
@@ -143,9 +161,16 @@ export default function Index() {
       });
 
       if (response.ok) {
-        setIsFavorite(!isFavorite);
+        if (endpoint === "/guardarFavorito") {
+          // Chamámos o guardar e deu OK -> adicionamos da lista
+          setIdsFavorite((prev) => [...prev, businessId]);
+        } else if (endpoint === "/retirarFavorito") {
+          // Chamámos o retirar e deu OK -> Removemos da lista
+          setIdsFavorite((prev) => prev.filter((id) => id !== businessId));
+        }
       }
     } catch (error) {
+      //trocar para snackbar
       Alert.alert("Erro", "Não foi possível atualizar os favoritos.");
     } finally {
       setLoadingFav(false);
@@ -155,8 +180,9 @@ export default function Index() {
   useFocusEffect(
     useCallback(() => {
       fetchNegocios();
-      checkFavorite(); // Esta função vai à API ver a lista atualizada
-    }, [user?.id, negocioSelecionado?._id]), // ou id nos Detalhes
+      fetchFavorite(); // Esta função vai à API ver a lista atualizada
+      //console.log("chamado")
+    }, [user?.id]), // ou id nos Detalhes
   );
   const onChangeSearch = (query: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -200,8 +226,6 @@ export default function Index() {
     setBizInArea(closeBiz);
   };
 
-  //vair ser usado para fazer zoom em qual dos negócios estiver perto do utilizador
-  const [itemVisivelId, setItemVisivelId] = useState<string | null>(null);
   //significa que se o item estiver 50% visivel fica selecionado
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -214,6 +238,10 @@ export default function Index() {
         // Como o carrossel mostra um de cada vez, o primeiro do array é o que está em destaque
         const itemVisivel = viewableItems[0].item;
         setItemVisivelId(itemVisivel._id);
+        setNegocioSelecionado(itemVisivel);
+        //console.log(itemVisivel._id);
+        //console.log(negocioSelecionado?._id);
+        //arranjar maneira para verificar se é favorito mais depressa :( carregar do servidor logo todos os favoritos e apartir dai
 
         //aqui é feito o zoom conforme qual está selecionado
         mapRef.current?.focusOnLocation(
@@ -240,6 +268,10 @@ export default function Index() {
     return pin.category === category;
   });
 
+  const isSelectedFavorite = negocioSelecionado
+    ? idsFavorite.includes(negocioSelecionado._id)
+    : false;
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View
@@ -253,6 +285,7 @@ export default function Index() {
           readOnly
           onMarkerPress={(biz) => {
             setNegocioSelecionado(biz);
+            setShowCloseBusiness(false);
             setListaFiltrada([]);
           }}
           onUserLocationUpdate={(coord) => setUserLocation(coord)}
@@ -312,7 +345,7 @@ export default function Index() {
         </View>
       </SafeAreaView>
 
-      {negocioSelecionado && (
+      {negocioSelecionado && !showCloseBusiness && (
         <Surface
           elevation={5}
           style={{
@@ -324,18 +357,14 @@ export default function Index() {
             borderRadius: 20,
             padding: 20,
             zIndex: 1000,
+            elevation: 10, // Garante que fica acima do mapa no Android
           }}
         >
           <View
             style={{
-              position: "absolute",
-              bottom: 30,
-              left: 20,
-              right: 20,
-              backgroundColor: theme.colors.secondaryContainer,
-              borderRadius: 20,
-              padding: 20,
-              zIndex: 1000,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
             }}
           >
             <View style={{ flex: 1 }}>
@@ -354,7 +383,10 @@ export default function Index() {
             </View>
             <IconButton
               icon="close"
-              onPress={() => setNegocioSelecionado(null)}
+              onPress={() => {
+                setNegocioSelecionado(null);
+                true;
+              }}
             />
           </View>
 
@@ -367,16 +399,17 @@ export default function Index() {
             }}
           >
             <Text style={{ color: theme.colors.onBackground, marginBottom: 5 }}>
-              📍 Lat: {negocioSelecionado.location.lat} | Long:{" "}
-              {negocioSelecionado.location.long}
+              📍 Lat: {negocioSelecionado.location.lat.toFixed(4)} | Long:{" "}
+              {negocioSelecionado.location.long.toFixed(4)}
             </Text>
           </View>
+
           <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
             {/* Botão de Favoritos */}
             <TouchableRipple
               disabled={loadingFav}
               style={{
-                backgroundColor: isFavorite
+                backgroundColor: isSelectedFavorite
                   ? theme.colors.errorContainer
                   : theme.colors.surfaceVariant,
                 paddingHorizontal: 15,
@@ -384,19 +417,19 @@ export default function Index() {
                 justifyContent: "center",
                 alignItems: "center",
                 borderWidth: 1,
-                borderColor: isFavorite
+                borderColor: isSelectedFavorite
                   ? theme.colors.error
                   : theme.colors.outlineVariant,
               }}
-              onPress={toggleFavorite}
+              onPress={() => toggleFavorite(negocioSelecionado._id)}
             >
               {loadingFav ? (
                 <ActivityIndicator size={24} color={theme.colors.primary} />
               ) : (
                 <IconButton
-                  icon={isFavorite ? "heart" : "heart-outline"}
+                  icon={isSelectedFavorite ? "heart" : "heart-outline"}
                   iconColor={
-                    isFavorite
+                    isSelectedFavorite
                       ? theme.colors.error
                       : theme.colors.onSurfaceVariant
                   }
@@ -453,7 +486,7 @@ export default function Index() {
         </Surface>
       )}
 
-      {bizInArea.length > 0 && !negocioSelecionado && (
+      {bizInArea.length > 0 && showCloseBusiness && (
         <View
           style={{
             position: "absolute",
@@ -493,6 +526,7 @@ export default function Index() {
             decelerationRate="fast"
             snapToAlignment="start"
             renderItem={({ item }) => {
+              const isFavorite = idsFavorite.includes(item._id);
               return (
                 <Surface
                   elevation={5}
@@ -537,7 +571,10 @@ export default function Index() {
                     <IconButton
                       icon="close"
                       // Esvazia o array de resultados de proximidade, o que desmonta este componente da UI
-                      onPress={() => setBizInArea([])}
+                      onPress={() => {
+                        setNegocioSelecionado(null);
+                        setShowCloseBusiness(false);
+                      }}
                     />
                   </View>
 
@@ -578,7 +615,7 @@ export default function Index() {
                           ? theme.colors.error
                           : theme.colors.outlineVariant,
                       }}
-                      onPress={toggleFavorite}
+                      onPress={() => toggleFavorite(item._id)}
                     >
                       {loadingFav ? (
                         <ActivityIndicator
@@ -654,6 +691,20 @@ export default function Index() {
           />
         </View>
       )}
+
+      <FAB
+        style={{
+          position: "absolute",
+          margin: 16,
+          right: 0,
+          bottom: 160,
+        }}
+        loading={loading}
+        onPress={() => {
+          setShowCloseBusiness(true);
+          fetchNegocios();
+        }}
+      ></FAB>
 
       <CustomSnackBar
         visible={snackbarVisible}
