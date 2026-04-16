@@ -196,9 +196,7 @@ const Map = forwardRef<MapRefType, MapProps>(
     const [loading, setLoading] = useState(false);
 
     return (
-      <View
-        style={{ flex: 1, width: "100%", overflow: "hidden", elevation: 10 }}
-      >
+      <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
         <MapView
           provider="google"
           ref={mapRef}
