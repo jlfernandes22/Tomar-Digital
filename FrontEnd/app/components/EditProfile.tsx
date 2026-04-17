@@ -5,10 +5,19 @@ import { useAuth } from "@/context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import { images } from "@/constants/images";
-import { Dialog, Portal, Surface, Text, useTheme } from "react-native-paper";
-import CustomTextInput from "./CustomTextInput";
-import CustomButton from "./CustomButton";
-import delay from "../utils/delay";
+import {
+  Dialog,
+  Divider,
+  Portal,
+  Surface,
+  Text,
+  TouchableRipple,
+  useTheme,
+} from "react-native-paper";
+import CustomTextInput from "../components/CustomTextInput";
+import CustomButton from "../components/CustomButton";
+import CustomSnackBar from "../components/CustomSnackBar";
+import * as ImagePicker from "expo-image-picker";
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
@@ -37,6 +46,37 @@ const EditProfile = () => {
     );
   }
 
+  const [image, setImage] = useState<string | null>(null);
+  const [visible, setvisible] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const pickImage = async () => {
+    const status = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    //verificar se o utilizador deu permissão para o uso da biblioteca de imagens
+    if (!status.granted) {
+      setMessage(
+        "Erro\nTem de dar permissão à biblioteca de imagens para poder selecionar foto de perfil",
+      );
+      setvisible(true);
+    }
+
+    //abrir a biblioteca de imagens para o utilizador escolher uma
+    let result = await ImagePicker.launchImageLibraryAsync({
+      //o utilizador apenas pode escolher imagens
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
   const hideDialog = async () => {
     setDialogVisible(false);
     if (success) {
@@ -57,6 +97,7 @@ const EditProfile = () => {
           name: name,
           city: city,
           NIF: NIF ? Number(NIF) : null,
+          file: image,
         }),
       });
 
@@ -99,6 +140,8 @@ const EditProfile = () => {
             <Text variant="headlineSmall">Editar Informações do Perfil</Text>
           </View>
 
+          <Divider />
+
           {/* Contentor Principal do Formulário*/}
           <View
             className=" items-center mx-4 py-8 px-6 rounded-xl border-2"
@@ -108,71 +151,84 @@ const EditProfile = () => {
             }}
           >
             {/* Zona da Imagem */}
-            <View className="relative mb-2">
+            <View className=" mb-2 w-full items-center">
               <View
-                className="w-32 h-32 rounded-full items-center justify-center"
+                className="w-32 h-32 rounded-full items-center justify-center border-2"
                 style={{
                   backgroundColor: theme.colors.background,
                   borderColor: theme.colors.outline,
-                  borderWidth: 2,
+                  alignSelf: "center",
                 }}
               >
-                <Text className="text-primary text-4xl font-bold uppercase">
-                  {(user.name || user.email || "V").charAt(0)}
-                </Text>
+                {!image && (
+                  <Text className="text-primary text-4xl font-bold uppercase">
+                    {(user.name || user.email || "V").charAt(0)}
+                  </Text>
+                )}
+                {image && (
+                  <Image
+                    source={{ uri: image }}
+                    className="w-32 h-32 rounded-full items-center justify-center border-2"
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.outline,
+                    }}
+                  ></Image>
+                )}
               </View>
 
               {/* Será trocado por uma touchable opacity para poder trocar foto de perfil */}
-              <View
-                className="absolute bottom-0 right-2  rounded-full border-2 "
+
+              <TouchableRipple
+                className="absolute rounded-xl border-2 size-11 top-24 right-11"
+                onPress={pickImage}
+                rippleColor={theme.colors.secondary}
                 style={{
-                  padding: 4,
-                  borderRadius: 26,
-                  borderWidth: 2,
-                  backgroundColor: theme.colors.background,
+                  backgroundColor: theme.colors.secondaryContainer,
                   borderColor: theme.colors.outline,
                 }}
               >
                 <Image
                   key={theme.dark ? "dark-theme" : "light-theme"}
-                  className="size-4"
-                  tintColor={theme.colors.onBackground}
+                  className="relative  rounded-xl size-10"
+                  tintColor={theme.colors.onSecondaryContainer}
                   source={images.editProfileImg}
                   accessibilityElementsHidden={true}
                   importantForAccessibility="no-hide-descendants"
+                  style={{
+                    backgroundColor: theme.colors.secondaryContainer,
+                    borderColor: theme.colors.outline,
+                    alignSelf: "center",
+                  }}
                 />
-              </View>
-            </View>
-            <Text className="text-center mb-8" variant="bodyLarge">
-              Mudar a Foto de Perfil
-            </Text>
+              </TouchableRipple>
 
-            <View className="w-full">
-              <CustomTextInput
-                value={name}
-                onChangeText={setName}
-                label="Nome"
-                className="w-full mb-4"
-              />
-
-              <CustomTextInput
-                label="Cidade"
-                value={city}
-                onChangeText={setCity}
-                className="w-full mb-4"
-              />
-
-              {user.NIF == null && (
+              <View className="w-full mt-6">
                 <CustomTextInput
-                  label="NIF"
-                  value={NIF}
-                  onChangeText={setNIF}
-                  isNIF
+                  value={name}
+                  onChangeText={setName}
+                  label="Nome"
                   className="w-full mb-4"
                 />
-              )}
-            </View>
 
+                <CustomTextInput
+                  label="Cidade"
+                  value={city}
+                  onChangeText={setCity}
+                  className="w-full mb-4"
+                />
+
+                {user.NIF == null && (
+                  <CustomTextInput
+                    label="NIF"
+                    value={NIF}
+                    onChangeText={setNIF}
+                    isNIF
+                    className="w-full mb-4"
+                  />
+                )}
+              </View>
+            </View>
             <View className="w-full mt-6">
               <CustomButton
                 buttonColor={theme.colors.error}

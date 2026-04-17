@@ -726,9 +726,12 @@ app.post(
 
       const user = await User.findById(req.user.id);
 
+      console.log(req.file);
+
       const receivedName = req.body.name;
       const receivedCity = req.body.city;
       const receivedNIF = req.body.NIF;
+      const avatar = req.file;
 
       console.log(receivedName, receivedCity, receivedNIF);
 

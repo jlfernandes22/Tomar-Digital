@@ -1,5 +1,5 @@
 import { ActivityIndicator, View, Image, ScrollView } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { router } from "expo-router"; // Simplificado, apenas o router chega
 import { useAuth } from "@/context/AuthContext";
 import { images } from "@/constants/images";
