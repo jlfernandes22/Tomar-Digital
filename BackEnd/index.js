@@ -196,6 +196,7 @@ app.post(
         telefoneDono, 
         emailDono, 
         descricaoNegocio, 
+        logo,
         galeriaFotos,
         owner // Caso a câmara esteja a registar por outro
       } = req.body;
