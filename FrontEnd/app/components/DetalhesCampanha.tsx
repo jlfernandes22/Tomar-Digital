@@ -141,6 +141,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
           </ScrollView>
 
           <View style={{ marginTop: 20 }}>
+            {/*TEMOS DE FAZER ESTA PARTE AINDA*/}
             <CustomButton  onPress={() => console.log("Aderir", campaign._id)}>
               Aderir à Campanha
             </CustomButton>
