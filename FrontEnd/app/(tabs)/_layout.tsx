@@ -137,7 +137,7 @@ const _layout = () => {
         options={{
           href: user?.role === "comerciante" ? "/JoinCampaign" : null,
           tabBarIcon: ({ color }) => (
-            <TabIcon icon={images.campanhaImg} color={color} />
+            <TabIcon icon={images.campaignImg} color={color} />
           ),
         }}
       />
