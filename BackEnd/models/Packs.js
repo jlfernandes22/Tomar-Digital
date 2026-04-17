@@ -15,6 +15,15 @@ const PacksSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+
+  currentStock: {
+    type: Number, 
+    default: function () {
+      return this.stock;
+    },
+  },
+
+  maxPerUser: { type: Number, default: 1 }
 });
 
 export default PacksSchema;

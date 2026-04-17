@@ -14,9 +14,9 @@ import multer from "multer";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
-app.use(express.json());
 app.use(cors());
-
+app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 //////////////////////////////
 //Conectar à mongoDb no docker
 mongoose
@@ -185,20 +185,31 @@ app.post(
   authorize(["comerciante", "camara"]),
   async (req, res) => {
     try {
-      const { owner, name, category, location, NIF } = req.body;
+      const { 
+        nomeNegocio, 
+        NIFnegocio, 
+        categoriaNegocio, 
+        logotipoNegocio, 
+        moradaNegocio, 
+        freguesiaNegocio, 
+        localizacao, 
+        telefoneDono, 
+        emailDono, 
+        descricaoNegocio, 
+        galeriaFotos,
+        owner // Caso a câmara esteja a registar por outro
+      } = req.body;
 
-      if (!name || !category || !location) {
+      if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
         return res.status(400).json({
-          message:
-            "Dados incompletos (Nome, Categoria e Localização são obrigatórios).",
+          message: "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
         });
       }
 
       const ownerId =
         req.user.role === "camara" ? owner || req.user.id : req.user.id;
       //Verificar se já existe um negócio com o mesmo nome para este dono
-      const existe = await Business.findOne({ name, owner: ownerId });
-
+      const existe = await Business.findOne({ nomeNegocio, owner: ownerId });
       if (existe) {
         return res.status(400).json({
           message: "Já tens um negócio registado com este nome.",
@@ -208,15 +219,24 @@ app.post(
       // Se for o comerciante a criar, o status deve ser 'pendente'
       // Se for a camara, definir logo como 'aprovado'
       const novoNegocio = new Business({
-        name,
-        category,
+        name: nomeNegocio,
+        category: categoriaNegocio,
+        NIF: NIFnegocio,
+        logo: logotipoNegocio, 
+        address: moradaNegocio,
+        parish: freguesiaNegocio,
         location: {
-          lat: Number(location.lat), // Forçamos a conversão para número por segurança
-          long: Number(location.long),
+          lat: Number(localizacao.latitude), 
+          long: Number(localizacao.longitude),
         },
+        
+        phone: telefoneDono,
+        email: emailDono,
+        description: descricaoNegocio,
+        gallery: galeriaFotos, 
         owner: ownerId,
         status: req.user.role === "camara" ? "aprovado" : "pendente",
-        NIF: NIF,
+        createdAt: new Date(),
       });
 
       await novoNegocio.save();
@@ -580,35 +600,55 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 //Criar Campanha
 app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    //console.log(user);
-    //receber variáveis, eventualmente uma imagem que será guardada no servidor
-    const { title, description, packs, expirationDate } = req.body;
+    const { 
+      titulo, 
+      slogan, 
+      descricao, 
+      dataInicio, 
+      dataExpiracao, 
+      normas, 
+      packs, 
+      logo, 
+      panfleto 
+    } = req.body;
 
     const newCampaign = new Campaign({
-      createdBy: user,
-      title: title,
-      description: description,
-      packs: packs,
-      expirationDate: expirationDate,
+      createdBy: req.user.id,
+      titulo: titulo,            // Garante que o nome à esquerda é igual ao do Schema
+      slogan: slogan,
+      descricao: descricao,
+      dataInicio: dataInicio,
+      DataExpiracao: dataExpiracao, // Nome exato que o Mongoose pediu no erro anterior
+      normas: normas,
+      packs: packs, 
+      logo: logo,
+      panfleto: panfleto
     });
 
     await newCampaign.save();
-
-    console.log("Campanha criada com sucesso");
-    console.log(
-      "Dados da campanha: \nTítulo: " +
-        title +
-        "\nDescrição: " +
-        description +
-        "\nPacotes: " +
-        packs +
-        "\nData de expiração: " +
-        expirationDate,
-    );
-    return res.status(200).json("Sucesso");
+    res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
   } catch (err) {
-    console.log(err);
+    console.error(err);
+    res.status(500).json({ message: "Erro ao gravar", details: err.message });
+  } });
+
+
+////Lista das Campanhas
+app.get("/listaCampanhas", async (req, res) => {
+  try {
+    const campanhas = await Campaign.find().lean();
+
+    const formatadas = campanhas.map(c => ({
+          ...c,
+          _id: c._id.toString(),
+          // Se createdBy for um objeto, enviamos apenas o nome ou string
+          createdBy: typeof c.createdBy === 'object' ? (c.createdBy.username || "Admin") : c.createdBy
+        }));
+    console.log(campanhas)
+    res.status(200).json(formatadas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json("Erro ao listar as campanhas");
   }
 });
 

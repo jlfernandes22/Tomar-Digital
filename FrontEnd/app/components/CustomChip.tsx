@@ -46,7 +46,7 @@ const CustomChip = ({
         // ESTILO DO TEXTO
         textStyle={{
           // Se selecionado: Branco. Se não: Cor de texto padrão do tema (escuro)
-          color: isSelected ? "white" : theme.colors.onSurface,
+          color: isSelected ? theme.colors.background : theme.colors.onSurface,
           fontWeight: isSelected ? "bold" : "500",
           fontSize: 14,
           marginVertical: 0,
