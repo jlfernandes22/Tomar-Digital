@@ -9,13 +9,14 @@ import Favorite from "./models/Favorite.js";
 import { authorize } from "./middleware/auth.js";
 import Campaign from "./models/Campaign.js";
 import "dotenv/config";
+import Invoice from "./models/Invoice.js";
 import multer from "multer";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
-app.use(express.json());
 app.use(cors());
-
+app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 //////////////////////////////
 //Conectar à mongoDb no docker
 mongoose
@@ -184,20 +185,31 @@ app.post(
   authorize(["comerciante", "camara"]),
   async (req, res) => {
     try {
-      const { owner, name, category, location, NIF } = req.body;
+      const { 
+        nomeNegocio, 
+        NIFnegocio, 
+        categoriaNegocio, 
+        logotipoNegocio, 
+        moradaNegocio, 
+        freguesiaNegocio, 
+        localizacao, 
+        telefoneDono, 
+        emailDono, 
+        descricaoNegocio, 
+        galeriaFotos,
+        owner // Caso a câmara esteja a registar por outro
+      } = req.body;
 
-      if (!name || !category || !location) {
+      if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
         return res.status(400).json({
-          message:
-            "Dados incompletos (Nome, Categoria e Localização são obrigatórios).",
+          message: "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
         });
       }
 
       const ownerId =
         req.user.role === "camara" ? owner || req.user.id : req.user.id;
       //Verificar se já existe um negócio com o mesmo nome para este dono
-      const existe = await Business.findOne({ name, owner: ownerId });
-
+      const existe = await Business.findOne({ nomeNegocio, owner: ownerId });
       if (existe) {
         return res.status(400).json({
           message: "Já tens um negócio registado com este nome.",
@@ -207,15 +219,24 @@ app.post(
       // Se for o comerciante a criar, o status deve ser 'pendente'
       // Se for a camara, definir logo como 'aprovado'
       const novoNegocio = new Business({
-        name,
-        category,
+        name: nomeNegocio,
+        category: categoriaNegocio,
+        NIF: NIFnegocio,
+        logo: logotipoNegocio, 
+        address: moradaNegocio,
+        parish: freguesiaNegocio,
         location: {
-          lat: Number(location.lat), // Forçamos a conversão para número por segurança
-          long: Number(location.long),
+          lat: Number(localizacao.latitude), 
+          long: Number(localizacao.longitude),
         },
+        
+        phone: telefoneDono,
+        email: emailDono,
+        description: descricaoNegocio,
+        gallery: galeriaFotos, 
         owner: ownerId,
         status: req.user.role === "camara" ? "aprovado" : "pendente",
-        NIF: NIF,
+        createdAt: new Date(),
       });
 
       await novoNegocio.save();
@@ -392,93 +413,76 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 
     //pegar nos dados da fatura
     const { QRCodeData } = req.body;
-    const QRCodeFields = QRCodeData.split("*");
-    //console.log(QRCodeFields);
-    //console.log(QRCodeFields[0])
+    console.log(QRCodeData);
 
-    //pegar nos números individualmente
-    // A -> NIF do emissor
-    //      QRCodeFields[0]
-    //
-    // B -> NIF do cliente, caso não haja não se pode validar a fatura como sendo da pessoa
-    //      QRCodeFields[1]
-    //
-    // C -> País do cliente
-    //      QRCodeFields[2]
-    //
-    // D -> tipo de documento (FS -> fatura simplificada) (FT -> fatura normal)
-    //      QRCodeFields[3]
-    //
-    // E -> estado do documento, N significa normal
-    //      QRCodeFields[4]
-    //
-    // F -> data de compra aaaa/mm/dd
-    //      QRCodeFields[5]
-    //
-    // G -> número de série do talão, inútil por enquanto
-    //      QRCodeFields[6]
-    //
-    // H -> ATCUD Este código prova que a loja comunicou a série de faturas às Finanças antes de a imprimir (deve ser
-    //        preciso verificar a autenticidade deste código para poder dar a fatura como válida)
-    //      QRCodeFields[7]
-    //
-    // Q -> um hash de quatro caracters que se liga a fatura passada? como uma chain?
-    //      QRCodeFields[8]
-    //
-    // R -> número do certificado de software de faturação registado na AT
-    //      QRCodeFields[9]
-    //
-    // I1 -> região de imposto
-    //      QRCodeFields[10]
-    //
-    // I3 -> valor sem iva
-    //      QRCodeFields[11]
-    //
-    // I4 -> valor do iva
-    //      QRCodeFields[12]
-    //
-    // N -> valor total de todos os impostos
-    //      QRCodeFields[13]
-    //
-    // O -> Valor total a pagar (I3+I4 = valor total)
-    //      QRCodeFields[14]
-    //
-    // S -> informação adicional, indica o valor pago e como foi (metodoDePagamento/valor)
-    //      QRCodeFields[15]
-    const NIFStore = QRCodeFields[0].split(":")[1];
-    const NIFClient = QRCodeFields[1].split(":")[1];
-    const CountryClient = QRCodeFields[2].split(":")[1];
-    const TypeDocument = QRCodeFields[3].split(":")[1];
-    const StateDocument = QRCodeFields[4].split(":")[1];
-    const BoughtDate = QRCodeFields[5].split(":")[1];
-    const SerialNumber = QRCodeFields[6].split(":")[1];
-    const CodeATCUD = QRCodeFields[7].split(":")[1];
-    const hash = QRCodeFields[8].split(":")[1];
-    const SoftCertNumber = QRCodeFields[9].split(":")[1];
-    const RegionTax = QRCodeFields[10].split(":")[1];
-    const NoIVAValue = QRCodeFields[11].split(":")[1];
-    const ValueIVA = QRCodeFields[12].split(":")[1];
-    const AllTaxValue = QRCodeFields[13].split(":")[1];
-    const BoughtValue = QRCodeFields[14].split(":")[1];
-    const AditionalInfo = QRCodeFields[15].split(":")[1];
+    //função para pegar nos campos de forma dinâmica pois existe a possibilidade de existir campos opcionais
+    const parseQRCodeFields = (data) => {
+      const parts = data.split("*");
 
+      const fields = {};
+
+      parts.forEach((part) => {
+        const [code, ...valueParts] = part.split(":");
+        const value = valueParts.join(":");
+
+        if (code) {
+          fields[code] = value;
+        }
+      });
+      return fields;
+    };
+    // Extração dinâmica de todos os campos da fatura lida
+    const QRCodeFields = parseQRCodeFields(QRCodeData);
+
+    // Mapeamento dos campos segundo as especificações técnicas da Autoridade Tributária
+    const NIFStore = QRCodeFields["A"]; // NIF do comerciante/emitente
+    const NIFClient = QRCodeFields["B"]; // NIF do adquirente (cliente)
+    const CountryClient = QRCodeFields["C"]; // País do adquirente
+    const TypeDocument = QRCodeFields["D"]; // Tipo de documento (FT: Fatura, FS: Fatura Simplificada, etc.)
+    const StateDocument = QRCodeFields["E"]; // Estado do documento (N: Normal, etc.)
+    const BoughtDate = QRCodeFields["F"]; // Data do documento (Formato: YYYYMMDD)
+    const SerialNumber = QRCodeFields["G"]; // Identificação única do documento pela loja
+    const CodeATCUD = QRCodeFields["H"]; // ATCUD - Código Único do Documento (Validação central da AT)
+    const hash = QRCodeFields["Q"]; // Assinatura digital do documento (Hash de 4 caracteres)
+    const SoftCertNumber = QRCodeFields["R"]; // Número do certificado do software de faturação
+
+    // Campos Fiscais e Financeiros
+    const RegionTax = QRCodeFields["11"]; // Espaço fiscal (ex: PT, PT-MA, PT-AC)
+    const NoIVAValue = QRCodeFields["L"]; // Valor total não sujeito a IVA / isento
+    const AllTaxValue = QRCodeFields["N"]; // Valor total de todos os impostos cobrados (IVA + Selo)
+    const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
+    const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
+
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
+     * Bloqueia a operação se a mesma combinação de ATCUD e Hash já existir na base de dados.
+     * Isto impede que o mesmo talão seja lido várias vezes por pessoas diferentes.
+     */
     const faturaRepetida = await Invoice.findOne({
       ATCUD: CodeATCUD,
       hash: hash,
     });
     if (faturaRepetida) {
       return res.status(400).json({
-        erro: "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente.",
+        message:
+          "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente.",
       });
     }
 
-    // 1. Procurar o utilizador
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 2: Autenticação do Utilizador
+     * Garante que quem está a fazer o pedido é um utilizador válido no sistema.
+     */
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "Utilizador não encontrado." });
     }
 
-    // 2. Verificar se a fatura tem NIF e se corresponde ao cidadão
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 3: Propriedade da Fatura (Anti-Fraude)
+     * Regra 1: Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
+     * Regra 2: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
+     */
     if (NIFClient == "999999990") {
       return res
         .status(400)
@@ -490,45 +494,63 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
         .json({ message: "O NIF na fatura não coincide com o seu." });
     }
 
-    // 3. Verificar quantidade gasta
+    //Adicionar verificação dos valores da fatura, pegando em todos e somando para verificar se dá igual ao valor total
+
+    /**
+     * VERIFICAÇÃO DE REGRA DE NEGÓCIO: Valor Mínimo
+     * Apenas faturas com um valor elegível (ex: superior a 1 euro) dão direito a pontos.
+     * Usa-se Number() para garantir a correta comparação matemática de strings.
+     */
     if (BoughtValue < 1) {
-      return res.status(400).json({ erro: "O valor gasto é inferior a 1€." });
+      return res
+        .status(400)
+        .json({ message: "O valor gasto é inferior a 1€." });
     }
 
-    // 4. Procurar a loja e "puxar" os dados das campanhas dela ao mesmo tempo!
+    /**
+     * VALIDAÇÃO DO COMERCIANTE E CAMPANHA
+     * Localiza o comerciante na base de dados e faz o "populate" das campanhas para avaliar a elegibilidade.
+     */
     const store = await Business.findOne({ NIF: Number(NIFStore) }).populate(
       "campaigns.campaign",
     );
     if (!store) {
       return res
         .status(404)
-        .json({ erro: "Esta loja não está registada na aplicação." });
+        .json({ message: "Esta loja não está registada na aplicação." });
     }
 
-    // 5. Confirmar se a loja tem alguma campanha ATIVA e APROVADA
+    // Procura na lista de campanhas da loja se existe alguma que cumpra todos os requisitos
     const activeCampaignEntry = store.campaigns.find((entry) => {
-      // O comerciante foi aprovado pela Câmara para esta campanha?
+      // 1. O comerciante foi formalmente aprovado para participar nesta campanha?
       if (entry.status !== "aprovado") return false;
 
-      // A campanha ainda existe e o seu estado global é "ativa"?
+      // 2. A campanha subjacente existe e está globalmente marcada como "ativa"?
       const camp = entry.campaign;
       if (!camp || camp.status !== "ativa") return false;
 
-      // A campanha ainda está dentro da validade?
+      // 3. A campanha ainda está dentro da validade temporal?
       const hoje = new Date();
       if (hoje > camp.expirationDate) return false;
 
+      // Se passou todos os filtros, esta é a campanha elegível
       return true;
     });
 
+    // Se nenhuma campanha válida foi encontrada, interrompe o processo
     if (!activeCampaignEntry) {
       return res.status(400).json({
-        erro: "Esta loja não tem nenhuma campanha de pontos ativa no momento.",
+        message:
+          "Esta loja não tem nenhuma campanha de pontos ativa no momento.",
       });
     }
 
-    // 6. Verificar Data da Fatura
-    // O QRCode AT usa "YYYYMMDD"
+    /**
+     * PROCESSAMENTO DA DATA DA FATURA
+     * O formato oficial da AT é uma string contínua "YYYYMMDD".
+     * Extraímos os fragmentos com substring() para montar um objeto Date no JavaScript.
+     * Nota: O JavaScript indexa os meses de 0 (Janeiro) a 11 (Dezembro).
+     */
     const invoiceYear = parseInt(BoughtDate.substring(0, 4));
     const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1; // Os meses em JS começam no 0
     const invoiceDay = parseInt(BoughtDate.substring(6, 8));
@@ -536,11 +558,17 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 
     // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
 
-    // 7. Fazer atribuição dos pontos (1 euro = 1 ponto)
+    /**
+     * ATRIBUIÇÃO DE PONTOS E PERSISTÊNCIA DE DADOS
+     * Regra de conversão atual: 1 euro gasto = 1 ponto.
+     * Math.trunc() corta as casas decimais (ex: 10.99€ -> 10 pontos).
+     */
     const pointsDeserved = Math.trunc(BoughtValue);
+    // Atualiza o saldo do utilizador e guarda na base de dados
     user.Points += pointsDeserved;
     await user.save();
 
+    // Regista a fatura no histórico para auditoria e prevenção de futuros bloqueios de duplicados
     await Invoice.create({
       user: user._id,
       business: store._id,
@@ -550,48 +578,77 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
       purchaseDate: BoughtDate,
     });
 
-    // 8. Responder com sucesso
+    /**
+     * RESPOSTA DE SUCESSO
+     * Retorna os detalhes da transação para que o front-end possa apresentar a notificação (Snackbar/Modal).
+     */
     return res.status(200).json({
       sucesso: "Fatura lida com sucesso!",
       pontosGanhos: pointsDeserved,
       saldoAtual: user.Points,
     });
-  } catch (error) {}
+  } catch (error) {
+    // Interceta falhas de servidor, base de dados ou parse mal formatado
+    console.error("Erro no processamento da fatura:", error);
+    return res.status(500).json({
+      erro: "Ocorreu um erro interno no servidor ao processar a fatura.",
+    });
+  }
 });
 
 ////////////////////////
 //Criar Campanha
 app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    //console.log(user);
-    //receber variáveis, eventualmente uma imagem que será guardada no servidor
-    const { title, description, packs, expirationDate } = req.body;
+    const { 
+      titulo, 
+      slogan, 
+      descricao, 
+      dataInicio, 
+      dataExpiracao, 
+      normas, 
+      packs, 
+      logo, 
+      panfleto 
+    } = req.body;
 
     const newCampaign = new Campaign({
-      createdBy: user,
-      title: title,
-      description: description,
-      packs: packs,
-      expirationDate: expirationDate,
+      createdBy: req.user.id,
+      titulo: titulo,            // Garante que o nome à esquerda é igual ao do Schema
+      slogan: slogan,
+      descricao: descricao,
+      dataInicio: dataInicio,
+      DataExpiracao: dataExpiracao, // Nome exato que o Mongoose pediu no erro anterior
+      normas: normas,
+      packs: packs, 
+      logo: logo,
+      panfleto: panfleto
     });
 
     await newCampaign.save();
-
-    console.log("Campanha criada com sucesso");
-    console.log(
-      "Dados da campanha: \nTítulo: " +
-        title +
-        "\nDescrição: " +
-        description +
-        "\nPacotes: " +
-        packs +
-        "\nData de expiração: " +
-        expirationDate,
-    );
-    return res.status(200).json("Sucesso");
+    res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
   } catch (err) {
-    console.log(err);
+    console.error(err);
+    res.status(500).json({ message: "Erro ao gravar", details: err.message });
+  } });
+
+
+////Lista das Campanhas
+app.get("/listaCampanhas", async (req, res) => {
+  try {
+    const campanhas = await Campaign.find().lean();
+
+    const formatadas = campanhas.map(c => ({
+          ...c,
+          _id: c._id.toString(),
+          // Se createdBy for um objeto, enviamos apenas o nome ou string
+          createdBy: typeof c.createdBy === 'object' ? (c.createdBy.username || "Admin") : c.createdBy
+        }));
+    console.log(campanhas)
+    res.status(200).json(formatadas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json("Erro ao listar as campanhas");
   }
 });
 

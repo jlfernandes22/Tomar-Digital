@@ -13,6 +13,7 @@ import {
   TouchableRipple,
   ActivityIndicator,
   Button,
+  Divider,
 } from "react-native-paper";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
@@ -91,20 +92,26 @@ const Saved = () => {
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} className="p-4">
         {/* Header Elegante */}
-        <View className="p-6">
-          <Text
-            variant="headlineMedium"
-            style={{
-              fontWeight: "bold",
-              color: theme.colors.primary,
-              letterSpacing: 0.5,
-            }}
-          >
-            Os Meus Favoritos
-          </Text>
-        </View>
+
+        <Text
+          variant="headlineMedium"
+          style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+          }}
+        >
+          Os Meus Favoritos
+        </Text>
+
+        <Divider
+          style={{
+            backgroundColor: theme.colors.outlineVariant,
+            marginBottom: 16,
+          }}
+        />
 
         {loading ? (
           <View className="flex-1 justify-center items-center">
@@ -117,11 +124,6 @@ const Saved = () => {
         ) : (
           <FlatList
             data={favoritos}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingBottom: 20,
-              flexGrow: 1,
-            }}
             keyExtractor={(item: any) => item._id}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
@@ -130,8 +132,9 @@ const Saved = () => {
                 <Surface
                   elevation={1}
                   style={{
-                    borderRadius: 20,
                     backgroundColor: theme.colors.secondaryContainer,
+                    borderRadius: 12,
+                    marginBottom: 16,
                     borderWidth: 1,
                     borderColor: theme.colors.outlineVariant,
                     overflow: "hidden",

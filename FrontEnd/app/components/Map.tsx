@@ -6,10 +6,9 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import MapView, { Marker, Callout, Circle } from "react-native-maps";
-import { Dialog, FAB, Portal, useTheme } from "react-native-paper";
+import MapView, { Marker, Circle } from "react-native-maps";
+import { FAB, Portal, useTheme } from "react-native-paper";
 import * as Location from "expo-location";
-import { subscribe } from "expo-router/build/link/linking";
 import CustomSnackBar from "./CustomSnackBar";
 
 interface MapProps {
@@ -19,6 +18,9 @@ interface MapProps {
   readOnly?: boolean;
   businesses?: any[];
   onMarkerPress?: (business: any) => void;
+  onUserLocationUpdate?: (
+    coords: { latitude: number; longitude: number } | null,
+  ) => void;
 }
 
 // Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
@@ -108,6 +110,7 @@ const Map = forwardRef<MapRefType, MapProps>(
       readOnly = false,
       businesses = [],
       onMarkerPress,
+      onUserLocationUpdate,
     },
     ref,
   ) => {
@@ -122,6 +125,12 @@ const Map = forwardRef<MapRefType, MapProps>(
       latitude: location?.lat ?? 39.6035,
       longitude: location?.long ?? -8.4154,
     });
+
+    useEffect(() => {
+      if (onUserLocationUpdate) {
+        onUserLocationUpdate(userLocation);
+      }
+    }, [userLocation]);
 
     useEffect(() => {
       let subscription: Location.LocationSubscription | null = null;
@@ -187,9 +196,7 @@ const Map = forwardRef<MapRefType, MapProps>(
     const [loading, setLoading] = useState(false);
 
     return (
-      <View
-        style={{ flex: 1, width: "100%", overflow: "hidden", elevation: 10 }}
-      >
+      <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
         <MapView
           provider="google"
           ref={mapRef}
@@ -259,7 +266,7 @@ const Map = forwardRef<MapRefType, MapProps>(
             position: "absolute",
             margin: 16,
             right: 0,
-            bottom: 70,
+            bottom: 80,
           }}
           loading={loading}
           icon="crosshairs-gps"
@@ -276,7 +283,6 @@ const Map = forwardRef<MapRefType, MapProps>(
                 return;
               }
 
-              // Corrigi um pequeno typo (corrent -> current)
               const currentLocation = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Low,
               });

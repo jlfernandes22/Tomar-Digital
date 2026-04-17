@@ -15,6 +15,7 @@ import favWaiting from "@/assets/otherIcons/favWaiting.png";
 import emailImg from "@/assets/otherIcons/mail-sharp.png";
 import mapImg from "@/assets/tabsImages/map-sharp.png";
 import campaignImg from "@/assets/tabsImages/pricetags-sharp.png";
+import bagImg from "@/assets/otherIcons/bag-handle-sharp.png";
 
 export const images = {
   profileImg,
@@ -34,4 +35,5 @@ export const images = {
   mapImg,
   campaignImg,
   logoutImg,
+  bagImg,
 };

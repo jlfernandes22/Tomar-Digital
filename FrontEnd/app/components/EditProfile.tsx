@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { images } from "@/constants/images";
 import {
   Dialog,
@@ -127,7 +127,8 @@ const EditProfile = () => {
 
   return (
     //Flex-1 na Surface e SafeAreaView para ocuparem o ecrã todo
-    <Surface style={{ flex: 1 }}>
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={{ flex: 1 }}>
         {/* ScrollView adicionada para ecrãs pequenos e para quando o teclado abre */}
         <ScrollView
@@ -242,7 +243,7 @@ const EditProfile = () => {
               <CustomButton
                 buttonColor={theme.colors.onBackground}
                 textColor={theme.colors.onPrimary}
-                onPress={() => router.replace("/(tabs)/Profile")}
+                onPress={() => router.back()}
                 className="w-full"
                 disabled={loading}
               >
