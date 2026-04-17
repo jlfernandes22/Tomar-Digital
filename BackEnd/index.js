@@ -15,8 +15,8 @@ import multer from "multer";
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
-app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use(express.json({ limit: "20mb" })); // Aumentei para 20mb para garantir segurança com panfletos
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
 //////////////////////////////
 //Conectar à mongoDb no docker
 mongoose
@@ -185,25 +185,34 @@ app.post(
   authorize(["comerciante", "camara"]),
   async (req, res) => {
     try {
-      const { 
-        nomeNegocio, 
-        NIFnegocio, 
-        categoriaNegocio, 
-        logotipoNegocio, 
-        moradaNegocio, 
-        freguesiaNegocio, 
-        localizacao, 
-        telefoneDono, 
-        emailDono, 
-        descricaoNegocio, 
-        logo,
+      const {
+        nomeNegocio,
+        NIFnegocio,
+        categoriaNegocio,
+        logotipoNegocio,
+        moradaNegocio,
+        freguesiaNegocio,
+        localizacao,
+        telefoneDono,
+        emailDono,
+        descricaoNegocio,
         galeriaFotos,
-        owner // Caso a câmara esteja a registar por outro
+        owner, // Caso a câmara esteja a registar por outro
       } = req.body;
 
-      if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
+      console.log(req.body);
+
+      if (
+        !nomeNegocio ||
+        !categoriaNegocio ||
+        !localizacao ||
+        !telefoneDono ||
+        !emailDono ||
+        galeriaFotos.length === 0
+      ) {
         return res.status(400).json({
-          message: "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
+          message:
+            "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
         });
       }
 
@@ -223,18 +232,18 @@ app.post(
         name: nomeNegocio,
         category: categoriaNegocio,
         NIF: NIFnegocio,
-        logo: logotipoNegocio, 
+        logo: logotipoNegocio,
         address: moradaNegocio,
         parish: freguesiaNegocio,
         location: {
-          lat: Number(localizacao.latitude), 
+          lat: Number(localizacao.latitude),
           long: Number(localizacao.longitude),
         },
-        
+
         phone: telefoneDono,
         email: emailDono,
         description: descricaoNegocio,
-        gallery: galeriaFotos, 
+        gallery: galeriaFotos,
         owner: ownerId,
         status: req.user.role === "camara" ? "aprovado" : "pendente",
         createdAt: new Date(),
@@ -601,29 +610,29 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 //Criar Campanha
 app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
   try {
-    const { 
-      titulo, 
-      slogan, 
-      descricao, 
-      dataInicio, 
-      dataExpiracao, 
-      normas, 
-      packs, 
-      logo, 
-      panfleto 
+    const {
+      titulo,
+      slogan,
+      descricao,
+      dataInicio,
+      dataExpiracao,
+      normas,
+      packs,
+      logo,
+      panfleto,
     } = req.body;
 
     const newCampaign = new Campaign({
       createdBy: req.user.id,
-      titulo: titulo,            // Garante que o nome à esquerda é igual ao do Schema
+      titulo: titulo, // Garante que o nome à esquerda é igual ao do Schema
       slogan: slogan,
       descricao: descricao,
       dataInicio: dataInicio,
       DataExpiracao: dataExpiracao, // Nome exato que o Mongoose pediu no erro anterior
       normas: normas,
-      packs: packs, 
+      packs: packs,
       logo: logo,
-      panfleto: panfleto
+      panfleto: panfleto,
     });
 
     await newCampaign.save();
@@ -631,21 +640,24 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro ao gravar", details: err.message });
-  } });
-
+  }
+});
 
 ////Lista das Campanhas
 app.get("/listaCampanhas", async (req, res) => {
   try {
     const campanhas = await Campaign.find().lean();
 
-    const formatadas = campanhas.map(c => ({
-          ...c,
-          _id: c._id.toString(),
-          // Se createdBy for um objeto, enviamos apenas o nome ou string
-          createdBy: typeof c.createdBy === 'object' ? (c.createdBy.username || "Admin") : c.createdBy
-        }));
-    console.log(campanhas)
+    const formatadas = campanhas.map((c) => ({
+      ...c,
+      _id: c._id.toString(),
+      // Se createdBy for um objeto, enviamos apenas o nome ou string
+      createdBy:
+        typeof c.createdBy === "object"
+          ? c.createdBy.username || "Admin"
+          : c.createdBy,
+    }));
+    console.log(campanhas);
     res.status(200).json(formatadas);
   } catch (err) {
     console.error(err);

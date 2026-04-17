@@ -64,13 +64,17 @@ const BusinessSchema = new mongoose.Schema({
     },
   ],
 
-   logo: {
+  logo: {
     type: String,
     default: "",
   },
 
-  galeriaFotos: { type: [], default: [""] },
-  
+  gallery: { type: [], default: [""] },
+
+  description: {
+    type: String,
+    required: true,
+  },
 });
 
 export default mongoose.model("Business", BusinessSchema);
