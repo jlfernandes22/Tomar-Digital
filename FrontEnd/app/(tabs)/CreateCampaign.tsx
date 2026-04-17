@@ -302,7 +302,6 @@ const handleFinalSubmit = async () => {
     });
 
     if (response.ok) {
-        console.log(formData);
 
       // Limpar formulário...
       setSnackBarText("Campanha criada!");

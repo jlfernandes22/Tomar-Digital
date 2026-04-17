@@ -130,6 +130,7 @@ const handleNewBusiness = async () => {
     const data = await response.json();
 
     if (response.ok) {
+      console.log(formData)
       setSnackbarMessage("Sucesso! Negócio registado.");
       setSnackbarVisible(true);
       await delay(1500);
