@@ -54,7 +54,7 @@ const DetalhesBusiness = () => {
 
   if (business) {
     return (
-      <Surface style={{ flex: 1 }}>
+      <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
         {/* O flex-1 na SafeAreaView é essencial para ocupar o ecrã todo */}
         <SafeAreaView style={{ flex: 1 }}>
           <Stack.Screen options={{ headerShown: false }} />
@@ -77,33 +77,48 @@ const DetalhesBusiness = () => {
           {/* Usar ScrollView é mais seguro caso o ecrã seja pequeno */}
           <ScrollView className="px-5 pt-6">
             {/* Título e Categoria */}
-            <View className="mb-6">
-              <Text variant="displaySmall" className="text-3xl  mb-1">
+            <View className="mb-6 " style={{ alignItems: "center" }}>
+              <Text variant="displaySmall" className="text-3xl mb-1 ">
                 {business.name}
               </Text>
 
-              <View className="flex-row items-start mt-1 rounded-xl ">
-                <Ionicons
-                  name="pricetag-outline"
-                  size={16}
-                  color={theme.colors.onSecondaryContainer}
-                  style={{ alignSelf: "center" }}
-                />
-                <Text
-                  className="text-base text-gray-500 font-medium ml-2"
+              <View className="flex-row mt-1 ">
+                <View
+                  className="flex-row items-center px-3 py-3"
                   style={{
-                    color: theme.colors.onSecondaryContainer,
-                    backgroundColor: theme.colors.secondaryContainer,
+                    backgroundColor: theme.colors.primaryContainer,
+                    borderRadius: 11,
                   }}
                 >
-                  {business.category}
-                </Text>
+                  <Ionicons
+                    name="pricetag-outline"
+                    size={16}
+                    color={theme.colors.onSecondaryContainer}
+                    style={{ alignSelf: "flex-start", marginRight: 10 }}
+                  />
+                  <Text
+                    style={{
+                      color: theme.colors.onSecondaryContainer,
+                    }}
+                  >
+                    {business.category}
+                  </Text>
+                </View>
               </View>
+            </View>
+
+            <View>
+              <Text variant="headlineSmall">Descrição</Text>
+
+              {/* Colocar a descrição do negócio ou informação extra */}
             </View>
 
             {/* Secção do Mapa */}
             <View className="mt-2 ">
-              <Text className="text-lg font-bold text-gray-800 mb-3">
+              <Text
+                variant="headlineSmall"
+                className="font-bold text-gray-800 mb-3"
+              >
                 Localização
               </Text>
 

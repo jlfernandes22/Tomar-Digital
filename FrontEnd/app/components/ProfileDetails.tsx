@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { images } from "@/constants/images";
 import { Surface, Text, TouchableRipple, useTheme } from "react-native-paper";
 import CustomButton from "./CustomButton";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const roleLabels: Record<string, string> = {
   cidadao: "Cidadão",
@@ -19,7 +20,7 @@ const ProfileDetails = () => {
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
   return (
-    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {/* 2. o ScrollView para ecrãs pequenos */}
       <ScrollView
         contentContainerStyle={{
@@ -33,7 +34,7 @@ const ProfileDetails = () => {
         <View className="w-full flex-row justify-end mt-4 mb-2">
           <TouchableRipple
             key={theme.dark ? "dark-theme" : "light-theme"}
-            onPress={() => router.replace("/(tabs)/EditProfile")}
+            onPress={() => router.push("/components/EditProfile")}
             style={{
               padding: 6,
               borderRadius: 26,
@@ -184,7 +185,7 @@ const ProfileDetails = () => {
           Terminar Sessão
         </CustomButton>
       </ScrollView>
-    </Surface>
+    </SafeAreaView>
   );
 };
 
