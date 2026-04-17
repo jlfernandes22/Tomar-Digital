@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Modal, ScrollView } from "react-native";
+import { View, Modal, ScrollView, Image } from "react-native";
 import { Surface, Text, useTheme, IconButton, Divider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "./CustomButton";
@@ -103,6 +103,34 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                 </Text>
               )}
 
+            <View style={{width: '50%', flexDirection: 'row', alignItems: 'center' }}>
+                
+                <Image
+                source={{ uri: campaign.logo }}
+                style={{
+                  width: '100%', // ou um valor fixo como 200
+                  height: 150,    // valor fixo obrigatório
+                  borderRadius: 8,
+                  marginVertical: 10,
+                }}
+                resizeMode="contain" // Mantém a proporção da imagem
+              />
+              <Image
+                source={{ uri: campaign.panfleto }}
+                style={{
+                  width: '100%', // ou um valor fixo como 200
+                  height: 150,    // valor fixo obrigatório
+                  borderRadius: 8,
+                  marginVertical: 10,
+                }}
+                resizeMode="contain" // Mantém a proporção da imagem
+              />
+          </View> 
+          <View style={{ flexDirection: 'row', justifyContent: "space-evenly", alignItems: 'center' }}>
+             <Text>Logótipo: </Text>
+              <Text>Panfleto: </Text>
+
+          </View>
               {/* 5. CORREÇÃO: expirationDate -> DataExpiracao */}
               <View style={{ marginTop: 20, flexDirection: 'row', alignItems: 'center' }}>
                 <Text variant="labelLarge" style={{ color: theme.colors.error }}>

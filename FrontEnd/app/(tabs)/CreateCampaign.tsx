@@ -77,7 +77,7 @@ interface ICampanhaForm {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showSnackBar, setShowSnackBar] = useState(false);
-    const [snakcBarText, setSnackBarText] = useState("");
+    const [snackBarText, setSnackBarText] = useState("");
 
   
   const onChangeDate = (event: any, selectedDate: any) => {
@@ -146,18 +146,18 @@ const selecionarLogo = async () => {
       alert('Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!');
       return;
     }
-    const resultado = await ImagePicker.launchImageLibraryAsync({
+      const resultado = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
-      base64: true,
     });
+
     if (!resultado.canceled) {
-      const base64 = `data:image/jpeg;base64,${resultado.assets[0].base64}`;
-      setFormData({...formData, logo: base64});
-    }
-  };
+      const uri = resultado.assets[0].uri;
+      setFormData({ ...formData, logo: uri });
+  }
+}
 
   const selecionarPanfleto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -166,20 +166,17 @@ const selecionarLogo = async () => {
       return;
     }
     const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-      base64: true,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
 
-    });
-    if (!resultado.canceled) {
-            const base64 = `data:image/jpeg;base64,${resultado.assets[0].base64}`;
-
-      setFormData({...formData, panfleto: base64});
+      if (!resultado.canceled) {
+        const uri = resultado.assets[0].uri;
+        setFormData({ ...formData, panfleto: uri });
+      }
     }
-  };
-
 
 const renderStep1 = () => (
   <View>
@@ -305,6 +302,8 @@ const handleFinalSubmit = async () => {
     });
 
     if (response.ok) {
+        console.log(formData);
+
       // Limpar formulário...
       setSnackBarText("Campanha criada!");
     } else {
@@ -380,13 +379,14 @@ const handleFinalSubmit = async () => {
           {step < totalSteps ? (
             <CustomButton  onPress={() => setStep(step + 1)}>Próximo</CustomButton>
           ) : (
-            <CustomButton  onPress={handleFinalSubmit} loading={loading}>Criar Campanha</CustomButton>
-          )}
+            <CustomButton  onPress={handleFinalSubmit}  loading={loading}>Criar Campanha</CustomButton>
+          )
+          }
         </View>
 
       </KeyboardAvoidingView>
 
-      <CustomSnackBar visible={showSnackBar} onDismiss={() => setShowSnackBar(false)} text={snakcBarText} />
+      <CustomSnackBar visible={showSnackBar} onDismiss={() => setShowSnackBar(false)} message="Criado!" />
       
       {showDatePicker && (
         <DateTimePicker
@@ -395,7 +395,6 @@ const handleFinalSubmit = async () => {
           onChange={onChangeDate}
         />
       )}
-   
       </SafeAreaView>
     </Surface>
   );
