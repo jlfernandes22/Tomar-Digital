@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   FlatList,
   ScrollView,
+  Dimensions,
 } from "react-native";
 
 import {
@@ -99,10 +100,9 @@ export default function Index() {
         (item: Negocio) => item.status === "aprovado",
       );
       setListaNegocios(apenasAprovados);
+      setLoading(false);
     } catch (error) {
       console.log("Erro ao obter negócios", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -149,8 +149,8 @@ export default function Index() {
 
     //console.log(isFavorite);
     //console.log(user.id);
-    //quando se usa os negócios perto não está a ser selecionado negócio o que causa problema
-    console.log(negocioSelecionado?._id);
+
+    //console.log(negocioSelecionado?._id);
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
@@ -178,13 +178,6 @@ export default function Index() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchNegocios();
-      fetchFavorite(); // Esta função vai à API ver a lista atualizada
-      //console.log("chamado")
-    }, [user?.id]), // ou id nos Detalhes
-  );
   const onChangeSearch = (query: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSearchQuery(query);
@@ -210,7 +203,7 @@ export default function Index() {
   const inRange = () => {
     if (!userLocation) return;
 
-    const closeBiz = listaNegocios.filter((negocio) => {
+    const closeBiz = filteredPins.filter((negocio) => {
       const distancia = calcularDistancia(
         negocio.location.lat,
         negocio.location.long,
@@ -218,7 +211,7 @@ export default function Index() {
         userLocation?.longitude,
       );
 
-      return distancia <= 250;
+      return (!category || negocio.category === category) && distancia <= 250;
     });
 
     //console.log(closeBiz)
@@ -240,6 +233,7 @@ export default function Index() {
         const itemVisivel = viewableItems[0].item;
         setItemVisivelId(itemVisivel._id);
         setNegocioSelecionado(itemVisivel);
+
         //console.log(itemVisivel._id);
         //console.log(negocioSelecionado?._id);
         //arranjar maneira para verificar se é favorito mais depressa :( carregar do servidor logo todos os favoritos e apartir dai
@@ -252,10 +246,6 @@ export default function Index() {
       }
     },
   ).current;
-
-  useEffect(() => {
-    inRange();
-  }, [userLocation, listaNegocios]);
 
   const focarNoMapa = (item: Negocio) => {
     setListaFiltrada([]);
@@ -272,6 +262,18 @@ export default function Index() {
   const isSelectedFavorite = negocioSelecionado
     ? idsFavorite.includes(negocioSelecionado._id)
     : false;
+
+  useEffect(() => {
+    inRange();
+  }, [userLocation, category]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchNegocios();
+      fetchFavorite(); // Esta função vai à API ver a lista atualizada
+      //console.log("chamado")
+    }, [user?.id]), // ou id nos Detalhes
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -305,6 +307,7 @@ export default function Index() {
           {listaFiltrada.length > 0 && (
             <View style={{ marginTop: 8, maxHeight: 300 }}>
               <FlatList
+                key={category || "all"}
                 data={listaFiltrada}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
@@ -335,7 +338,14 @@ export default function Index() {
               <CustomChip
                 key={cat}
                 isSelected={category === cat}
-                onPress={() => setCategory(category === cat ? "" : cat)}
+                onPress={() => {
+                  //caso tenha negocios por perto selecionado e seja selecionado uma categoria
+                  //if (itemVisivelId) {
+                  //  console.log("inRange");
+                  //  inRange();
+                  //}
+                  setCategory(category === cat ? "" : cat);
+                }}
                 className="mr-1 h-[40px] mt-2"
               >
                 {cat}
@@ -345,6 +355,7 @@ export default function Index() {
         </View>
       </SafeAreaView>
 
+      {/*Cartão do negócio selecionado*/}
       {negocioSelecionado && !showCloseBusiness && (
         <View
           style={{
@@ -374,6 +385,7 @@ export default function Index() {
                 backgroundColor: theme.colors.secondaryContainer,
                 borderRadius: 20,
                 padding: 20,
+                alignSelf: "center",
               }}
             >
               <View
@@ -510,26 +522,21 @@ export default function Index() {
         </View>
       )}
 
+      {/* Lista dos negócios perto do utilizador */}
       {bizInArea.length > 0 && showCloseBusiness && (
-        <View
-          style={{
-            position: "absolute",
-            bottom: 50,
-            left: 0,
-            right: 0,
-            height: 250,
-            elevation: 10,
-            zIndex: 1000,
-          }}
-        >
+        <View>
           <FlatList
+            key={category || "all"}
             data={bizInArea}
             keyExtractor={(item) => item._id}
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
-              paddingHorizontal: 20,
-              paddingBottom: 10,
+              paddingHorizontal:
+                bizInArea.length === 1
+                  ? (Dimensions.get("window").width - 320) / 2
+                  : 20,
+              paddingBottom: 60,
             }}
             //props para fazer as animações conforme o id selecionado
             onViewableItemsChanged={onViewableItemsChanged}
@@ -717,6 +724,7 @@ export default function Index() {
           setShowCloseBusiness(true);
           fetchNegocios();
         }}
+        disabled={loading}
       ></FAB>
 
       <CustomSnackBar

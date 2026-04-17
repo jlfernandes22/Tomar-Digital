@@ -54,15 +54,15 @@ const DetalhesBusiness = () => {
 
   if (business) {
     return (
-
-      <Surface style={{flex:1}}>
+      <Surface style={{ flex: 1 }}>
         {/* O flex-1 na SafeAreaView é essencial para ocupar o ecrã todo */}
-        <SafeAreaView style={{flex:1}}>
+        <SafeAreaView style={{ flex: 1 }}>
           <Stack.Screen options={{ headerShown: false }} />
 
           {/* --- CABEÇALHO (Botão Voltar) --- */}
 
           <CustomButton
+            buttonColor={theme.colors.primaryContainer}
             className="self-start px-3 py-2 "
             onPress={() => router.back()}
             icon={() => (
@@ -82,13 +82,20 @@ const DetalhesBusiness = () => {
                 {business.name}
               </Text>
 
-              <View className="flex-row items-start mt-1">
+              <View className="flex-row items-start mt-1 rounded-xl ">
                 <Ionicons
                   name="pricetag-outline"
                   size={16}
-                  color={theme.colors.outlineVariant}
+                  color={theme.colors.onSecondaryContainer}
+                  style={{ alignSelf: "center" }}
                 />
-                <Text className="text-base text-gray-500 font-medium ml-2">
+                <Text
+                  className="text-base text-gray-500 font-medium ml-2"
+                  style={{
+                    color: theme.colors.onSecondaryContainer,
+                    backgroundColor: theme.colors.secondaryContainer,
+                  }}
+                >
                   {business.category}
                 </Text>
               </View>
