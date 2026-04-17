@@ -17,6 +17,7 @@ import { delay } from "@/app/utils/delay";
 import CustomButton from "../components/CustomButton";
 import CustomTextField from "../components/CustomTextInput";
 import CustomSnackBar from "../components/CustomSnackBar";
+import { useTheme } from "react-native-paper";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ const Register = () => {
   const [city, setCity] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const theme = useTheme();
 
   const handleRegister = async () => {
     // 1. Validação local antes de incomodar o servidor!
@@ -141,7 +143,7 @@ const Register = () => {
                 {/* Botão de Registo */}
                 <CustomButton
                   onPress={handleRegister}
-                  buttonColor="#FF8533"
+                  buttonColor={theme.colors.primaryContainer}
                   className="mt-8"
                 >
                   Criar Conta

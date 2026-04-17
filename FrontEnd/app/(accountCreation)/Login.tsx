@@ -19,6 +19,7 @@ import CustomButton from "../components/CustomButton";
 import CustomTextField from "../components/CustomTextInput";
 import { delay } from "@/app/utils/delay";
 import CustomSnackBar from "../components/CustomSnackBar";
+import { useTheme } from "react-native-paper";
 
 const Login = () => {
   //Guardar os estados das variáveis que queremos obter para fazer o login
@@ -29,6 +30,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
+  const theme = useTheme();
 
   const handleLogin = async () => {
     try {
@@ -153,8 +155,8 @@ const Login = () => {
                 {/* Botão */}
                 <View className="mt-8">
                   <CustomButton
+                    buttonColor={theme.colors.primaryContainer}
                     onPress={handleLogin}
-                    buttonColor="#FF8533"
                     loading={loading}
                   >
                     Iniciar Sessão

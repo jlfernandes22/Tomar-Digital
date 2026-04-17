@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Button,
 } from "react-native-paper";
-import CustomButton4 from "../components/CustomButton";
+import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
 
 interface Favorito {
@@ -62,32 +62,32 @@ const Saved = () => {
   );
 
   const retirarFavorito = async (businessId: string) => {
-  // 1. Atualiza a UI localmente primeiro (Optimistic Update)
-  setFavoritos((prev) =>
-    prev.filter((item) => item.businessId?._id !== businessId)
-  );
+    // 1. Atualiza a UI localmente primeiro (Optimistic Update)
+    setFavoritos((prev) =>
+      prev.filter((item) => item.businessId?._id !== businessId),
+    );
 
-  try {
-    const response = await fetch(`${API_URL}/retirarFavorito`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id, businessId }),
-    });
+    try {
+      const response = await fetch(`${API_URL}/retirarFavorito`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, businessId }),
+      });
 
-    if (response.ok) {
-      setSnackbarMessage("Removido com sucesso");
-      setSnackbarVisible(true);
-      // Não precisas de chamar carregarFavoritos() aqui se o filter correu bem
-    } else {
-      // Se falhar no servidor, recarregamos para repor o item na lista
+      if (response.ok) {
+        setSnackbarMessage("Removido com sucesso");
+        setSnackbarVisible(true);
+        // Não precisas de chamar carregarFavoritos() aqui se o filter correu bem
+      } else {
+        // Se falhar no servidor, recarregamos para repor o item na lista
+        carregarFavoritos();
+        setSnackbarMessage("Erro ao remover do servidor");
+        setSnackbarVisible(true);
+      }
+    } catch (error) {
       carregarFavoritos();
-      setSnackbarMessage("Erro ao remover do servidor");
-      setSnackbarVisible(true);
     }
-  } catch (error) {
-    carregarFavoritos();
-  }
-};
+  };
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -96,10 +96,10 @@ const Saved = () => {
         <View className="p-6">
           <Text
             variant="headlineMedium"
-            style={{ 
-              fontWeight: 'bold', 
+            style={{
+              fontWeight: "bold",
               color: theme.colors.primary,
-              letterSpacing: 0.5 
+              letterSpacing: 0.5,
             }}
           >
             Os Meus Favoritos
@@ -108,11 +108,11 @@ const Saved = () => {
 
         {loading ? (
           <View className="flex-1 justify-center items-center">
-             <ActivityIndicator
-                animating={true}
-                size="large"
-                color={theme.colors.primary}
-              />
+            <ActivityIndicator
+              animating={true}
+              size="large"
+              color={theme.colors.primary}
+            />
           </View>
         ) : (
           <FlatList
@@ -129,12 +129,12 @@ const Saved = () => {
                 {/* Card do Negócio */}
                 <Surface
                   elevation={1}
-                  style={{ 
-                    borderRadius: 20, 
-                    backgroundColor: theme.colors.elevation.level1,
+                  style={{
+                    borderRadius: 20,
+                    backgroundColor: theme.colors.secondaryContainer,
                     borderWidth: 1,
                     borderColor: theme.colors.outlineVariant,
-                    overflow: "hidden" 
+                    overflow: "hidden",
                   }}
                 >
                   <TouchableRipple
@@ -157,24 +157,16 @@ const Saved = () => {
                 </Surface>
 
                 {/* Botão Remover - Integrado com o Tema de Erro */}
-                <View className="absolute right-3 top-7">
-                  <Button
-                    mode="contained"
+                <View className="absolute right-3 top-10">
+                  <CustomButton
                     buttonColor={theme.colors.error}
                     textColor={theme.colors.onError}
                     onPress={() => {
                       if (item.businessId) retirarFavorito(item.businessId._id);
                     }}
-                    style={{ 
-                      borderRadius: 12, 
-                      elevation: 4,
-                      shadowColor: theme.colors.error 
-                    }}
-                    labelStyle={{ fontSize: 11, fontWeight: 'bold' }}
-                    contentStyle={{ height: 36, paddingHorizontal: 0 }}
                   >
                     Remover
-                  </Button>
+                  </CustomButton>
                 </View>
               </View>
             )}
@@ -183,9 +175,9 @@ const Saved = () => {
                 <Image
                   source={images.favWaiting}
                   className="w-64 h-64 mb-8"
-                  style={{ 
+                  style={{
                     tintColor: theme.colors.onSurfaceVariant,
-                    opacity: 0.6 
+                    opacity: 0.6,
                   }}
                   resizeMode="contain"
                 />
@@ -206,19 +198,19 @@ const Saved = () => {
                   seus favoritos.
                 </Text>
 
-                <CustomButton4
+                <CustomButton
                   buttonColor={theme.colors.primary}
                   textColor={theme.colors.onPrimary}
                   onPress={() => router.push("/Home")}
                   className="w-full h-14"
                 >
                   Descobrir Negócios
-                </CustomButton4>
+                </CustomButton>
               </View>
             }
           />
         )}
-        
+
         <CustomSnackBar
           visible={snackbarVisible}
           message={snackbarMessage}
@@ -227,6 +219,6 @@ const Saved = () => {
       </SafeAreaView>
     </Surface>
   );
-}
+};
 
 export default Saved;

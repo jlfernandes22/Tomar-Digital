@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -12,6 +11,7 @@ import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { router } from "expo-router";
 import { delay } from "@/app/utils/delay";
+import CustomSnackBar from "../components/CustomSnackBar";
 
 export default function ScanScreen() {
   const { user } = useAuth();
@@ -21,6 +21,8 @@ export default function ScanScreen() {
 
   const isProcessing = useRef(false);
   const { updateUser } = useAuth();
+  const [message, setMessage] = useState("");
+  const [visibility, setVisibility] = useState(false);
 
   //  permissão ao abrir o ecrã
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function ScanScreen() {
         </Text>
         <TouchableOpacity
           onPress={requestPermission}
-          className="bg-warning-500 p-4 rounded-xl"
+          className="bg-purple-600 p-4 rounded-xl"
         >
           <Text className="text-white font-bold">Dar Permissão</Text>
         </TouchableOpacity>
@@ -75,31 +77,26 @@ export default function ScanScreen() {
 
       if (response.ok) {
         updateUser({ Points: result.novoSaldoTotal });
-        Alert.alert(
-          "Sucesso!",
-          `Ganhaste ${result.valorGanho}€ de saldo!\nNovo saldo: ${result.novoSaldoTotal}€`,
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                isProcessing.current = false;
-                router.push("/Home");
-              },
-            },
-          ],
+
+        setMessage(
+          `Sucesso\nGanhaste ${result.pontosGanhos}€ de saldo!\nNovo saldo: ${result.saldoAtual}€`,
         );
+
+        setVisibility(true);
+        await delay(1000);
+        router.replace("/(tabs)/Home");
       } else {
-        Alert.alert(
-          "Erro",
-          result.message || "Não foi possível validar este código.",
-        );
+        setMessage(`Erro\n${result.message}`);
+
+        setVisibility(true);
         isProcessing.current = false;
         await delay(3000);
         setScanning(true);
         setLoading(false);
       }
     } catch (error) {
-      Alert.alert("Erro", "Falha na ligação ao servidor.");
+      setMessage("Erro\nFalha na ligação ao servidor");
+      setVisibility(true);
       isProcessing.current = false;
       await delay(3000);
       setScanning(true);
@@ -143,6 +140,12 @@ export default function ScanScreen() {
           <Text className="text-warning-500 font-bold">Tentar Novamente</Text>
         </TouchableOpacity>
       )}
+
+      <CustomSnackBar
+        visible={visibility}
+        onDismiss={() => setVisibility(false)}
+        message={message}
+      />
     </View>
   );
 }

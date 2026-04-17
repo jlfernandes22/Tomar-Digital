@@ -33,7 +33,14 @@ const CampaignSchema = new mongoose.Schema({
     required: true,
   },
 
-  logo: { type: String, default: "" },
+  //Data de inicio da campanha para verificar se a fatura é válida
+
+  //logo e flysheet teram de ser required no futuro
+
+  logo: {
+    type: String,
+    default: "",
+  },
 
   panfleto: { type: String, default: "" },
   
