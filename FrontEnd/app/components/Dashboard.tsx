@@ -115,7 +115,10 @@ const Dashboard = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView 
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      edges={['top', 'left', 'right']}
+    >
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 10 }}>
         <Text
           variant="headlineMedium"

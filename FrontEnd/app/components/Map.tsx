@@ -269,6 +269,7 @@ const Map = forwardRef<MapRefType, MapProps>(
             bottom: 80,
           }}
           loading={loading}
+          disabled={loading}
           icon="crosshairs-gps"
           onPress={async () => {
             console.log("get localization");

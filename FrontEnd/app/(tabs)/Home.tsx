@@ -201,6 +201,7 @@ export default function Index() {
 
   //Função para verificar se o negócio está na área do utilizador
   const inRange = () => {
+    setLoading(true);
     if (!userLocation) return;
 
     const closeBiz = filteredPins.filter((negocio) => {
@@ -211,6 +212,7 @@ export default function Index() {
         userLocation?.longitude,
       );
 
+      setLoading(false);
       return (!category || negocio.category === category) && distancia <= 250;
     });
 
@@ -339,11 +341,6 @@ export default function Index() {
                 key={cat}
                 isSelected={category === cat}
                 onPress={() => {
-                  //caso tenha negocios por perto selecionado e seja selecionado uma categoria
-                  //if (itemVisivelId) {
-                  //  console.log("inRange");
-                  //  inRange();
-                  //}
                   setCategory(category === cat ? "" : cat);
                 }}
                 className="mr-1 h-[40px] mt-2"
@@ -731,7 +728,7 @@ export default function Index() {
         loading={loading}
         onPress={() => {
           setShowCloseBusiness(true);
-          fetchNegocios();
+          inRange();
         }}
         disabled={loading}
       ></FAB>
