@@ -115,168 +115,166 @@ const Dashboard = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 10 }}>
-          <Text
-            variant="headlineMedium"
-            style={{
-              color: theme.colors.primary,
-              fontWeight: "bold",
-              marginBottom: 24,
-            }}
-          >
-            Visão Geral
-          </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 10 }}>
+        <Text
+          variant="headlineMedium"
+          style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 24,
+          }}
+        >
+          Visão Geral
+        </Text>
 
-          {/* Secção de KPIs */}
-          <View className="flex-row mb-6">
-            <Surface
-              className="p-4"
-              style={{
-                backgroundColor: theme.colors.primaryContainer,
-                borderRadius: 24,
-                marginRight: 20,
-                flex: 1,
-              }}
-              elevation={2}
-            >
-              <Text
-                variant="titleMedium"
-                style={{
-                  color: theme.colors.onPrimaryContainer,
-                  opacity: 0.8,
-                  alignSelf: "center",
-                }}
-              >
-                Cidadãos
-              </Text>
-              <Text
-                variant="displaySmall"
-                style={{
-                  color: theme.colors.onPrimaryContainer,
-                  fontWeight: "bold",
-                  alignSelf: "center",
-                }}
-              >
-                {summary.totalUsers}
-              </Text>
-            </Surface>
-
-            <Surface
-              className="p-4"
-              style={{
-                backgroundColor: theme.colors.secondaryContainer,
-                borderRadius: 24,
-                flex: 1,
-              }}
-              elevation={2}
-            >
-              <Text
-                variant="titleMedium"
-                style={{
-                  color: theme.colors.onSecondaryContainer,
-                  alignSelf: "center",
-                  opacity: 0.8,
-                }}
-              >
-                Negócios
-              </Text>
-              <Text
-                variant="displaySmall"
-                style={{
-                  color: theme.colors.onSecondaryContainer,
-                  fontWeight: "bold",
-                  alignSelf: "center",
-                }}
-              >
-                {summary.totalBusinesses}
-              </Text>
-            </Surface>
-          </View>
-
-          {/* Secção Gráfica 1 - Distribuição Demográfica (PieChart Ajustado) */}
+        {/* Secção de KPIs */}
+        <View className="flex-row mb-6">
           <Surface
             className="p-4"
             style={{
-              backgroundColor: theme.colors.surfaceVariant,
+              backgroundColor: theme.colors.primaryContainer,
               borderRadius: 24,
-              marginBottom: 20,
+              marginRight: 20,
+              flex: 1,
             }}
-            elevation={0}
+            elevation={2}
           >
             <Text
-              variant="titleLarge"
+              variant="titleMedium"
               style={{
-                color: theme.colors.onSurfaceVariant,
-                marginBottom: 16,
-                marginLeft: 8,
+                color: theme.colors.onPrimaryContainer,
+                opacity: 0.8,
+                alignSelf: "center",
               }}
             >
-              Distribuição Geográfica
+              Cidadãos
             </Text>
-            {allInfo.cities.length > 0 ? (
-              <PieChart
-                data={formatPieData(allInfo.cities)}
-                width={chartWidth}
-                height={chartHeight}
-                chartConfig={chartConfig}
-                accessor={"population"}
-                backgroundColor={"transparent"}
-                paddingLeft="15"
-                center={[3, 0]}
-                /* Remoção da propriedade 'absolute' para melhor adaptação do layout */
-              />
-            ) : (
-              <Text style={{ color: theme.colors.onSurfaceVariant }}>
-                Sem dados disponíveis.
-              </Text>
-            )}
+            <Text
+              variant="displaySmall"
+              style={{
+                color: theme.colors.onPrimaryContainer,
+                fontWeight: "bold",
+                alignSelf: "center",
+              }}
+            >
+              {summary.totalUsers}
+            </Text>
           </Surface>
 
-          {/* Secção Gráfica 2 - Tipologia de Negócios (BarChart) */}
           <Surface
-            className="p-4 mb-6"
+            className="p-4"
             style={{
-              backgroundColor: theme.colors.surfaceVariant,
+              backgroundColor: theme.colors.secondaryContainer,
               borderRadius: 24,
+              flex: 1,
             }}
-            elevation={0}
+            elevation={2}
           >
             <Text
-              variant="titleLarge"
+              variant="titleMedium"
               style={{
-                color: theme.colors.onSurfaceVariant,
-                marginBottom: 16,
-                marginLeft: 8,
+                color: theme.colors.onSecondaryContainer,
+                alignSelf: "center",
+                opacity: 0.8,
               }}
             >
-              Tipologia de Negócios
+              Negócios
             </Text>
-            {allInfo.categories.length > 0 ? (
-              <BarChart
-                data={formatBarData(allInfo.categories)}
-                width={chartWidth}
-                height={450}
-                chartConfig={chartConfig}
-                yAxisLabel=""
-                yAxisSuffix=""
-                withInnerLines={false}
-                showValuesOnTopOfBars={true}
-                segments={yAxisSegments}
-                fromZero={true}
-                verticalLabelRotation={45}
-                style={{ borderRadius: 16 }}
-              />
-            ) : (
-              <Text style={{ color: theme.colors.onSurfaceVariant }}>
-                Sem dados disponíveis.
-              </Text>
-            )}
+            <Text
+              variant="displaySmall"
+              style={{
+                color: theme.colors.onSecondaryContainer,
+                fontWeight: "bold",
+                alignSelf: "center",
+              }}
+            >
+              {summary.totalBusinesses}
+            </Text>
           </Surface>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+        </View>
+
+        {/* Secção Gráfica 1 - Distribuição Demográfica (PieChart Ajustado) */}
+        <Surface
+          className="p-4"
+          style={{
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 24,
+            marginBottom: 20,
+          }}
+          elevation={0}
+        >
+          <Text
+            variant="titleLarge"
+            style={{
+              color: theme.colors.onSurfaceVariant,
+              marginBottom: 16,
+              marginLeft: 8,
+            }}
+          >
+            Distribuição Geográfica
+          </Text>
+          {allInfo.cities.length > 0 ? (
+            <PieChart
+              data={formatPieData(allInfo.cities)}
+              width={chartWidth}
+              height={chartHeight}
+              chartConfig={chartConfig}
+              accessor={"population"}
+              backgroundColor={"transparent"}
+              paddingLeft="15"
+              center={[3, 0]}
+              /* Remoção da propriedade 'absolute' para melhor adaptação do layout */
+            />
+          ) : (
+            <Text style={{ color: theme.colors.onSurfaceVariant }}>
+              Sem dados disponíveis.
+            </Text>
+          )}
+        </Surface>
+
+        {/* Secção Gráfica 2 - Tipologia de Negócios (BarChart) */}
+        <Surface
+          className="p-4 mb-6"
+          style={{
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 24,
+          }}
+          elevation={0}
+        >
+          <Text
+            variant="titleLarge"
+            style={{
+              color: theme.colors.onSurfaceVariant,
+              marginBottom: 16,
+              marginLeft: 8,
+            }}
+          >
+            Tipologia de Negócios
+          </Text>
+          {allInfo.categories.length > 0 ? (
+            <BarChart
+              data={formatBarData(allInfo.categories)}
+              width={chartWidth}
+              height={450}
+              chartConfig={chartConfig}
+              yAxisLabel=""
+              yAxisSuffix=""
+              withInnerLines={false}
+              showValuesOnTopOfBars={true}
+              segments={yAxisSegments}
+              fromZero={true}
+              verticalLabelRotation={45}
+              style={{ borderRadius: 16 }}
+            />
+          ) : (
+            <Text style={{ color: theme.colors.onSurfaceVariant }}>
+              Sem dados disponíveis.
+            </Text>
+          )}
+        </Surface>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

@@ -524,7 +524,16 @@ export default function Index() {
 
       {/* Lista dos negócios perto do utilizador */}
       {bizInArea.length > 0 && showCloseBusiness && (
-        <View>
+        <View
+          style={{
+            position: "absolute",
+            bottom: 20, // Mantém a lista na parte inferior
+            left: 0,
+            right: 0,
+            zIndex: 2000, // Força a estar acima do FAB
+            elevation: 20, // Força no Android
+          }}
+        >
           <FlatList
             key={category || "all"}
             data={bizInArea}
@@ -536,7 +545,7 @@ export default function Index() {
                 bizInArea.length === 1
                   ? (Dimensions.get("window").width - 320) / 2
                   : 20,
-              paddingBottom: 60,
+              paddingBottom: 40,
             }}
             //props para fazer as animações conforme o id selecionado
             onViewableItemsChanged={onViewableItemsChanged}
