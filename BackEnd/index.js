@@ -410,17 +410,13 @@ app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
 app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
   try {
     const { token } = req.body;
-
-    //pegar nos dados da fatura
     const { QRCodeData } = req.body;
     console.log(QRCodeData);
 
     //função para pegar nos campos de forma dinâmica pois existe a possibilidade de existir campos opcionais
     const parseQRCodeFields = (data) => {
       const parts = data.split("*");
-
       const fields = {};
-
       parts.forEach((part) => {
         const [code, ...valueParts] = part.split(":");
         const value = valueParts.join(":");
@@ -431,9 +427,11 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
       });
       return fields;
     };
+
+    const
+
     // Extração dinâmica de todos os campos da fatura lida
     const QRCodeFields = parseQRCodeFields(QRCodeData);
-
     // Mapeamento dos campos segundo as especificações técnicas da Autoridade Tributária
     const NIFStore = QRCodeFields["A"]; // NIF do comerciante/emitente
     const NIFClient = QRCodeFields["B"]; // NIF do adquirente (cliente)
@@ -452,6 +450,8 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     const AllTaxValue = QRCodeFields["N"]; // Valor total de todos os impostos cobrados (IVA + Selo)
     const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
     const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
+
+
 
     /**
      * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
@@ -480,22 +480,56 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 
     /**
      * VERIFICAÇÃO DE SEGURANÇA 3: Propriedade da Fatura (Anti-Fraude)
-     * Regra 1: Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
-     * Regra 2: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
+     * Regra 1: Validar integridade matemática dos NIF
+     * Regra 2: Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
+     * Regra 3: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
      */
-    if (NIFClient == "999999990") {
-      return res
-        .status(400)
-        .json({ message: "A fatura não tem NIF associado." });
+
+
+    const validarNIF = (nif) => {
+      const sNif = String(nif);
+      //tamanho do NIF
+      if (!/^\d{9}$/.test(sNif)) return false;
+      //prefixos válidos no NIF na posiçãp 0
+      const prefixosValidos = ['1', '2', '3', '5', '6', '8', '9'];
+      if (!prefixosValidos.includes(sNif[0])) return false;
+      
+      //cálculo do módulo 11 para a integridade matemática
+      let soma = 0;
+      for (let i = 0; i < 8; i++) {
+        soma += parseInt(sNif[i]) * (9 - i);
+      }
+
+      const resto = soma % 11;
+      const digitoControloCalculado = (resto === 0 || resto === 1) ? 0 : 11 - resto;
+
+      return digitoControloCalculado === parseInt(sNif[8]);
+    };
+
+
+// 1. Validar integridade matemática do NIF do Cliente e da Loja
+    if (!validarNIF(NIFClient) || !validarNIF(NIFStore)) {
+      return res.status(400).json({ 
+        message: "O QR Code contém um NIF matematicamente inválido." 
+      });
     }
-    if (user.NIF != NIFClient) {
-      return res
-        .status(400)
-        .json({ message: "O NIF na fatura não coincide com o seu." });
+
+    // 2. Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
+    if (NIFClient === "999999990") {
+      return res.status(400).json({ 
+        message: "A fatura foi emitida a 'Consumidor Final' e não pode acumular pontos." 
+      });
+    }
+
+    // 3. O NIF do QR Code tem de coincidir com o NIF do perfil do utilizador
+    if (user.NIF !== NIFClient) {
+      return res.status(400).json({ 
+        message: "O NIF nesta fatura não pertence à sua conta." 
+      });
     }
 
     //Adicionar verificação dos valores da fatura, pegando em todos e somando para verificar se dá igual ao valor total
-
+     //softcertnumber - 
     /**
      * VERIFICAÇÃO DE REGRA DE NEGÓCIO: Valor Mínimo
      * Apenas faturas com um valor elegível (ex: superior a 1 euro) dão direito a pontos.
@@ -549,7 +583,9 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
      * PROCESSAMENTO DA DATA DA FATURA
      * O formato oficial da AT é uma string contínua "YYYYMMDD".
      * Extraímos os fragmentos com substring() para montar um objeto Date no JavaScript.
-     * Nota: O JavaScript indexa os meses de 0 (Janeiro) a 11 (Dezembro).
+     * Nota: O JavaScript indexa os meses de 
+     * 
+     *0 (Janeiro) a 11 (Dezembro).
      */
     const invoiceYear = parseInt(BoughtDate.substring(0, 4));
     const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1; // Os meses em JS começam no 0
@@ -557,7 +593,7 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     const dataDaFatura = new Date(invoiceYear, invoiceMonth, invoiceDay);
 
     // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
-
+  //BoughtDate
     /**
      * ATRIBUIÇÃO DE PONTOS E PERSISTÊNCIA DE DADOS
      * Regra de conversão atual: 1 euro gasto = 1 ponto.
