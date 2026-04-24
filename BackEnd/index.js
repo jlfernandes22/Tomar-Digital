@@ -485,7 +485,6 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
      * Regra 3: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
      */
 
-
     const validarNIF = (nif) => {
       const sNif = String(nif);
       //tamanho do NIF
@@ -528,8 +527,81 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
       });
     }
 
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 4: Validar o ATCUD campo H
+     * O campo CodeATCUD (campo H) é o Código Único do Documento. 
+     * Ele tem um formato específico: CodValidacao-NumSequencial.
+     */
+    // 1. Verificar se o campo existe
+        if (!CodeATCUD || typeof CodeATCUD !== "string") {
+          return res.status(400).json({ 
+            message: "Código ATCUD ausente ou inválido." 
+          });
+        }
+
+      // 2. Expressão Regular para validar o formato:
+      // ^[A-Z0-9]+  -> Começa com caracteres alfanuméricos (Código de Validação)
+      // -           -> Tem obrigatoriamente um hífen
+      // [0-9]+$     -> Termina com números (Número Sequencial do documento na série)
+      const atcudRegex = /^[A-Z0-9]+-[0-9]+$/;
+
+      if (!atcudRegex.test(CodeATCUD)) {
+        return res.status(400).json({ 
+          message: "O formato do código ATCUD é inválido." 
+        });
+      }
+
+      // 3. Verificação de tamanho mínimo razoável
+      // O código de validação da AT tem no mínimo 8 caracteres
+      if (CodeATCUD.length < 10) { 
+        return res.status(400).json({ 
+          message: "Código ATCUD demasiado curto para ser autêntico." 
+        });
+      }
+
+
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 5: Validar o tipo de documento
+     * Nem todos os documentos num QR Code são faturas que dão direito a pontos.
+     * Aceitar apenas FT (Fatura), FS (Fatura Simplificada) e FR (Fatura-Recibo).
+     * 
+     */
+
+    const documentosElegiveis = ["FT", "FS", "FR"];
+
+    //  Verificação do campo TypeDocument (extraído do campo 'D' do QR Code)
+    if (!TypeDocument || !documentosElegiveis.includes(TypeDocument.toUpperCase())) {
+            
+      if (TypeDocument === "OR") mensagemErro = "Orçamentos não são válidos para pontos.";
+      if (TypeDocument === "GT") mensagemErro = "Guias de transporte não são válidas para pontos.";
+      if (TypeDocument === "NE") mensagemErro = "Notas de encomenda não são válidas para pontos.";
+
+      return res.status(400).json({ 
+        message: "Este tipo de documento não é válido para ganhar pontos." 
+      });
+    }
+
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 6: Validar o estado do documento
+     * Regra: Aceitar apenas documentos no estado "N" (Normal).
+     * Bloquear: Documentos no estado "A" (Anulado)     */
+
+      // 1. O campo 'StateDocument' vem do campo 'E' do QR Code
+    if (!StateDocument || StateDocument.toUpperCase() !== "N") {
+            
+      if (StateDocument.toUpperCase() === "A") {
+        mensagemEstado = "Esta fatura foi anulada e não é válida para pontos.";
+      } else if (StateDocument.toUpperCase() === "S") {
+        mensagemEstado = "Esta fatura foi substituída por outra e não pode ser utilizada.";
+      }
+      return res.status(400).json({ 
+        message: "Apenas faturas em estado 'Normal' podem acumular pontos." 
+      });
+    }
+
+
+    
     //Adicionar verificação dos valores da fatura, pegando em todos e somando para verificar se dá igual ao valor total
-     //softcertnumber - 
     /**
      * VERIFICAÇÃO DE REGRA DE NEGÓCIO: Valor Mínimo
      * Apenas faturas com um valor elegível (ex: superior a 1 euro) dão direito a pontos.
@@ -580,17 +652,36 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     }
 
     /**
-     * PROCESSAMENTO DA DATA DA FATURA
-     * O formato oficial da AT é uma string contínua "YYYYMMDD".
-     * Extraímos os fragmentos com substring() para montar um objeto Date no JavaScript.
-     * Nota: O JavaScript indexa os meses de 
-     * 
-     *0 (Janeiro) a 11 (Dezembro).
+     * VERIFICAÇÃO DE SEGURANÇA: Limite de 20 faturas por dia
+     * Esta verificação olha para o momento da leitura (hoje).
+     */
+    const inicioDoDia = new Date();
+    inicioDoDia.setHours(0, 0, 0, 0);
+
+    const faturasLidasHoje = await Invoice.countDocuments({
+      user: user._id,
+      createdAt: { $gte: inicioDoDia }
+    });
+
+    if (faturasLidasHoje >= 20) {
+      return res.status(429).json({
+        message: "Limite diário atingido. Só pode registar 20 faturas por dia."
+      });
+    }
+
+    /**
+     * PROCESSAMENTO DA DATA DA FATURA (Extraída do QR Code)
      */
     const invoiceYear = parseInt(BoughtDate.substring(0, 4));
-    const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1; // Os meses em JS começam no 0
+    const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1;
     const invoiceDay = parseInt(BoughtDate.substring(6, 8));
     const dataDaFatura = new Date(invoiceYear, invoiceMonth, invoiceDay);
+
+    // Verificação: A fatura não pode ser do futuro
+    const agora = new Date();
+    if (dataDaFatura > agora) {
+      return res.status(400).json({ message: "A data da fatura não pode ser futura." });
+    }
 
     // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
   //BoughtDate
