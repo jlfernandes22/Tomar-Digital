@@ -79,6 +79,33 @@ app.post("/registar", async (req, res) => {
       return res.status(400).json({ message: "Utilizador já existe" });
     }
 
+    //verificar Complexidade da Password
+    // Regex: 
+    // (?=.*[a-z]) -> Pelo menos uma minúscula
+    // (?=.*[A-Z]) -> Pelo menos uma maiúscula
+    // (?=.*\d)    -> Pelo menos um dígito
+    // .{8,}       -> No mínimo 8 caracteres
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ 
+        message: "A palavra-passe é demasiado fraca. Deve conter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas e números." 
+      });
+    }
+    //verificar Formato do Email
+    // Limpar espaços em branco que o utilizador possa ter deixado sem querer
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Regex padrão RFC 5322 (simplificada para uso comum)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ 
+        message: "O formato do email introduzido não é válido." 
+      });
+    }
+
+
     //verificar se as passowrds coincidem
     if (password != confirmPassword) {
       return res.status(400).json({ message: "Palavra-passe não coincide" });
