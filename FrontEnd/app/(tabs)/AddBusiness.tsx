@@ -18,12 +18,14 @@ import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
 import CustomChip from "../components/CustomChip";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import { router } from "expo-router";
 
 export default function AddBusiness() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
-
-  const [formData, setFormData] = useState({
+  const [reverseLocation, setReverseLocation] = useState<string | null>(null);
+  const INITIAL_FORM_DATA = {
     nomeNegocio: "",
     NIFnegocio: "",
     categoriaNegocio: "",
@@ -31,14 +33,15 @@ export default function AddBusiness() {
     moradaNegocio: "",
     freguesiaNegocio: "",
     localizacao: {
-      latitude: 39.6036,
-      longitude: -8.4151,
+      latitude: 0,
+      longitude: 0,
     },
     telefoneDono: "",
     emailDono: "",
     descricaoNegocio: "",
     galeriaFotos: [] as string[],
-  });
+  };
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -110,7 +113,7 @@ export default function AddBusiness() {
       !formData.emailDono
     ) {
       setSnackbarMessage(
-        "Por favor, preencha todos os campos obrigatórios (incluindo E-mail).",
+        "Erro:\nPor favor, preencha todos os campos obrigatórios (incluindo E-mail).",
       );
       setSnackbarVisible(true);
       return;
@@ -150,7 +153,13 @@ export default function AddBusiness() {
         console.log(formData.galeriaFotos);
         setSnackbarMessage("Sucesso! Negócio registado.");
         setSnackbarVisible(true);
-        await delay(1500);
+        await delay(500);
+
+        setFormData(INITIAL_FORM_DATA);
+
+        router.back();
+        setStep(1);
+
         // Reset...
       } else {
         setSnackbarMessage(data.message || "Erro no registo.");
@@ -290,9 +299,32 @@ export default function AddBusiness() {
             >
               <Map
                 showPin={true}
-                onLocationSelect={(location) =>
-                  setFormData({ ...formData, localizacao: location })
-                }
+                onLocationSelect={async (location) => {
+                  console.log(location);
+                  setFormData({
+                    ...formData,
+                    localizacao: {
+                      latitude: location.latitude,
+                      longitude: location.longitude,
+                    },
+                  });
+
+                  try {
+                    const geocode = await Location.reverseGeocodeAsync({
+                      latitude: location.latitude,
+                      longitude: location.longitude,
+                    });
+
+                    if (geocode.length > 0) {
+                      //console.log(geocode);
+                      const address = geocode[0].formattedAddress;
+                      setFormData({
+                        ...formData,
+                        moradaNegocio: address || "",
+                      });
+                    }
+                  } catch (err) {}
+                }}
               />
             </View>
           </View>

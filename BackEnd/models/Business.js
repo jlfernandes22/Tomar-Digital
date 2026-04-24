@@ -34,6 +34,11 @@ const BusinessSchema = new mongoose.Schema({
     long: Number,
   },
 
+  address: {
+    type: String,
+    default: "",
+  },
+
   status: {
     type: String,
     enum: ["pendente", "aprovado", "rejeitado"],

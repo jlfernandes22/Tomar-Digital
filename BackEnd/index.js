@@ -212,7 +212,7 @@ app.post(
       ) {
         return res.status(400).json({
           message:
-            "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
+            "Erro:\nDados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
         });
       }
 

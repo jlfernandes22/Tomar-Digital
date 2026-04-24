@@ -30,23 +30,11 @@ import { useAuth } from "@/context/AuthContext";
 import CustomChip from "../components/CustomChip";
 import { calcularDistancia } from "../utils/locationUtils";
 import { images } from "../../constants/images";
+import MapFocous from "@/constants/MapFocous";
+import * as Location from "expo-location";
 
-// INTERFACES
-interface BusinessLocation {
-  lat: number;
-  long: number;
-}
-
-interface Negocio {
-  _id: string;
-  owner: string;
-  name: string;
-  category: string;
-  location: BusinessLocation;
-  status: string;
-  NIF?: number | null;
-  email?: string;
-}
+//interfaces
+import Negocio from "@/constants/Interfaces/Negocio";
 
 export default function Index() {
   // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
@@ -238,23 +226,17 @@ export default function Index() {
 
         //console.log(itemVisivel._id);
         //console.log(negocioSelecionado?._id);
-        //arranjar maneira para verificar se é favorito mais depressa :( carregar do servidor logo todos os favoritos e apartir dai
 
-        //aqui é feito o zoom conforme qual está selecionado
-        mapRef.current?.focusOnLocation(
-          itemVisivel.location.lat,
-          itemVisivel.location.long,
-        );
+        /*
+          aqui é feito o zoom conforme qual está selecionado
+          ao fazer desta maneira é mais dinâmico o que torna possível
+          usar em outros screens sem muita dificuldade 
+        */
+        MapFocous(itemVisivel, mapRef);
+        //focarNoMapa(itemVisivel);
       }
     },
   ).current;
-
-  const focarNoMapa = (item: Negocio) => {
-    setListaFiltrada([]);
-    if (mapRef.current?.focusOnLocation) {
-      mapRef.current.focusOnLocation(item.location.lat, item.location.long);
-    }
-  };
 
   const filteredPins = listaNegocios.filter((pin) => {
     if (category === "") return true;
@@ -323,7 +305,8 @@ export default function Index() {
                   >
                     <TouchableRipple
                       onPress={() => {
-                        focarNoMapa(item);
+                        MapFocous(item, mapRef);
+                        setListaFiltrada([]);
                         setNegocioSelecionado(item); // Define o negócio ao clicar na lista
                       }}
                     >
@@ -538,10 +521,7 @@ export default function Index() {
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
-              paddingHorizontal:
-                bizInArea.length === 1
-                  ? (Dimensions.get("window").width - 320) / 2
-                  : 20,
+              paddingHorizontal: (Dimensions.get("window").width - 320) / 2,
               paddingBottom: 40,
             }}
             //props para fazer as animações conforme o id selecionado
@@ -617,7 +597,9 @@ export default function Index() {
                         marginBottom: 5,
                       }}
                     >
-                      📍 Perto de ti!
+                      {item.address
+                        ? item.address
+                        : `Lat: ${item.location.lat.toFixed(4)} | long: ${item.location.long.toFixed(4)}`}
                     </Text>
                   </View>
 

@@ -10,95 +10,12 @@ import MapView, { Marker, Circle } from "react-native-maps";
 import { FAB, Portal, useTheme } from "react-native-paper";
 import * as Location from "expo-location";
 import CustomSnackBar from "./CustomSnackBar";
-
-interface MapProps {
-  location?: { lat: number; long: number };
-  showPin: boolean;
-  onLocationSelect?: (coords: { latitude: number; longitude: number }) => void;
-  readOnly?: boolean;
-  businesses?: any[];
-  onMarkerPress?: (business: any) => void;
-  onUserLocationUpdate?: (
-    coords: { latitude: number; longitude: number } | null,
-  ) => void;
-}
-
-// Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
-export interface MapRefType {
-  focusOnLocation: (lat: number, lng: number) => void;
-}
+//interfaces
+import MapProps from "@/constants/Interfaces/MapProps";
+import MapRefType from "@/constants/Interfaces/MapRefType";
 
 //Estilo escuro do mapa fornecido pela IA
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#263c3f" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#6b9a76" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#38414e" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#212a37" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9ca5b3" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#746855" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#1f2835" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#f3d19c" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#17263c" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#515c6d" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#17263c" }],
-  },
-];
+import darkMapStyle from "@/constants/DarkMapStyle";
 
 // Adicionamos <MapRefType, MapProps>
 const Map = forwardRef<MapRefType, MapProps>(
@@ -121,11 +38,35 @@ const Map = forwardRef<MapRefType, MapProps>(
       latitude: number;
       longitude: number;
     } | null>(null);
+    //console.log(location);
+
     const [selectedLocation, setSelectedLocation] = useState({
       latitude: location?.lat ?? 39.6035,
       longitude: location?.long ?? -8.4154,
     });
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
 
+    /*useEffect para fazer a animação quando 
+     o utilizador entra na página de detalhes de negócio
+    */
+
+    useEffect(() => {
+      if (location?.lat && location?.long) {
+        mapRef.current?.animateToRegion(
+          {
+            latitude: location.lat,
+            longitude: location.long,
+            longitudeDelta: 0.008,
+            latitudeDelta: 0.008,
+          },
+          1000,
+        );
+      }
+    }, []);
+
+    /* useeffect para atualizar a localização do utilizador */
     useEffect(() => {
       if (onUserLocationUpdate) {
         onUserLocationUpdate(userLocation);
@@ -191,10 +132,6 @@ const Map = forwardRef<MapRefType, MapProps>(
       },
     }));
 
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const [loading, setLoading] = useState(false);
-
     return (
       <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
         <MapView
@@ -204,8 +141,8 @@ const Map = forwardRef<MapRefType, MapProps>(
           initialRegion={{
             latitude: selectedLocation.latitude,
             longitude: selectedLocation.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
           }}
           showsUserLocation={true}
           showsMyLocationButton={false}

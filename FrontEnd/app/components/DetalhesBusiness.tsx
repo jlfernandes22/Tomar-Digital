@@ -17,27 +17,16 @@ import {
   Text,
   useTheme,
 } from "react-native-paper";
+import MapRefType from "@/constants/Interfaces/MapRefType";
+import NegocioInterface from "@/constants/Interfaces/Negocio";
 
 const DetalhesBusiness = () => {
-  type BusinessType = {
-    _id: string;
-    name: string;
-    category: string;
-    location: {
-      lat: number;
-      long: number;
-    };
-    logo: string;
-    description: string;
-    gallery: string[];
-  };
-
   const businessId = useLocalSearchParams();
-  const [business, setBusiness] = useState<BusinessType | null>(null);
+  const [business, setBusiness] = useState<NegocioInterface>();
   const [loading, setLoading] = useState(true); // Começa em true para mostrar o spinner inicial
   const router = useRouter();
   const theme = useTheme();
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapRefType>(null);
 
   const handleBusiness = async () => {
     setLoading(true);
@@ -45,10 +34,7 @@ const DetalhesBusiness = () => {
       const response = await fetch(`${API_URL}/negocios/${businessId.id}`);
       const dados = await response.json();
       setBusiness(dados);
-      mapRef.current?.focusOnLocation(
-        dados?.location.lat,
-        dados?.location.long,
-      );
+      //console.log(dados.location);
     } catch (error) {
       console.log("Não foi possível obter a informação sobre o negócio", error);
     } finally {
@@ -197,6 +183,7 @@ const DetalhesBusiness = () => {
                 <Map
                   ref={mapRef}
                   location={business.location}
+                  
                   showPin={true}
                   readOnly
                 />
