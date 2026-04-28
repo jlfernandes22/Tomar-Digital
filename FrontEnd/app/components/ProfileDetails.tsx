@@ -41,10 +41,10 @@ const ProfileDetails = () => {
         onDismiss={closeMenu}
         anchor={
           <IconButton
-            icon={({ size }) => (
+            icon={({ size}) => (
           <Image
             source={images.settingsImg} 
-            style={{ width: size, height: size }}
+            style={{ width: size, height: size, tintColor: theme.colors.onBackground }}
             
           />)}
             mode="outlined"
@@ -67,7 +67,54 @@ const ProfileDetails = () => {
           leadingIcon="pencil" 
           title="Editar Perfil" 
         />
+         <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            logout();
+          }} 
+          leadingIcon="account" 
+          title="Ser Comerciante"
+        />
         <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            logout();
+          }} 
+          leadingIcon={({ size }) => (
+            <Image
+              source={images.preferencesImg} // <--- A tua imagem aqui
+              style={{ 
+                width: size, 
+                height: size,
+                tintColor: theme.colors.onSurfaceVariant // Opcional: para seguir a cor do tema
+              }}
+            />
+          )}
+          title="Preferências"
+        />
+        <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            logout();
+          }} 
+          leadingIcon="information-outline" 
+          title="Sobre a App"
+        />
+        <Divider />
+         <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            logout();
+          }} 
+          leadingIcon="delete" 
+          title="Apagar Conta"
+          titleStyle={{color: theme.colors.error}}
+        />
+        <Divider />
+      
         <Menu.Item 
           onPress={() => {
             closeMenu();
@@ -77,6 +124,7 @@ const ProfileDetails = () => {
           title="Terminar Sessão"
           titleStyle={{ color: theme.colors.error }}
         />
+         
       </Menu>
 </View>
         {/* Avatar */}
@@ -196,18 +244,7 @@ const ProfileDetails = () => {
           </View>
         </View>
 
-        {/* Botão Logout */}
-        <CustomButton
-          onPress={logout}
-          className="mt-10 mb-6 shadow-md"
-          textColor={theme.colors.onError}
-          buttonColor={theme.colors.error}
-          accessibilityRole="button"
-          accessibilityLabel="Terminar sessão e sair da conta"
-          icon={images.logoutImg}
-        >
-          Terminar Sessão
-        </CustomButton>
+     
       </ScrollView>
     </SafeAreaView>
   );

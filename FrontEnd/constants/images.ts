@@ -17,6 +17,7 @@ import mapImg from "@/assets/tabsImages/map-sharp.png";
 import campaignImg from "@/assets/tabsImages/pricetags-sharp.png";
 import bagImg from "@/assets/otherIcons/bag-handle-sharp.png";
 import settingsImg from "@/assets/otherIcons/settings-sharp.png";
+import preferencesImg from "@/assets/otherIcons/options-sharp.png"
 
 export const images = {
   profileImg,
@@ -37,5 +38,6 @@ export const images = {
   campaignImg,
   logoutImg,
   bagImg,
-  settingsImg
+  settingsImg,
+  preferencesImg
 };
