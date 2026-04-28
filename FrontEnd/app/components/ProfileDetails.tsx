@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { router } from "expo-router"; // Simplificado, apenas o router chega
 import { useAuth } from "@/context/AuthContext";
 import { images } from "@/constants/images";
-import { Surface, Text, TouchableRipple, useTheme } from "react-native-paper";
+import { Surface, Text, TouchableRipple, useTheme, Menu, IconButton, Divider } from "react-native-paper";
 import CustomButton from "./CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,6 +16,10 @@ const roleLabels: Record<string, string> = {
 const ProfileDetails = () => {
   const theme = useTheme();
   const { logout, user } = useAuth();
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openMenu = () => setMenuVisible(true);
+  const closeMenu = () => setMenuVisible(false);
 
   if (!user) return <ActivityIndicator size="large" color="#7c3aed" />;
 
@@ -30,31 +34,51 @@ const ProfileDetails = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Botão Editar Perfil*/}
-        <View className="w-full flex-row justify-end mt-4 mb-2">
-          <TouchableRipple
-            key={theme.dark ? "dark-theme" : "light-theme"}
-            onPress={() => router.push("/components/EditProfile")}
+{/* Menu de Opções no Canto Superior Direito */}
+    <View className="w-full flex-row justify-end mt-4 mb-2">
+      <Menu
+        visible={menuVisible}
+        onDismiss={closeMenu}
+        anchor={
+          <IconButton
+            icon={({ size }) => (
+          <Image
+            source={images.settingsImg} 
+            style={{ width: size, height: size }}
+            
+          />)}
+            mode="outlined"
+            selected={true}
+            size={24}
+            onPress={openMenu}
             style={{
-              padding: 6,
-              borderRadius: 26,
-              borderWidth: 2,
-              backgroundColor: theme.colors.background,
               borderColor: theme.colors.outline,
+              backgroundColor: theme.colors.background,
+              borderWidth: 2,
             }}
-            accessibilityRole="button"
-            accessibilityLabel="Editar informações do meu perfil"
-          >
-            <Image
-              className="size-6"
-              source={images.editProfileImg}
-              accessibilityElementsHidden={true}
-              tintColor={theme.colors.onBackground}
-              importantForAccessibility="no-hide-descendants"
-            />
-          </TouchableRipple>
-        </View>
-
+          />
+        }
+      >
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            router.push("/components/EditProfile");
+          }} 
+          leadingIcon="pencil" 
+          title="Editar Perfil" 
+        />
+        <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            logout();
+          }} 
+          leadingIcon="logout" 
+          title="Terminar Sessão"
+          titleStyle={{ color: theme.colors.error }}
+        />
+      </Menu>
+</View>
         {/* Avatar */}
         <View
           className="w-32 h-32 border-2 rounded-full items-center justify-center mb-3"
