@@ -71,7 +71,6 @@ const ProfileDetails = () => {
         <Menu.Item 
           onPress={() => {
             closeMenu();
-            logout();
           }} 
           leadingIcon="account" 
           title="Ser Comerciante"
@@ -80,7 +79,6 @@ const ProfileDetails = () => {
         <Menu.Item 
           onPress={() => {
             closeMenu();
-            logout();
           }} 
           leadingIcon={({ size }) => (
             <Image
@@ -98,7 +96,7 @@ const ProfileDetails = () => {
         <Menu.Item 
           onPress={() => {
             closeMenu();
-            logout();
+            
           }} 
           leadingIcon="information-outline" 
           title="Sobre a App"
@@ -107,7 +105,6 @@ const ProfileDetails = () => {
          <Menu.Item 
           onPress={() => {
             closeMenu();
-            logout();
           }} 
           leadingIcon="delete" 
           title="Apagar Conta"
