@@ -1,4 +1,10 @@
-import { ActivityIndicator, View, Image, ScrollView } from "react-native";
+import {
+  ActivityIndicator,
+  View,
+  Image,
+  ScrollView,
+  Dimensions,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
@@ -129,18 +135,31 @@ const EditProfile = () => {
     //Flex-1 na Surface e SafeAreaView para ocuparem o ecrã todo
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} className="p-4">
         {/* ScrollView adicionada para ecrãs pequenos e para quando o teclado abre */}
         <ScrollView
           contentContainerStyle={{ paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Cabeçalho */}
-          <View className="items-center mt-6 mb-8 px-6">
-            <Text variant="headlineSmall">Editar Informações do Perfil</Text>
-          </View>
 
-          <Divider />
+          <Text
+            variant="headlineMedium"
+            style={{
+              color: theme.colors.primary,
+              fontWeight: "bold",
+              marginBottom: 10,
+            }}
+          >
+            Editar Informações do Perfil
+          </Text>
+
+          <Divider
+            style={{
+              backgroundColor: theme.colors.outlineVariant,
+              marginBottom: 16,
+            }}
+          />
 
           {/* Contentor Principal do Formulário*/}
           <View
@@ -151,7 +170,7 @@ const EditProfile = () => {
             }}
           >
             {/* Zona da Imagem */}
-            <View className=" mb-2 w-full items-center">
+            <View className=" mb-2 w-full items-center justify-center flex-col">
               <View
                 className="w-32 h-32 rounded-full items-center justify-center border-2"
                 style={{
@@ -180,55 +199,54 @@ const EditProfile = () => {
               {/* Será trocado por uma touchable opacity para poder trocar foto de perfil */}
 
               <TouchableRipple
-                className="absolute rounded-xl border-2 size-11 top-24 right-11"
+                className="relative size-11 bottom-8 left-11"
                 onPress={pickImage}
                 rippleColor={theme.colors.secondary}
                 style={{
-                  backgroundColor: theme.colors.secondaryContainer,
                   borderColor: theme.colors.outline,
+                  borderRadius: 50,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: theme.colors.secondaryContainer,
+                  borderWidth: 2,
                 }}
               >
                 <Image
                   key={theme.dark ? "dark-theme" : "light-theme"}
-                  className="relative  rounded-xl size-10"
+                  className=" m-2 size-8 bg-transparent"
                   tintColor={theme.colors.onSecondaryContainer}
                   source={images.editProfileImg}
                   accessibilityElementsHidden={true}
                   importantForAccessibility="no-hide-descendants"
-                  style={{
-                    backgroundColor: theme.colors.secondaryContainer,
-                    borderColor: theme.colors.outline,
-                    alignSelf: "center",
-                  }}
                 />
               </TouchableRipple>
-
-              <View className="w-full mt-6">
-                <CustomTextInput
-                  value={name}
-                  onChangeText={setName}
-                  label="Nome"
-                  className="w-full mb-4"
-                />
-
-                <CustomTextInput
-                  label="Cidade"
-                  value={city}
-                  onChangeText={setCity}
-                  className="w-full mb-4"
-                />
-
-                {user.NIF == null && (
-                  <CustomTextInput
-                    label="NIF"
-                    value={NIF}
-                    onChangeText={setNIF}
-                    isNIF
-                    className="w-full mb-4"
-                  />
-                )}
-              </View>
             </View>
+            <View className="w-full mt-6">
+              <CustomTextInput
+                value={name}
+                onChangeText={setName}
+                label="Nome"
+                className="w-full mb-4"
+              />
+
+              <CustomTextInput
+                label="Cidade"
+                value={city}
+                onChangeText={setCity}
+                className="w-full mb-4"
+              />
+
+              {user.NIF == null && (
+                <CustomTextInput
+                  label="NIF"
+                  value={NIF}
+                  onChangeText={setNIF}
+                  isNIF
+                  className="w-full mb-4"
+                />
+              )}
+            </View>
+
             <View className="w-full mt-6">
               <CustomButton
                 buttonColor={theme.colors.error}

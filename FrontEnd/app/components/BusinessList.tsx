@@ -2,7 +2,7 @@ import { Text, useTheme } from "react-native-paper";
 import { View } from "react-native";
 import React from "react";
 
-const BusinessList = ({ name, category, location }: any) => {
+const BusinessList = ({ name, category, location, ownerName }: any) => {
   const theme = useTheme();
   const formatLocation = () => {
     if (!location) return "Localização indisponível";
@@ -32,7 +32,7 @@ const BusinessList = ({ name, category, location }: any) => {
 
         <View className="flex-row items-center">
           <Text variant="bodySmall" className="opacity-60">
-            {formatLocation()}
+            {ownerName ? `Dono: ${ownerName}` : formatLocation()}
           </Text>
         </View>
       </View>

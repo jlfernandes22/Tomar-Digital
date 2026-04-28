@@ -3,15 +3,34 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../context/AuthContext";
-import { PaperProvider } from "react-native-paper";
+import { PaperProvider, useTheme } from "react-native-paper";
 import { ThemeProvider, useAppTheme } from "../context/ThemeContext";
 import ThemeSelectorFAB from "../app/components/ThemeSelectorFAB";
+import { ThemeProvider as NavThemeProvider, DefaultTheme } from "@react-navigation/native";
 import "./globals.css";
 
-// O ThemeSelector extrai o tema dinâmico do contexto e injeta-o no PaperProvider
 const ThemeSelector = ({ children }: { children: React.ReactNode }) => {
   const { currentTheme } = useAppTheme();
-  return <PaperProvider theme={currentTheme}>{children}</PaperProvider>;
+
+  const navTheme = {
+    ...DefaultTheme,
+    dark: currentTheme.dark,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: currentTheme.colors.primary,
+      background: currentTheme.colors.background,
+      card: currentTheme.colors.surface,
+      text: currentTheme.colors.onSurface,
+      border: currentTheme.colors.outline,
+      notification: currentTheme.colors.error,
+    },
+  };
+
+  return (
+    <PaperProvider theme={currentTheme}>
+      <NavThemeProvider value={navTheme}>{children}</NavThemeProvider>
+    </PaperProvider>
+  );
 };
 
 export default function RootLayout() {

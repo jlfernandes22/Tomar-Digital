@@ -34,6 +34,11 @@ const BusinessSchema = new mongoose.Schema({
     long: Number,
   },
 
+  address: {
+    type: String,
+    default: "",
+  },
+
   status: {
     type: String,
     enum: ["pendente", "aprovado", "rejeitado"],
@@ -63,6 +68,18 @@ const BusinessSchema = new mongoose.Schema({
       },
     },
   ],
+
+  logo: {
+    type: String,
+    default: "",
+  },
+
+  gallery: { type: [], default: [""] },
+
+  description: {
+    type: String,
+    required: true,
+  },
 });
 
 export default mongoose.model("Business", BusinessSchema);

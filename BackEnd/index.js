@@ -15,8 +15,8 @@ import multer from "multer";
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
-app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use(express.json({ limit: "20mb" })); // Aumentei para 20mb para garantir segurança com panfletos
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
 //////////////////////////////
 //Conectar à mongoDb no docker
 mongoose
@@ -78,6 +78,33 @@ app.post("/registar", async (req, res) => {
     if (user) {
       return res.status(400).json({ message: "Utilizador já existe" });
     }
+
+    //verificar Complexidade da Password
+    // Regex: 
+    // (?=.*[a-z]) -> Pelo menos uma minúscula
+    // (?=.*[A-Z]) -> Pelo menos uma maiúscula
+    // (?=.*\d)    -> Pelo menos um dígito
+    // .{8,}       -> No mínimo 8 caracteres
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ 
+        message: "A palavra-passe é demasiado fraca. Deve conter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas e números." 
+      });
+    }
+    //verificar Formato do Email
+    // Limpar espaços em branco que o utilizador possa ter deixado sem querer
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Regex padrão RFC 5322 (simplificada para uso comum)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ 
+        message: "O formato do email introduzido não é válido." 
+      });
+    }
+
 
     //verificar se as passowrds coincidem
     if (password != confirmPassword) {
@@ -185,24 +212,34 @@ app.post(
   authorize(["comerciante", "camara"]),
   async (req, res) => {
     try {
-      const { 
-        nomeNegocio, 
-        NIFnegocio, 
-        categoriaNegocio, 
-        logotipoNegocio, 
-        moradaNegocio, 
-        freguesiaNegocio, 
-        localizacao, 
-        telefoneDono, 
-        emailDono, 
-        descricaoNegocio, 
+      const {
+        nomeNegocio,
+        NIFnegocio,
+        categoriaNegocio,
+        logotipoNegocio,
+        moradaNegocio,
+        freguesiaNegocio,
+        localizacao,
+        telefoneDono,
+        emailDono,
+        descricaoNegocio,
         galeriaFotos,
-        owner // Caso a câmara esteja a registar por outro
+        owner, // Caso a câmara esteja a registar por outro
       } = req.body;
 
-      if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
+      console.log(req.body);
+
+      if (
+        !nomeNegocio ||
+        !categoriaNegocio ||
+        !localizacao ||
+        !telefoneDono ||
+        !emailDono ||
+        galeriaFotos.length === 0
+      ) {
         return res.status(400).json({
-          message: "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
+          message:
+            "Erro:\nDados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
         });
       }
 
@@ -222,18 +259,18 @@ app.post(
         name: nomeNegocio,
         category: categoriaNegocio,
         NIF: NIFnegocio,
-        logo: logotipoNegocio, 
+        logo: logotipoNegocio,
         address: moradaNegocio,
         parish: freguesiaNegocio,
         location: {
-          lat: Number(localizacao.latitude), 
+          lat: Number(localizacao.latitude),
           long: Number(localizacao.longitude),
         },
-        
+
         phone: telefoneDono,
         email: emailDono,
         description: descricaoNegocio,
-        gallery: galeriaFotos, 
+        gallery: galeriaFotos,
         owner: ownerId,
         status: req.user.role === "camara" ? "aprovado" : "pendente",
         createdAt: new Date(),
@@ -410,17 +447,13 @@ app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
 app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
   try {
     const { token } = req.body;
-
-    //pegar nos dados da fatura
     const { QRCodeData } = req.body;
     console.log(QRCodeData);
 
     //função para pegar nos campos de forma dinâmica pois existe a possibilidade de existir campos opcionais
     const parseQRCodeFields = (data) => {
       const parts = data.split("*");
-
       const fields = {};
-
       parts.forEach((part) => {
         const [code, ...valueParts] = part.split(":");
         const value = valueParts.join(":");
@@ -431,9 +464,11 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
       });
       return fields;
     };
+
+    const
+
     // Extração dinâmica de todos os campos da fatura lida
     const QRCodeFields = parseQRCodeFields(QRCodeData);
-
     // Mapeamento dos campos segundo as especificações técnicas da Autoridade Tributária
     const NIFStore = QRCodeFields["A"]; // NIF do comerciante/emitente
     const NIFClient = QRCodeFields["B"]; // NIF do adquirente (cliente)
@@ -452,6 +487,8 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     const AllTaxValue = QRCodeFields["N"]; // Valor total de todos os impostos cobrados (IVA + Selo)
     const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
     const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
+
+
 
     /**
      * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
@@ -480,22 +517,128 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 
     /**
      * VERIFICAÇÃO DE SEGURANÇA 3: Propriedade da Fatura (Anti-Fraude)
-     * Regra 1: Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
-     * Regra 2: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
+     * Regra 1: Validar integridade matemática dos NIF
+     * Regra 2: Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
+     * Regra 3: O NIF do QR Code tem de coincidir obrigatoriamente com o NIF registado no perfil do utilizador.
      */
-    if (NIFClient == "999999990") {
-      return res
-        .status(400)
-        .json({ message: "A fatura não tem NIF associado." });
-    }
-    if (user.NIF != NIFClient) {
-      return res
-        .status(400)
-        .json({ message: "O NIF na fatura não coincide com o seu." });
+
+    const validarNIF = (nif) => {
+      const sNif = String(nif);
+      //tamanho do NIF
+      if (!/^\d{9}$/.test(sNif)) return false;
+      //prefixos válidos no NIF na posiçãp 0
+      const prefixosValidos = ['1', '2', '3', '5', '6', '8', '9'];
+      if (!prefixosValidos.includes(sNif[0])) return false;
+      
+      //cálculo do módulo 11 para a integridade matemática
+      let soma = 0;
+      for (let i = 0; i < 8; i++) {
+        soma += parseInt(sNif[i]) * (9 - i);
+      }
+
+      const resto = soma % 11;
+      const digitoControloCalculado = (resto === 0 || resto === 1) ? 0 : 11 - resto;
+
+      return digitoControloCalculado === parseInt(sNif[8]);
+    };
+
+
+// 1. Validar integridade matemática do NIF do Cliente e da Loja
+    if (!validarNIF(NIFClient) || !validarNIF(NIFStore)) {
+      return res.status(400).json({ 
+        message: "O QR Code contém um NIF matematicamente inválido." 
+      });
     }
 
+    // 2. Rejeitar faturas de "Consumidor Final" (NIF: 999999990)
+    if (NIFClient === "999999990") {
+      return res.status(400).json({ 
+        message: "A fatura foi emitida a 'Consumidor Final' e não pode acumular pontos." 
+      });
+    }
+
+    // 3. O NIF do QR Code tem de coincidir com o NIF do perfil do utilizador
+    if (user.NIF !== NIFClient) {
+      return res.status(400).json({ 
+        message: "O NIF nesta fatura não pertence à sua conta." 
+      });
+    }
+
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 4: Validar o ATCUD campo H
+     * O campo CodeATCUD (campo H) é o Código Único do Documento. 
+     * Ele tem um formato específico: CodValidacao-NumSequencial.
+     */
+    // 1. Verificar se o campo existe
+        if (!CodeATCUD || typeof CodeATCUD !== "string") {
+          return res.status(400).json({ 
+            message: "Código ATCUD ausente ou inválido." 
+          });
+        }
+
+      // 2. Expressão Regular para validar o formato:
+      // ^[A-Z0-9]+  -> Começa com caracteres alfanuméricos (Código de Validação)
+      // -           -> Tem obrigatoriamente um hífen
+      // [0-9]+$     -> Termina com números (Número Sequencial do documento na série)
+      const atcudRegex = /^[A-Z0-9]+-[0-9]+$/;
+
+      if (!atcudRegex.test(CodeATCUD)) {
+        return res.status(400).json({ 
+          message: "O formato do código ATCUD é inválido." 
+        });
+      }
+
+      // 3. Verificação de tamanho mínimo razoável
+      // O código de validação da AT tem no mínimo 8 caracteres
+      if (CodeATCUD.length < 10) { 
+        return res.status(400).json({ 
+          message: "Código ATCUD demasiado curto para ser autêntico." 
+        });
+      }
+
+
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 5: Validar o tipo de documento
+     * Nem todos os documentos num QR Code são faturas que dão direito a pontos.
+     * Aceitar apenas FT (Fatura), FS (Fatura Simplificada) e FR (Fatura-Recibo).
+     * 
+     */
+
+    const documentosElegiveis = ["FT", "FS", "FR"];
+
+    //  Verificação do campo TypeDocument (extraído do campo 'D' do QR Code)
+    if (!TypeDocument || !documentosElegiveis.includes(TypeDocument.toUpperCase())) {
+            
+      if (TypeDocument === "OR") mensagemErro = "Orçamentos não são válidos para pontos.";
+      if (TypeDocument === "GT") mensagemErro = "Guias de transporte não são válidas para pontos.";
+      if (TypeDocument === "NE") mensagemErro = "Notas de encomenda não são válidas para pontos.";
+
+      return res.status(400).json({ 
+        message: "Este tipo de documento não é válido para ganhar pontos." 
+      });
+    }
+
+    /**
+     * VERIFICAÇÃO DE SEGURANÇA 6: Validar o estado do documento
+     * Regra: Aceitar apenas documentos no estado "N" (Normal).
+     * Bloquear: Documentos no estado "A" (Anulado)     */
+
+      // 1. O campo 'StateDocument' vem do campo 'E' do QR Code
+    if (!StateDocument || StateDocument.toUpperCase() !== "N") {
+            
+      if (StateDocument.toUpperCase() === "A") {
+        mensagemEstado = "Esta fatura foi anulada e não é válida para pontos.";
+      } else if (StateDocument.toUpperCase() === "S") {
+        mensagemEstado = "Esta fatura foi substituída por outra e não pode ser utilizada.";
+      }
+      return res.status(400).json({ 
+        message: "Apenas faturas em estado 'Normal' podem acumular pontos." 
+      });
+    }
+
+
+    
     //Adicionar verificação dos valores da fatura, pegando em todos e somando para verificar se dá igual ao valor total
-
     /**
      * VERIFICAÇÃO DE REGRA DE NEGÓCIO: Valor Mínimo
      * Apenas faturas com um valor elegível (ex: superior a 1 euro) dão direito a pontos.
@@ -546,18 +689,39 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
     }
 
     /**
-     * PROCESSAMENTO DA DATA DA FATURA
-     * O formato oficial da AT é uma string contínua "YYYYMMDD".
-     * Extraímos os fragmentos com substring() para montar um objeto Date no JavaScript.
-     * Nota: O JavaScript indexa os meses de 0 (Janeiro) a 11 (Dezembro).
+     * VERIFICAÇÃO DE SEGURANÇA: Limite de 20 faturas por dia
+     * Esta verificação olha para o momento da leitura (hoje).
+     */
+    const inicioDoDia = new Date();
+    inicioDoDia.setHours(0, 0, 0, 0);
+
+    const faturasLidasHoje = await Invoice.countDocuments({
+      user: user._id,
+      createdAt: { $gte: inicioDoDia }
+    });
+
+    if (faturasLidasHoje >= 20) {
+      return res.status(429).json({
+        message: "Limite diário atingido. Só pode registar 20 faturas por dia."
+      });
+    }
+
+    /**
+     * PROCESSAMENTO DA DATA DA FATURA (Extraída do QR Code)
      */
     const invoiceYear = parseInt(BoughtDate.substring(0, 4));
-    const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1; // Os meses em JS começam no 0
+    const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1;
     const invoiceDay = parseInt(BoughtDate.substring(6, 8));
     const dataDaFatura = new Date(invoiceYear, invoiceMonth, invoiceDay);
 
-    // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
+    // Verificação: A fatura não pode ser do futuro
+    const agora = new Date();
+    if (dataDaFatura > agora) {
+      return res.status(400).json({ message: "A data da fatura não pode ser futura." });
+    }
 
+    // Pode verificar se a fatura é anterior à data de início da campanha (se a campanha tiver startDate)
+  //BoughtDate
     /**
      * ATRIBUIÇÃO DE PONTOS E PERSISTÊNCIA DE DADOS
      * Regra de conversão atual: 1 euro gasto = 1 ponto.
@@ -600,29 +764,29 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
 //Criar Campanha
 app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
   try {
-    const { 
-      titulo, 
-      slogan, 
-      descricao, 
-      dataInicio, 
-      dataExpiracao, 
-      normas, 
-      packs, 
-      logo, 
-      panfleto 
+    const {
+      titulo,
+      slogan,
+      descricao,
+      dataInicio,
+      dataExpiracao,
+      normas,
+      packs,
+      logo,
+      panfleto,
     } = req.body;
 
     const newCampaign = new Campaign({
       createdBy: req.user.id,
-      titulo: titulo,            // Garante que o nome à esquerda é igual ao do Schema
+      titulo: titulo, // Garante que o nome à esquerda é igual ao do Schema
       slogan: slogan,
       descricao: descricao,
       dataInicio: dataInicio,
       DataExpiracao: dataExpiracao, // Nome exato que o Mongoose pediu no erro anterior
       normas: normas,
-      packs: packs, 
+      packs: packs,
       logo: logo,
-      panfleto: panfleto
+      panfleto: panfleto,
     });
 
     await newCampaign.save();
@@ -630,21 +794,24 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro ao gravar", details: err.message });
-  } });
-
+  }
+});
 
 ////Lista das Campanhas
 app.get("/listaCampanhas", async (req, res) => {
   try {
     const campanhas = await Campaign.find().lean();
 
-    const formatadas = campanhas.map(c => ({
-          ...c,
-          _id: c._id.toString(),
-          // Se createdBy for um objeto, enviamos apenas o nome ou string
-          createdBy: typeof c.createdBy === 'object' ? (c.createdBy.username || "Admin") : c.createdBy
-        }));
-    console.log(campanhas)
+    const formatadas = campanhas.map((c) => ({
+      ...c,
+      _id: c._id.toString(),
+      // Se createdBy for um objeto, enviamos apenas o nome ou string
+      createdBy:
+        typeof c.createdBy === "object"
+          ? c.createdBy.username || "Admin"
+          : c.createdBy,
+    }));
+    console.log(campanhas);
     res.status(200).json(formatadas);
   } catch (err) {
     console.error(err);
