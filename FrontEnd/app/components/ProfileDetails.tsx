@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { router } from "expo-router"; // Simplificado, apenas o router chega
 import { useAuth } from "@/context/AuthContext";
 import { images } from "@/constants/images";
-import { Surface, Text, TouchableRipple, useTheme } from "react-native-paper";
+import { Surface, Text, TouchableRipple, useTheme, Menu, IconButton, Divider } from "react-native-paper";
 import CustomButton from "./CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,23 +16,118 @@ const roleLabels: Record<string, string> = {
 const ProfileDetails = () => {
   const theme = useTheme();
   const { logout, user } = useAuth();
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openMenu = () => setMenuVisible(true);
+  const closeMenu = () => setMenuVisible(false);
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-      edges={["top", "left", "right"]}
-    >
-      {!user ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      ) : (
-        // 2. o ScrollView para ecrãs pequenos
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: 20,
-            alignItems: "center",
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {/* 2. o ScrollView para ecrãs pequenos */}
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 20,
+          alignItems: "center",
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+{/* Menu de Opções no Canto Superior Direito */}
+    <View className="w-full flex-row justify-end mt-4 mb-2">
+      <Menu
+        visible={menuVisible}
+        onDismiss={closeMenu}
+        anchor={
+          <IconButton
+            icon={({ size}) => (
+          <Image
+            source={images.settingsImg} 
+            style={{ width: size, height: size, tintColor: theme.colors.onBackground }}
+            
+          />)}
+            mode="outlined"
+            selected={true}
+            size={24}
+            onPress={openMenu}
+            style={{
+              borderColor: theme.colors.outline,
+              backgroundColor: theme.colors.background,
+              borderWidth: 2,
+            }}
+          />
+        }
+      >
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            router.push("/components/EditProfile");
+          }} 
+          leadingIcon="pencil" 
+          title="Editar Perfil" 
+        />
+         <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+          }} 
+          leadingIcon="account" 
+          title="Ser Comerciante"
+        />
+        <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+          }} 
+          leadingIcon={({ size }) => (
+            <Image
+              source={images.preferencesImg} // <--- A tua imagem aqui
+              style={{ 
+                width: size, 
+                height: size,
+                tintColor: theme.colors.onSurfaceVariant // Opcional: para seguir a cor do tema
+              }}
+            />
+          )}
+          title="Preferências"
+        />
+        <Divider />
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            
+          }} 
+          leadingIcon="information-outline" 
+          title="Sobre a App"
+        />
+        <Divider />
+         <Menu.Item 
+          onPress={() => {
+            closeMenu();
+          }} 
+          leadingIcon="delete" 
+          title="Apagar Conta"
+          titleStyle={{color: theme.colors.error}}
+        />
+        <Divider />
+      
+        <Menu.Item 
+          onPress={() => {
+            closeMenu();
+            logout();
+          }} 
+          leadingIcon="logout" 
+          title="Terminar Sessão"
+          titleStyle={{ color: theme.colors.error }}
+        />
+         
+      </Menu>
+</View>
+        {/* Avatar */}
+        <View
+          className="w-32 h-32 border-2 rounded-full items-center justify-center mb-3"
+          style={{
+            backgroundColor: theme.colors.background,
+            borderColor: theme.colors.outline,
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -146,52 +241,8 @@ const ProfileDetails = () => {
             </View>
           </View>
 
-          {/* e-mail */}
-          <View
-            className=" w-full flex-row p-3 rounded-xl mt-5 border-2 items-center px-4"
-            //className="w-full mt-5 flex-row items-center p-3"
-            style={{
-              backgroundColor: theme.colors.secondaryContainer,
-              borderColor: theme.colors.outline,
-            }}
-          >
-            <Image
-              style={{
-                width: 44,
-                height: 44,
-              }}
-              source={images.emailImg}
-              tintColor={theme.colors.onSecondaryContainer}
-              accessibilityElementsHidden={true}
-              importantForAccessibility="no-hide-descendants"
-            />
-            <View style={{ marginLeft: 20 }}>
-              <Text style={{ fontWeight: "bold", fontSize: 15 }}>
-                Endereço de E-mail
-              </Text>
-              <Text
-                style={{ fontWeight: "bold", fontSize: 13 }}
-                numberOfLines={1}
-              >
-                {user.email}
-              </Text>
-            </View>
-          </View>
-
-          {/* Botão Logout */}
-          <CustomButton
-            onPress={logout}
-            className="mt-10 mb-6 shadow-md"
-            textColor={theme.colors.onError}
-            buttonColor={theme.colors.error}
-            accessibilityRole="button"
-            accessibilityLabel="Terminar sessão e sair da conta"
-            icon={images.logoutImg}
-          >
-            Terminar Sessão
-          </CustomButton>
-        </ScrollView>
-      )}
+     
+      </ScrollView>
     </SafeAreaView>
   );
 };
