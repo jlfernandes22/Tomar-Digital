@@ -1284,7 +1284,12 @@ const swaggerOptions = {
     },
     servers: [
       {
+        url: "https://tomar-rg-b0bvd9e7fkdhatbh.westeurope-01.azurewebsites.net",
+        description: "Servidor de Produção (Azure)",
+      },
+      {
         url: "http://localhost:3000",
+        description: "Servidor Local (Testes)",
       },
     ],
     components: {
@@ -1303,5 +1308,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-app.listen(3000, "0.0.0.0", () => console.log("Servidor ligado"));
-//await Business.deleteMany({}); // Apaga todos os documentos da coleção User
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(`Servidor ligado na porta ${PORT}`),
+);
