@@ -95,7 +95,8 @@ const DetalhesBusiness = () => {
               <Image
                 source={{ uri: business.logo as string }}
                 // Altura reduzida para h-64. Sombras suaves adicionadas.
-                className="w-full h-64 rounded-2xl bg-gray-200 shadow-sm"
+                className="w-full h-64 rounded-2xl shadow-sm"
+                style={{ backgroundColor: theme.colors.surfaceVariant }}
                 resizeMode="cover"
               />
             )}
@@ -108,7 +109,7 @@ const DetalhesBusiness = () => {
               <Text
                 variant="headlineLarge"
                 className="font-bold flex-1 mr-3"
-                style={{ color: theme.colors.onBackground }}
+                style={{ color: theme.colors.primary }}
               >
                 {business.name}
               </Text>
@@ -160,7 +161,8 @@ const DetalhesBusiness = () => {
                       <Image
                         key={index}
                         source={{ uri }}
-                        className="w-32 h-32 mr-3 rounded-xl bg-gray-200"
+                        className="w-32 h-32 mr-3 rounded-xl"
+                        style={{ backgroundColor: theme.colors.surfaceVariant }}
                         resizeMode="cover"
                       />
                     ) : null,
@@ -179,7 +181,7 @@ const DetalhesBusiness = () => {
                 Localização
               </Text>
 
-              <View className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 h-[20rem]">
+              <View className="rounded-2xl overflow-hidden border h-[20rem]" style={{ borderColor: theme.colors.outlineVariant }}>
                 <Map
                   ref={mapRef}
                   location={business.location}

@@ -91,8 +91,8 @@ const Dashboard = () => {
   const yAxisSegments = Math.max(1, Math.min(4, maxCategoryValue));
 
   const chartConfig = {
-    backgroundGradientFrom: theme.colors.surfaceVariant,
-    backgroundGradientTo: theme.colors.surfaceVariant,
+    backgroundGradientFrom: theme.colors.surfaceContainer,
+    backgroundGradientTo: theme.colors.surfaceContainer,
     color: (opacity = 1) => theme.colors.primary,
     labelColor: (opacity = 1) => theme.colors.onSurfaceVariant,
     barPercentage: 0.7,
@@ -201,7 +201,7 @@ const Dashboard = () => {
         <Surface
           className="p-4"
           style={{
-            backgroundColor: theme.colors.surfaceVariant,
+            backgroundColor: theme.colors.surfaceContainer,
             borderRadius: 24,
             marginBottom: 20,
           }}
@@ -210,7 +210,7 @@ const Dashboard = () => {
           <Text
             variant="titleLarge"
             style={{
-              color: theme.colors.onSurfaceVariant,
+              color: theme.colors.onSurface,
               marginBottom: 16,
               marginLeft: 8,
             }}
@@ -240,7 +240,7 @@ const Dashboard = () => {
         <Surface
           className="p-4 mb-6"
           style={{
-            backgroundColor: theme.colors.surfaceVariant,
+            backgroundColor: theme.colors.surfaceContainer,
             borderRadius: 24,
           }}
           elevation={0}
@@ -248,7 +248,7 @@ const Dashboard = () => {
           <Text
             variant="titleLarge"
             style={{
-              color: theme.colors.onSurfaceVariant,
+              color: theme.colors.onSurface,
               marginBottom: 16,
               marginLeft: 8,
             }}

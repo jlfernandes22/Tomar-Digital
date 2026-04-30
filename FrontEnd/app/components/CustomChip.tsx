@@ -39,7 +39,7 @@ const CustomChip = ({
           borderColor: isSelected
             ? theme.colors.onSurfaceVariant
             : theme.colors.outline,
-          borderRadius: 12,
+          borderRadius: 9999,
           height: 40,
           justifyContent: "center",
         }}

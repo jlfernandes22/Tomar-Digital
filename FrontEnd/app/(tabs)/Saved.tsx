@@ -12,7 +12,6 @@ import {
   Text,
   TouchableRipple,
   ActivityIndicator,
-  Button,
   Divider,
 } from "react-native-paper";
 import CustomButton from "../components/CustomButton";
@@ -150,7 +149,7 @@ const Saved = () => {
                       params: { id: item.businessId?._id },
                     });
                   }}
-                  rippleColor="rgba(0, 0, 0, .1)"
+                  rippleColor="rgba(150, 150, 150, 0.2)"
                 >
                   <View className="p-1 ">
                     <BusinessList
@@ -163,8 +162,8 @@ const Saved = () => {
                 <View className="flex-row gap-x-3 px-4 pb-4">
                   <CustomButton
                     className="flex-1"
-                    buttonColor={theme.colors.error}
-                    textColor={theme.colors.onError}
+                    buttonColor={theme.colors.errorContainer}
+                    textColor={theme.colors.onErrorContainer}
                     onPress={() => {
                       if (item.businessId) retirarFavorito(item.businessId._id);
                     }}

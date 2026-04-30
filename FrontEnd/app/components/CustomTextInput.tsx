@@ -36,7 +36,7 @@ const CustomTextInput = ({
       : "default";
 
   return (
-    <View className={`${className || ""}`}>
+    <View className={`${className || ""}`} style={{ borderRadius: 9999 }}>
       <TextInput
         mode="outlined"
         label={label}

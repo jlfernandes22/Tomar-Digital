@@ -24,13 +24,18 @@ const _layout = () => {
           if (!options.tabBarIcon || options.href === null) return false;
 
           // Regras de acesso restrito baseadas no Role do utilizador
-          if (route.name === "CamaraIndex" && user?.role !== "camara") return false;
-          if (route.name === "DashboardTab" && user?.role !== "camara") return false;
-          if (route.name === "AddBusiness" && user?.role !== "comerciante") return false;
-          if (route.name === "JoinCampaign" && user?.role !== "comerciante") return false;
+          if (route.name === "CamaraIndex" && user?.role !== "camara")
+            return false;
+          if (route.name === "DashboardTab" && user?.role !== "camara")
+            return false;
+          if (route.name === "AddBusiness" && user?.role !== "comerciante")
+            return false;
+          if (route.name === "JoinCampaign" && user?.role !== "comerciante")
+            return false;
           if (route.name === "ScanScreen") return false;
           if (route.name === "EditProfile") return false;
-          if (route.name === "CreateCampaign" && user?.role !== "camara") return false;
+          if (route.name === "CreateCampaign" && user?.role !== "camara")
+            return false;
 
           return true;
         });
@@ -51,17 +56,17 @@ const _layout = () => {
             }}
             safeAreaInsets={insets}
             style={{
-              backgroundColor: theme.colors.secondaryContainer,
+              backgroundColor: theme.colors.surfaceContainer,
               height: 80,
             }}
             /* Aplicação direta das cores dinâmicas do Design System */
-
+            activeColor={theme.colors.onPrimary}
             inactiveColor={theme.colors.onSurfaceVariant}
             activeIndicatorStyle={{
-              backgroundColor: theme.colors.primaryContainer,
+              backgroundColor: theme.colors.primary,
               width: 64,
               height: 44,
-              borderRadius: 22,
+              borderRadius: theme.roundness,
             }}
             labeled={false}
             onTabPress={({ route, preventDefault }) => {
@@ -176,8 +181,7 @@ const _layout = () => {
             <TabIcon icon={images.profileImg} color={color} />
           ),
         }}
-      />
-      <Tabs.Screen name="EditProfile" options={{ href: null }} />
+      />  
     </Tabs>
   );
 };

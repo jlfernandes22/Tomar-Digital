@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
 import {
   FAB,
   Portal,
@@ -31,14 +30,14 @@ const ThemeSelectorFAB = () => {
           {/* Surface utiliza a cor de fundo apropriada do tema atual */}
           <Surface
             style={{
-              backgroundColor: theme.colors.surfaceVariant,
+              backgroundColor: theme.colors.surfaceContainerHighest,
               padding: 24,
               borderRadius: 16,
             }}
           >
             <Text
               variant="titleLarge"
-              style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}
+              style={{ color: theme.colors.onSurface, marginBottom: 16 }}
             >
               Aparência da Aplicação
             </Text>
@@ -83,10 +82,15 @@ const ThemeSelectorFAB = () => {
       {/* Botão flutuante fixado no canto inferior direito do ecrã */}
       <FAB
         icon="palette"
-        style={{ position: "absolute", margin: 16, right: 0, bottom: 80 }}
+        style={{ 
+          position: "absolute", 
+          margin: 16, 
+          right: 0, 
+          bottom: 80,
+          backgroundColor: theme.colors.primary
+        }}
         onPress={showModal}
-        color={theme.colors.onPrimaryContainer}
-        theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
+        color={theme.colors.onPrimary}
       />
     </>
   );

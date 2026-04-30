@@ -47,7 +47,7 @@ const EditProfile = () => {
   if (!user) {
     return (
       <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#7c3aed" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -180,7 +180,7 @@ const EditProfile = () => {
                 }}
               >
                 {!image && (
-                  <Text className="text-primary text-4xl font-bold uppercase">
+                  <Text className="text-4xl font-bold uppercase" style={{ color: theme.colors.primary }}>
                     {(user.name || user.email || "V").charAt(0)}
                   </Text>
                 )}
@@ -213,7 +213,7 @@ const EditProfile = () => {
               >
                 <Image
                   key={theme.dark ? "dark-theme" : "light-theme"}
-                  className=" m-2 size-8 bg-transparent"
+                  className="m-2 size-8"
                   tintColor={theme.colors.onSecondaryContainer}
                   source={images.editProfileImg}
                   accessibilityElementsHidden={true}
@@ -249,8 +249,8 @@ const EditProfile = () => {
 
             <View className="w-full mt-6">
               <CustomButton
-                buttonColor={theme.colors.error}
-                textColor={theme.colors.onError}
+                buttonColor={theme.colors.errorContainer}
+                textColor={theme.colors.onErrorContainer}
                 onPress={handleEdit}
                 loading={loading}
                 className="w-full mb-3"
@@ -259,8 +259,8 @@ const EditProfile = () => {
               </CustomButton>
 
               <CustomButton
-                buttonColor={theme.colors.onBackground}
-                textColor={theme.colors.onPrimary}
+                buttonColor={theme.colors.primaryContainer}
+                textColor={theme.colors.onPrimaryContainer}
                 onPress={() => router.back()}
                 className="w-full"
                 disabled={loading}

@@ -40,16 +40,16 @@ const _layout = () => {
             }}
             safeAreaInsets={insets}
             style={{
-              backgroundColor: theme.colors.secondaryContainer,
+              backgroundColor: theme.colors.surfaceContainer,
               height: 80,
             }}
-            activeColor={theme.colors.primary}
+            activeColor={theme.colors.onPrimary}
             inactiveColor={theme.colors.onSurfaceVariant}
             activeIndicatorStyle={{
-              backgroundColor: "rgba(255, 102, 0, 0.2)",
+              backgroundColor: theme.colors.primary,
               width: 64,
               height: 44,
-              borderRadius: 22,
+              borderRadius: theme.roundness,
             }}
             labeled={false}
             onTabPress={({ route, preventDefault }) => {

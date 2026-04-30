@@ -2,7 +2,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   View,
   Image,
 } from "react-native";
@@ -21,18 +20,11 @@ import CustomTextInput from "../components/CustomTextInput";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
-import delay from "../utils/delay";
 import * as ImagePicker from "expo-image-picker";
+import { images } from "@/constants/images";
+import PacketInterface from "@/constants/Interfaces/PacketInterface";
 
 const CreateCampaign = () => {
-  interface IPacote {
-    descricaoRecompensa: string;
-    custoEmPontos: number;
-    stockInicial: number;
-    stockAtual: number;
-    maximoPorUser: number;
-  }
-
   interface ICampanhaForm {
     tituloCampanha: string;
     slogan: string;
@@ -42,7 +34,7 @@ const CreateCampaign = () => {
     normas: string;
     logo: string; // s minúsculo
     panfleto: string; // s minúsculo
-    pacotes: IPacote[];
+    pacotes: PacketInterface[];
   }
   const [step, setStep] = useState(1);
   const totalSteps = 3;
@@ -101,7 +93,7 @@ const CreateCampaign = () => {
 
     if (!descricaoRecompensa || !custoEmPontos || !stockInicial) {
       setSnackBarText(
-        "Erro: Preencha a descrição, o custo e o stock do pacote.",
+        "Erro:\nPreencha a descrição, o custo e o stock do pacote.",
       );
       setShowSnackBar(true);
       setLoading(false);
@@ -132,7 +124,7 @@ const CreateCampaign = () => {
         maximoPorUser: "1",
       });
 
-      setSnackBarText("Pacote adicionado com sucesso!");
+      setSnackBarText("Sucesso:\nPacote adicionado!");
       setShowSnackBar(true);
     } catch (err) {
       console.error("Erro na adição do pacote: ", err);
@@ -186,10 +178,38 @@ const CreateCampaign = () => {
   };
 
   const renderStep1 = () => (
-    <View>
-      <Text variant="headlineSmall" style={{ marginBottom: 10 }}>
-        Identidade
-      </Text>
+    <View
+      style={{
+        padding: 20,
+        backgroundColor: theme.colors.secondaryContainer,
+        borderRadius: 44,
+        margin: 20,
+      }}
+    >
+      <View className="flex-row">
+        <View
+          style={{
+            backgroundColor: theme.colors.primaryContainer,
+            borderRadius: 9999,
+            width: 50,
+            height: 50,
+            marginRight: 20,
+          }}
+        >
+          <Image
+            source={images.megaphone}
+            className="size-10 mt-2"
+            tintColor={theme.colors.onPrimaryContainer}
+            style={{ alignSelf: "center" }}
+          ></Image>
+        </View>
+        <Text
+          variant="headlineSmall"
+          style={{ marginBottom: 10, marginTop: 8 }}
+        >
+          Criar Campanha
+        </Text>
+      </View>
       <CustomTextInput
         label="Título da Campanha"
         value={formData.tituloCampanha}
@@ -259,7 +279,14 @@ const CreateCampaign = () => {
   );
 
   const renderStep2 = () => (
-    <View>
+    <View
+      style={{
+        padding: 20,
+        backgroundColor: theme.colors.secondaryContainer,
+        borderRadius: 44,
+        margin: 20,
+      }}
+    >
       <Text variant="headlineSmall" style={{ marginBottom: 10 }}>
         Prazos e Regras
       </Text>
@@ -353,8 +380,14 @@ const CreateCampaign = () => {
         style={{ flex: 1 }}
       >
         {/* Barra de Progresso */}
-        <Text style={{ textAlign: "right", marginBottom: 5 }}>
-          Passo {step} de {totalSteps}
+        <Text
+          style={{
+            textAlign: "right",
+            marginBottom: 5,
+            color: theme.colors.onSurfaceVariant,
+          }}
+        >
+          Página {step} de {totalSteps}
         </Text>
         <ProgressBar
           progress={step / totalSteps}
@@ -367,7 +400,14 @@ const CreateCampaign = () => {
           {step === 2 && renderStep2()}
 
           {step === 3 && (
-            <View>
+            <View
+              style={{
+                padding: 20,
+                backgroundColor: theme.colors.secondaryContainer,
+                borderRadius: 44,
+                margin: 20,
+              }}
+            >
               <Text variant="headlineSmall" style={{ marginBottom: 10 }}>
                 Configurar Pacotes
               </Text>
@@ -385,6 +425,7 @@ const CreateCampaign = () => {
                 onChangeText={(t) => setPacote({ ...pacote, custoEmPontos: t })}
               />
               <CustomTextInput
+                className="mb-4"
                 label="Stock Inicial"
                 value={pacote.stockInicial}
                 onChangeText={(t) => setPacote({ ...pacote, stockInicial: t })}
@@ -405,7 +446,7 @@ const CreateCampaign = () => {
                         padding: 10,
                         marginVertical: 5,
                         borderRadius: 8,
-                        backgroundColor: "#f0f0f0",
+                        backgroundColor: theme.colors.surfaceContainer,
                       }}
                     >
                       <Text>
@@ -448,14 +489,14 @@ const CreateCampaign = () => {
       <CustomSnackBar
         visible={showSnackBar}
         onDismiss={() => setShowSnackBar(false)}
-        message="Criado!"
+        message={snackBarText}
       />
 
       {showDatePicker && (
         <DateTimePicker
           value={formData.dataExpiracao}
           mode="date"
-          onChange={onChangeDate}
+          onValueChange={onChangeDate}
         />
       )}
     </SafeAreaView>

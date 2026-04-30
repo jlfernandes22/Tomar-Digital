@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import Map from "@/app/components/Map";
-import { delay } from "../utils/delay";
+import { delay } from "../../utils/delay";
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
@@ -20,11 +20,11 @@ import CustomChip from "../components/CustomChip";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
+import getAddress from "../../utils/getAddress";
 
 export default function AddBusiness() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
-  const [reverseLocation, setReverseLocation] = useState<string | null>(null);
   const INITIAL_FORM_DATA = {
     nomeNegocio: "",
     NIFnegocio: "",
@@ -246,7 +246,7 @@ export default function AddBusiness() {
                   height: 200,
                   width: 200,
                   borderWidth: 1,
-                  borderColor: "#ccc",
+                  borderColor: theme.colors.outline,
                   borderStyle: "dashed",
                   borderRadius: 10,
                   backgroundColor: theme.colors.onBackground,
@@ -310,20 +310,21 @@ export default function AddBusiness() {
                   });
 
                   try {
-                    const geocode = await Location.reverseGeocodeAsync({
+                    const address = await getAddress({
                       latitude: location.latitude,
                       longitude: location.longitude,
                     });
 
-                    if (geocode.length > 0) {
-                      //console.log(geocode);
-                      const address = geocode[0].formattedAddress;
-                      setFormData({
-                        ...formData,
-                        moradaNegocio: address || "",
-                      });
-                    }
-                  } catch (err) {}
+                    setFormData({
+                      ...formData,
+                      moradaNegocio: address || "",
+                    });
+                  } catch (err) {
+                    console.error(
+                      "Erro ao obter a morada para o formulário:",
+                      err,
+                    );
+                  }
                 }}
               />
             </View>
@@ -367,7 +368,7 @@ export default function AddBusiness() {
                       width: 100,
                       height: 100,
                       borderWidth: 1,
-                      borderColor: "#ccc",
+                      borderColor: theme.colors.outline,
                       borderStyle: "dashed",
                       borderRadius: 8,
                       justifyContent: "center",
@@ -393,12 +394,12 @@ export default function AddBusiness() {
                       <IconButton
                         icon="close-circle"
                         size={20}
-                        iconColor="red"
+                        iconColor={theme.colors.error}
                         style={{
                           position: "absolute",
                           top: -10,
                           right: -10,
-                          backgroundColor: "white",
+                          backgroundColor: theme.colors.surfaceVariant,
                         }}
                         onPress={() => {
                           const novaLista = formData.galeriaFotos.filter(

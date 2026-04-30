@@ -6,7 +6,10 @@ import { AuthProvider } from "../context/AuthContext";
 import { PaperProvider, useTheme } from "react-native-paper";
 import { ThemeProvider, useAppTheme } from "../context/ThemeContext";
 import ThemeSelectorFAB from "../app/components/ThemeSelectorFAB";
-import { ThemeProvider as NavThemeProvider, DefaultTheme } from "@react-navigation/native";
+import {
+  ThemeProvider as NavThemeProvider,
+  DefaultTheme,
+} from "@react-navigation/native";
 import "./globals.css";
 
 const ThemeSelector = ({ children }: { children: React.ReactNode }) => {
@@ -43,7 +46,7 @@ export default function RootLayout() {
             <Stack>
               <Stack.Screen
                 name="(accountCreation)"
-                options={{ headerShown: false }}
+                options={{ headerShown: false, gestureEnabled: true }}
               />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             </Stack>

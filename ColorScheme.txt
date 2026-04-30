@@ -1,39 +1,84 @@
-1. Estrutura Base e Ecrãs
+========================================================================
+DOCUMENTO DE ESTRATÉGIA DE CORES E UI - MATERIAL DESIGN 3 (MD3)
+========================================================================
+Este documento é a ÚNICA FONTE DE VERDADE para a aplicação de cores e 
+estilos na aplicação. A aplicação utiliza React Native Paper e suporta 
+múltiplos temas dinâmicos (Light/Dark Mode e Paletas de Marca).
 
-Os fundos da aplicação rejeitam o branco puro e o preto puro, utilizando os tons mais recuados da paleta selecionada para garantir conforto visual.
-Componente / Elemento	Propriedade de Cor	Descrição do Uso
-SafeAreaView / View (Raiz)	background	Cor de fundo principal de qualquer ecrã inteiro.
-Text (Títulos Principais)	primary	Títulos de grande destaque ou cabeçalhos de secção (displaySmall, headlineMedium).
-Text (Corpo Base)	onBackground	Texto de leitura geral (parágrafos) que assenta diretamente sobre o fundo principal do ecrã.
-2. Cartões e Agrupamento de Conteúdo
+REGRAS GERAIS E ABSOLUTAS (PROIBIDO IGNORAR):
+1. É ESTRITAMENTE PROIBIDO usar Hex Codes (ex: #FFFFFF, #000) no código dos ecrãs (exceto no ficheiro themes.js e CustomSnackBar).
+2. É ESTRITAMENTE PROIBIDO usar classes de cor do Tailwind (ex: bg-white, text-black, border-gray-200, bg-red-500).
+3. Todas as cores devem ser injetadas através do hook: `const theme = useTheme();`.
+4. Todos os ecrãs devem suportar Dark Mode nativamente, o que significa que o contraste é garantido pelo emparelhamento correto das variáveis (ex: usar sempre `onPrimary` por cima de `primary`).
 
-A separação de secções não utiliza linhas (borderWidth). A hierarquia visual é construída através da sobreposição de superfícies com diferentes tons.
-Componente / Elemento	Propriedade de Cor	Descrição do Uso
-Surface (Base Layer)	surface	Utilizado para blocos neutros que se fundem quase na totalidade com o fundo, criando uma elevação invisível.
-Surface (Separação/Blocos)	surfaceVariant	Utilizado para agrupar formulários, definições ou grandes blocos de informação. Substitui as linhas de divisão.
-Text (Em Blocos Variant)	onSurfaceVariant	Cor do texto principal, subtítulos e ícones que habitam dentro de uma Surface com a cor surfaceVariant.
-Surface (Cartões Interativos)	secondaryContainer	Utilizado para cartões de listagem (ex: pacotes de uma campanha), itens clicáveis e áreas de alto contraste.
-Text (Em Cartões Interativos)	onSecondaryContainer	Cor do texto e ícones que habitam dentro do secondaryContainer.
-3. Entradas de Dados e Formulários (CustomTextInput)
+------------------------------------------------------------------------
+1. FUNDOS, ECRÃS E CARTÕES (ELEVAÇÃO TONAL)
+Não usamos sombras pesadas. A separação visual é feita por camadas de cor.
 
-Os campos de texto assumem um estilo preenchido, garantindo consistência térmica com o resto do ecrã e um contraste legível durante a escrita.
-Elemento do TextInput	Propriedade de Cor	Descrição do Uso
-Fundo Inativo	surfaceVariant	O fundo da caixa de texto quando o utilizador não está a interagir com ela.
-Borda Inativa	outlineVariant	A linha de contorno subtil quando o campo não está focado.
-Borda Focada / Label Ativa	primary	A cor que o campo e o título (label) assumem no momento em que o utilizador clica para escrever.
-Texto Escrito / Placeholder	onSurfaceVariant	A cor do texto inserido pelo utilizador.
-4. Botões e Chamadas de Ação (CTAs)
+* Raiz do Ecrã (SafeAreaView / View principal): 
+  - backgroundColor: theme.colors.background
 
-As ações são separadas por prioridade. Botões primários puxam o foco absoluto do ecrã, enquanto ações secundárias se integram organicamente nos cartões.
-Tipo de Botão	Propriedade de Cor	Descrição do Uso
-Botão Primário (Fundo)	primary	Fundo para a ação mais importante do ecrã (ex: "Publicar Campanha", "Gravar"). Requer borderRadius: 9999px.
-Botão Primário (Texto)	onPrimary	Cor do texto e dos ícones dentro do botão primário.
-Botão Secundário (Fundo)	secondaryContainer	Fundo para ações de apoio (ex: "Alterar Data", "Cancelar").
-Botão Secundário (Texto)	onSecondaryContainer	Cor do texto e dos ícones dentro do botão secundário.
-Botão Flutuante (FAB)	primaryContainer	Fundo do botão circular flutuante (ex: Seletor de Temas).
-5. Elementos de Interface Específicos
-Componente / Elemento	Propriedade de Cor	Descrição do Uso
-Vibe Chips (Tags/Etiquetas)	tertiaryContainer	Fundo para pequenas etiquetas de categoria (ex: "Histórico", "Natureza"). Possuem um tom distinto (geralmente amarelado/mostarda).
-Texto das Vibe Chips	onTertiaryContainer	Texto dentro das etiquetas de categoria.
-Bordas (Ghost Borders)	outline	Apenas utilizadas quando estritamente exigidas por acessibilidade. Devem ser aplicadas com opacidade máxima de 15%.
-Alertas e Erros (SnackBar)	error	Fundos de mensagens de erro, validações falhadas ou botões de eliminação destrutiva.
+* Cartões Principais (Surface de listas, negócios, campanhas): 
+  - backgroundColor: theme.colors.surfaceContainer (ou secondaryContainer para destacar)
+  - border: 1px solid theme.colors.outlineVariant (Nunca usar outline normal para cartões)
+  - elevation: 1 a 2 (para o iOS processar a sombra suave)
+
+* Blocos de Informação Internos / Formulários / Placeholders de Imagem:
+  - backgroundColor: theme.colors.surfaceVariant
+
+* Modais, Diálogos e Bottom Sheets:
+  - backgroundColor: theme.colors.surfaceContainerHighest
+
+------------------------------------------------------------------------
+2. TIPOGRAFIA E ÍCONES (HIERARQUIA DE LEITURA)
+A cor do texto deve SEMPRE corresponder ao fundo onde está assente.
+
+* Títulos Principais do Ecrã (Headline): 
+  - color: theme.colors.primary (Dá destaque à marca da página)
+
+* Texto Normal sobre o 'background' da App:
+  - color: theme.colors.onBackground
+
+* Títulos dentro de Cartões (TitleLarge/Medium):
+  - color: theme.colors.onSurface (ou onSecondaryContainer se o cartão for secondaryContainer)
+
+* Corpo de Texto, Descrições e Ícones Secundários:
+  - color: theme.colors.onSurfaceVariant (Cria o efeito editorial de leitura suave)
+
+------------------------------------------------------------------------
+3. BOTÕES E CHAMADAS DE AÇÃO (CTAs)
+Os botões devem ter a forma de pílula (borderRadius: 9999) ou seguir a regra do tema (roundness).
+
+* Ação Primária (Gravar, Iniciar Sessão, Aceitar):
+  - backgroundColor: theme.colors.primary
+  - color (Texto/Ícone): theme.colors.onPrimary
+
+* Ação Secundária (Cancelar, Voltar, Filtrar):
+  - backgroundColor: theme.colors.surfaceVariant (ou primaryContainer para dar mais ênfase)
+  - color: theme.colors.onSurfaceVariant (ou onPrimaryContainer)
+
+* Ação Destrutiva (Eliminar, Descartar, Rejeitar):
+  - backgroundColor: theme.colors.errorContainer
+  - color: theme.colors.onErrorContainer
+
+------------------------------------------------------------------------
+4. INTERATIVIDADE (TOUCHABLE RIPPLE)
+Sempre que um elemento for clicável (cartões da lista, imagens de perfil):
+
+* A Regra do Ripple: O `TouchableRipple` NUNCA deve ter `backgroundColor`. O fundo pertence à `View` ou `Surface` que o envolve.
+* A Cor da Onda (Ripple Color): 
+  - Se for um cartão claro/escuro normal: `rippleColor="rgba(150, 150, 150, 0.2)"`
+  - Evitar usar hex + opacidade dinâmica (ex: `+ '33'`) para não quebrar no iOS/Android.
+
+------------------------------------------------------------------------
+5. INPUTS E FORMULÁRIOS (TextInput)
+* Fundo do Input: theme.colors.surfaceVariant
+* Texto inserido: theme.colors.onSurface
+* Borda Inativa: theme.colors.outlineVariant
+* Borda Ativa/Focada: theme.colors.primary
+* Placeholder: theme.colors.onSurfaceVariant
+
+------------------------------------------------------------------------
+6. EXCEÇÕES À REGRA
+* CustomSnackBar: Os alertas de sucesso e erro devem manter as cores universais estáticas de trânsito (Verde = #16A34A, Vermelho = #DC2626, Texto = #FFFFFF) para garantir o reconhecimento imediato em qualquer tema.
+* Overlays Escuros (Fundo de ecrãs de Login/Registo com imagem): Usar `backgroundColor: theme.colors.background + 'B3'` (Fundo com 70% de opacidade).

@@ -1,9 +1,17 @@
 import { ActivityIndicator, View, Image, ScrollView } from "react-native";
 import React, { useState } from "react";
-import { router } from "expo-router"; // Simplificado, apenas o router chega
+import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { images } from "@/constants/images";
-import { Surface, Text, TouchableRipple, useTheme, Menu, IconButton, Divider } from "react-native-paper";
+import {
+  Surface,
+  Text,
+  TouchableRipple,
+  useTheme,
+  Menu,
+  IconButton,
+  Divider,
+} from "react-native-paper";
 import CustomButton from "./CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,144 +24,123 @@ const roleLabels: Record<string, string> = {
 const ProfileDetails = () => {
   const theme = useTheme();
   const { logout, user } = useAuth();
+
+  // 1. Criar o estado para controlar se o Menu está aberto ou fechado
   const [menuVisible, setMenuVisible] = useState(false);
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* 2. o ScrollView para ecrãs pequenos */}
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: 20,
-          alignItems: "center",
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-{/* Menu de Opções no Canto Superior Direito */}
-    <View className="w-full flex-row justify-end mt-4 mb-2">
-      <Menu
-        visible={menuVisible}
-        onDismiss={closeMenu}
-        anchor={
-          <IconButton
-            icon={({ size}) => (
-          <Image
-            source={images.settingsImg} 
-            style={{ width: size, height: size, tintColor: theme.colors.onBackground }}
-            
-          />)}
-            mode="outlined"
-            selected={true}
-            size={24}
-            onPress={openMenu}
-            style={{
-              borderColor: theme.colors.outline,
-              backgroundColor: theme.colors.background,
-              borderWidth: 2,
-            }}
-          />
-        }
-      >
-        <Menu.Item 
-          onPress={() => {
-            closeMenu();
-            router.push("/components/EditProfile");
-          }} 
-          leadingIcon="pencil" 
-          title="Editar Perfil" 
-        />
-         <Divider />
-        <Menu.Item 
-          onPress={() => {
-            closeMenu();
-          }} 
-          leadingIcon="account" 
-          title="Ser Comerciante"
-        />
-        <Divider />
-        <Menu.Item 
-          onPress={() => {
-            closeMenu();
-          }} 
-          leadingIcon={({ size }) => (
-            <Image
-              source={images.preferencesImg} // <--- A tua imagem aqui
-              style={{ 
-                width: size, 
-                height: size,
-                tintColor: theme.colors.onSurfaceVariant // Opcional: para seguir a cor do tema
-              }}
-            />
-          )}
-          title="Preferências"
-        />
-        <Divider />
-        <Menu.Item 
-          onPress={() => {
-            closeMenu();
-            
-          }} 
-          leadingIcon="information-outline" 
-          title="Sobre a App"
-        />
-        <Divider />
-         <Menu.Item 
-          onPress={() => {
-            closeMenu();
-          }} 
-          leadingIcon="delete" 
-          title="Apagar Conta"
-          titleStyle={{color: theme.colors.error}}
-        />
-        <Divider />
-      
-        <Menu.Item 
-          onPress={() => {
-            closeMenu();
-            logout();
-          }} 
-          leadingIcon="logout" 
-          title="Terminar Sessão"
-          titleStyle={{ color: theme.colors.error }}
-        />
-         
-      </Menu>
-</View>
-        {/* Avatar */}
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      edges={["top", "left", "right"]}
+    >
+      {!user ? (
         <View
-          className="w-32 h-32 border-2 rounded-full items-center justify-center mb-3"
-          style={{
-            backgroundColor: theme.colors.background,
-            borderColor: theme.colors.outline,
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            alignItems: "center",
           }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Botão Editar Perfil*/}
+          {/* Menu de Opções no Canto Superior Direito */}
           <View className="w-full flex-row justify-end mt-4 mb-2">
-            <TouchableRipple
-              key={theme.dark ? "dark-theme" : "light-theme"}
-              onPress={() => router.push("/components/EditProfile")}
-              style={{
-                padding: 6,
-                borderRadius: 26,
-                borderWidth: 2,
-                backgroundColor: theme.colors.background,
-                borderColor: theme.colors.outline,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Editar informações do meu perfil"
+            <Menu
+              visible={menuVisible}
+              onDismiss={closeMenu}
+              anchor={
+                <IconButton
+                  icon={({ size }) => (
+                    <Image
+                      source={images.settingsImg} // <-- NOTA: Garante que tens esta imagem no images.ts!
+                      style={{
+                        width: size,
+                        height: size,
+                        tintColor: theme.colors.onBackground,
+                      }}
+                    />
+                  )}
+                  mode="outlined"
+                  size={24}
+                  onPress={openMenu}
+                  style={{
+                    borderColor: theme.colors.outline,
+                    backgroundColor: theme.colors.background,
+                    borderWidth: 2,
+                  }}
+                />
+              }
             >
-              <Image
-                className="size-6"
-                source={images.editProfileImg}
-                accessibilityElementsHidden={true}
-                tintColor={theme.colors.onBackground}
-                importantForAccessibility="no-hide-descendants"
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                  router.push("/components/EditProfile");
+                }}
+                leadingIcon="pencil"
+                title="Editar Perfil"
               />
-            </TouchableRipple>
+              <Divider />
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                }}
+                leadingIcon="account"
+                title="Ser Comerciante"
+              />
+              <Divider />
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                }}
+                leadingIcon={({ size }) => (
+                  <Image
+                    source={images.preferencesImg} // <-- NOTA: Garante que tens esta imagem no images.ts!
+                    style={{
+                      width: size,
+                      height: size,
+                      tintColor: theme.colors.onSurfaceVariant,
+                    }}
+                  />
+                )}
+                title="Preferências"
+              />
+              <Divider />
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                }}
+                leadingIcon="information-outline"
+                title="Sobre a App"
+              />
+              <Divider />
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                }}
+                leadingIcon="delete"
+                title="Apagar Conta"
+                titleStyle={{ color: theme.colors.error }}
+              />
+              <Divider />
+
+              <Menu.Item
+                onPress={() => {
+                  closeMenu();
+                  logout();
+                }}
+                leadingIcon="logout"
+                title="Terminar Sessão"
+                titleStyle={{ color: theme.colors.error }}
+              />
+            </Menu>
           </View>
 
           {/* Avatar */}
@@ -164,16 +151,13 @@ const ProfileDetails = () => {
               borderColor: theme.colors.outline,
             }}
           >
-            <Text style={{ color: theme.colors.primary, fontSize: 40 }}>
+            <Text style={{ fontSize: 40 }}>
               {(user.name || user.email || "V").charAt(0)}
             </Text>
           </View>
 
           {/* NOME */}
-          <Text
-            style={{ color: theme.colors.primary, fontWeight: "bold" }}
-            className="text-xl mb-2"
-          >
+          <Text style={{ fontWeight: "bold" }} className="text-xl mb-2">
             {user.name}
           </Text>
 
@@ -219,7 +203,7 @@ const ProfileDetails = () => {
             <CustomButton
               onPress={() => router.replace("/(tabs)/ScanScreen")}
               className="w-full mt-2 shadow-md"
-              buttonColor={theme.colors.onSecondaryContainer}
+              buttonColor={theme.colors.primary}
               textColor={theme.colors.onPrimary}
               accessibilityRole="button"
               accessibilityLabel="Ler QR-Code de fatura"
@@ -241,8 +225,38 @@ const ProfileDetails = () => {
             </View>
           </View>
 
-     
-      </ScrollView>
+          {/* E-mail */}
+          <View
+            className=" w-full flex-row p-3 rounded-xl mt-5 border-2 items-center px-4"
+            style={{
+              backgroundColor: theme.colors.secondaryContainer,
+              borderColor: theme.colors.outline,
+            }}
+          >
+            <Image
+              style={{
+                width: 44,
+                height: 44,
+              }}
+              source={images.emailImg}
+              tintColor={theme.colors.onSecondaryContainer}
+              accessibilityElementsHidden={true}
+              importantForAccessibility="no-hide-descendants"
+            />
+            <View style={{ marginLeft: 20 }}>
+              <Text style={{ fontWeight: "bold", fontSize: 15 }}>
+                Endereço de E-mail
+              </Text>
+              <Text
+                style={{ fontWeight: "bold", fontSize: 13 }}
+                numberOfLines={1}
+              >
+                {user.email}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };

@@ -204,7 +204,9 @@ const Map = forwardRef<MapRefType, MapProps>(
             margin: 16,
             right: 0,
             bottom: 80,
+            backgroundColor: theme.colors.primary,
           }}
+          color={theme.colors.onPrimary}
           loading={loading}
           disabled={loading}
           icon="crosshairs-gps"

@@ -31,7 +31,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
         
         <Surface style={{ 
           width: '100%', 
-          backgroundColor: theme.colors.elevation.level3, 
+          backgroundColor: theme.colors.surfaceContainerHighest, 
           borderRadius: 24, 
           padding: 20,
           elevation: 10 
@@ -70,7 +70,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                     style={{ 
                       padding: 16, 
                       borderRadius: 12, 
-                      backgroundColor: theme.colors.elevation.level1, 
+                      backgroundColor: theme.colors.surfaceContainer, 
                       marginBottom: 12,
                       borderWidth: 1,
                       borderColor: theme.colors.outlineVariant

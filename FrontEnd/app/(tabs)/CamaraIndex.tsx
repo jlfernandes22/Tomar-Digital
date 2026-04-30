@@ -162,7 +162,11 @@ export default function CamaraIndex() {
           backgroundColor: theme.colors.surface,
         }}
       >
-        <ActivityIndicator animating={true} size="large" color="#FF6600" />
+        <ActivityIndicator
+          animating={true}
+          size="large"
+          color={theme.colors.primary}
+        />
       </Surface>
     );
   }
@@ -220,12 +224,12 @@ export default function CamaraIndex() {
             return (
               <Surface
                 style={{
-                  backgroundColor: theme.colors.secondaryContainer,
                   borderRadius: 12,
                   marginBottom: 16,
                   borderWidth: 1,
                   borderColor: theme.colors.outlineVariant,
                   overflow: "hidden",
+                  backgroundColor: theme.colors.secondaryContainer,
                 }}
                 elevation={1}
               >
@@ -236,6 +240,7 @@ export default function CamaraIndex() {
                       params: { id: item._id },
                     });
                   }}
+                  rippleColor="rgba(150, 150, 150, 0.2)"
                 >
                   <View className="p-1 ">
                     <BusinessList
@@ -247,20 +252,22 @@ export default function CamaraIndex() {
                 </TouchableRipple>
 
                 <View className="flex-row gap-x-3 px-4 pb-4">
+                  {/* Botão ACEITAR */}
                   <CustomButton
                     className="flex-1"
                     onPress={() => handleAprovar(item._id)}
-                    buttonColor={theme.colors.primary}
                     textColor={theme.colors.onPrimary}
+                    buttonColor={theme.colors.primary}
                   >
                     Aceitar
                   </CustomButton>
 
+                  {/* Botão DESCARTAR */}
                   <CustomButton
                     className="flex-1"
                     onPress={() => handleDescartar(item._id)}
-                    buttonColor={theme.colors.error}
-                    textColor={theme.colors.onError}
+                    buttonColor={theme.colors.errorContainer}
+                    textColor={theme.colors.onErrorContainer}
                   >
                     Descartar
                   </CustomButton>

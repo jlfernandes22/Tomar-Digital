@@ -13,68 +13,58 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { router } from "expo-router";
 import { images } from "@/constants/images";
-import { delay } from "@/app/utils/delay";
+import { delay } from "../../utils/delay";
 import CustomButton from "../components/CustomButton";
 import CustomTextField from "../components/CustomTextInput";
 import CustomSnackBar from "../components/CustomSnackBar";
-import { useTheme } from "react-native-paper";
+import { useTheme, Surface } from "react-native-paper";
 
 const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
   const [city, setCity] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const theme = useTheme();
 
   const handleRegister = async () => {
-    // 1. Validação local antes de incomodar o servidor!
     if (!email || !password) {
       setSnackbarMessage(
-        "Aviso: Por favor, preencha pelo menos email, password.",
+        "Aviso:\nPor favor, preencha pelo menos email e password.",
       );
       setSnackbarVisible(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      console.log(password, confirmPassword);
-      setSnackbarMessage("Aviso: As palavras-passe não coincidem!");
+      setSnackbarMessage("Aviso:\nAs palavras-passe não coincidem!");
       setSnackbarVisible(true);
       return;
     }
 
     try {
-      // 2. Enviar dados (normalmente não se envia o confirmPassword para a API)
       const response = await fetch(`${API_URL}/registar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          city: city,
-        }),
+        body: JSON.stringify({ email, password, confirmPassword, city }),
       });
 
       const dados = await response.json();
 
       if (response.ok) {
-        setSnackbarMessage("Sucesso: A redirecionar...");
+        setSnackbarMessage("Sucesso:\nA redirecionar...");
         setSnackbarVisible(true);
         await delay(500);
-
         router.replace("/Login");
       } else {
         setSnackbarMessage(
-          "Erro: " + dados.message || "Erro: Não foi possível criar a conta.",
+          "Erro:\n" + (dados.message || "Não foi possível criar a conta."),
         );
         setSnackbarVisible(true);
       }
     } catch (err) {
-      setSnackbarMessage("Erro de Rede. Verifique a sua ligação à internet.");
+      setSnackbarMessage("Erro:\nVerifique a sua ligação à internet.");
       setSnackbarVisible(true);
     }
   };
@@ -86,7 +76,12 @@ const Register = () => {
         className="absolute w-full h-full"
         resizeMode="cover"
       />
-      <View className="absolute w-full h-full bg-convento-900/60" />
+
+      {/* OVERLAY ESCURO FIXO */}
+      <View
+        className="absolute w-full h-full"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
+      />
 
       <SafeAreaView className="flex-1 bg-transparent">
         <KeyboardAvoidingView
@@ -95,59 +90,66 @@ const Register = () => {
           keyboardVerticalOffset={Platform.OS === "android" ? 20 : 0}
         >
           <ScrollView
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "center",
+              paddingBottom: 40,
+            }}
             keyboardShouldPersistTaps="handled"
             bounces={false}
           >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View className="flex-1 w-[85%] self-center pt-10 space-y-4">
-                <Text className="mb-10 text-center text-5xl font-bold text-neutral-300">
-                  Criar conta
-                </Text>
-
-                {/* Campo do email*/}
-                <CustomTextField
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  isEmail
-                  className="mb-[2rem]"
-                />
-
-                {/* Campo da cidade*/}
-                <CustomTextField
-                  label="Cidade (Ex: Tomar)"
-                  value={city}
-                  onChangeText={setCity}
-                  className="mb-[2rem]"
-                />
-
-                {/* Campo da palavra-passe*/}
-                <CustomTextField
-                  label="Palavra-passe"
-                  value={password}
-                  onChangeText={setPassword}
-                  isPassword
-                  className="mb-[2rem]"
-                />
-
-                {/* Confirmar Password */}
-                <CustomTextField
-                  label="Comfirmar Palavra-passe"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  isPassword
-                  className="mb-[2rem]"
-                />
-
-                {/* Botão de Registo */}
-                <CustomButton
-                  onPress={handleRegister}
-                  buttonColor={theme.colors.primaryContainer}
-                  className="mt-8"
+              <View className="w-[90%] self-center py-10">
+                <Surface
+                  elevation={2}
+                  style={{
+                    backgroundColor: theme.colors.surfaceContainer,
+                    padding: 32,
+                    borderRadius: theme.roundness === 0 ? 0 : 24,
+                  }}
                 >
-                  Criar Conta
-                </CustomButton>
+                  <Text
+                    className="mb-8 text-center text-4xl font-bold"
+                    style={{ color: theme.colors.primary }}
+                  >
+                    Criar conta
+                  </Text>
+
+                  <CustomTextField
+                    label="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    isEmail
+                    className="mb-5"
+                  />
+
+                  <CustomTextField
+                    label="Cidade (Ex: Tomar)"
+                    value={city}
+                    onChangeText={setCity}
+                    className="mb-5"
+                  />
+
+                  <CustomTextField
+                    label="Palavra-passe"
+                    value={password}
+                    onChangeText={setPassword}
+                    isPassword
+                    className="mb-5"
+                  />
+
+                  <CustomTextField
+                    label="Confirmar Palavra-passe"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    isPassword
+                    className="mb-8"
+                  />
+
+                  <CustomButton onPress={handleRegister}>
+                    Criar Conta
+                  </CustomButton>
+                </Surface>
               </View>
             </TouchableWithoutFeedback>
           </ScrollView>
