@@ -1,7 +1,7 @@
-{
+export default {
   "expo": {
-    "name": "ReactNativeProject",
-    "slug": "ReactNativeProject",
+    "name": "Tomar+Digital",
+    "slug": "Tomar_Digital",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/Logos/TomarDigitalLogo.png",
@@ -17,6 +17,12 @@
         "foregroundImage": "./assets/Logos/TomarDigitalLogo.png",
         "backgroundImage": "./assets/Logos/TomarDigitalLogo.png",
         "monochromeImage": "./assets/Logos/TomarDigitalLogo.png"
+      },
+      "config": {
+        "googleMaps": {
+          // Aqui a tua variável dinâmica entra em segurança, sem aspas!
+          "apiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+        }
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -58,6 +64,7 @@
         }
       ],
       "expo-secure-store"
+      // REPARA: O react-native-maps não está aqui nos plugins!
     ],
     "experiments": {
       "typedRoutes": true,
@@ -66,7 +73,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "fe8cdda4-5e3c-427e-b7ec-fd6dbdadac5d"
+        "projectId": "39bcf77c-f4b7-45dc-bb23-3db18bdc0b2d"
       }
     }
   }
