@@ -13,7 +13,8 @@ const CustomSnackBar = ({
   onDismiss: () => void;
 }) => {
   // garante que não dá erro se a mensagem estiver vazia
-  const isError = message?.includes("Erro") || message?.includes("Aviso");
+  const isError = message?.includes("Erro");
+  const isAviso = message?.includes("Aviso");
   const theme = useTheme();
 
   return (
@@ -23,8 +24,12 @@ const CustomSnackBar = ({
       duration={3000}
       style={{
         // CORES ESTÁTICAS: Vermelho para erros, Verde para sucesso
-        backgroundColor: isError ? "#DC2626" : "#16A34A",
-        borderRadius: 9999,
+        backgroundColor: isError
+          ? "#DC2626"
+          : isAviso
+            ? theme.colors.primaryContainer
+            : "#16A34A",
+        borderRadius: 16,
         marginHorizontal: 16,
         marginBottom: 20, // Margem de segurança
         zIndex: 9999,

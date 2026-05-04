@@ -4,7 +4,7 @@
     "slug": "ReactNativeProject",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "",
+    "icon": "./assets/Logos/TomarDigitalLogo.png",
     "scheme": "movies",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,12 +14,14 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "",
-        "backgroundImage": "",
-        "monochromeImage": ""
+        "foregroundImage": "./assets/Logos/TomarDigitalLogo.png",
+        "backgroundImage": "./assets/Logos/TomarDigitalLogo.png",
+        "monochromeImage": "./assets/Logos/TomarDigitalLogo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.RECORD_AUDIO"],
+      "package": "com.jlfernandes.TomarDigital"
     },
     "web": {
       "output": "static",
@@ -46,7 +48,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "",
+          "image": "./assets/Logos/TomarDigitalLogo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -60,6 +62,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fe8cdda4-5e3c-427e-b7ec-fd6dbdadac5d"
+      }
     }
   }
 }

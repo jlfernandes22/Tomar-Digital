@@ -83,6 +83,7 @@ export default function Index() {
     try {
       const response = await fetch(`${API_URL}/negocios`);
       const dados = await response.json();
+      console.log("fetchNegocios");
       // Garantir que os dados mapeados seguem a interface
       const apenasAprovados = dados.filter(
         (item: Negocio) => item.status === "aprovado",
@@ -195,6 +196,14 @@ export default function Index() {
   //Função para verificar se o negócio está na área do utilizador
   const inRange = () => {
     setLoading(true);
+    if (listaNegocios.length === 0) {
+      console.log("não há negócios registados");
+
+      setSnackbarMessage("Aviso:\nNão existem negócios por perto");
+      setSnackbarVisible(true);
+      setLoading(false);
+      return;
+    }
     if (!userLocation) return;
 
     const closeBiz = filteredPins.filter((negocio) => {
@@ -254,7 +263,7 @@ export default function Index() {
 
   useEffect(() => {
     inRange();
-  }, [userLocation, category]);
+  }, [category]);
 
   useFocusEffect(
     useCallback(() => {
@@ -272,7 +281,7 @@ export default function Index() {
         {/* showPin TRUE (Se estiver false, os pins não aparecem) */}
         <Map
           ref={mapRef}
-          showPin={true}
+          showPin={false}
           businesses={filteredPins}
           readOnly
           onMarkerPress={(biz) => {

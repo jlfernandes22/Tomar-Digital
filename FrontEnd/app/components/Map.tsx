@@ -40,13 +40,15 @@ const Map = forwardRef<MapRefType, MapProps>(
     } | null>(null);
     //console.log(location);
 
-    const [selectedLocation, setSelectedLocation] = useState({
-      latitude: location?.lat ?? 39.6035,
-      longitude: location?.long ?? -8.4154,
-    });
+    const [selectedLocation, setSelectedLocation] = useState<{
+      latitude: number;
+      longitude: number;
+    } | null>(null);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const tomar = { latitude: 39.6035, longitude: -8.4154 };
 
     /*useEffect para fazer a animação quando 
      o utilizador entra na página de detalhes de negócio
@@ -139,8 +141,8 @@ const Map = forwardRef<MapRefType, MapProps>(
           ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={{
-            latitude: selectedLocation.latitude,
-            longitude: selectedLocation.longitude,
+            latitude: tomar.latitude,
+            longitude: tomar.longitude,
             latitudeDelta: 0.005,
             longitudeDelta: 0.005,
           }}
@@ -167,7 +169,9 @@ const Map = forwardRef<MapRefType, MapProps>(
             </>
           )}
 
-          {showPin && <Marker coordinate={selectedLocation} />}
+          {showPin && selectedLocation && (
+            <Marker coordinate={selectedLocation} />
+          )}
 
           {businesses.map((biz) => (
             <Marker
@@ -250,7 +254,7 @@ const Map = forwardRef<MapRefType, MapProps>(
             } catch (error) {
               console.log("get localization error", error);
               setSnackbarMessage(
-                "Erro\nTem de ativar o GPS para aceder a todas as funcionalidades",
+                "Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades",
               );
               setSnackbarVisible(true);
               setLoading(false); // Desliga se der erro
