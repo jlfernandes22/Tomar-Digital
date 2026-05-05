@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Platform } from "react-native";
 import {
   FAB,
   Portal,
@@ -9,11 +10,13 @@ import {
   useTheme,
 } from "react-native-paper";
 import { useAppTheme, ModeType, PaletteType } from "../../context/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ThemeSelectorFAB = () => {
   const [visible, setVisible] = useState(false);
   const { userMode, setUserMode, userPalette, setUserPalette } = useAppTheme();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
@@ -82,12 +85,12 @@ const ThemeSelectorFAB = () => {
       {/* Botão flutuante fixado no canto inferior direito do ecrã */}
       <FAB
         icon="palette"
-        style={{ 
-          position: "absolute", 
-          margin: 16, 
-          right: 0, 
-          bottom: 80,
-          backgroundColor: theme.colors.primary
+        style={{
+          position: "absolute",
+          margin: 16,
+          right: 0,
+          bottom: Platform.OS == "ios" ? 90 : 80 + insets.bottom,
+          backgroundColor: theme.colors.primary,
         }}
         onPress={showModal}
         color={theme.colors.onPrimary}

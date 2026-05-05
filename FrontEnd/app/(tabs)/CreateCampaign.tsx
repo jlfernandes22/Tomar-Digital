@@ -42,14 +42,6 @@ const CreateCampaign = () => {
   const theme = useTheme();
   const { user } = useAuth();
 
-  /* Renderização de estado de carregamento enquanto os dados do utilizador não estão disponíveis */
-  if (!user)
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-
   const [formData, setFormData] = useState<ICampanhaForm>({
     tituloCampanha: "",
     slogan: "",
@@ -74,6 +66,15 @@ const CreateCampaign = () => {
   const [loading, setLoading] = useState(false);
   const [showSnackBar, setShowSnackBar] = useState(false);
   const [snackBarText, setSnackBarText] = useState("");
+
+  //colocado aqui depois dos useStates senão dá erro de early return statment
+  /* Renderização de estado de carregamento enquanto os dados do utilizador não estão disponíveis */
+  if (!user)
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
 
   const onChangeDate = (event: any, selectedDate: any) => {
     setShowDatePicker(false);

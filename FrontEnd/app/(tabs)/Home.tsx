@@ -31,7 +31,6 @@ import CustomChip from "../components/CustomChip";
 import { calcularDistancia } from "../../utils/locationUtils";
 import { images } from "../../constants/images";
 import MapFocous from "@/constants/MapFocous";
-import getAddress from "../../utils/getAddress";
 
 //interfaces
 import Negocio from "@/constants/Interfaces/Negocio";
@@ -194,16 +193,14 @@ export default function Index() {
   };
 
   //Função para verificar se o negócio está na área do utilizador
-  const inRange = () => {
+  const inRange = (isManualClick = false) => {
+    console.log("inRange");
     setLoading(true);
     if (listaNegocios.length === 0) {
       console.log("não há negócios registados");
-
-      setSnackbarMessage("Aviso:\nNão existem negócios por perto");
-      setSnackbarVisible(true);
-      setLoading(false);
       return;
     }
+    //console.log(userLocation);
     if (!userLocation) return;
 
     const closeBiz = filteredPins.filter((negocio) => {
@@ -217,6 +214,12 @@ export default function Index() {
       setLoading(false);
       return (!category || negocio.category === category) && distancia <= 250;
     });
+
+    if (closeBiz.length === 0 && isManualClick) {
+      setSnackbarMessage("Aviso:\nNão existem negócios por perto");
+      setSnackbarVisible(true);
+      setLoading(false);
+    }
 
     //console.log(closeBiz)
     //console.log(negocioSelecionado)
@@ -262,7 +265,7 @@ export default function Index() {
     : false;
 
   useEffect(() => {
-    inRange();
+    inRange(false);
   }, [category]);
 
   useFocusEffect(
@@ -750,7 +753,8 @@ export default function Index() {
         loading={loading}
         onPress={() => {
           setShowCloseBusiness(true);
-          inRange();
+          console.log("negociosFABpressed");
+          inRange(true);
         }}
         disabled={loading}
       ></FAB>
