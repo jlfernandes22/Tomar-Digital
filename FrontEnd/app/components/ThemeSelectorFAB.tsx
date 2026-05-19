@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { Platform } from "react-native";
 import {
   FAB,
   Portal,
@@ -10,11 +10,13 @@ import {
   useTheme,
 } from "react-native-paper";
 import { useAppTheme, ModeType, PaletteType } from "../../context/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ThemeSelectorFAB = () => {
   const [visible, setVisible] = useState(false);
   const { userMode, setUserMode, userPalette, setUserPalette } = useAppTheme();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
@@ -31,14 +33,14 @@ const ThemeSelectorFAB = () => {
           {/* Surface utiliza a cor de fundo apropriada do tema atual */}
           <Surface
             style={{
-              backgroundColor: theme.colors.surfaceVariant,
+              backgroundColor: theme.colors.surfaceContainerHighest,
               padding: 24,
               borderRadius: 16,
             }}
           >
             <Text
               variant="titleLarge"
-              style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}
+              style={{ color: theme.colors.onSurface, marginBottom: 16 }}
             >
               Aparência da Aplicação
             </Text>
@@ -83,10 +85,15 @@ const ThemeSelectorFAB = () => {
       {/* Botão flutuante fixado no canto inferior direito do ecrã */}
       <FAB
         icon="palette"
-        style={{ position: "absolute", margin: 16, right: 0, bottom: 80 }}
+        style={{
+          position: "absolute",
+          margin: 16,
+          right: 0,
+          bottom: Platform.OS == "ios" ? 90 : 80 + insets.bottom,
+          backgroundColor: theme.colors.primary,
+        }}
         onPress={showModal}
-        color={theme.colors.onPrimaryContainer}
-        theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
+        color={theme.colors.onPrimary}
       />
     </>
   );

@@ -10,10 +10,12 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
 import { router } from "expo-router";
-import { delay } from "@/app/utils/delay";
+import { delay } from "../../utils/delay";
 import CustomSnackBar from "../components/CustomSnackBar";
+import { useTheme } from "react-native-paper";
 
 export default function ScanScreen() {
+  const theme = useTheme();
   const { user } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(false); // NÃO abre o scanner de imediato
@@ -35,15 +37,21 @@ export default function ScanScreen() {
 
   if (!permission.granted) {
     return (
-      <View className="flex-1 justify-center items-center p-6 bg-white">
+      <View
+        className="flex-1 justify-center items-center p-6"
+        style={{ backgroundColor: theme.colors.background }}
+      >
         <Text className="text-center mb-4">
           Precisamos de acesso à câmara para ler o QR Code.
         </Text>
         <TouchableOpacity
           onPress={requestPermission}
-          className="bg-purple-600 p-4 rounded-xl"
+          className="p-4 rounded-xl"
+          style={{ backgroundColor: theme.colors.primary }}
         >
-          <Text className="text-white font-bold">Dar Permissão</Text>
+          <Text className="font-bold" style={{ color: theme.colors.onPrimary }}>
+            Dar Permissão
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -107,7 +115,10 @@ export default function ScanScreen() {
   };
 
   return (
-    <View className="flex-1 bg-black">
+    <View
+      className="flex-1"
+      style={{ backgroundColor: theme.colors.background }}
+    >
       <CameraView
         style={StyleSheet.absoluteFillObject}
         onBarcodeScanned={scanning ? handleBarcodeScanned : undefined}
@@ -116,16 +127,31 @@ export default function ScanScreen() {
 
       {/* Interface Visual do Scanner */}
       <View className="flex-1 justify-center items-center">
-        <View className="w-64 h-64 border-2 border-white rounded-3xl opacity-60 mb-10" />
-        <Text className="text-white font-bold text-lg bg-black/50 p-2 rounded-lg">
+        <View
+          className="w-64 h-64 border-2 rounded-3xl opacity-60 mb-10"
+          style={{ borderColor: theme.colors.outline }}
+        />
+        <Text
+          className="font-bold text-lg p-2 rounded-lg"
+          style={{
+            color: theme.colors.onSurfaceVariant,
+            backgroundColor: theme.colors.surfaceVariant + "CC",
+          }}
+        >
           Aponte para o QR Code da Fatura
         </Text>
       </View>
 
       {loading && (
-        <View className="absolute inset-0 bg-black/70 justify-center items-center">
-          <ActivityIndicator size="large" color="#9333ea" />
-          <Text className="text-white mt-4 font-bold">
+        <View
+          className="absolute inset-0 justify-center items-center"
+          style={{ backgroundColor: theme.colors.surface + "B3" }}
+        >
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text
+            className="mt-4 font-bold"
+            style={{ color: theme.colors.onSurface }}
+          >
             A processar o teu saldo...
           </Text>
         </View>
@@ -135,9 +161,12 @@ export default function ScanScreen() {
       {!scanning && !loading && (
         <TouchableOpacity
           onPress={() => setScanning(true)}
-          className="absolute bottom-10 self-center bg-white p-4 rounded-full"
+          className="absolute bottom-10 self-center p-4 rounded-full"
+          style={{ backgroundColor: theme.colors.surface }}
         >
-          <Text className="text-warning-500 font-bold">Tentar Novamente</Text>
+          <Text className="font-bold" style={{ color: theme.colors.primary }}>
+            Tentar Novamente
+          </Text>
         </TouchableOpacity>
       )}
 

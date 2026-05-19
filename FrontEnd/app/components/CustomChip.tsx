@@ -39,14 +39,16 @@ const CustomChip = ({
           borderColor: isSelected
             ? theme.colors.onSurfaceVariant
             : theme.colors.outline,
-          borderRadius: 12,
+          borderRadius: 9999,
           height: 40,
           justifyContent: "center",
         }}
         // ESTILO DO TEXTO
         textStyle={{
           // Se selecionado: Branco. Se não: Cor de texto padrão do tema (escuro)
-          color: isSelected ? theme.colors.background : theme.colors.onSurface,
+          color: isSelected
+            ? theme.colors.onPrimaryContainer
+            : theme.colors.onSurface,
           fontWeight: isSelected ? "bold" : "500",
           fontSize: 14,
           marginVertical: 0,

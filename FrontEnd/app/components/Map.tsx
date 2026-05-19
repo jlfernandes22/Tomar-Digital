@@ -10,95 +10,12 @@ import MapView, { Marker, Circle } from "react-native-maps";
 import { FAB, Portal, useTheme } from "react-native-paper";
 import * as Location from "expo-location";
 import CustomSnackBar from "./CustomSnackBar";
-
-interface MapProps {
-  location?: { lat: number; long: number };
-  showPin: boolean;
-  onLocationSelect?: (coords: { latitude: number; longitude: number }) => void;
-  readOnly?: boolean;
-  businesses?: any[];
-  onMarkerPress?: (business: any) => void;
-  onUserLocationUpdate?: (
-    coords: { latitude: number; longitude: number } | null,
-  ) => void;
-}
-
-// Mantemos a interface para o TypeScript não reclamar do useImperativeHandle
-export interface MapRefType {
-  focusOnLocation: (lat: number, lng: number) => void;
-}
+//interfaces
+import MapProps from "@/constants/Interfaces/MapProps";
+import MapRefType from "@/constants/Interfaces/MapRefType";
 
 //Estilo escuro do mapa fornecido pela IA
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#d59563" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#263c3f" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#6b9a76" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#38414e" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#212a37" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9ca5b3" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#746855" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#1f2835" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#f3d19c" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#17263c" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#515c6d" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.stroke",
-    stylers: [{ color: "#17263c" }],
-  },
-];
+import darkMapStyle from "@/constants/DarkMapStyle";
 
 // Adicionamos <MapRefType, MapProps>
 const Map = forwardRef<MapRefType, MapProps>(
@@ -121,11 +38,37 @@ const Map = forwardRef<MapRefType, MapProps>(
       latitude: number;
       longitude: number;
     } | null>(null);
-    const [selectedLocation, setSelectedLocation] = useState({
-      latitude: location?.lat ?? 39.6035,
-      longitude: location?.long ?? -8.4154,
-    });
+    //console.log(location);
 
+    const [selectedLocation, setSelectedLocation] = useState<{
+      latitude: number;
+      longitude: number;
+    } | null>(null);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const tomar = { latitude: 39.6035, longitude: -8.4154 };
+
+    /*useEffect para fazer a animação quando 
+     o utilizador entra na página de detalhes de negócio
+    */
+
+    useEffect(() => {
+      if (location?.lat && location?.long) {
+        mapRef.current?.animateToRegion(
+          {
+            latitude: location.lat,
+            longitude: location.long,
+            longitudeDelta: 0.008,
+            latitudeDelta: 0.008,
+          },
+          1000,
+        );
+      }
+    }, []);
+
+    /* useeffect para atualizar a localização do utilizador */
     useEffect(() => {
       if (onUserLocationUpdate) {
         onUserLocationUpdate(userLocation);
@@ -191,10 +134,6 @@ const Map = forwardRef<MapRefType, MapProps>(
       },
     }));
 
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarVisible, setSnackbarVisible] = useState(false);
-    const [loading, setLoading] = useState(false);
-
     return (
       <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
         <MapView
@@ -202,10 +141,10 @@ const Map = forwardRef<MapRefType, MapProps>(
           ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={{
-            latitude: selectedLocation.latitude,
-            longitude: selectedLocation.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
+            latitude: tomar.latitude,
+            longitude: tomar.longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
           }}
           showsUserLocation={true}
           showsMyLocationButton={false}
@@ -230,7 +169,9 @@ const Map = forwardRef<MapRefType, MapProps>(
             </>
           )}
 
-          {showPin && <Marker coordinate={selectedLocation} />}
+          {showPin && selectedLocation && (
+            <Marker coordinate={selectedLocation} />
+          )}
 
           {businesses.map((biz) => (
             <Marker
@@ -267,8 +208,11 @@ const Map = forwardRef<MapRefType, MapProps>(
             margin: 16,
             right: 0,
             bottom: 80,
+            backgroundColor: theme.colors.primary,
           }}
+          color={theme.colors.onPrimary}
           loading={loading}
+          disabled={loading}
           icon="crosshairs-gps"
           onPress={async () => {
             console.log("get localization");
@@ -310,7 +254,7 @@ const Map = forwardRef<MapRefType, MapProps>(
             } catch (error) {
               console.log("get localization error", error);
               setSnackbarMessage(
-                "Erro\nTem de ativar o GPS para aceder a todas as funcionalidades",
+                "Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades",
               );
               setSnackbarVisible(true);
               setLoading(false); // Desliga se der erro

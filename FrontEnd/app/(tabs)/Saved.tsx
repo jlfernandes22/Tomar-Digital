@@ -12,7 +12,6 @@ import {
   Text,
   TouchableRipple,
   ActivityIndicator,
-  Button,
   Divider,
 } from "react-native-paper";
 import CustomButton from "../components/CustomButton";
@@ -91,79 +90,80 @@ const Saved = () => {
   };
 
   return (
-    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1 }} className="p-4">
-        {/* Header Elegante */}
+    <SafeAreaView
+      className="p-4"
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      edges={["top", "left", "right"]}
+    >
+      {/* Header Elegante */}
 
-        <Text
-          variant="headlineMedium"
-          style={{
-            color: theme.colors.primary,
-            fontWeight: "bold",
-            marginBottom: 10,
-          }}
-        >
-          Os Meus Favoritos
-        </Text>
+      <Text
+        variant="headlineMedium"
+        style={{
+          color: theme.colors.primary,
+          fontWeight: "bold",
+          marginBottom: 10,
+        }}
+      >
+        Os Meus Favoritos
+      </Text>
 
-        <Divider
-          style={{
-            backgroundColor: theme.colors.outlineVariant,
-            marginBottom: 16,
-          }}
-        />
+      <Divider
+        style={{
+          backgroundColor: theme.colors.outlineVariant,
+          marginBottom: 16,
+        }}
+      />
 
-        {loading ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator
-              animating={true}
-              size="large"
-              color={theme.colors.primary}
-            />
-          </View>
-        ) : (
-          <FlatList
-            data={favoritos}
-            keyExtractor={(item: any) => item._id}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View className="relative mb-4">
-                {/* Card do Negócio */}
-                <Surface
-                  elevation={1}
-                  style={{
-                    backgroundColor: theme.colors.secondaryContainer,
-                    borderRadius: 12,
-                    marginBottom: 16,
-                    borderWidth: 1,
-                    borderColor: theme.colors.outlineVariant,
-                    overflow: "hidden",
+      {loading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator
+            animating={true}
+            size="large"
+            color={theme.colors.primary}
+          />
+        </View>
+      ) : (
+        <FlatList
+          data={favoritos}
+          keyExtractor={(item: any) => item._id}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View className="relative">
+              {/* Card do Negócio */}
+              <Surface
+                elevation={1}
+                style={{
+                  backgroundColor: theme.colors.secondaryContainer,
+                  borderRadius: 12,
+                  marginBottom: 16,
+                  borderWidth: 1,
+                  borderColor: theme.colors.outlineVariant,
+                  overflow: "hidden",
+                }}
+              >
+                <TouchableRipple
+                  onPress={() => {
+                    router.push({
+                      pathname: "/components/DetalhesBusiness",
+                      params: { id: item.businessId?._id },
+                    });
                   }}
+                  rippleColor="rgba(150, 150, 150, 0.2)"
                 >
-                  <TouchableRipple
-                    onPress={() => {
-                      router.push({
-                        pathname: "/components/DetalhesBusiness",
-                        params: { id: item.businessId?._id },
-                      });
-                    }}
-                    rippleColor="rgba(0, 0, 0, .1)"
-                  >
-                    <View className="p-1">
-                      <BusinessList
-                        name={item.businessId?.name || "Negócio não disponível"}
-                        category={item.businessId?.category || "N/A"}
-                        location={item.businessId?.location || ""}
-                      />
-                    </View>
-                  </TouchableRipple>
-                </Surface>
-
-                {/* Botão Remover - Integrado com o Tema de Erro */}
-                <View className="absolute right-3 top-10">
+                  <View className="p-1 ">
+                    <BusinessList
+                      name={item.businessId?.name || "Negócio não disponível"}
+                      category={item.businessId?.category || "N/A"}
+                      location={item.businessId?.location || ""}
+                    />
+                  </View>
+                </TouchableRipple>
+                <View className="flex-row gap-x-3 px-4 pb-4">
                   <CustomButton
-                    buttonColor={theme.colors.error}
-                    textColor={theme.colors.onError}
+                    className="flex-1"
+                    buttonColor={theme.colors.errorContainer}
+                    textColor={theme.colors.onErrorContainer}
                     onPress={() => {
                       if (item.businessId) retirarFavorito(item.businessId._id);
                     }}
@@ -171,56 +171,58 @@ const Saved = () => {
                     Remover
                   </CustomButton>
                 </View>
-              </View>
-            )}
-            ListEmptyComponent={
-              <View className="flex-1 items-center justify-center px-10 pb-20">
-                <Image
-                  source={images.favWaiting}
-                  className="w-64 h-64 mb-8"
-                  style={{
-                    tintColor: theme.colors.onSurfaceVariant,
-                    opacity: 0.6,
-                  }}
-                  resizeMode="contain"
-                />
+              </Surface>
 
-                <Text
-                  variant="headlineSmall"
-                  style={{ color: theme.colors.onSurface, fontWeight: "bold" }}
-                  className="text-center mb-2"
-                >
-                  Lista vazia
-                </Text>
-                <Text
-                  variant="bodyLarge"
-                  style={{ color: theme.colors.onSurfaceVariant }}
-                  className="text-center mb-10 opacity-70"
-                >
-                  Parece que ainda não guardou nenhum dos tesouros de Tomar nos
-                  seus favoritos.
-                </Text>
+              {/* Botão Remover - Integrado com o Tema de Erro */}
+            </View>
+          )}
+          ListEmptyComponent={
+            <View className="flex-1 items-center justify-center px-10 pb-20">
+              <Image
+                source={images.favWaiting}
+                className="w-64 h-64 mb-8"
+                style={{
+                  tintColor: theme.colors.onSurfaceVariant,
+                  opacity: 0.6,
+                }}
+                resizeMode="contain"
+              />
 
-                <CustomButton
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
-                  onPress={() => router.push("/Home")}
-                  className="w-full h-14"
-                >
-                  Descobrir Negócios
-                </CustomButton>
-              </View>
-            }
-          />
-        )}
+              <Text
+                variant="headlineSmall"
+                style={{ color: theme.colors.onSurface, fontWeight: "bold" }}
+                className="text-center mb-2"
+              >
+                Lista vazia
+              </Text>
+              <Text
+                variant="bodyLarge"
+                style={{ color: theme.colors.onSurfaceVariant }}
+                className="text-center mb-10 opacity-70"
+              >
+                Parece que ainda não guardou nenhum dos tesouros de Tomar nos
+                seus favoritos.
+              </Text>
 
-        <CustomSnackBar
-          visible={snackbarVisible}
-          message={snackbarMessage}
-          onDismiss={() => setSnackbarVisible(false)}
+              <CustomButton
+                buttonColor={theme.colors.primary}
+                textColor={theme.colors.onPrimary}
+                onPress={() => router.push("/Home")}
+                className="w-full h-14"
+              >
+                Descobrir Negócios
+              </CustomButton>
+            </View>
+          }
         />
-      </SafeAreaView>
-    </Surface>
+      )}
+
+      <CustomSnackBar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
+    </SafeAreaView>
   );
 };
 

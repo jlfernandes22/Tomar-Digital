@@ -9,7 +9,13 @@ import { Image } from "expo-image"; // Substituído pelo expo-image para perform
 import React, { useState } from "react";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
-import { ActivityIndicator, Surface, Text, useTheme, ProgressBar } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Surface,
+  Text,
+  useTheme,
+  ProgressBar,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomTextInput from "../components/CustomTextInput";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -40,7 +46,7 @@ interface ICampanhaForm {
 // CORREÇÃO: Removido o "async" da declaração do componente
 const CreateCampaign = () => {
   const [step, setStep] = useState(1);
-  const totalSteps = 3; 
+  const totalSteps = 3;
 
   const theme = useTheme();
   const { user } = useAuth();

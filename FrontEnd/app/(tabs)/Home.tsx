@@ -21,32 +21,19 @@ import {
   FAB,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { API_URL } from "@/constants/api";
 import Map from "../components/Map";
 import BusinessList from "../components/BusinessList";
 import CustomSnackBar from "../components/CustomSnackBar";
 import { useAuth } from "@/context/AuthContext";
 import CustomChip from "../components/CustomChip";
-import { calcularDistancia } from "../utils/locationUtils";
+import { calcularDistancia } from "../../utils/locationUtils";
 import { images } from "../../constants/images";
+import MapFocous from "@/constants/MapFocous";
 
-// INTERFACES
-interface BusinessLocation {
-  lat: number;
-  long: number;
-}
-
-interface Negocio {
-  _id: string;
-  owner: string;
-  name: string;
-  category: string;
-  location: BusinessLocation;
-  status: string;
-  NIF?: number | null;
-  email?: string;
-}
+//interfaces
+import Negocio from "@/constants/Interfaces/Negocio";
 
 export default function Index() {
   // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
@@ -95,6 +82,7 @@ export default function Index() {
     try {
       const response = await fetch(`${API_URL}/negocios`);
       const dados = await response.json();
+      console.log("fetchNegocios");
       // Garantir que os dados mapeados seguem a interface
       const apenasAprovados = dados.filter(
         (item: Negocio) => item.status === "aprovado",
@@ -136,9 +124,8 @@ export default function Index() {
   const toggleFavorite = async (businessId: string) => {
     if (!user?.id) {
       //trocar para snackbar
-      Alert.alert(
-        "Aviso",
-        "Tens de ter sessão iniciada para guardar favoritos.",
+      setSnackbarMessage(
+        "Aviso:\nTens de ter sessão inciada para guardar favoritos",
       );
       return;
     }
@@ -146,6 +133,13 @@ export default function Index() {
     setLoadingFav(true);
     const currentFav = idsFavorite.includes(businessId);
     const endpoint = currentFav ? "/retirarFavorito" : "/guardarFavorito";
+
+    //coloca-se logo para atualizar logo para o utilizador
+    if (currentFav) {
+      setIdsFavorite((prev) => prev.filter((id) => id !== businessId));
+    } else {
+      setIdsFavorite((prev) => [...prev, businessId]);
+    }
 
     //console.log(isFavorite);
     //console.log(user.id);
@@ -157,22 +151,21 @@ export default function Index() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
-          businessId: negocioSelecionado?._id,
+          businessId: businessId,
         }),
       });
 
-      if (response.ok) {
-        if (endpoint === "/guardarFavorito") {
-          // Chamámos o guardar e deu OK -> adicionamos da lista
-          setIdsFavorite((prev) => [...prev, businessId]);
-        } else if (endpoint === "/retirarFavorito") {
-          // Chamámos o retirar e deu OK -> Removemos da lista
-          setIdsFavorite((prev) => prev.filter((id) => id !== businessId));
-        }
+      if (!response.ok) {
       }
     } catch (error) {
-      //trocar para snackbar
-      Alert.alert("Erro", "Não foi possível atualizar os favoritos.");
+      if (currentFav) {
+        setIdsFavorite((prev) => [...prev, businessId]);
+      } else {
+        setIdsFavorite((prev) => prev.filter((id) => id !== businessId));
+      }
+
+      setSnackbarMessage("Erro:\n Não foi possível atualizar os favoritos.");
+      setSnackbarVisible(true);
     } finally {
       setLoadingFav(false);
     }
@@ -200,7 +193,14 @@ export default function Index() {
   };
 
   //Função para verificar se o negócio está na área do utilizador
-  const inRange = () => {
+  const inRange = (isManualClick = false) => {
+    console.log("inRange");
+    setLoading(true);
+    if (listaNegocios.length === 0) {
+      console.log("não há negócios registados");
+      return;
+    }
+    //console.log(userLocation);
     if (!userLocation) return;
 
     const closeBiz = filteredPins.filter((negocio) => {
@@ -211,8 +211,15 @@ export default function Index() {
         userLocation?.longitude,
       );
 
+      setLoading(false);
       return (!category || negocio.category === category) && distancia <= 250;
     });
+
+    if (closeBiz.length === 0 && isManualClick) {
+      setSnackbarMessage("Aviso:\nNão existem negócios por perto");
+      setSnackbarVisible(true);
+      setLoading(false);
+    }
 
     //console.log(closeBiz)
     //console.log(negocioSelecionado)
@@ -236,23 +243,17 @@ export default function Index() {
 
         //console.log(itemVisivel._id);
         //console.log(negocioSelecionado?._id);
-        //arranjar maneira para verificar se é favorito mais depressa :( carregar do servidor logo todos os favoritos e apartir dai
 
-        //aqui é feito o zoom conforme qual está selecionado
-        mapRef.current?.focusOnLocation(
-          itemVisivel.location.lat,
-          itemVisivel.location.long,
-        );
+        /*
+          aqui é feito o zoom conforme qual está selecionado
+          ao fazer desta maneira é mais dinâmico o que torna possível
+          usar em outros screens sem muita dificuldade 
+        */
+        MapFocous(itemVisivel, mapRef);
+        //focarNoMapa(itemVisivel);
       }
     },
   ).current;
-
-  const focarNoMapa = (item: Negocio) => {
-    setListaFiltrada([]);
-    if (mapRef.current?.focusOnLocation) {
-      mapRef.current.focusOnLocation(item.location.lat, item.location.long);
-    }
-  };
 
   const filteredPins = listaNegocios.filter((pin) => {
     if (category === "") return true;
@@ -264,8 +265,8 @@ export default function Index() {
     : false;
 
   useEffect(() => {
-    inRange();
-  }, [userLocation, category]);
+    inRange(false);
+  }, [category]);
 
   useFocusEffect(
     useCallback(() => {
@@ -283,7 +284,7 @@ export default function Index() {
         {/* showPin TRUE (Se estiver false, os pins não aparecem) */}
         <Map
           ref={mapRef}
-          showPin={true}
+          showPin={false}
           businesses={filteredPins}
           readOnly
           onMarkerPress={(biz) => {
@@ -321,7 +322,8 @@ export default function Index() {
                   >
                     <TouchableRipple
                       onPress={() => {
-                        focarNoMapa(item);
+                        MapFocous(item, mapRef);
+                        setListaFiltrada([]);
                         setNegocioSelecionado(item); // Define o negócio ao clicar na lista
                       }}
                     >
@@ -339,11 +341,6 @@ export default function Index() {
                 key={cat}
                 isSelected={category === cat}
                 onPress={() => {
-                  //caso tenha negocios por perto selecionado e seja selecionado uma categoria
-                  //if (itemVisivelId) {
-                  //  console.log("inRange");
-                  //  inRange();
-                  //}
                   setCategory(category === cat ? "" : cat);
                 }}
                 className="mr-1 h-[40px] mt-2"
@@ -370,12 +367,18 @@ export default function Index() {
           pointerEvents="box-none"
         >
           {/* 2. Imitamos o contentContainerStyle da FlatList para ter as margens perfeitas */}
-          <View
+          <TouchableRipple
             style={{
               flex: 1,
               justifyContent: "flex-end",
               paddingHorizontal: 20,
               paddingBottom: 10,
+            }}
+            onPress={() => {
+              router.push({
+                pathname: "/components/DetalhesBusiness",
+                params: { id: negocioSelecionado._id },
+              });
             }}
           >
             <Surface
@@ -398,7 +401,7 @@ export default function Index() {
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
-                      color: theme.colors.onBackground,
+                      color: theme.colors.onSecondaryContainer,
                       fontSize: 22,
                       fontWeight: "bold",
                     }}
@@ -406,13 +409,17 @@ export default function Index() {
                     {negocioSelecionado.name}
                   </Text>
                   <Text
-                    style={{ color: theme.colors.onBackground, fontSize: 14 }}
+                    style={{
+                      color: theme.colors.onSecondaryContainer,
+                      fontSize: 14,
+                    }}
                   >
                     {negocioSelecionado.category}
                   </Text>
                 </View>
                 <IconButton
                   icon="close"
+                  iconColor={theme.colors.onSecondaryContainer}
                   onPress={() => {
                     setNegocioSelecionado(null);
                   }}
@@ -423,15 +430,19 @@ export default function Index() {
                 style={{
                   marginVertical: 15,
                   borderTopWidth: 0.5,
-                  borderColor: "#eee",
+                  borderColor: theme.colors.outlineVariant,
                   paddingTop: 15,
                 }}
               >
                 <Text
-                  style={{ color: theme.colors.onBackground, marginBottom: 5 }}
+                  style={{
+                    color: theme.colors.onSecondaryContainer,
+                    marginBottom: 5,
+                  }}
                 >
-                  📍 Lat: {negocioSelecionado.location.lat.toFixed(4)} | Long:{" "}
-                  {negocioSelecionado.location.long.toFixed(4)}
+                  {negocioSelecionado.address
+                    ? negocioSelecionado.address
+                    : `Lat: ${negocioSelecionado.location.lat.toFixed(4)} | long: ${negocioSelecionado.location.long.toFixed(4)}`}
                 </Text>
               </View>
 
@@ -461,7 +472,7 @@ export default function Index() {
                       icon={isSelectedFavorite ? "heart" : "heart-outline"}
                       iconColor={
                         isSelectedFavorite
-                          ? theme.colors.error
+                          ? theme.colors.onErrorContainer
                           : theme.colors.onSurfaceVariant
                       }
                       size={24}
@@ -518,13 +529,22 @@ export default function Index() {
                 </TouchableRipple>
               </View>
             </Surface>
-          </View>
+          </TouchableRipple>
         </View>
       )}
 
       {/* Lista dos negócios perto do utilizador */}
       {bizInArea.length > 0 && showCloseBusiness && (
-        <View>
+        <View
+          style={{
+            position: "absolute",
+            bottom: 20, // Mantém a lista na parte inferior
+            left: 0,
+            right: 0,
+            zIndex: 2000, // Força a estar acima do FAB
+            elevation: 20, // Força no Android
+          }}
+        >
           <FlatList
             key={category || "all"}
             data={bizInArea}
@@ -532,11 +552,8 @@ export default function Index() {
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
-              paddingHorizontal:
-                bizInArea.length === 1
-                  ? (Dimensions.get("window").width - 320) / 2
-                  : 20,
-              paddingBottom: 60,
+              paddingHorizontal: (Dimensions.get("window").width - 320) / 2,
+              paddingBottom: 40,
             }}
             //props para fazer as animações conforme o id selecionado
             onViewableItemsChanged={onViewableItemsChanged}
@@ -550,161 +567,173 @@ export default function Index() {
             renderItem={({ item }) => {
               const isFavorite = idsFavorite.includes(item._id);
               return (
-                <Surface
-                  elevation={5}
-                  style={{
-                    width: 320,
-                    marginRight: 15,
-                    backgroundColor: theme.colors.secondaryContainer,
-                    borderRadius: 20,
-                    padding: 20,
-                    alignSelf: "flex-end",
+                <TouchableRipple
+                  onPress={() => {
+                    router.push({
+                      pathname: "/components/DetalhesBusiness",
+                      params: { id: itemVisivelId },
+                    });
                   }}
                 >
-                  <View
+                  <Surface
+                    elevation={5}
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
+                      width: 320,
+                      marginRight: 15,
+                      backgroundColor: theme.colors.secondaryContainer,
+                      borderRadius: 20,
+                      padding: 20,
+                      alignSelf: "flex-end",
                     }}
                   >
-                    <View style={{ flex: 1 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            color: theme.colors.onSecondaryContainer,
+                            fontSize: 22,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {item.name}
+                        </Text>
+                        <Text
+                          style={{
+                            color: theme.colors.onSecondaryContainer,
+                            fontSize: 14,
+                          }}
+                        >
+                          {item.category}
+                        </Text>
+                      </View>
+                      <IconButton
+                        icon="close"
+                        iconColor={theme.colors.onSecondaryContainer}
+                        // Esvazia o array de resultados de proximidade, o que desmonta este componente da UI
+                        onPress={() => {
+                          setNegocioSelecionado(null);
+                          setShowCloseBusiness(false);
+                        }}
+                      />
+                    </View>
+
+                    <View
+                      style={{
+                        marginVertical: 15,
+                        borderTopWidth: 0.5,
+                        borderColor: theme.colors.outlineVariant,
+                        paddingTop: 15,
+                      }}
+                    >
                       <Text
                         style={{
-                          color: theme.colors.onBackground,
-                          fontSize: 22,
-                          fontWeight: "bold",
+                          color: theme.colors.onSecondaryContainer,
+                          marginBottom: 5,
                         }}
                       >
-                        {item.name}
-                      </Text>
-                      <Text
-                        style={{
-                          color: theme.colors.onBackground,
-                          fontSize: 14,
-                        }}
-                      >
-                        {item.category}
+                        {item.address
+                          ? item.address
+                          : `Lat: ${item.location.lat.toFixed(4)} | long: ${item.location.long.toFixed(4)}`}
                       </Text>
                     </View>
-                    <IconButton
-                      icon="close"
-                      // Esvazia o array de resultados de proximidade, o que desmonta este componente da UI
-                      onPress={() => {
-                        setNegocioSelecionado(null);
-                        setShowCloseBusiness(false);
-                      }}
-                    />
-                  </View>
 
-                  <View
-                    style={{
-                      marginVertical: 15,
-                      borderTopWidth: 0.5,
-                      borderColor: "#eee",
-                      paddingTop: 15,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: theme.colors.onBackground,
-                        marginBottom: 5,
-                      }}
+                    <View
+                      style={{ flexDirection: "row", gap: 10, marginTop: 10 }}
                     >
-                      📍 Perto de ti!
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{ flexDirection: "row", gap: 10, marginTop: 10 }}
-                  >
-                    {/* Controlo de estado para adicionar/remover o negócio aos favoritos do utilizador */}
-                    <TouchableRipple
-                      disabled={loadingFav}
-                      style={{
-                        backgroundColor: isFavorite
-                          ? theme.colors.errorContainer
-                          : theme.colors.surfaceVariant,
-                        paddingHorizontal: 15,
-                        borderRadius: 12,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        borderWidth: 1,
-                        borderColor: isFavorite
-                          ? theme.colors.error
-                          : theme.colors.outlineVariant,
-                      }}
-                      onPress={() => toggleFavorite(item._id)}
-                    >
-                      {loadingFav ? (
-                        <ActivityIndicator
-                          size={24}
-                          color={theme.colors.primary}
-                        />
-                      ) : (
-                        <IconButton
-                          icon={isFavorite ? "heart" : "heart-outline"}
-                          iconColor={
-                            isFavorite
-                              ? theme.colors.error
-                              : theme.colors.onSurfaceVariant
-                          }
-                          size={24}
-                          style={{ margin: 0 }}
-                        />
-                      )}
-                    </TouchableRipple>
-
-                    {/* Ação de Deep Linking para aplicações de navegação externas */}
-                    <TouchableRipple
-                      style={{
-                        flex: 1,
-                        backgroundColor: theme.colors.primary,
-                        paddingVertical: 14,
-                        borderRadius: 12,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      onPress={() => {
-                        const { lat, long } = item.location;
-
-                        if (Platform.OS === "ios") {
-                          // Protocolo URL Scheme nativo para o Apple Maps
-                          const url = `maps://?q=${item.name}&ll=${lat},${long}`;
-                          Linking.openURL(url).catch(() =>
-                            Alert.alert(
-                              "Erro",
-                              "Não foi possível abrir o Apple Maps",
-                            ),
-                          );
-                        } else {
-                          // Protocolo Geo URI para integração com Google Maps no Android
-                          const url = `geo:${lat},${long}?q=${lat},${long}(${item.name})`;
-                          Linking.canOpenURL(url).then((supported) => {
-                            if (supported) {
-                              Linking.openURL(url);
-                            } else {
-                              // Fallback genérico web caso a app do Google Maps não esteja instalada
-                              Linking.openURL(
-                                `http://maps.google.com/?q=${lat},${long}`,
-                              );
-                            }
-                          });
-                        }
-                      }}
-                    >
-                      <Text
+                      {/* Controlo de estado para adicionar/remover o negócio aos favoritos do utilizador */}
+                      <TouchableRipple
+                        disabled={loadingFav}
                         style={{
-                          color: theme.colors.onPrimary,
-                          fontWeight: "bold",
-                          fontSize: 16,
+                          backgroundColor: isFavorite
+                            ? theme.colors.errorContainer
+                            : theme.colors.surfaceVariant,
+                          paddingHorizontal: 15,
+                          borderRadius: 12,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          borderWidth: 1,
+                          borderColor: isFavorite
+                            ? theme.colors.error
+                            : theme.colors.outlineVariant,
+                        }}
+                        onPress={() => toggleFavorite(item._id)}
+                      >
+                        {loadingFav ? (
+                          <ActivityIndicator
+                            size={24}
+                            color={theme.colors.primary}
+                          />
+                        ) : (
+                          <IconButton
+                            icon={isFavorite ? "heart" : "heart-outline"}
+                            iconColor={
+                              isFavorite
+                                ? theme.colors.onErrorContainer
+                                : theme.colors.onSurfaceVariant
+                            }
+                            size={24}
+                            style={{ margin: 0 }}
+                          />
+                        )}
+                      </TouchableRipple>
+
+                      {/* Ação de Deep Linking para aplicações de navegação externas */}
+                      <TouchableRipple
+                        style={{
+                          flex: 1,
+                          backgroundColor: theme.colors.primary,
+                          paddingVertical: 14,
+                          borderRadius: 12,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        onPress={() => {
+                          const { lat, long } = item.location;
+
+                          if (Platform.OS === "ios") {
+                            // Protocolo URL Scheme nativo para o Apple Maps
+                            const url = `maps://?q=${item.name}&ll=${lat},${long}`;
+                            Linking.openURL(url).catch(() =>
+                              Alert.alert(
+                                "Erro",
+                                "Não foi possível abrir o Apple Maps",
+                              ),
+                            );
+                          } else {
+                            // Protocolo Geo URI para integração com Google Maps no Android
+                            const url = `geo:${lat},${long}?q=${lat},${long}(${item.name})`;
+                            Linking.canOpenURL(url).then((supported) => {
+                              if (supported) {
+                                Linking.openURL(url);
+                              } else {
+                                // Fallback genérico web caso a app do Google Maps não esteja instalada
+                                Linking.openURL(
+                                  `http://maps.google.com/?q=${lat},${long}`,
+                                );
+                              }
+                            });
+                          }
                         }}
                       >
-                        VER NO MAPA
-                      </Text>
-                    </TouchableRipple>
-                  </View>
-                </Surface>
+                        <Text
+                          style={{
+                            color: theme.colors.onPrimary,
+                            fontWeight: "bold",
+                            fontSize: 16,
+                          }}
+                        >
+                          VER NO MAPA
+                        </Text>
+                      </TouchableRipple>
+                    </View>
+                  </Surface>
+                </TouchableRipple>
               );
             }}
           />
@@ -718,11 +747,14 @@ export default function Index() {
           margin: 16,
           right: 0,
           bottom: 160,
+          backgroundColor: theme.colors.primary,
         }}
+        color={theme.colors.onPrimary}
         loading={loading}
         onPress={() => {
           setShowCloseBusiness(true);
-          fetchNegocios();
+          console.log("negociosFABpressed");
+          inRange(true);
         }}
         disabled={loading}
       ></FAB>

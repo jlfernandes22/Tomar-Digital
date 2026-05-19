@@ -1,20 +1,25 @@
 import React from "react";
-import { View } from "react-native";
-import { Button, useTheme } from "react-native-paper";
+import { View, Image } from "react-native";
+import {
+  TouchableRipple,
+  Text,
+  ActivityIndicator,
+  useTheme,
+  Icon,
+} from "react-native-paper";
 
-// Definimos o que o botão pode receber
 interface PrimaryButtonProps {
-  children: React.ReactNode; // O texto
-  onPress: () => void; // A função que corre ao clicar
-  className?: string; // Para adicionar margens extra
-  loading?: boolean; // para mostrar a rodinha de carregamento
+  children: React.ReactNode;
+  onPress: () => void;
+  className?: string;
+  loading?: boolean;
+  disabled?: boolean;
   buttonColor?: string;
   textColor?: string;
   icon?: any;
   labelStyle?: any;
   accessibilityRole?: any;
   accessibilityLabel?: any;
-  disabled?: boolean;
 }
 
 const CustomButton = ({
@@ -22,6 +27,7 @@ const CustomButton = ({
   onPress,
   className,
   loading,
+  disabled,
   buttonColor,
   textColor,
   icon,
@@ -31,22 +37,76 @@ const CustomButton = ({
 }: PrimaryButtonProps) => {
   const theme = useTheme();
 
+  // Cores ligadas ao Theme atual
+  const bgColor = buttonColor ? buttonColor : theme.colors.primary;
+  const txtColor = textColor ? textColor : theme.colors.onPrimary;
+
+  const isDisabled = disabled || loading;
+
   return (
-    <View className={` ${className || ""}`}>
-      <Button
-        mode="contained"
-        buttonColor={buttonColor ? buttonColor : "#FF8533"}
-        textColor={textColor ? textColor : "#FFFFFF"}
-        onPress={loading ? () => {} : onPress}
-        loading={loading}
-        labelStyle={[{ fontSize: 18, fontWeight: "bold" }, labelStyle]}
-        rippleColor={theme.colors.onSecondary}
-        icon={icon}
-        accessibilityRole={accessibilityRole}
+    <View
+      className={className || ""}
+      style={{
+        backgroundColor: bgColor,
+        borderRadius: 9999,
+        overflow: "hidden",
+        opacity: isDisabled ? 0.6 : 1,
+      }}
+    >
+      <TouchableRipple
+        onPress={isDisabled ? undefined : onPress}
+        rippleColor="rgba(150, 150, 150, 0.3)"
+        accessibilityRole={accessibilityRole || "button"}
         accessibilityLabel={accessibilityLabel}
+        disabled={isDisabled}
+        style={{
+          paddingVertical: 12,
+          paddingHorizontal: 24,
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "row",
+        }}
       >
-        {children}
-      </Button>
+        <>
+          {loading && (
+            <ActivityIndicator
+              animating={true}
+              color={txtColor}
+              size={20}
+              style={{ marginRight: 8 }}
+            />
+          )}
+
+          {!loading && icon && (
+            <View style={{ marginRight: 8 }}>
+              {typeof icon === "string" ? (
+                <Icon source={icon} size={22} color={txtColor} />
+              ) : (
+                <Image
+                  source={icon}
+                  style={{ width: 22, height: 22, tintColor: txtColor }}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          )}
+
+          <Text
+            style={[
+              {
+                color: txtColor,
+                fontSize: 16,
+                fontWeight: "bold",
+                letterSpacing: 0.5,
+              },
+              labelStyle,
+            ]}
+            numberOfLines={1}
+          >
+            {children}
+          </Text>
+        </>
+      </TouchableRipple>
     </View>
   );
 };

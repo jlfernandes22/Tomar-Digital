@@ -5,6 +5,7 @@ import TabIcon from "@/app/components/Tabicon";
 import { useAuth } from "@/context/AuthContext";
 import { BottomNavigation, useTheme } from "react-native-paper";
 import { CommonActions } from "@react-navigation/native";
+import { Platform } from "react-native";
 
 const _layout = () => {
   const { user } = useAuth();
@@ -24,13 +25,18 @@ const _layout = () => {
           if (!options.tabBarIcon || options.href === null) return false;
 
           // Regras de acesso restrito baseadas no Role do utilizador
-          if (route.name === "CamaraIndex" && user?.role !== "camara") return false;
-          if (route.name === "DashboardTab" && user?.role !== "camara") return false;
-          if (route.name === "AddBusiness" && user?.role !== "comerciante") return false;
-          if (route.name === "JoinCampaign" && user?.role !== "comerciante") return false;
+          if (route.name === "CamaraIndex" && user?.role !== "camara")
+            return false;
+          if (route.name === "DashboardTab" && user?.role !== "camara")
+            return false;
+          if (route.name === "AddBusiness" && user?.role !== "comerciante")
+            return false;
+          if (route.name === "JoinCampaign" && user?.role !== "comerciante")
+            return false;
           if (route.name === "ScanScreen") return false;
           if (route.name === "EditProfile") return false;
-          if (route.name === "CreateCampaign" && user?.role !== "camara") return false;
+          if (route.name === "CreateCampaign" && user?.role !== "camara")
+            return false;
 
           return true;
         });
@@ -51,17 +57,31 @@ const _layout = () => {
             }}
             safeAreaInsets={insets}
             style={{
-              backgroundColor: theme.colors.secondaryContainer,
-              height: 80,
+              backgroundColor: theme.colors.surfaceContainer,
+              ...Platform.select({
+                ios: {
+                  // Aqui controlas SÓ o iPhone!
+                  // Mudei de 80 para 60 para não ficar tão alto, mas podes ajustar a teu gosto.
+                  height: 60 + insets.bottom,
+                  paddingBottom: insets.bottom,
+                },
+                android: {
+                  // No Android não pomos nada de alturas.
+                  // Deixamos o React Native Paper fazer a magia toda sozinho!
+                },
+              }),
             }}
             /* Aplicação direta das cores dinâmicas do Design System */
-
+            activeColor={theme.colors.onPrimary}
             inactiveColor={theme.colors.onSurfaceVariant}
             activeIndicatorStyle={{
-              backgroundColor: theme.colors.primaryContainer,
+              backgroundColor: theme.colors.primary,
               width: 64,
+              minWidth: 64,
+              maxWidth: 64,
               height: 44,
-              borderRadius: 22,
+              borderRadius: theme.roundness,
+              alignSelf: "center",
             }}
             labeled={false}
             onTabPress={({ route, preventDefault }) => {
@@ -177,7 +197,6 @@ const _layout = () => {
           ),
         }}
       />
-      <Tabs.Screen name="EditProfile" options={{ href: null }} />
     </Tabs>
   );
 };

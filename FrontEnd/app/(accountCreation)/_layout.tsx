@@ -5,6 +5,7 @@ import TabIcon from "@/app/components/Tabicon";
 import { useAuth } from "@/context/AuthContext";
 import { BottomNavigation, useTheme } from "react-native-paper";
 import { CommonActions } from "@react-navigation/native";
+import { Platform } from "react-native";
 
 const _layout = () => {
   const { user } = useAuth();
@@ -40,16 +41,27 @@ const _layout = () => {
             }}
             safeAreaInsets={insets}
             style={{
-              backgroundColor: theme.colors.secondaryContainer,
-              height: 80,
+              backgroundColor: theme.colors.surfaceContainer,
+              ...Platform.select({
+                ios: {
+                  // Aqui controlas SÓ o iPhone!
+                  // Mudei de 80 para 60 para não ficar tão alto, mas podes ajustar a teu gosto.
+                  height: 60 + insets.bottom,
+                  paddingBottom: insets.bottom,
+                },
+                android: {
+                  // No Android não pomos nada de alturas.
+                  // Deixamos o React Native Paper fazer a magia toda sozinho!
+                },
+              }),
             }}
-            activeColor={theme.colors.primary}
+            activeColor={theme.colors.onPrimary}
             inactiveColor={theme.colors.onSurfaceVariant}
             activeIndicatorStyle={{
-              backgroundColor: "rgba(255, 102, 0, 0.2)",
+              backgroundColor: theme.colors.primary,
               width: 64,
               height: 44,
-              borderRadius: 22,
+              borderRadius: theme.roundness,
             }}
             labeled={false}
             onTabPress={({ route, preventDefault }) => {
