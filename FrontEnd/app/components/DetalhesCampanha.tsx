@@ -3,6 +3,7 @@ import { View, Modal, ScrollView, Image } from "react-native";
 import { Surface, Text, useTheme, IconButton, Divider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "./CustomButton";
+import { API_URL } from "@/constants/api";
 
 interface DetalhesProps {
   visible: boolean;
@@ -106,7 +107,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             <View style={{width: '50%', flexDirection: 'row', alignItems: 'center' }}>
                 
                 <Image
-                source={{ uri: campaign.logo }}
+                source={{ uri: `${API_URL}/mostrarImagem/${campaign.logo}` }}
                 style={{
                   width: '100%', // ou um valor fixo como 200
                   height: 150,    // valor fixo obrigatório
@@ -116,7 +117,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                 resizeMode="contain" // Mantém a proporção da imagem
               />
               <Image
-                source={{ uri: campaign.panfleto }}
+                source={{ uri: `${API_URL}/mostrarImagem/${campaign.logo}` }}
                 style={{
                   width: '100%', // ou um valor fixo como 200
                   height: 150,    // valor fixo obrigatório

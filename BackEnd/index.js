@@ -8,11 +8,13 @@ import Business from "./models/Business.js";
 import Favorite from "./models/Favorite.js";
 import { authorize } from "./middleware/auth.js";
 import Campaign from "./models/Campaign.js";
+import Image from "./models/Image.js"
 import "dotenv/config";
 import Invoice from "./models/Invoice.js";
 import multer from "multer";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import sharp from "sharp";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
@@ -20,8 +22,13 @@ const app = express();
 // Vai procurar a variável MONGO_URI. Se não a encontrar (por exemplo, se te esqueceres do .env), tenta o localhost como plano B
 const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 app.use(cors());
-app.use(express.json({ limit: "20mb" })); // Aumentei para 20mb para garantir segurança com panfletos
-app.use(express.urlencoded({ limit: "20mb", extended: true }));
+app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+
 
 //////////////////////////////
 //Conectar à mongoDb no docker
@@ -71,33 +78,62 @@ mongoose
 //  }
 //});
 
-/**
- * @swagger
- * /registar:
- *   post:
- *     summary: Registar um novo utilizador
- *     tags: [Autenticação]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               confirmPassword:
- *                 type: string
- *               city:
- *                 type: string
- *     responses:
- *       201:
- *         description: Utilizador criado com sucesso
- *       400:
- *         description: Erro de validação ou utilizador já existe
- */
+////////////////////////
+//Upload de Imagem
+
+app.post('/uploadImage', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
+    }
+
+    const webpBuffer = await sharp(req.file.buffer)
+      .resize({ width: 800 }) 
+      .toFormat('webp')
+      .webp({ quality: 80 })  
+      .toBuffer();
+
+    // 1. Criamos a constante como "novaImagem"
+    const novaImagem = new Image({
+      nomeOriginal: req.file.originalname,
+      dados: webpBuffer,         
+      contentType: 'image/webp'  
+    });
+
+    await novaImagem.save();
+
+    res.status(201).json({ 
+      message: 'Imagem guardada com sucesso!', 
+      id: novaImagem._id 
+    });
+
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    res.status(500).json({ error: 'Erro ao processar imagem.' });
+  }
+});
+
+////////////////////////
+// Mostrar Imagem
+app.get('/mostrarImagem/:id', async (req, res) => {
+  try {
+    let imagem = await Image.findById(req.params.id);
+
+    
+    if (!imagem) {
+      return res.status(404).json({ error: 'Imagem não encontrada .' });
+    }
+
+    res.set('Content-Type', imagem.contentType);
+    res.send(imagem.dados);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao procurar imagem.' });
+  }
+});
+
+
+//////////////////////
+//Registar utilizador
 app.post("/registar", async (req, res) => {
   console.log("Recebido pedido de registo:", req.body);
 
@@ -1078,58 +1114,100 @@ app.post("/lerFatura", authorize(["cidadao"]), async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /criarCampanha:
- *   post:
- *     summary: Criar uma nova campanha (Câmara)
- *     tags: [Campanhas e Faturas]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Campanha criada
- */
-app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
+////////////////////////
+//Criar Campanha
+
+const uploadCampanha = upload.fields([
+  { name: 'logo', maxCount: 1 }, 
+  { name: 'panfleto', maxCount: 1 }
+]);
+
+app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, res) => {
   try {
-    const {
-      titulo,
-      slogan,
-      descricao,
-      dataInicio,
-      dataExpiracao,
-      normas,
-      packs,
-      logo,
-      panfleto,
+    const { 
+      titulo, 
+      slogan, 
+      descricao, 
+      dataInicio, 
+      dataExpiracao, 
+      normas, 
+      packs 
     } = req.body;
 
+    let parsedPacks = [];
+    if (packs) {
+      try {
+        parsedPacks = JSON.parse(packs);
+      } catch (parseError) {
+        console.error("Erro ao converter os packs de string para JSON:", parseError);
+        return res.status(400).json({ message: "O formato dos pacotes/packs é inválido." });
+      }
+    }
+
+
+    let logoIdDefinitivo = null;
+    let panfletoIdDefinitivo = null;
+
+    // 1.  LOGÓTIPO
+    if (req.files && req.files['logo']) {
+      const logoFile = req.files['logo'][0];
+      const logoBuffer = await sharp(logoFile.buffer)
+        .resize({ width: 800 })
+        .toFormat('webp')
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      const novaImagemLogo = new Image({
+        nomeOriginal: logoFile.originalname,
+        dados: logoBuffer,
+        contentType: 'image/webp'
+      });
+      await novaImagemLogo.save();
+      logoIdDefinitivo = novaImagemLogo._id;
+    } 
+
+    // 2.  PANFLETO 
+    if (req.files && req.files['panfleto']) {
+      const panfletoFile = req.files['panfleto'][0];
+      const panfletoBuffer = await sharp(panfletoFile.buffer)
+        .resize({ width: 800 })
+        .toFormat('webp')
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      const novaImagemPanfleto = new Image({
+        nomeOriginal: panfletoFile.originalname,
+        dados: panfletoBuffer,
+        contentType: 'image/webp'
+      });
+      await novaImagemPanfleto.save();
+      panfletoIdDefinitivo = novaImagemPanfleto._id;
+    } 
+
+    // 3. CRIAR A CAMPANHA 
     const newCampaign = new Campaign({
       createdBy: req.user.id,
-      titulo: titulo, // Garante que o nome à esquerda é igual ao do Schema
+      titulo: titulo,            
       slogan: slogan,
       descricao: descricao,
       dataInicio: dataInicio,
-      DataExpiracao: dataExpiracao, // Nome exato que o Mongoose pediu no erro anterior
+      DataExpiracao: dataExpiracao, 
       normas: normas,
-      packs: packs,
-      logo: logo,
-      panfleto: panfleto,
+      packs: parsedPacks,           
+      logo: logoIdDefinitivo,       
+      panfleto: panfletoIdDefinitivo 
     });
 
     await newCampaign.save();
+    
     res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
+    
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Erro ao gravar", details: err.message });
+    res.status(500).json({ message: "Erro ao guardar", details: err.message });
   }
 });
+
 
 /**
  * @swagger
