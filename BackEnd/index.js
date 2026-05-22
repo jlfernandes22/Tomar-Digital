@@ -8,12 +8,15 @@ import Business from "./models/Business.js";
 import Favorite from "./models/Favorite.js";
 import { authorize } from "./middleware/auth.js";
 import Campaign from "./models/Campaign.js";
+import Cae from "./models/Cae.js";
 import "dotenv/config";
 import Invoice from "./models/Invoice.js";
 import multer from "multer";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
+
+
 app.use(cors());
 app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
@@ -23,6 +26,9 @@ mongoose
   .connect("mongodb://localhost:27017/tomar_db")
   .then(() => console.log("Conectado a base de dados"))
   .catch((err) => console.error("Erro: ", err));
+
+
+
 
 //////////////////////////////////////////////////
 //Registar utilizador teste para usar no postman//
@@ -714,6 +720,8 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
     res.status(500).json({ message: "Erro ao obter as informações" });
   }
 });
+
+
 
 ///////////////
 //Editar perfil
