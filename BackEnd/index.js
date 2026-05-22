@@ -610,6 +610,7 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
       titulo, 
       slogan, 
       descricao, 
+      listaCAES,
       dataInicio, 
       dataExpiracao, 
       normas, 
@@ -623,6 +624,7 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
       titulo: titulo,            // Garante que o nome à esquerda é igual ao do Schema
       slogan: slogan,
       descricao: descricao,
+      listaCAES: listaCAES,
       dataInicio: dataInicio,
       DataExpiracao: dataExpiracao, // Nome exato que o Mongoose pediu no erro anterior
       normas: normas,
@@ -630,13 +632,13 @@ app.post("/criarCampanha", authorize(["camara"]), async (req, res) => {
       logo: logo,
       panfleto: panfleto
     });
-
     await newCampaign.save();
     res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro ao gravar", details: err.message });
-  } });
+  }
+});
 
 
 ////Lista das Campanhas

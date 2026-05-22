@@ -14,6 +14,8 @@ const CampaignSchema = new mongoose.Schema({
   slogan: { type: String },
 
   descricao: { type: String, required: true },
+
+  listaCAES: {type: [String], required: true},
   
   estado: {
     type: String,
