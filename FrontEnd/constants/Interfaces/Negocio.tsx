@@ -3,6 +3,9 @@ export default interface NegocioInterface {
   owner: string;
   name: string;
   category: string;
+  logo?: string;
+  description?: string;
+  gallery?: string[];
   location: {
     lat: number;
     long: number;

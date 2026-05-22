@@ -18,7 +18,8 @@ import CustomButton from "../components/CustomButton";
 import CustomTextField from "../components/CustomTextInput";
 import { delay } from "../../utils/delay";
 import CustomSnackBar from "../components/CustomSnackBar";
-import { useTheme, Surface } from "react-native-paper";
+import { useAppTheme } from "@/context/ThemeContext";
+import { Surface } from "react-native-paper";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   const handleLogin = async () => {
     try {

@@ -1,10 +1,9 @@
 import * as Location from "expo-location";
-import { useState } from "react";
-import business from "../../constants/Interfaces/Negocio";
+import type NegocioInterface from "../constants/Interfaces/Negocio";
 
 export default async function getAddress(
   locat?: { latitude: number; longitude: number },
-  business?: business,
+  business?: NegocioInterface,
 ) {
   let finalLat: number;
   let finalLong: number;

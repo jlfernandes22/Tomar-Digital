@@ -17,7 +17,8 @@ import { delay } from "../../utils/delay";
 import CustomButton from "../components/CustomButton";
 import CustomTextField from "../components/CustomTextInput";
 import CustomSnackBar from "../components/CustomSnackBar";
-import { useTheme, Surface } from "react-native-paper";
+import { useAppTheme } from "@/context/ThemeContext";
+import { Surface } from "react-native-paper";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ const Register = () => {
   const [city, setCity] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   const handleRegister = async () => {
     if (!email || !password) {

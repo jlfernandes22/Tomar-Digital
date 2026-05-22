@@ -1,14 +1,17 @@
 import { Alert, ScrollView, View, useWindowDimensions } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useAppTheme } from "@/context/ThemeContext";
 import { API_URL } from "@/constants/api";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { PieChart, BarChart } from "react-native-chart-kit";
-import { Surface, Text, ActivityIndicator, useTheme } from "react-native-paper";
+import { PieChart } from "react-native-chart-kit";
+import { BarChart } from "react-native-gifted-charts";
+
+import { Surface, Text, ActivityIndicator } from "react-native-paper";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
   const { width: screenWidth } = useWindowDimensions();
 
   const [allInfo, setAllInfo] = useState({ categories: [], cities: [] });
@@ -21,6 +24,7 @@ const Dashboard = () => {
 
   const CHART_COLORS = [
     theme.colors.primary,
+    theme.colors.secondary,
     theme.colors.primaryContainer,
     theme.colors.secondaryContainer,
     theme.colors.tertiaryContainer,
@@ -40,6 +44,7 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setAllInfo(data);
+       //console.log(allInfo.categories)
 
         setSummary({
           totalUsers: data.totalUsers || 0,
@@ -59,6 +64,7 @@ const Dashboard = () => {
     if (user?.token) fetchAllInfo();
   }, [user?.token]);
 
+  //função para formatar os dados vindos da API para obter distribuição geográfica
   const formatPieData = (dataArray: any[]) => {
     return dataArray.map((item, index) => ({
       name: item._id,
@@ -69,17 +75,18 @@ const Dashboard = () => {
     }));
   };
 
+  //função para formatar os dados vindos da API para os negócios
   const formatBarData = (dataArray: any[]) => {
-    return {
-      labels: dataArray.map((item) =>
-        item._id.length > 8 ? item._id.substring(0, 8) + "..." : item._id,
-      ),
-      datasets: [
-        {
-          data: dataArray.map((item) => item.total),
-        },
-      ],
-    };
+    //console.log(dataArray[1].total)
+    return dataArray.map((item) => ({
+      value: item.total,
+      label: item._id,
+      frontColor: '#177AD5',
+      labelTextStyle: {color: theme.colors.onSurface},
+     
+
+      
+    }));
   };
 
   const maxCategoryValue =
@@ -201,7 +208,7 @@ const Dashboard = () => {
         <Surface
           className="p-4"
           style={{
-            backgroundColor: theme.colors.surfaceContainer,
+            backgroundColor: theme.colors.secondaryContainer,
             borderRadius: 24,
             marginBottom: 20,
           }}
@@ -238,10 +245,11 @@ const Dashboard = () => {
 
         {/* Secção Gráfica 2 - Tipologia de Negócios (BarChart) */}
         <Surface
-          className="p-4 mb-6"
           style={{
-            backgroundColor: theme.colors.surfaceContainer,
+            backgroundColor: theme.colors.secondaryContainer,
             borderRadius: 24,
+            padding: 16, 
+            height: Math.max(500, allInfo.categories.length * 80)
           }}
           elevation={0}
         >
@@ -255,20 +263,14 @@ const Dashboard = () => {
           >
             Tipologia de Negócios
           </Text>
+          
           {allInfo.categories.length > 0 ? (
             <BarChart
               data={formatBarData(allInfo.categories)}
-              width={chartWidth}
-              height={450}
-              chartConfig={chartConfig}
-              yAxisLabel=""
-              yAxisSuffix=""
-              withInnerLines={false}
-              showValuesOnTopOfBars={true}
-              segments={yAxisSegments}
-              fromZero={true}
-              verticalLabelRotation={45}
-              style={{ borderRadius: 16 }}
+              horizontal
+              noOfSections={allInfo.categories.length}
+              
+              isAnimated
             />
           ) : (
             <Text style={{ color: theme.colors.onSurfaceVariant }}>

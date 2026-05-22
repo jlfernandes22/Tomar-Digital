@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Modal, ScrollView, Image } from "react-native";
-import { Surface, Text, useTheme, IconButton, Divider } from "react-native-paper";
+import { Surface, Text, IconButton, Divider } from "react-native-paper";
+import { useAppTheme } from "@/context/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "./CustomButton";
 import { API_URL } from "@/constants/api";
@@ -11,7 +12,7 @@ interface DetalhesProps {
   onClose: () => void;
 }
 const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   if (!campaign) return null;
 

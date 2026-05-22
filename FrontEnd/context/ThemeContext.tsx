@@ -5,6 +5,7 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
+import type { CustomMD3Theme } from "react-native-paper";
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { appThemes } from "../constants/themes";
@@ -17,7 +18,7 @@ interface ThemeContextType {
   setUserMode: (mode: ModeType) => Promise<void>;
   userPalette: PaletteType;
   setUserPalette: (palette: PaletteType) => Promise<void>;
-  currentTheme: any;
+  currentTheme: CustomMD3Theme;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

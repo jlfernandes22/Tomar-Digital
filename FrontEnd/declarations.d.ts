@@ -18,32 +18,5 @@ declare module "*.webp" {
   export default value;
 }
 
-declare module "react-native-paper" {
-  export interface MD3Colors {
-    // Novas superfícies de Tonal Layering
-    surfaceContainerLowest: string;
-    surfaceContainerLow: string;
-    surfaceContainer: string;
-    surfaceContainerHigh: string;
-    surfaceContainerHighest: string;
-    surfaceDim: string;
-    surfaceBright: string;
-    surfaceTint: string;
-
-    // Novas cores fixas (Fixed Colors)
-    primaryFixed: string;
-    primaryFixedDim: string;
-    onPrimaryFixed: string;
-    onPrimaryFixedVariant: string;
-
-    secondaryFixed: string;
-    secondaryFixedDim: string;
-    onSecondaryFixed: string;
-    onSecondaryFixedVariant: string;
-
-    tertiaryFixed: string;
-    tertiaryFixedDim: string;
-    onTertiaryFixed: string;
-    onTertiaryFixedVariant: string;
-  }
-}
+// Removed broken react-native-paper module declaration because it conflicts with the package's own type declarations.
+// If you need custom theme color slots, extend the theme in your own app types instead of re-declaring the module.
