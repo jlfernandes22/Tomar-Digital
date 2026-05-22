@@ -9,6 +9,7 @@ import Favorite from "./models/Favorite.js";
 import { authorize } from "./middleware/auth.js";
 import Campaign from "./models/Campaign.js";
 import Image from "./models/Image.js"
+import Cae from "./models/Cae.js";
 import "dotenv/config";
 import Invoice from "./models/Invoice.js";
 import multer from "multer";
@@ -19,8 +20,7 @@ import sharp from "sharp";
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 
-// Vai procurar a variável MONGO_URI. Se não a encontrar (por exemplo, se te esqueceres do .env), tenta o localhost como plano B
-const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
+
 app.use(cors());
 app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
@@ -36,6 +36,9 @@ mongoose
   .connect(dbURI)
   .then(() => console.log("Conectado à Base de Dados com sucesso!"))
   .catch((err) => console.error("Erro na Base de Dados: ", err));
+
+
+
 
 //////////////////////////////////////////////////
 //Registar utilizador teste para usar no postman//
@@ -1128,6 +1131,7 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       titulo, 
       slogan, 
       descricao, 
+      listaCAES,
       dataInicio, 
       dataExpiracao, 
       normas, 
@@ -1190,6 +1194,7 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       titulo: titulo,            
       slogan: slogan,
       descricao: descricao,
+      listaCAES: listaCAES,
       dataInicio: dataInicio,
       DataExpiracao: dataExpiracao, 
       normas: normas,
@@ -1197,14 +1202,13 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       logo: logoIdDefinitivo,       
       panfleto: panfletoIdDefinitivo 
     });
-
     await newCampaign.save();
     
     res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
     
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Erro ao guardar", details: err.message });
+    res.status(500).json({ message: "Erro ao gravar", details: err.message });
   }
 });
 
@@ -1290,24 +1294,10 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /editarUser/{id}:
- *   post:
- *     summary: Editar perfil do utilizador
- *     tags: [Utilizadores]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       201:
- *         description: Perfil atualizado
- */
+
+
+///////////////
+//Editar perfil
 app.post(
   "/editarUser/:id",
   authorize(["camara", "comerciante", "cidadao"]),

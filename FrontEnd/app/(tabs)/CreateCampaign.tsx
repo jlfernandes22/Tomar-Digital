@@ -3,25 +3,21 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  View
+  View, 
+  Image,
+  Pressable
 } from "react-native";
-import { Image } from "expo-image"; // Substituído pelo expo-image para performance
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
-import {
-  ActivityIndicator,
-  Surface,
-  Text,
-  useTheme,
-  ProgressBar,
-} from "react-native-paper";
+import { ActivityIndicator, Surface, Text, useTheme, ProgressBar, TextInput, Button, HelperText } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomTextInput from "../components/CustomTextInput";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
-import UploadImage from "../components/UploadImage"; // A tua função utilitária de upload
+import CustomChip from "../components/CustomChip"; // Garante que o caminho está correto
+import * as ImagePicker from 'expo-image-picker';
 
 interface IPacote {
   descricaoRecompensa: string;
@@ -35,6 +31,7 @@ interface ICampanhaForm {
   tituloCampanha: string;
   slogan: string;
   descricaoCampanha: string;
+  listaCAES: string[];
   dataExpiracao: Date;
   dataInicio: Date;
   normas: string;
@@ -43,10 +40,12 @@ interface ICampanhaForm {
   pacotes: IPacote[];
 }
 
-// CORREÇÃO: Removido o "async" da declaração do componente
 const CreateCampaign = () => {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
+
+  const [caeInput, setCaeInput] = useState("");
+  const [erro, setErro] = useState("");
 
   const theme = useTheme();
   const { user } = useAuth();
@@ -55,6 +54,7 @@ const CreateCampaign = () => {
     tituloCampanha: '',
     slogan: '',
     descricaoCampanha: '',
+    listaCAES: [],
     dataExpiracao: new Date(),
     dataInicio: new Date(),
     normas: '',
@@ -72,15 +72,12 @@ const CreateCampaign = () => {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingPanfleto, setUploadingPanfleto] = useState(false);
   const [showSnackBar, setShowSnackBar] = useState(false);
   const [snackBarText, setSnackBarText] = useState("");
 
-  /* Renderização de estado de carregamento se user não existir */
   if (!user) {
     return (
-      <View className="flex-1 justify-center items-center">
+      <View style={{ flex: 1, justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
@@ -140,111 +137,68 @@ const CreateCampaign = () => {
   };
 
   const selecionarLogo = async () => {
-  const uriLocal = await UploadImage(); // A tua função que abre a galeria
-  if (uriLocal) {
-    // Garante que o caminho começa sempre por 'file://'
-    const uriFormatado = uriLocal.startsWith('file://') ? uriLocal : `file://${uriLocal}`;
-    
-    setFormData(prev => ({ ...prev, logo: uriFormatado }));
-    setSnackBarText("Logótipo selecionado!");
-    setShowSnackBar(true);
-  }
-};
-
- const selecionarPanfleto = async () => {
-  const uriLocal = await UploadImage(); // A tua função que abre a galeria
-  if (uriLocal) {
-    // Garante que o caminho começa sempre por 'file://'
-    const uriFormatado = uriLocal.startsWith('file://') ? uriLocal : `file://${uriLocal}`;
-    
-    setFormData(prev => ({ ...prev, panfleto: uriFormatado }));
-    setSnackBarText("Panfleto selecionado!");
-    setShowSnackBar(true);
-  }
-};
-
-  const handleFinalSubmit = async () => {
-  setLoading(true);
-
-  if (formData.pacotes.length === 0) {
-    setSnackBarText("Erro: Adicione pelo menos um pacote.");
-    setShowSnackBar(true);
-    setLoading(false);
-    return;
-  }
-
-  // 1. Criamos um objeto FormData em vez de um objeto JSON puro
-  const dataToSend = new FormData();
-
-  // 2. Adicionamos os campos de texto simples
-  dataToSend.append("titulo", formData.tituloCampanha);
-  dataToSend.append("slogan", formData.slogan);
-  dataToSend.append("descricao", formData.descricaoCampanha);
-  dataToSend.append("dataInicio", formData.dataInicio.toISOString());
-  dataToSend.append("dataExpiracao", formData.dataExpiracao.toISOString());
-  dataToSend.append("normas", formData.normas);
-  
-  // Como o FormData só aceita strings ou ficheiros, convertemos o array de pacotes para String JSON
-  dataToSend.append("packs", JSON.stringify(
-    formData.pacotes.map(p => ({
-      rewardDescription: p.descricaoRecompensa,
-      pointsCost: Number(p.custoEmPontos),
-      stock: Number(p.stockInicial),
-      maxPerUser: Number(p.maximoPorUser)
-    }))
-  ));
-
-  // 3. Adicionamos o ficheiro do LOGÓTIPO (se o utilizador escolheu um)
-  if (formData.logo) {
-    const filename = formData.logo.split('/').pop() || 'logo.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image/jpeg`;
-    
-    dataToSend.append("logo", {
-      uri: formData.logo, // O URI local do telemóvel (file:///...)
-      name: filename,
-      type: type
-    } as any);
-  }
-
-  // 4. Adicionamos o ficheiro do PANFLETO (se o utilizador escolheu um)
-  if (formData.panfleto) {
-    const filename = formData.panfleto.split('/').pop() || 'panfleto.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image/jpeg`;
-    
-    dataToSend.append("panfleto", {
-      uri: formData.panfleto, 
-      name: filename,
-      type: type
-    } as any);
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/criarCampanha`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-     },
-      body: dataToSend, // Passamos o FormData completo
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!');
+      return;
+    }
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
     });
 
-    if (response.ok) {
-      setSnackBarText("Campanha criada com sucesso!");
-      setShowSnackBar(true);
-    } else {
-      const errorData = await response.json();
-      setSnackBarText("Erro: " + errorData.message);
-      setShowSnackBar(true);
+    if (!resultado.canceled) {
+      const uri = resultado.assets[0].uri;
+      setFormData({ ...formData, logo: uri });
     }
-  } catch (err) {
-    console.error(err);
-    setSnackBarText("Erro na ligação ao servidor");
-    setShowSnackBar(true);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
+  const selecionarPanfleto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!');
+      return;
+    }
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!resultado.canceled) {
+      const uri = resultado.assets[0].uri;
+      setFormData({ ...formData, panfleto: uri });
+    }
+  };
+
+  const handleAdicionarCae = () => {
+    if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
+      setErro("O CAE deve ter 5 numeros.");
+      return;
+    }
+    if (formData.listaCAES.includes(caeInput)) {
+      setErro("Este CAE já foi adicionado.");
+      return;
+    }
+    setErro("");
+    setFormData({
+      ...formData,
+      listaCAES: [...formData.listaCAES, caeInput]
+    
+    });
+    setCaeInput("");
+  };
+
+  const handleRemoverCae = (caeParaRemover: string) => {
+    setFormData({
+      ...formData,
+      listaCAES: formData.listaCAES.filter((c) => c !== caeParaRemover)
+    });
+
+  };
 
   const renderStep1 = () => (
     <View>
@@ -265,34 +219,87 @@ const CreateCampaign = () => {
         onChangeText={(val) => setFormData({...formData, descricaoCampanha: val})} 
       />
 
+      {/* SELEÇÃO DE CAES INTEGRADA AQUI */}
+      <Text variant="titleMedium" style={{ marginTop: 20, marginBottom: 5, fontWeight: '600' }}>
+        CAEs Abrangentes da Campanha
+      </Text>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <TextInput
+          mode="outlined"
+          label="Adicionar CAE"
+          placeholder="Ex: 01111"
+          maxLength={5}
+          keyboardType="numeric"
+          value={caeInput}
+          onChangeText={(text) => {
+            setErro("");
+            setCaeInput(text.replace(/[^0-9]/g, ""));
+          }}
+          style={{ flex: 1, height: 48 }}
+        />
+        <Button
+          mode="contained"
+          onPress={handleAdicionarCae}
+          style={{ height: 48, justifyContent: 'center' }}
+        >
+          Add
+        </Button>
+      </View>
+
+      <HelperText type="error" visible={!!erro} style={{ paddingHorizontal: 0 }}>
+        {erro}
+      </HelperText>
+
+      {/* Renderização com o teu CustomChip Intacto + X flutuante no canto */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+        {formData.listaCAES.map((cae) => (
+          <View key={cae} style={{ position: 'relative', paddingTop: 4, paddingRight: 4 }}>
+            <CustomChip isSelected={true} icon="tag" onPress={() => {}}>
+              {cae}
+            </CustomChip>
+            
+            {/* Badge Vermelho Flutuante de Fechar */}
+            <View style={{ 
+              position: 'absolute', top: 0, right: 0, backgroundColor: '#ef4444', 
+              borderRadius: 10, width: 20, height: 20, alignItems: 'center', 
+              justifyContent: 'center', borderColor: '#fff', elevation: 2 
+            }}>
+              <Pressable onPress={() => handleRemoverCae(cae)} hitSlop={10}>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold', lineHeight: 12 }}>X</Text>
+              </Pressable>
+            </View>
+          </View>
+        ))}
+        
+      </View>
+
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
-        {/* SECÇÃO LOGO */}
         <View style={{ width: '48%' }}>
           <Text variant="labelLarge">Logótipo</Text>
-          <CustomButton icon="image" onPress={selecionarLogo} loading={uploadingLogo} disabled={uploadingLogo}>
+          <CustomButton icon="image" onPress={selecionarLogo}>
             {formData.logo ? "Alterar" : "Upload"}
           </CustomButton>
           {formData.logo && (
             <Image 
               source={{ uri: formData.logo }} 
               style={{ width: '100%', height: 100, borderRadius: 8, marginTop: 10 }} 
-              contentFit="cover"
             />
           )}
         </View>
+      </View>
+    </View>
+  );
 
-        {/* SECÇÃO PANFLETO */}
         <View style={{ width: '48%' }}>
           <Text variant="labelLarge">Panfleto</Text>
-          <CustomButton icon="file-image" onPress={selecionarPanfleto} loading={uploadingPanfleto} disabled={uploadingPanfleto}>
+          <CustomButton icon="file-image" onPress={selecionarPanfleto}>
             {formData.panfleto ? "Alterar" : "Upload"}
           </CustomButton>
-          {formData.panfleto && !uploadingPanfleto && (
+          {formData.panfleto && (
             <Image 
-              source={{uri : formData.panfleto}} 
+              source={{ uri: formData.panfleto }} 
               style={{ width: '100%', height: 100, borderRadius: 8, marginTop: 10 }} 
-              contentFit="cover"
-              transition={500}
             />
           )}
         </View>
@@ -303,9 +310,13 @@ const CreateCampaign = () => {
   const renderStep2 = () => (
     <View>
       <Text variant="headlineSmall" style={{ marginBottom: 10 }}>Prazos e Regras</Text>
+      
       <Text variant="labelMedium" style={{ marginBottom: 5 }}>Data de Expiração:</Text>
 
-      <CustomButton icon="calendar" onPress={() => setShowDatePicker(true)}>
+      <CustomButton 
+        icon="calendar"
+        onPress={() => setShowDatePicker(true)}
+      >
         {formData.dataExpiracao.toLocaleDateString('pt-PT')}
       </CustomButton>
 
@@ -324,8 +335,96 @@ const CreateCampaign = () => {
         value={formData.normas} 
         onChangeText={(val) => setFormData({...formData, normas: val})} 
       />
+
+      
     </View>
   );
+
+  const handleFinalSubmit = async () => {
+    setLoading(true);
+
+    if (formData.pacotes.length === 0) {
+      setSnackBarText("Erro: Adicione pacotes.");
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      titulo: formData.tituloCampanha,
+      slogan: formData.slogan,
+      descricao: formData.descricaoCampanha,
+      listaCAES: formData.listaCAES, 
+      dataInicio: formData.dataInicio.toISOString(),
+      dataExpiracao: formData.dataExpiracao.toISOString(),
+      normas: formData.normas,
+      logo: formData.logo,
+      panfleto: formData.panfleto,
+      packs: formData.pacotes.map(p => ({
+        rewardDescription: p.descricaoRecompensa,
+        pointsCost: Number(p.custoEmPontos),
+        stock: Number(p.stockInicial),
+        maxPerUser: Number(p.maximoPorUser)
+      }))
+    };
+
+
+    try {
+      const response = await fetch(`${API_URL}/criarCampanha`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        setSnackBarText("Campanha criada!");
+        setShowSnackBar(true);
+
+  // 1. Limpa o objeto principal do formulário
+      setFormData({
+        tituloCampanha: '',
+        slogan: '',
+        descricaoCampanha: '',
+        listaCAES: [],
+        dataExpiracao: new Date(),
+        dataInicio: new Date(),
+        normas: '',
+        logo: '',
+        panfleto: '',
+        pacotes: []
+      });
+
+      // 2. Limpa os inputs temporários que possam ter ficado preenchidos
+      setCaeInput("");
+      setErro("");
+      setPacote({
+        descricaoRecompensa: '',
+        custoEmPontos: '',
+        stockInicial: '',
+        maximoPorUser: '1'
+      });
+
+      // 3. Volta o formulário para o Passo 1 (Identidade)
+      setStep(1);
+      } else {
+        const errorData = await response.json();
+        setSnackBarText("Erro: " + errorData.message);
+        setShowSnackBar(true);
+      }
+    } catch (err) {
+      setSnackBarText("Erro na rede");
+      setShowSnackBar(true);
+    } finally {
+      setLoading(false);
+    }
+
+};
+
+  useEffect(() => {
+  console.log("LOG CAES:", formData.listaCAES);
+}, [formData.listaCAES]); 
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -367,7 +466,7 @@ const CreateCampaign = () => {
                   <View style={{ marginTop: 10 }}>
                     <Text variant="titleMedium">Packs na lista:</Text>
                     {formData.pacotes.map((p, i) => (
-                      <Surface key={i} style={{ padding: 10, marginVertical: 5, borderRadius: 8, backgroundColor: '#f0f0f0' }}>
+                      <Surface key={i} style={{ padding: 10, marginVertical: 5, borderRadius: 8, backgroundColor: theme.colors.background }}>
                         <Text>• {p.descricaoRecompensa} ({p.custoEmPontos} pts)</Text>
                       </Surface>
                     ))}
@@ -377,7 +476,6 @@ const CreateCampaign = () => {
             )}
           </ScrollView>
 
-          {/* Navegação entre passos */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
             {step > 1 && (
               <CustomButton onPress={() => setStep(step - 1)}>Anterior</CustomButton>
@@ -393,7 +491,6 @@ const CreateCampaign = () => {
         </KeyboardAvoidingView>
 
         <CustomSnackBar visible={showSnackBar} onDismiss={() => setShowSnackBar(false)} message={snackBarText} />
-        
       </SafeAreaView>
     </Surface>
   );
