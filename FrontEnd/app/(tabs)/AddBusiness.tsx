@@ -17,7 +17,7 @@ import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
 import CustomChip from "../components/CustomChip";
-import * as ImagePicker from "expo-image-picker";
+import { pickImage } from "@/utils/imagePicker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import getAddress from "../../utils/getAddress";
@@ -60,44 +60,45 @@ export default function AddBusiness() {
   ];
 
   const selecionarLogotipo = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert(
-        "Precisamos de acesso às tuas fotos para carregares o logótipo do negócio!",
-      );
-      return;
-    }
-    const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-    if (!resultado.canceled) {
-      setFormData({ ...formData, logotipoNegocio: resultado.assets[0].uri });
+    try {
+      // Passamos as opções específicas do logótipo
+      const uri = await pickImage({
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      // Se o utilizador escolheu uma imagem (e como não é múltipla, sabemos que é string)
+      if (uri && typeof uri === "string") {
+        setFormData({ ...formData, logotipoNegocio: uri });
+      }
+    } catch (error: any) {
+      // O utilitário tratou das permissões, nós só mostramos o erro!
+      return("Erro: " + error.message);
     }
   };
 
   const adicionarFotosGaleria = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Precisamos de ter acesso às tuas fotos para carregares imagens!");
-      return;
-    }
-    const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      selectionLimit: 5,
-      quality: 0.7,
-    });
-    if (!resultado.canceled) {
-      const novasFotos = resultado.assets.map((asset) => asset.uri);
-      setFormData({
-        ...formData,
-        galeriaFotos: [...formData.galeriaFotos, ...novasFotos],
+    try {
+      // Passamos as opções específicas da galeria
+      const uris = await pickImage({
+        allowsMultipleSelection: true,
+        selectionLimit: 5,
+        allowsEditing: false, // allowsEditing deve ser false quando permitimos múltiplas fotos
       });
+
+      // Como ativámos o multiple selection, o utilitário devolve um array
+      if (uris && Array.isArray(uris)) {
+        setFormData({
+          ...formData,
+          galeriaFotos: [...formData.galeriaFotos, ...uris],
+        });
+      }
+    } catch (error: any) {
+      return("Erro: " + error.message);
     }
   };
+
+
   const handleNewBusiness = async () => {
     if (!user?.token) {
       setSnackbarMessage("Erro: Sessão expirada.");

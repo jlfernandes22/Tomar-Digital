@@ -25,5 +25,5 @@ export const calcularDistancia = (
 
   const distanciaEmMetros = RaioTerra * c;
 
-  return distanciaEmMetros; // Devolve os metros exatos!
+  return distanciaEmMetros; // Devolve os metros exatos
 };
