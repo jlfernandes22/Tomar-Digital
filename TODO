@@ -1,0 +1,39 @@
+-Geral:
+    Fazer upload de imagens:
+        perfil
+        logotipo
+        capa do negócio
+        galeria do negócio
+        ficheiro da licença de comerciante (foto ou pdf)
+
+
+    notificações:
+        caso haja negócio com campanha ativa por perto
+        ou quantos negócios existem por perto 
+    
+-Cidadão:
+
+    - relatório para ser comerciante  
+
+
+-Comerciante:
+
+    - pedir para aderir a campanha funcional
+    - horário de funcionamento
+    - CAE do negócio no formulário de registo
+
+
+-Câmara:
+
+    - sitio para a câmara aprovar ou negar comerciante    
+    - aceitar ou não negocio numa campanha
+
+
+
+-Faturas:
+
+    - Fazer upload da fatura, ler o qr-code, e ter de guardar caso haja necessidade de apresentar presencialmente
+    - script para analisar a informação no papel para comparar com os campos do QR-code
+    - Usar ocr para retirar o texto da imagem para verificar 
+    
+

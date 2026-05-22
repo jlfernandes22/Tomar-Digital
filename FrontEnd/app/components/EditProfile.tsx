@@ -23,7 +23,7 @@ import {
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
-import * as ImagePicker from "expo-image-picker";
+import {pickImage} from "@/utils/imagePicker";
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
@@ -56,31 +56,23 @@ const EditProfile = () => {
   const [visible, setvisible] = useState(false);
   const [message, setMessage] = useState("");
 
-  const pickImage = async () => {
-    const status = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const avatar = async () => {
 
-    //verificar se o utilizador deu permissão para o uso da biblioteca de imagens
-    if (!status.granted) {
-      setMessage(
-        "Erro\nTem de dar permissão à biblioteca de imagens para poder selecionar foto de perfil",
-      );
-      setvisible(true);
-    }
-
-    //abrir a biblioteca de imagens para o utilizador escolher uma
-    let result = await ImagePicker.launchImageLibraryAsync({
-      //o utilizador apenas pode escolher imagens
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    console.log(result);
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    try{
+    
+          const uri = await pickImage({allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,})
+    
+            // Se o utilizador escolheu uma imagem (e como não é múltipla, sabemos que é string)
+          if (uri && typeof uri === "string") {
+            setImage(uri);
+          }
+    
+        } catch (error: any) {
+          // O utilitário tratou das permissões, nós só mostramos o erro!
+          alert(error.message);
+        }
   };
 
   const hideDialog = async () => {
