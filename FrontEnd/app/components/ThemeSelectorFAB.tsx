@@ -7,15 +7,13 @@ import {
   Surface,
   Text,
   SegmentedButtons,
-  useTheme,
 } from "react-native-paper";
 import { useAppTheme, ModeType, PaletteType } from "../../context/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ThemeSelectorFAB = () => {
   const [visible, setVisible] = useState(false);
-  const { userMode, setUserMode, userPalette, setUserPalette } = useAppTheme();
-  const theme = useTheme();
+  const { currentTheme: theme, userMode, setUserMode, userPalette, setUserPalette } = useAppTheme();
   const insets = useSafeAreaInsets();
 
   const showModal = () => setVisible(true);

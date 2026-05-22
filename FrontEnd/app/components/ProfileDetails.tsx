@@ -102,7 +102,7 @@ const ProfileDetails = () => {
                 }}
                 leadingIcon={({ size }) => (
                   <Image
-                    source={images.preferencesImg} // <-- NOTA: Garante que tens esta imagem no images.ts!
+                    source={images.preferencesImg} 
                     style={{
                       width: size,
                       height: size,

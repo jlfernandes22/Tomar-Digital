@@ -156,7 +156,7 @@ const DetalhesBusiness = () => {
                 </Text>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {business.gallery.map((uri, index) =>
+                  {business.gallery.map((uri: string, index: number) =>
                     uri ? (
                       <Image
                         key={index}

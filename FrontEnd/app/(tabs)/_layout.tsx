@@ -3,13 +3,14 @@ import { Tabs } from "expo-router";
 import React from "react";
 import TabIcon from "@/app/components/Tabicon";
 import { useAuth } from "@/context/AuthContext";
-import { BottomNavigation, useTheme } from "react-native-paper";
+import { BottomNavigation } from "react-native-paper";
+import { useAppTheme } from "@/context/ThemeContext";
 import { CommonActions } from "@react-navigation/native";
 import { Platform } from "react-native";
 
 const _layout = () => {
   const { user } = useAuth();
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   return (
     <Tabs
