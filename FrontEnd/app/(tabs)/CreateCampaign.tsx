@@ -16,7 +16,7 @@ import CustomTextInput from "../components/CustomTextInput";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
-import CustomChip from "../components/CustomChip"; // Garante que o caminho está correto
+import CustomChip from "../components/CustomChip"; 
 import * as ImagePicker from 'expo-image-picker';
 
 interface IPacote {
@@ -187,7 +187,6 @@ const CreateCampaign = () => {
     setFormData({
       ...formData,
       listaCAES: [...formData.listaCAES, caeInput]
-    
     });
     setCaeInput("");
   };
@@ -197,7 +196,6 @@ const CreateCampaign = () => {
       ...formData,
       listaCAES: formData.listaCAES.filter((c) => c !== caeParaRemover)
     });
-
   };
 
   const renderStep1 = () => (
@@ -219,7 +217,6 @@ const CreateCampaign = () => {
         onChangeText={(val) => setFormData({...formData, descricaoCampanha: val})} 
       />
 
-      {/* SELEÇÃO DE CAES INTEGRADA AQUI */}
       <Text variant="titleMedium" style={{ marginTop: 20, marginBottom: 5, fontWeight: '600' }}>
         CAEs Abrangentes da Campanha
       </Text>
@@ -251,7 +248,6 @@ const CreateCampaign = () => {
         {erro}
       </HelperText>
 
-      {/* Renderização com o teu CustomChip Intacto + X flutuante no canto */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
         {formData.listaCAES.map((cae) => (
           <View key={cae} style={{ position: 'relative', paddingTop: 4, paddingRight: 4 }}>
@@ -259,7 +255,6 @@ const CreateCampaign = () => {
               {cae}
             </CustomChip>
             
-            {/* Badge Vermelho Flutuante de Fechar */}
             <View style={{ 
               position: 'absolute', top: 0, right: 0, backgroundColor: '#ef4444', 
               borderRadius: 10, width: 20, height: 20, alignItems: 'center', 
@@ -271,9 +266,9 @@ const CreateCampaign = () => {
             </View>
           </View>
         ))}
-        
       </View>
 
+      {/* AQUI ESTÁ A CORREÇÃO: Colocados lado a lado de forma segura */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
         <View style={{ width: '48%' }}>
           <Text variant="labelLarge">Logótipo</Text>
@@ -287,9 +282,6 @@ const CreateCampaign = () => {
             />
           )}
         </View>
-      </View>
-    </View>
-  );
 
         <View style={{ width: '48%' }}>
           <Text variant="labelLarge">Panfleto</Text>
@@ -335,8 +327,6 @@ const CreateCampaign = () => {
         value={formData.normas} 
         onChangeText={(val) => setFormData({...formData, normas: val})} 
       />
-
-      
     </View>
   );
 
@@ -367,7 +357,6 @@ const CreateCampaign = () => {
       }))
     };
 
-
     try {
       const response = await fetch(`${API_URL}/criarCampanha`, {
         method: "POST",
@@ -382,32 +371,29 @@ const CreateCampaign = () => {
         setSnackBarText("Campanha criada!");
         setShowSnackBar(true);
 
-  // 1. Limpa o objeto principal do formulário
-      setFormData({
-        tituloCampanha: '',
-        slogan: '',
-        descricaoCampanha: '',
-        listaCAES: [],
-        dataExpiracao: new Date(),
-        dataInicio: new Date(),
-        normas: '',
-        logo: '',
-        panfleto: '',
-        pacotes: []
-      });
+        setFormData({
+          tituloCampanha: '',
+          slogan: '',
+          descricaoCampanha: '',
+          listaCAES: [],
+          dataExpiracao: new Date(),
+          dataInicio: new Date(),
+          normas: '',
+          logo: '',
+          panfleto: '',
+          pacotes: []
+        });
 
-      // 2. Limpa os inputs temporários que possam ter ficado preenchidos
-      setCaeInput("");
-      setErro("");
-      setPacote({
-        descricaoRecompensa: '',
-        custoEmPontos: '',
-        stockInicial: '',
-        maximoPorUser: '1'
-      });
+        setCaeInput("");
+        setErro("");
+        setPacote({
+          descricaoRecompensa: '',
+          custoEmPontos: '',
+          stockInicial: '',
+          maximoPorUser: '1'
+        });
 
-      // 3. Volta o formulário para o Passo 1 (Identidade)
-      setStep(1);
+        setStep(1);
       } else {
         const errorData = await response.json();
         setSnackBarText("Erro: " + errorData.message);
@@ -419,12 +405,11 @@ const CreateCampaign = () => {
     } finally {
       setLoading(false);
     }
-
-};
+  };
 
   useEffect(() => {
-  console.log("LOG CAES:", formData.listaCAES);
-}, [formData.listaCAES]); 
+    console.log("LOG CAES:", formData.listaCAES);
+  }, [formData.listaCAES]); 
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>

@@ -20,14 +20,14 @@ import sharp from "sharp";
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 
-
+// Vai procurar a variável MONGO_URI. Se não a encontrar (por exemplo, se te esqueceres do .env), tenta o localhost como plano B
+const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 app.use(cors());
 app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
 
 
 //////////////////////////////
