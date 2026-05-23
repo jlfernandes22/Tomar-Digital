@@ -28,7 +28,7 @@ const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 app.use(cors());
 app.use(express.json({ limit: '20mb' })); // Aumentei para 20mb para garantir segurança com panfletos
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
-
+app.use('/uploads', express.static('uploads'));
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let targetFolder = 'uploads/';
@@ -511,9 +511,86 @@ app.post("/pedidoComerciante", authorize(["cidadao"]), upload.single('documentoP
 });
 
 
-app.get("/obterPedidosComerciante", authorize(["camara"]) , async (req, res) => {
+app.delete("/apagar/PedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Procurar o pedido na Base de Dados
+    const pedido = await PedidosComerciante.findById(id);
+
+    if (!pedido) {
+      return res.status(404).json({ message: "Pedido não encontrado." });
+    }
+
+    // 2. Tentar apagar o ficheiro PDF físico do servidor se ele existir
+    if (pedido.documentoPdfUrl) {
+      // Usamos o path.join para mapear o caminho real no disco do servidor
+      const filePath = path.join(process.cwd(), pedido.documentoPdfUrl);
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath); 
+        console.log(`Ficheiro PDF eliminado do disco: ${filePath}`);
+      } else {
+        console.log(` Ficheiro PDF não encontrado no disco para apagar: ${filePath}`);
+      }
+    }
+
+    // 3. Eliminar o registo do MongoDB
+    await pedido.deleteOne();
+
+    console.log(` Pedido ${id} eliminado com sucesso.`);
+    res.status(200).json({ message: "Pedido rejeitado e eliminado com sucesso!" });
+
+  } catch (err) {
+    console.error(" Erro ao eliminar o pedido:", err);
+    res.status(500).json({ message: "Erro interno ao eliminar o pedido", details: err.message });
+  }
+});
+
+
+app.post("/aprovar/PedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pedido = await PedidosComerciante.findById(id);
+    if (!pedido) {
+      return res.status(404).json({ message: "Pedido não encontrado." });
+    }
+
+    const utilizador = await User.findOne({ email: pedido.emailDono });
+    if (!utilizador) {
+      return res.status(404).json({ message: "Utilizador que é dono do pedido não foi encontrado no sistema." });
+    }
+
+    // Atualizar o role do utilizador para comerciante
+    utilizador.role = "comerciante";
+    await utilizador.save();
+    console.log(` Utilizador ${utilizador.email} promovido a comerciante!`);
+
+    if (pedido.documentoPdfUrl) {
+      const filePath = path.join(process.cwd(), pedido.documentoPdfUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`PDF do pedido aprovado foi removido do disco.`);
+      }
+    }
+
+    await pedido.deleteOne();
+
+    res.status(200).json({ 
+      message: "Pedido aprovado com sucesso! O utilizador agora é comerciante.",
+      user: { id: utilizador._id, name: utilizador.name, role: utilizador.role }
+    });
+
+  } catch (err) {
+    console.error(" Erro ao aprovar o pedido:", err);
+    res.status(500).json({ message: "Erro interno no servidor ao aprovar o pedido", details: err.message });
+  }
+});
+
+app.get("/obter/PedidosComerciante", authorize(["camara"]) , async (req, res) => {
     try {
-    const pedidosComerciante = await PedidosComerciante.find.lean();
+const pedidosComerciante = await PedidosComerciante.find().lean();
     res.json(pedidosComerciante);
   } catch (error) {
     res.status(500).json({ message: "Erro ao procurar pedidos." });

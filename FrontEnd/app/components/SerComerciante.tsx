@@ -7,6 +7,8 @@ import { useAuth } from '@/context/AuthContext';
 import CustomTextInput from './CustomTextInput';
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_URL } from '@/constants/api';
+import { router, Stack } from "expo-router";
+
 
 interface IComercianteForm {
   tituloComercio: string;
@@ -185,6 +187,8 @@ export default function SerComerciante() {
   return (
     <>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
+       <Stack.Screen options={{ headerShown: false }} />
+
         <Text 
           variant="headlineMedium" 
           style={{ marginBottom: 20, textAlign: 'center', fontWeight: 'bold' }}
