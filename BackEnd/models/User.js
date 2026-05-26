@@ -46,6 +46,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  acceptedInvoiceTerms: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default mongoose.model("User", UserSchema);

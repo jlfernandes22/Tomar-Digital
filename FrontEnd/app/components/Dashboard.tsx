@@ -81,8 +81,9 @@ const Dashboard = () => {
     return dataArray.map((item) => ({
       value: item.total,
       label: item._id,
-      frontColor: '#177AD5',
-      labelTextStyle: {color: theme.colors.onSurface},
+      frontColor: theme.colors.primary,
+
+      
      
 
       
@@ -257,7 +258,7 @@ const Dashboard = () => {
             variant="titleLarge"
             style={{
               color: theme.colors.onSurface,
-              marginBottom: 16,
+              marginBottom: 8,
               marginLeft: 8,
             }}
           >
@@ -269,7 +270,12 @@ const Dashboard = () => {
               data={formatBarData(allInfo.categories)}
               horizontal
               noOfSections={allInfo.categories.length}
-              
+              xAxisLabelsVerticalShift={50}
+              xAxisTextNumberOfLines={2}
+           
+              xAxisLabelTextStyle={{textAlign:'center', width: 80}}
+              shiftX={40}
+              width={allInfo.categories.length *40}
               isAnimated
             />
           ) : (

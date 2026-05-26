@@ -11,6 +11,7 @@ export interface User {
   name: string;
   city?: string;
   NIF?: number | null;
+  acceptedInvoiceTerms?: boolean;
 }
 
 interface AuthContextData {
@@ -26,6 +27,7 @@ interface AuthContextData {
     name: string,
     city?: string,
     NIF?: number | null,
+    acceptedInvoiceTerms?: boolean,
   ) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -86,6 +88,7 @@ export const AuthProvider = ({ children }: any) => {
     name: string,
     city?: string,
     NIF?: number | null,
+    acceptedInvoiceTerms?: boolean,
   ) => {
     try {
       const userData: User = {
@@ -97,6 +100,7 @@ export const AuthProvider = ({ children }: any) => {
         name,
         city,
         NIF,
+        acceptedInvoiceTerms,
       };
 
       await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(userData));
