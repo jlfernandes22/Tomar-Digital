@@ -40,7 +40,6 @@ interface Owner {
 export default function AprovarNegocios() {
   const [pendentes, setPendentes] = useState<Business[]>([]);
   const [pendOwners, setPendOwners] = useState<Owner[]>([]);
-  // Começamos o loading a true
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
@@ -58,7 +57,6 @@ export default function AprovarNegocios() {
 
   const theme = useTheme();
 
-  // 2. FUNÇÃO UNIFICADA: Carrega tudo ao mesmo tempo e gere o loading perfeitamente
   const carregarDados = useCallback(async () => {
     // Se não há token, paramos o loading para não ficar preso
     if (!user?.token) {
@@ -69,7 +67,6 @@ export default function AprovarNegocios() {
     try {
       setLoading(true);
 
-      // O Promise.all faz as duas chamadas ao servidor em simultâneo (mais rápido e seguro)
       const [resPendentes, resOwners] = await Promise.all([
         fetch(`${API_URL}/business/pendentes`, {
           headers: {
@@ -187,7 +184,7 @@ export default function AprovarNegocios() {
           marginBottom: 10,
         }}
       >
-        Pedidos Pendentes
+        Pedidos de Novos Negócios Pendentes
       </Text>
 
       <Divider

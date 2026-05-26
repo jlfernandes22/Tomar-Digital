@@ -135,7 +135,7 @@ const ProfileDetails = () => {
 
               <Menu.Item
                 onPress={() => {
-                   logout();
+                  logout();
                   closeMenu();
                 }}
                 leadingIcon="logout"
