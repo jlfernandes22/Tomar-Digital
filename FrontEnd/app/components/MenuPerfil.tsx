@@ -121,6 +121,7 @@ const ProfileDetails = () => {
               <Menu.Item
                 onPress={() => {
                   closeMenu();
+                  router.push("/components/SobreAPP")
                 }}
                 leadingIcon="information-outline"
                 title="Sobre a App"
