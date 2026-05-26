@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
   //Nome do utilizador
   name: {
     type: String,
-    required: true,
+    required: false,
   },
 
   //Email
@@ -46,6 +46,8 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+
+  codigoValidar: {type: String},
 });
 
 export default mongoose.model("User", UserSchema);

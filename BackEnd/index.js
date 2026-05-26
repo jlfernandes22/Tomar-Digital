@@ -19,9 +19,18 @@ import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import sharp from "sharp";
 import PedidosComerciante from "./models/PedidosComerciante.js";
+import nodemailer from "nodemailer";
 
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "tomardigitalsuporte@gmail.com",
+    pass: process.env.GOOGLE_APP_PASSWORD, // The 16-character App Password
+  },
+});
 
 // Vai procurar a variável MONGO_URI. Se não a encontrar (por exemplo, se te esqueceres do .env), tenta o localhost como plano B
 const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
@@ -163,66 +172,66 @@ app.get('/mostrarImagem/:id', async (req, res) => {
 //////////////////////
 //Registar utilizador
 app.post("/registar", async (req, res) => {
-  console.log("Recebido pedido de registo:", req.body);
-
-  const { email, password, confirmPassword, city } = req.body;
-
   try {
-    //verificar se já existe
-    const user = await User.findOne({ email: email });
-    if (user) {
-      return res.status(400).json({ message: "Utilizador já existe" });
-    }
+    const { email, password, city ,name} = req.body;
 
-    //verificar Complexidade da Password
-    // Regex:
-    // (?=.*[a-z]) -> Pelo menos uma minúscula
-    // (?=.*[A-Z]) -> Pelo menos uma maiúscula
-    // (?=.*\d)    -> Pelo menos um dígito
-    // .{8,}       -> No mínimo 8 caracteres
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    // 1. Crie o código AQUI, antes de tentar enviar o e-mail
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
 
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        message:
-          "A palavra-passe é demasiado fraca. Deve conter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas e números.",
-      });
-    }
-    //verificar Formato do Email
-    // Limpar espaços em branco que o utilizador possa ter deixado sem querer
-    const cleanEmail = email.trim().toLowerCase();
+    // 2. Guarde o código no objeto do novo utilizador (certifique-se que o seu Model User tem este campo)
+    const newUser = new User({ 
+      name,  
+      email, 
+        password: await bcrypt.hash(password, 10), 
+        city,
+        codigoValidar: code, 
+        isVerified: false 
+    });
+    
+    await newUser.save();
 
-    // Regex padrão RFC 5322 (simplificada para uso comum)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(cleanEmail)) {
-      return res.status(400).json({
-        message: "O formato do email introduzido não é válido.",
-      });
-    }
-
-    //verificar se as passowrds coincidem
-    if (password != confirmPassword) {
-      return res.status(400).json({ message: "Palavra-passe não coincide" });
-    }
-
-    const salt = 10;
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    //Definir utilizador com password em hash
-    const newUser = new User({
-      name: email,
-      email: email,
-      password: hashedPassword,
-      city: city,
+    // 3. Agora a variável 'code' existe e pode ser usada
+    await transporter.sendMail({
+        from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
+        to: email,
+        subject: 'Confirme a sua conta',
+        html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
     });
 
-    await newUser.save();
-    res.status(201).json({ message: "Utilizador criado com sucesso" });
-  } catch (err) {
-    res.status(400).json({ message: "Erro ao criar conta" });
+    // 4. Resposta única e final
+    return res.status(201).json({ message: "Utilizador criado! Verifique o e-mail." });
+
+  } catch (error) {
+    console.error("Erro no registo:", error);
+    
+    // Proteção contra o erro ERR_HTTP_HEADERS_SENT
+    if (!res.headersSent) {
+        return res.status(500).json({ message: "Erro ao registar utilizador" });
+    }
   }
 });
+
+app.post("/verificar-codigo", async (req, res) => {
+ 
+
+  const { email, code } = req.body;
+  const user = await User.findOne({ email: email });
+
+  if (!user) {
+    return res.status(400).json({ message: "Utilizador não encontrado." });
+  }
+
+  if (user.codigoValidar !== code) {
+    return res.status(400).json({ message: "Código inválido." });
+  }
+
+  user.isVerified = true;
+  user.codigoValidar = null;
+  await user.save();
+
+  return res.status(200).json({ message: "Conta validada com sucesso!" });
+});
+
 
 /**
  * @swagger
