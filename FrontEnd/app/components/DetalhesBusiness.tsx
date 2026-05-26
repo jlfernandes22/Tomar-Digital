@@ -48,7 +48,6 @@ const DetalhesBusiness = () => {
     }, []),
   );
 
-  // 1. ESTADO DE CARREGAMENTO (Mostra um spinner enquanto espera pela API)
   if (loading) {
     return (
       <Surface
@@ -65,11 +64,11 @@ const DetalhesBusiness = () => {
     );
   }
 
-  // 2. ESTADO DE SUCESSO
   if (business) {
     return (
+      <Surface style={{flex: 1,backgroundColor: theme.colors.background}}>
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
+        style={{ flex: 1 }}
         edges={["top", "left", "right"]}
       >
         <Stack.Screen options={{ headerShown: false }} />
@@ -109,8 +108,13 @@ const DetalhesBusiness = () => {
               <Text
                 variant="headlineLarge"
                 className="font-bold flex-1 mr-3"
-                style={{ color: theme.colors.primary }}
-              >
+                style={{
+                            color: theme.colors.primary,
+                            fontWeight: "bold",
+                            marginBottom: 10,
+                            textAlign: "center",
+                            margin: 10
+                          }}              >
                 {business.name}
               </Text>
             </View>
@@ -118,7 +122,7 @@ const DetalhesBusiness = () => {
             {/* Tag da Categoria Limpa */}
             <View
               className="self-start flex-row items-center py-1.5 px-3 rounded-lg mb-6"
-              style={{ backgroundColor: theme.colors.secondaryContainer }}
+              style={{ backgroundColor: theme.colors.secondaryContainer,  alignSelf: "center" }}
             >
               <Ionicons
                 name="pricetag-outline"
@@ -128,7 +132,13 @@ const DetalhesBusiness = () => {
               />
               <Text
                 variant="labelMedium"
-                style={{ color: theme.colors.onSecondaryContainer }}
+                style={{
+            color: theme.colors.onSecondaryContainer,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}
               >
                 {business.category}
               </Text>
@@ -138,7 +148,7 @@ const DetalhesBusiness = () => {
             <Text
               variant="bodyLarge"
               className="leading-6 mb-8"
-              style={{ color: theme.colors.onSurfaceVariant }}
+              style={{ color: theme.colors.onSurfaceVariant, alignSelf: "center" }}
             >
               {business.description}
             </Text>
@@ -150,7 +160,13 @@ const DetalhesBusiness = () => {
                 <Text
                   variant="titleLarge"
                   className="font-bold mb-4"
-                  style={{ color: theme.colors.onBackground }}
+                  style={{
+            color: theme.colors.onBackground,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}
                 >
                   Galeria
                 </Text>
@@ -176,7 +192,13 @@ const DetalhesBusiness = () => {
               <Text
                 variant="titleLarge"
                 className="font-bold mb-4"
-                style={{ color: theme.colors.onBackground }}
+                style={{
+            color: theme.colors.onBackground,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}
               >
                 Localização
               </Text>
@@ -194,6 +216,8 @@ const DetalhesBusiness = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
+          </Surface>
+
     );
   }
 
