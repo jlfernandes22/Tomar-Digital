@@ -88,6 +88,7 @@ const ProfileDetails = () => {
                 title="Editar Perfil"
               />
               <Divider />
+              {user.role === 'cidadao' && (
               <Menu.Item
                 onPress={() => {
                   closeMenu();
@@ -96,7 +97,8 @@ const ProfileDetails = () => {
                 }}
                 leadingIcon="account"
                 title="Ser Comerciante"
-              />
+              /> )}
+              
               <Divider />
               <Menu.Item
                 onPress={() => {
