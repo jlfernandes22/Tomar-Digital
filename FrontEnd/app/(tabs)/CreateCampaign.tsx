@@ -200,7 +200,13 @@ const CreateCampaign = () => {
 
   const renderStep1 = () => (
     <View>
-      <Text variant="headlineSmall" style={{ marginBottom: 10 }}>Identidade</Text>
+      <Text variant="headlineSmall" style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center"
+          }}
+          >Identidade</Text>
       <CustomTextInput 
         label="Título da Campanha" 
         value={formData.tituloCampanha} 
@@ -217,8 +223,14 @@ const CreateCampaign = () => {
         onChangeText={(val) => setFormData({...formData, descricaoCampanha: val})} 
       />
 
-      <Text variant="titleMedium" style={{ marginTop: 20, marginBottom: 5, fontWeight: '600' }}>
-        CAEs Abrangentes da Campanha
+      <Text variant="titleMedium" style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}>
+        CAES Abrangentes da Campanha
       </Text>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -235,13 +247,11 @@ const CreateCampaign = () => {
           }}
           style={{ flex: 1, height: 48 }}
         />
-        <Button
-          mode="contained"
+        <CustomButton
           onPress={handleAdicionarCae}
-          style={{ height: 48, justifyContent: 'center' }}
         >
-          Add
-        </Button>
+          +
+        </CustomButton>
       </View>
 
       <HelperText type="error" visible={!!erro} style={{ paddingHorizontal: 0 }}>
@@ -268,10 +278,15 @@ const CreateCampaign = () => {
         ))}
       </View>
 
-      {/* AQUI ESTÁ A CORREÇÃO: Colocados lado a lado de forma segura */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
         <View style={{ width: '48%' }}>
-          <Text variant="labelLarge">Logótipo</Text>
+          <Text variant="labelLarge" style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}>Logótipo</Text>
           <CustomButton icon="image" onPress={selecionarLogo}>
             {formData.logo ? "Alterar" : "Upload"}
           </CustomButton>
@@ -284,7 +299,13 @@ const CreateCampaign = () => {
         </View>
 
         <View style={{ width: '48%' }}>
-          <Text variant="labelLarge">Panfleto</Text>
+          <Text variant="labelLarge" style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}>Panfleto</Text>
           <CustomButton icon="file-image" onPress={selecionarPanfleto}>
             {formData.panfleto ? "Alterar" : "Upload"}
           </CustomButton>
@@ -301,9 +322,15 @@ const CreateCampaign = () => {
 
   const renderStep2 = () => (
     <View>
-      <Text variant="headlineSmall" style={{ marginBottom: 10 }}>Prazos e Regras</Text>
+      <Text variant="headlineSmall" style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}>Prazos e Regras</Text>
       
-      <Text variant="labelMedium" style={{ marginBottom: 5 }}>Data de Expiração:</Text>
+      <Text variant="labelMedium" style={{ marginBottom: 5, textAlign: "center" }}>Data de Expiração:</Text>
 
       <CustomButton 
         icon="calendar"
@@ -322,8 +349,9 @@ const CreateCampaign = () => {
         />
       )}
 
-      <CustomTextInput 
-        label="Termos e Condições" 
+      <CustomTextInput
+       multiline={true}           
+      label="Termos e Condições" 
         value={formData.normas} 
         onChangeText={(val) => setFormData({...formData, normas: val})} 
       />
@@ -425,7 +453,13 @@ const CreateCampaign = () => {
 
             {step === 3 && (
               <View>
-                <Text variant="headlineSmall" style={{ marginBottom: 10 }}>Configurar Pacotes</Text>
+                <Text variant="headlineSmall"  style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+            textAlign: "center",
+            margin: 10
+          }}>Configurar Pacotes</Text>
                 
                 <CustomTextInput 
                   label="Descrição da Recompensa" 
@@ -443,7 +477,7 @@ const CreateCampaign = () => {
                   onChangeText={(t) => setPacote({...pacote, stockInicial: t})}
                 />
 
-                <CustomButton onPress={addPack}>
+                <CustomButton onPress={addPack} className="m-5">
                   + Adicionar este Pacote
                 </CustomButton>
                 

@@ -60,7 +60,7 @@ const ProfileDetails = () => {
                 <IconButton
                   icon={({ size }) => (
                     <Image
-                      source={images.settingsImg} // <-- NOTA: Garante que tens esta imagem no images.ts!
+                      source={images.settingsImg} 
                       style={{
                         width: size,
                         height: size,
@@ -91,6 +91,8 @@ const ProfileDetails = () => {
               <Menu.Item
                 onPress={() => {
                   closeMenu();
+                 router.push("/components/SerComerciante");
+
                 }}
                 leadingIcon="account"
                 title="Ser Comerciante"
@@ -133,8 +135,8 @@ const ProfileDetails = () => {
 
               <Menu.Item
                 onPress={() => {
-                  closeMenu();
                   logout();
+                  closeMenu();
                 }}
                 leadingIcon="logout"
                 title="Terminar Sessão"
