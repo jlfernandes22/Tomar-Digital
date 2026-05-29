@@ -4,13 +4,13 @@ import {
   Image,
   ScrollView,
   Dimensions,
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { API_URL } from "@/constants/api";
-import { useAuth } from "@/context/AuthContext";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, Stack } from "expo-router";
-import { images } from "@/constants/images";
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { API_URL } from '@/constants/api';
+import { useAuth } from '@/context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, Stack } from 'expo-router';
+import { images } from '@/constants/images';
 import {
   Dialog,
   Divider,
@@ -19,34 +19,34 @@ import {
   Text,
   TouchableRipple,
   useTheme,
-} from "react-native-paper";
-import CustomTextInput from "../components/CustomTextInput";
-import CustomButton from "../components/CustomButton";
-import CustomSnackBar from "../components/CustomSnackBar";
-import {pickImage} from "@/utils/imagePicker";
+} from 'react-native-paper';
+import CustomTextInput from '../components/CustomTextInput';
+import CustomButton from '../components/CustomButton';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { pickImage } from '@/utils/imagePicker';
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
-  const [name, setName] = useState(user?.name || "");
-  const [city, setCity] = useState(user?.city || "");
-  const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : "");
+  const [name, setName] = useState(user?.name || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : '');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const [dialogVisible, setDialogVisible] = useState(false);
-  const [dialogText, setDialogText] = useState("");
+  const [dialogText, setDialogText] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setName(user.name || "");
-      setCity(user.city || "");
-      setNIF(user.NIF ? String(user.NIF) : "");
+      setName(user.name || '');
+      setCity(user.city || '');
+      setNIF(user.NIF ? String(user.NIF) : '');
     }
   }, [user]);
 
   if (!user) {
     return (
-      <View className="flex-1 justify-center items-center">
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
@@ -54,42 +54,41 @@ const EditProfile = () => {
 
   const [image, setImage] = useState<string | null>(null);
   const [visible, setvisible] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
 
   const avatar = async () => {
+    try {
+      const uri = await pickImage({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
 
-    try{
-    
-          const uri = await pickImage({allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,})
-    
-            // Se o utilizador escolheu uma imagem (e como não é múltipla, sabemos que é string)
-          if (uri && typeof uri === "string") {
-            setImage(uri);
-          }
-    
-        } catch (error: any) {
-          // O utilitário tratou das permissões, nós só mostramos o erro!
-          alert(error.message);
-        }
+      // Se o utilizador escolheu uma imagem (e como não é múltipla, sabemos que é string)
+      if (uri && typeof uri === 'string') {
+        setImage(uri);
+      }
+    } catch (error: any) {
+      // O utilitário tratou das permissões, nós só mostramos o erro!
+      alert(error.message);
+    }
   };
 
   const hideDialog = async () => {
     setDialogVisible(false);
     if (success) {
-      router.replace("/(tabs)/Profile");
+      router.replace('/(tabs)/Profile');
     }
   };
 
   const handleEdit = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/editar/${user.id}`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/editarUser/${user.id}`, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${user.token}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: name,
@@ -102,7 +101,7 @@ const EditProfile = () => {
       if (response.ok) {
         setSuccess(true);
         //console.log(success);
-        setDialogText("Alteração de dados com sucesso");
+        setDialogText('Alteração de dados com sucesso');
         setDialogVisible(true);
         updateUser({
           name: name,
@@ -110,12 +109,12 @@ const EditProfile = () => {
           NIF: NIF ? Number(NIF) : null,
         });
       } else {
-        setDialogText("O servidor rejeitou as alterações.");
+        setDialogText('O servidor rejeitou as alterações.');
         setDialogVisible(true);
         setSuccess(false);
       }
     } catch (error) {
-      setDialogText("Falha na ligação ao servidor.");
+      setDialogText('Falha na ligação ao servidor.');
       setDialogVisible(true);
       setSuccess(false);
     } finally {
@@ -139,7 +138,7 @@ const EditProfile = () => {
             variant="headlineMedium"
             style={{
               color: theme.colors.primary,
-              fontWeight: "bold",
+              fontWeight: 'bold',
               marginBottom: 10,
             }}
           >
@@ -155,31 +154,34 @@ const EditProfile = () => {
 
           {/* Contentor Principal do Formulário*/}
           <View
-            className=" items-center mx-4 py-8 px-6 rounded-xl border-2"
+            className=" mx-4 items-center rounded-xl border-2 px-6 py-8"
             style={{
               backgroundColor: theme.colors.secondaryContainer,
               borderColor: theme.colors.outline,
             }}
           >
             {/* Zona da Imagem */}
-            <View className=" mb-2 w-full items-center justify-center flex-col">
+            <View className=" mb-2 w-full flex-col items-center justify-center">
               <View
-                className="w-32 h-32 rounded-full items-center justify-center border-2"
+                className="h-32 w-32 items-center justify-center rounded-full border-2"
                 style={{
                   backgroundColor: theme.colors.background,
                   borderColor: theme.colors.outline,
-                  alignSelf: "center",
+                  alignSelf: 'center',
                 }}
               >
                 {!image && (
-                  <Text className="text-4xl font-bold uppercase" style={{ color: theme.colors.primary }}>
-                    {(user.name || user.email || "V").charAt(0)}
+                  <Text
+                    className="text-4xl font-bold uppercase"
+                    style={{ color: theme.colors.primary }}
+                  >
+                    {(user.name || user.email || 'V').charAt(0)}
                   </Text>
                 )}
                 {image && (
                   <Image
                     source={{ uri: image }}
-                    className="w-32 h-32 rounded-full items-center justify-center border-2"
+                    className="h-32 w-32 items-center justify-center rounded-full border-2"
                     style={{
                       backgroundColor: theme.colors.background,
                       borderColor: theme.colors.outline,
@@ -191,20 +193,20 @@ const EditProfile = () => {
               {/* Será trocado por uma touchable opacity para poder trocar foto de perfil */}
 
               <TouchableRipple
-                className="relative size-11 bottom-8 left-11"
+                className="relative bottom-8 left-11 size-11"
                 onPress={pickImage}
                 rippleColor={theme.colors.secondary}
                 style={{
                   borderColor: theme.colors.outline,
                   borderRadius: 50,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: theme.colors.secondaryContainer,
                   borderWidth: 2,
                 }}
               >
                 <Image
-                  key={theme.dark ? "dark-theme" : "light-theme"}
+                  key={theme.dark ? 'dark-theme' : 'light-theme'}
                   className="m-2 size-8"
                   tintColor={theme.colors.onSecondaryContainer}
                   source={images.editProfileImg}
@@ -213,19 +215,19 @@ const EditProfile = () => {
                 />
               </TouchableRipple>
             </View>
-            <View className="w-full mt-6">
+            <View className="mt-6 w-full">
               <CustomTextInput
                 value={name}
                 onChangeText={setName}
                 label="Nome"
-                className="w-full mb-4"
+                className="mb-4 w-full"
               />
 
               <CustomTextInput
                 label="Cidade"
                 value={city}
                 onChangeText={setCity}
-                className="w-full mb-4"
+                className="mb-4 w-full"
               />
 
               {user.NIF == null && (
@@ -234,18 +236,18 @@ const EditProfile = () => {
                   value={NIF}
                   onChangeText={setNIF}
                   isNIF
-                  className="w-full mb-4"
+                  className="mb-4 w-full"
                 />
               )}
             </View>
 
-            <View className="w-full mt-6">
+            <View className="mt-6 w-full">
               <CustomButton
                 buttonColor={theme.colors.errorContainer}
                 textColor={theme.colors.onErrorContainer}
                 onPress={handleEdit}
                 loading={loading}
-                className="w-full mb-3"
+                className="mb-3 w-full"
               >
                 Confirmar Alterações
               </CustomButton>
@@ -261,7 +263,7 @@ const EditProfile = () => {
               </CustomButton>
               <Portal>
                 <Dialog visible={dialogVisible} onDismiss={hideDialog}>
-                  <Dialog.Title>{success ? "Sucesso" : "Erro"}</Dialog.Title>
+                  <Dialog.Title>{success ? 'Sucesso' : 'Erro'}</Dialog.Title>
                   <Dialog.Content>
                     <Text variant="bodyMedium">{dialogText}</Text>
                   </Dialog.Content>

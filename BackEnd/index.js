@@ -19,6 +19,9 @@ import swaggerUi from "swagger-ui-express";
 import sharp from "sharp";
 import PedidosComerciante from "./models/PedidosComerciante.js";
 import Tesseract from 'tesseract.js';
+import CitiesAndCountries from "./models/CitiesAndCountries.js"
+import CitiesAncCountries from "./models/CitiesAndCountries.js";
+import { DocumentAnalysisClient, AzureKeyCredential } from "@azure/ai-form-recognizer";
 
 // ============================================================================
 // 1. CONFIGURAÇÃO BASE DO SERVIDOR E MIDDLEWARES
@@ -216,9 +219,9 @@ app.post("/aceitarTermosFatura", authorize(["cidadao", "comerciante", "camara"])
     if (!user) {
       return res.status(404).json({ message: "Utilizador não encontrado." });
     }
-    res.status(200).json({ 
-      message: valueToSet ? "Termos aceites com sucesso." : "Consentimento revogado com sucesso.", 
-      acceptedInvoiceTerms: valueToSet 
+    res.status(200).json({
+      message: valueToSet ? "Termos aceites com sucesso." : "Consentimento revogado com sucesso.",
+      acceptedInvoiceTerms: valueToSet
     });
   } catch (error) {
     console.error("Erro ao atualizar termos:", error);
@@ -845,35 +848,67 @@ app.post("/lerFatura", authorize(["cidadao", "comerciante", "camara"]), upload.s
     const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
     const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
 
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// Usando Document Intelisence Azure Tools -> resultados perfeitos em 10 testes consecutivos 
+    /////////////////////////////////////////////////////////////////////////////////////////////
 
-    ///
-    /// GRANDE PROBLEMA DE FUNCIONALIDADE
-    ///
-    const ocrImagePath = path.join('uploads/', `ocr_${req.file.filename}`);
-    await sharp(req.file.path)
-      .grayscale()
-      .normalize() // Melhora o contraste do papel/tinta
-      .toFile(ocrImagePath);
+    // 1. Em vez de ler o ficheiro diretamente, usamos o 'sharp' para o comprimir em memória
+    // Importa o sharp no topo do index.js se o tiveres apagado: import sharp from "sharp";
+    
+    console.log("A comprimir a imagem para respeitar os limites do Azure...");
+    
+    const compressedImageBuffer = await sharp(req.file.path)
+      .resize({ width: 2500, withoutEnlargement: true }) // Reduz imagens gigantes (ex: 4000px) para máx 2500px
+      .jpeg({ quality: 80 }) // Guarda em JPEG com 80% de qualidade (perfeito para OCR e reduz 70% do peso)
+      .toBuffer(); // Guarda o resultado diretamente na RAM (Buffer) sem criar novos ficheiros
 
+    const azureEndpoint = process.env.AZURE_VISION_ENDPOINT; 
+    const azureKey = process.env.AZURE_VISION_KEY;
+    
+    console.log("A enviar fatura comprimida para o Azure Document Intelligence...");
+    const client = new DocumentAnalysisClient(azureEndpoint, new AzureKeyCredential(azureKey));
+    
+    // 2. Enviamos o BUFFER COMPRIMIDO para o Azure, e não o ficheiro original
+    const poller = await client.beginAnalyzeDocument("prebuilt-layout", compressedImageBuffer);
+    const { pages } = await poller.pollUntilDone();
 
-    const { data: { text } } = await Tesseract.recognize(
-      ocrImagePath,
-      'por'
-    );
-    console.log("Texto extraído pelo OCR:", text);
-    const ocrDigits = text.replace(/\D/g, '');
-    console.log("Dígitos extraídos para validação:", ocrDigits);
+    let extractedText = "";
 
+    if (pages && pages.length > 0) {
+      pages.forEach(page => {
+        page.lines.forEach(line => {
+          extractedText += line.content + "\n";
+        });
+      });
+    }
+
+    console.log("Texto extraído:\n", extractedText);
+
+    // 1. Apagar a imagem original do servidor (fazemos isto logo para garantir que não acumula lixo)
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    if (fs.existsSync(ocrImagePath)) fs.unlinkSync(ocrImagePath);
 
-    if (!ocrDigits.includes(NIFStore)) {
-      return res.status(400).json({ message: "O NIF da fatura não foi detetado corretamente no documento." });
+    // 2. Criar a variável 'ocrDigits' que faltava
+    // Isto pega no texto gigante do Azure e remove TUDO o que não seja número.
+    const ocrDigits = extractedText.replace(/\D/g, '');
+    
+    // Opcional: Debug para veres os números que o Azure encontrou
+    // console.log("Dígitos puros do documento:", ocrDigits);
+
+    // 3. Validação do NIF do Cliente (OCR-Resilient)
+    // Em vez de procurar em linhas específicas, verificamos se o NIF do QR Code 
+    // existe no meio de todos os números lidos na fatura.
+    if (!ocrDigits.includes(NIFClient)) {
+      return res.status(400).json({ message: "O NIF do cliente não foi detetado corretamente na fotografia do documento." });
     }
 
-    if (!ocrDigits.includes(CodeATCUD.replace(/\D/g, ''))) {
-      return res.status(400).json({ message: "O ATCUD da fatura não foi detetado corretamente no documento." });
+    // 4. Validação do ATCUD (OCR-Resilient)
+    // O ATCUD tem formato "ABCD-1234". Limpamos as letras/hífens do QR Code e verificamos 
+    // se essa sequência exata de números também foi lida pelo Azure.
+    const atcudDigits = CodeATCUD.replace(/\D/g, '');
+    if (!ocrDigits.includes(atcudDigits)) {
+      return res.status(400).json({ message: "O código ATCUD não foi detetado corretamente na fotografia do documento." });
     }
+
     /**
      * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
      * Bloqueia a operação se a mesma combinação de ATCUD e Hash já existir na base de dados.
@@ -883,6 +918,7 @@ app.post("/lerFatura", authorize(["cidadao", "comerciante", "camara"]), upload.s
       ATCUD: CodeATCUD,
       hash: hash,
     });
+    
     if (faturaRepetida) {
       return res.status(400).json({ message: "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente." });
     }
@@ -912,7 +948,9 @@ app.post("/lerFatura", authorize(["cidadao", "comerciante", "camara"]), upload.s
       return res.status(400).json({ message: "A fatura foi emitida a 'Consumidor Final' e não pode acumular pontos." });
     }
 
-    if (user.NIF !== NIFClient) {
+    const numberNif = Number(NIFClient)
+    if (user.NIF !== numberNif) {
+      console.log(user.NIF, NIFClient)
       return res.status(400).json({ message: "O NIF nesta fatura não pertence à sua conta." });
     }
 
@@ -937,8 +975,7 @@ app.post("/lerFatura", authorize(["cidadao", "comerciante", "camara"]), upload.s
 
     // Validação de Elegibilidade da Campanha
     const store = await Business.findOne({ NIF: Number(NIFStore) }).populate("campaigns.campaign");
-    if (!store) return res.status(404).json({ message: "Esta loja não está registada na aplicação." });
-
+    if (!store) return res.status(404).json({ message: "Esta loja não está registada na aplicação." })
     const activeCampaignEntry = store.campaigns.find((entry) => {
       if (entry.status !== "aprovado") return false;
       const camp = entry.campaign;
@@ -947,7 +984,7 @@ app.post("/lerFatura", authorize(["cidadao", "comerciante", "camara"]), upload.s
       if (hoje > camp.expirationDate) return false;
       return true;
     });
-
+    
     if (!activeCampaignEntry) {
       return res.status(400).json({ message: "Esta loja não tem nenhuma campanha de pontos ativa no momento." });
     }
@@ -1121,15 +1158,51 @@ app.get("/listaCampanhas", async (req, res) => {
  */
 app.get("/dashboard", authorize(["camara"]), async (req, res) => {
   try {
-    // Aggregation Framework do MongoDB para alta performance no cálculo de volumetrias
-    const usersByCity = await User.aggregate([{ $group: { _id: "$city", total: { $sum: 1 } } }]);
+    const usersByCity = await User.aggregate([
+      {
+        $lookup: {
+          from: CitiesAndCountries.collection.name,
+          localField: "city",
+          foreignField: "name",
+          as: "locationData"
+        }
+      },
+      { $unwind: { path: "$locationData", preserveNullAndEmptyArrays: false } },
+      { $match: { "locationData.country_name": "Portugal" } },
+      { $group: { _id: "$city", total: { $sum: 1 } } }
+    ]);
+
     const businessByCategory = await Business.aggregate([{ $group: { _id: "$category", total: { $sum: 1 } } }]);
+
+    const usersByCountry = await User.aggregate([
+      {
+        $lookup: {
+          from: CitiesAndCountries.collection.name,
+          localField: "city",
+          foreignField: "name",
+          as: "locationData"
+        }
+      },
+      {
+        $unwind: {
+          path: "$locationData",
+          preserveNullAndEmptyArrays: false
+        }
+      },
+      {
+        $group: {
+          _id: "$locationData.country_name",
+          total: { $sum: 1 }
+        }
+      }
+    ]);
 
     const totalUsersCount = await User.countDocuments();
     const totalBusinessesCount = await Business.countDocuments();
 
     res.status(200).json({
       cities: usersByCity,
+      countries: usersByCountry,
       categories: businessByCategory,
       totalUsers: totalUsersCount,
       totalBusinesses: totalBusinessesCount,
@@ -1162,7 +1235,7 @@ app.post(
       if (user.name !== receivedName) user.name = receivedName;
       if (user.city !== receivedCity) user.city = receivedCity;
       if (receivedNIF != null) user.NIF = receivedNIF;
-
+      console.log(receivedNIF)
       // Tratamento Exclusivo da Imagem de Perfil (Avatar)
       if (req.file) {
         const nomeSemExtensao = path.parse(req.file.filename).name;
