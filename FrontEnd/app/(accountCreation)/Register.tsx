@@ -57,7 +57,10 @@ const Register = () => {
         setSnackbarMessage("Sucesso:\nA redirecionar...");
         setSnackbarVisible(true);
         await delay(500);
-        router.replace("/Login");
+        router.replace({
+          pathname: "/Validar", 
+          params: { email: email } // Passamos o email para a próxima tela
+});
       } else {
         setSnackbarMessage(
           "Erro:\n" + (dados.message || "Não foi possível criar a conta."),

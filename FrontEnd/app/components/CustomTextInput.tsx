@@ -14,6 +14,8 @@ interface CustomTextInputProps {
   isEmail?: boolean;
   isNumber?: boolean;
   isNIF?: boolean;
+  placeholder?: string;
+  keyboardType?: string;
 }
 
 const CustomTextInput = ({
@@ -24,6 +26,7 @@ const CustomTextInput = ({
   className,
   onChangeText,
   isPassword,
+  placeholder,
   isEmail,
   isNumber,
   isNIF,
@@ -47,6 +50,7 @@ const CustomTextInput = ({
         mode="outlined"
         label={label}
         value={value}
+        placeholder={placeholder}
         textAlignVertical={multiline ? "top" : "center"}
         style={multiline ? { minHeight: 400, height: 'auto' } : {}}
         onChangeText={onChangeText}
