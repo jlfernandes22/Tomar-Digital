@@ -156,6 +156,13 @@ const ProfileDetails = () => {
               borderColor: theme.colors.outline,
             }}
           >
+            {!user.Avatar && (
+             <Text className="text-4xl font-bold uppercase" style={{ color: theme.colors.primary }}>
+                 {(user.name || user.email || "V").charAt(0)}
+             </Text>
+            )}
+
+            {user.Avatar && (
             <Image
               source={{ uri: `${API_URL}/mostrarImagem/${user.Avatar}` }}
               className="w-32 h-32 rounded-full items-center justify-center border-2"
@@ -164,6 +171,7 @@ const ProfileDetails = () => {
                 borderColor: theme.colors.outline,
               }}
             />
+            )}
           </View>
 
           {/* NOME */}
