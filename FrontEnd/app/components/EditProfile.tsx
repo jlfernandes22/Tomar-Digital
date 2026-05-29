@@ -20,22 +20,21 @@ import {
   Text,
   TouchableRipple,
   useTheme,
-} from "react-native-paper";
-import CustomTextInput from "../components/CustomTextInput";
-import CustomButton from "../components/CustomButton";
-import CustomSnackBar from "../components/CustomSnackBar";
-import * as ImagePicker from 'expo-image-picker';
-
+} from 'react-native-paper';
+import CustomTextInput from '../components/CustomTextInput';
+import CustomButton from '../components/CustomButton';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { pickImage } from '@/utils/imagePicker';
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
-  const [name, setName] = useState(user?.name || "");
-  const [city, setCity] = useState(user?.city || "");
-  const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : "");
+  const [name, setName] = useState(user?.name || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : '');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const [dialogVisible, setDialogVisible] = useState(false);
-  const [dialogText, setDialogText] = useState("");
+  const [dialogText, setDialogText] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -49,7 +48,7 @@ const EditProfile = () => {
 
   if (!user) {
     return (
-      <View className="flex-1 justify-center items-center">
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
@@ -57,7 +56,7 @@ const EditProfile = () => {
 
   const [image, setImage] = useState(user.Avatar || null);
   const [visible, setvisible] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
 
   const selecionarAvatar = async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -81,7 +80,7 @@ const EditProfile = () => {
   const hideDialog = async () => {
     setDialogVisible(false);
     if (success) {
-      router.replace("/(tabs)/Profile");
+      router.replace('/(tabs)/Profile');
     }
   };
 
@@ -183,7 +182,7 @@ const EditProfile = () => {
             variant="headlineMedium"
             style={{
               color: theme.colors.primary,
-              fontWeight: "bold",
+              fontWeight: 'bold',
               marginBottom: 10,
             }}
           >
@@ -199,25 +198,28 @@ const EditProfile = () => {
 
           {/* Contentor Principal do Formulário*/}
           <View
-            className=" items-center mx-4 py-8 px-6 rounded-xl border-2"
+            className=" mx-4 items-center rounded-xl border-2 px-6 py-8"
             style={{
               backgroundColor: theme.colors.secondaryContainer,
               borderColor: theme.colors.outline,
             }}
           >
             {/* Zona da Imagem */}
-            <View className=" mb-2 w-full items-center justify-center flex-col">
+            <View className=" mb-2 w-full flex-col items-center justify-center">
               <View
-                className="w-32 h-32 rounded-full items-center justify-center border-2"
+                className="h-32 w-32 items-center justify-center rounded-full border-2"
                 style={{
                   backgroundColor: theme.colors.background,
                   borderColor: theme.colors.outline,
-                  alignSelf: "center",
+                  alignSelf: 'center',
                 }}
               >
                 {!image && (
-                  <Text className="text-4xl font-bold uppercase" style={{ color: theme.colors.primary }}>
-                    {(user.name || user.email || "V").charAt(0)}
+                  <Text
+                    className="text-4xl font-bold uppercase"
+                    style={{ color: theme.colors.primary }}
+                  >
+                    {(user.name || user.email || 'V').charAt(0)}
                   </Text>
                 )}
                 {image && (
@@ -244,14 +246,14 @@ const EditProfile = () => {
                 style={{
                   borderColor: theme.colors.outline,
                   borderRadius: 50,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: theme.colors.secondaryContainer,
                   borderWidth: 2,
                 }}
               >
                 <Image
-                  key={theme.dark ? "dark-theme" : "light-theme"}
+                  key={theme.dark ? 'dark-theme' : 'light-theme'}
                   className="m-2 size-8"
                   tintColor={theme.colors.onSecondaryContainer}
                   source={images.editProfileImg}
@@ -260,19 +262,19 @@ const EditProfile = () => {
                 />
               </TouchableRipple>
             </View>
-            <View className="w-full mt-6">
+            <View className="mt-6 w-full">
               <CustomTextInput
                 value={name}
                 onChangeText={setName}
                 label="Nome"
-                className="w-full mb-4"
+                className="mb-4 w-full"
               />
 
               <CustomTextInput
                 label="Cidade"
                 value={city}
                 onChangeText={setCity}
-                className="w-full mb-4"
+                className="mb-4 w-full"
               />
 
               {user.NIF == null && (
@@ -281,18 +283,18 @@ const EditProfile = () => {
                   value={NIF}
                   onChangeText={setNIF}
                   isNIF
-                  className="w-full mb-4"
+                  className="mb-4 w-full"
                 />
               )}
             </View>
 
-            <View className="w-full mt-6">
+            <View className="mt-6 w-full">
               <CustomButton
                 buttonColor={theme.colors.errorContainer}
                 textColor={theme.colors.onErrorContainer}
                 onPress={handleEdit}
                 loading={loading}
-                className="w-full mb-3"
+                className="mb-3 w-full"
               >
                 Confirmar Alterações
               </CustomButton>
@@ -308,7 +310,7 @@ const EditProfile = () => {
               </CustomButton>
               <Portal>
                 <Dialog visible={dialogVisible} onDismiss={hideDialog}>
-                  <Dialog.Title>{success ? "Sucesso" : "Erro"}</Dialog.Title>
+                  <Dialog.Title>{success ? 'Sucesso' : 'Erro'}</Dialog.Title>
                   <Dialog.Content>
                     <Text variant="bodyMedium">{dialogText}</Text>
                   </Dialog.Content>
