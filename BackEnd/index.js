@@ -62,6 +62,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+const uploadParaMemoria = multer({ storage: multer.memoryStorage() });
 
 
 //////////////////////////////
@@ -118,10 +119,15 @@ mongoose
 ////////////////////////
 //Upload de Imagem
 
-app.post('/uploadImage', upload.single('image'), async (req, res) => {
+app.post('/uploadImage', uploadParaMemoria.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
+    }
+
+    if (!req.file.buffer) {
+      console.error("Erro: O Multer recebeu o ficheiro mas o buffer está vazio. Verifica a configuração do memoryStorage.");
+      return res.status(500).json({ error: 'Erro interno ao ler os dados da imagem.' });
     }
 
     const webpBuffer = await sharp(req.file.buffer)
@@ -130,12 +136,12 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
       .webp({ quality: 80 })  
       .toBuffer();
 
-    // 1. Criamos a constante como "novaImagem"
     const novaImagem = new Image({
       nomeOriginal: req.file.originalname,
       dados: webpBuffer,         
       contentType: 'image/webp'  
     });
+
 
     await novaImagem.save();
 
@@ -293,6 +299,7 @@ app.post("/iniciarSessao", async (req, res) => {
         role: user.role,
         city: user.city,
         NIF: user.NIF,
+        Avatar: user.Avatar,
       },
     });
   } catch (err) {
@@ -1454,45 +1461,50 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
 
 ///////////////
 //Editar perfil
+///////////////
+// Editar perfil
 app.post(
   "/editarUser/:id",
   authorize(["camara", "comerciante", "cidadao"]),
   async (req, res) => {
     try {
-      //console.log(req.body)
-
       const user = await User.findById(req.user.id);
-
-      console.log(req.file);
-
-      const receivedName = req.body.name;
-      const receivedCity = req.body.city;
-      const receivedNIF = req.body.NIF;
-      const avatar = req.file;
-
-      console.log(receivedName, receivedCity, receivedNIF);
 
       if (!user) {
         return res.status(404).json({ message: "Utilizador não encontrado." });
       }
 
-      if (user.name != receivedName) {
-        user.name = receivedName;
-      }
+      const { name, city, NIF, avatarId } = req.body;
 
-      if (user.city != receivedCity) {
-        user.city = receivedCity;
-      }
+      if (name !== undefined) user.name = name;
+      if (city !== undefined) user.city = city;
+      if (NIF !== undefined) user.NIF = NIF;
 
-      if (receivedNIF != null) {
-        user.NIF = receivedNIF;
+      // Associar o ID da imagem guardada no MongoDB ao perfil do utilizador
+      if (avatarId !== undefined) {
+        if (user.Avatar && user.Avatar !== avatarId) {
+          await Image.findByIdAndDelete(user.avatar).catch(err => 
+            console.error("Erro ao apagar imagem antiga:", err)
+          );
+        }
+        
+        user.Avatar = avatarId; 
       }
 
       await user.save();
 
-      res.status(201).json({ message: "Alterações guardadas" });
+      res.status(200).json({ 
+        message: "Alterações guardadas com sucesso!",
+        user: {
+          name: user.name,
+          city: user.city,
+          NIF: user.NIF,
+          avatar: user.Avatar
+        }
+      });
+      
     } catch (error) {
-      console.error("Erro ao alterar informações", error);
+      console.error("Erro ao alterar informações:", error);
       res.status(500).json({ message: "Erro ao alterar as informações" });
     }
   },

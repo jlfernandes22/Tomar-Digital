@@ -4,6 +4,7 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  Platform,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { API_URL } from "@/constants/api";
@@ -23,7 +24,8 @@ import {
 import CustomTextInput from "../components/CustomTextInput";
 import CustomButton from "../components/CustomButton";
 import CustomSnackBar from "../components/CustomSnackBar";
-import {pickImage} from "@/utils/imagePicker";
+import * as ImagePicker from 'expo-image-picker';
+
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
@@ -41,6 +43,7 @@ const EditProfile = () => {
       setName(user.name || "");
       setCity(user.city || "");
       setNIF(user.NIF ? String(user.NIF) : "");
+      setImage(user.Avatar || "");
     }
   }, [user]);
 
@@ -52,28 +55,28 @@ const EditProfile = () => {
     );
   }
 
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState(user.Avatar || null);
   const [visible, setvisible] = useState(false);
   const [message, setMessage] = useState("");
 
-  const avatar = async () => {
-
-    try{
-    
-          const uri = await pickImage({allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,})
-    
-            // Se o utilizador escolheu uma imagem (e como não é múltipla, sabemos que é string)
-          if (uri && typeof uri === "string") {
-            setImage(uri);
-          }
-    
-        } catch (error: any) {
-          // O utilitário tratou das permissões, nós só mostramos o erro!
-          alert(error.message);
+  const selecionarAvatar = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!');
+        return;
+      }
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+  
+      if (!resultado.canceled) {
+          const uri = resultado.assets[0].uri;
+          setImage(uri); 
         }
-  };
+    };
 
   const hideDialog = async () => {
     setDialogVisible(false);
@@ -83,48 +86,89 @@ const EditProfile = () => {
   };
 
   const handleEdit = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/editar/${user.id}`, {
+  setLoading(true);
+  try {
+    let avatarIdDefinitivo = null;
+
+    if (image && (image.startsWith('file://') || image.startsWith('content://'))) {
+     const formData = new FormData();
+
+     const uriLimpa = Platform.OS === 'android' ? image : image.replace('file://', '');
+      const filename = image.split('/').pop() || 'avatar.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+       const fileToUpload = {
+        uri: uriLimpa,
+        name: filename,
+        type: type,
+      };
+
+      formData.append('image', fileToUpload as any);
+
+      const uploadResponse = await fetch(`${API_URL}/uploadImage`, {
         method: "POST",
+        body: formData,
         headers: {
-          Authorization: `Bearer ${user.token}`,
-          "Content-Type": "application/json",
+          'Authorization': `Bearer ${user.token}`,
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          name: name,
-          city: city,
-          NIF: NIF ? Number(NIF) : null,
-          file: image,
-        }),
       });
 
-      if (response.ok) {
-        setSuccess(true);
-        //console.log(success);
-        setDialogText("Alteração de dados com sucesso");
-        setDialogVisible(true);
-        updateUser({
-          name: name,
-          city: city,
-          NIF: NIF ? Number(NIF) : null,
-        });
-      } else {
-        setDialogText("O servidor rejeitou as alterações.");
-        setDialogVisible(true);
-        setSuccess(false);
+
+      if (!uploadResponse.ok) {
+        const erroBackend = await uploadResponse.text();
+        console.error("Erro detalhado do backend:", erroBackend);
+        throw new Error("Falha ao fazer upload da imagem de perfil.");
       }
-    } catch (error) {
-      setDialogText("Falha na ligação ao servidor.");
+
+      const uploadResult = await uploadResponse.json();
+      avatarIdDefinitivo = uploadResult.id; // ID que o MongoDB gerou para a imagem
+    }
+
+    const response = await fetch(`${API_URL}/editarUser/${user.id}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: name,
+        city: city,
+        NIF: NIF ? Number(NIF) : null,
+        avatarId: avatarIdDefinitivo, 
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setSuccess(true);
+      setDialogText("Alteração de dados com sucesso");
+      setDialogVisible(true);
+      
+
+      updateUser({
+        ...user,
+        name: name,
+        city: city,
+        NIF: NIF ? Number(NIF) : null,
+        Avatar: avatarIdDefinitivo || user.Avatar 
+      });
+    } else {
+      setDialogText("O servidor rejeitou as alterações.");
       setDialogVisible(true);
       setSuccess(false);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error(error);
+    setDialogVisible(true);
+    setSuccess(false);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    //Flex-1 na Surface e SafeAreaView para ocuparem o ecrã todo
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={{ flex: 1 }} className="p-4">
@@ -177,22 +221,25 @@ const EditProfile = () => {
                   </Text>
                 )}
                 {image && (
-                  <Image
-                    source={{ uri: image }}
-                    className="w-32 h-32 rounded-full items-center justify-center border-2"
-                    style={{
-                      backgroundColor: theme.colors.background,
-                      borderColor: theme.colors.outline,
-                    }}
-                  ></Image>
-                )}
+                <Image
+                  source={{ 
+                    uri: image.startsWith('file://') || image.startsWith('content://')
+                      ? image                                 
+                      : `${API_URL}/mostrarImagem/${image}`   
+                  }}
+                  className="w-32 h-32 rounded-full items-center justify-center border-2"
+                  style={{
+                    backgroundColor: theme.colors.background,
+                    borderColor: theme.colors.outline,
+                  }}
+                />
+              )}
               </View>
 
-              {/* Será trocado por uma touchable opacity para poder trocar foto de perfil */}
 
               <TouchableRipple
                 className="relative size-11 bottom-8 left-11"
-                onPress={pickImage}
+                onPress={selecionarAvatar}
                 rippleColor={theme.colors.secondary}
                 style={{
                   borderColor: theme.colors.outline,
