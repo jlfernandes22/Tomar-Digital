@@ -28,6 +28,20 @@ import { DocumentAnalysisClient, AzureKeyCredential } from "@azure/ai-form-recog
 // ============================================================================
 const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
+import nodemailer from "nodemailer";
+
+const SECRET_KEY = process.env.JWT_SECRET;
+const app = express();
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "tomardigitalsuporte@gmail.com",
+    pass: process.env.GOOGLE_APP_PASSWORD, // The 16-character App Password
+  },
+});
+
+// Vai procurar a variável MONGO_URI. Se não a encontrar (por exemplo, se te esqueceres do .env), tenta o localhost como plano B
 const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 
 app.use(cors());
@@ -71,6 +85,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+const uploadParaMemoria = multer({ storage: multer.memoryStorage() });
 
 // ============================================================================
 // 3. CONEXÃO À BASE DE DADOS
@@ -84,37 +99,149 @@ mongoose
 // 4. ROTAS DE AUTENTICAÇÃO E GESTÃO DE UTILIZADORES
 // ============================================================================
 
-/**
- * Endpoint de Registo de Utilizadores
- * Flow: Validação de Existência -> Validação de Segurança (Regex) -> Hashing (Bcrypt) -> Persistência
- */
-app.post("/registar", async (req, res) => {
-  const { email, password, confirmPassword, city } = req.body;
 
+
+//////////////////////////////////////////////////
+//Registar utilizador teste para usar no postman//
+//////////////////////////////////////////////////
+//app.post("/registar-teste", async (req, res) => {
+//  console.log("Recebido pedido do Postman para registo de teste:", req.body);
+//
+//  // Retiramos o confirmPassword para ser mais rápido escrever o JSON no Postman
+//  const { name, email, password, city, role } = req.body;
+//
+//  try {
+//    // Verificar se já existe
+//    const user = await User.findOne({ email: email });
+//    if (user) {
+//      return res
+//        .status(400)
+//        .json({ message: "Este utilizador de teste já existe" });
+//    }
+//
+//    const salt = 10;
+//    const hashedPassword = await bcrypt.hash(password, salt);
+//
+//    // Definir utilizador com password em hash
+//    const newUser = new User({
+//      name: name || "Utilizador de Teste", // Se não enviares nome, ele assume este
+//      email: email,
+//      password: hashedPassword,
+//      role: role,
+//      city: city || "Tomar", // Se não enviares cidade, ele assume Tomar
+//    });
+//
+//    await newUser.save();
+//    res.status(201).json({
+//      message: "Utilizador de teste criado com sucesso via Postman!",
+//      dados: { email: newUser.email, name: newUser.name },
+//    });
+//  } catch (err) {
+//    console.error("Erro na criação via Postman:", err);
+//    res.status(500).json({ message: "Erro ao criar conta de teste" });
+//  }
+//});
+
+////////////////////////
+//Upload de Imagem
+
+app.post('/uploadImage', uploadParaMemoria.single('image'), async (req, res) => {
   try {
-    // 1. Verificação de Integridade: Impede o registo de contas duplicadas
-    const user = await User.findOne({ email: email });
-    if (user) {
-      return res.status(400).json({ message: "Utilizador já existe" });
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
     }
 
-    // 2. Política de Senhas (Security Validation)
-    // Exigência: Mínimo de 8 chars, 1 maiúscula, 1 minúscula e 1 dígito.
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        message: "A palavra-passe é demasiado fraca. Deve conter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas e números.",
-      });
+    if (!req.file.buffer) {
+      console.error("Erro: O Multer recebeu o ficheiro mas o buffer está vazio. Verifica a configuração do memoryStorage.");
+      return res.status(500).json({ error: 'Erro interno ao ler os dados da imagem.' });
     }
 
-    // 3. Sanitização e Validação do Email (RFC 5322 simplificado)
-    const cleanEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      return res.status(400).json({
-        message: "O formato do email introduzido não é válido.",
-      });
+    const webpBuffer = await sharp(req.file.buffer)
+      .resize({ width: 800 }) 
+      .toFormat('webp')
+      .webp({ quality: 80 })  
+      .toBuffer();
+
+    const novaImagem = new Image({
+      nomeOriginal: req.file.originalname,
+      dados: webpBuffer,         
+      contentType: 'image/webp'  
+    });
+
+
+    await novaImagem.save();
+
+    res.status(201).json({ 
+      message: 'Imagem guardada com sucesso!', 
+      id: novaImagem._id 
+    });
+
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    res.status(500).json({ error: 'Erro ao processar imagem.' });
+  }
+});
+
+////////////////////////
+// Mostrar Imagem
+app.get('/mostrarImagem/:id', async (req, res) => {
+  try {
+    let imagem = await Image.findById(req.params.id);
+
+    
+    if (!imagem) {
+      return res.status(404).json({ error: 'Imagem não encontrada .' });
     }
+
+    res.set('Content-Type', imagem.contentType);
+    res.send(imagem.dados);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao procurar imagem.' });
+  }
+});
+
+
+//////////////////////
+//Registar utilizador
+app.post("/registar", async (req, res) => {
+  try {
+    const { email, password, city ,name} = req.body;
+
+    // 1. Crie o código AQUI, antes de tentar enviar o e-mail
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
+
+    // 2. Guarde o código no objeto do novo utilizador (certifique-se que o seu Model User tem este campo)
+    const newUser = new User({ 
+      name,  
+      email, 
+        password: await bcrypt.hash(password, 10), 
+        city,
+        codigoValidar: code, 
+        isVerified: false 
+    });
+    
+    await newUser.save();
+
+    // 3. Agora a variável 'code' existe e pode ser usada
+    await transporter.sendMail({
+        from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
+        to: email,
+        subject: 'Confirme a sua conta',
+        html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
+    });
+
+    // 4. Resposta única e final
+    return res.status(201).json({ message: "Utilizador criado! Verifique o e-mail." });
+
+  } catch (error) {
+    console.error("Erro no registo:", error);
+    
+    // Proteção contra o erro ERR_HTTP_HEADERS_SENT
+    if (!res.headersSent) {
+        return res.status(500).json({ message: "Erro ao registar utilizador" });
+    }
+  }
+});
 
     // 4. Verificação de Intenção do Utilizador
     if (password !== confirmPassword) {
@@ -137,8 +264,27 @@ app.post("/registar", async (req, res) => {
   } catch (err) {
     console.error("Erro no registo: ", err);
     res.status(400).json({ message: "Erro ao criar conta" });
+app.post("/verificar-codigo", async (req, res) => {
+ 
+
+  const { email, code } = req.body;
+  const user = await User.findOne({ email: email });
+
+  if (!user) {
+    return res.status(400).json({ message: "Utilizador não encontrado." });
   }
+
+  if (user.codigoValidar !== code) {
+    return res.status(400).json({ message: "Código inválido." });
+  }
+
+  user.isVerified = true;
+  user.codigoValidar = null;
+  await user.save();
+
+  return res.status(200).json({ message: "Conta validada com sucesso!" });
 });
+
 
 /**
  * @swagger
@@ -195,6 +341,7 @@ app.post("/iniciarSessao", async (req, res) => {
         city: user.city,
         NIF: user.NIF,
         acceptedInvoiceTerms: user.acceptedInvoiceTerms,
+        Avatar: user.Avatar,
       },
     });
   } catch (err) {
@@ -1253,20 +1400,41 @@ app.post(
           if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         }
 
-        // Limpeza do Avatar Antigo para não criar lixo (Orphan files)
-        if (user.Avatar) {
-          const relativeOldPath = user.Avatar.replace(/^\//, '');
-          const oldPath = path.join(process.cwd(), relativeOldPath);
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
+      if (!user) {
+        return res.status(404).json({ message: "Utilizador não encontrado." });
+      }
 
-        user.Avatar = `/uploads/imagens/${webpFilename}`;
+      const { name, city, NIF, avatarId } = req.body;
+
+      if (name !== undefined) user.name = name;
+      if (city !== undefined) user.city = city;
+      if (NIF !== undefined) user.NIF = NIF;
+
+      // Associar o ID da imagem guardada no MongoDB ao perfil do utilizador
+      if (avatarId !== undefined) {
+        if (user.Avatar && user.Avatar !== avatarId) {
+          await Image.findByIdAndDelete(user.avatar).catch(err => 
+            console.error("Erro ao apagar imagem antiga:", err)
+          );
+        }
+        
+        user.Avatar = avatarId; 
       }
 
       await user.save();
-      res.status(201).json({ message: "Alterações guardadas" });
+
+      res.status(200).json({ 
+        message: "Alterações guardadas com sucesso!",
+        user: {
+          name: user.name,
+          city: user.city,
+          NIF: user.NIF,
+          avatar: user.Avatar
+        }
+      });
+      
     } catch (error) {
-      console.error("Erro ao alterar informações", error);
+      console.error("Erro ao alterar informações:", error);
       res.status(500).json({ message: "Erro ao alterar as informações" });
     }
   },

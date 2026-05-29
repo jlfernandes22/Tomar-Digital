@@ -223,7 +223,7 @@ const handleVerPDF = async (url?: string, tituloLoja?: string) => {
             marginBottom: 10,
           }}
         >
-          Pedidos Comerciantes Pendentes
+          Pedidos de Novos Comerciantes Pendentes
         </Text>
 
         <Divider
@@ -281,16 +281,14 @@ const handleVerPDF = async (url?: string, tituloLoja?: string) => {
                 />
 
                 <View className="px-4 pb-2">
-                  <Button
-                    mode="outlined"
+                  <CustomButton
                     icon="eye"
                     loading={loadingPdf}
                     disabled={loadingPdf}
                     onPress={() => handleVerPDF(item.documentoPdfUrl, item.tituloComercio)}
-                    style={{ borderColor: theme.colors.outline }}
                   >
                     Visualizar Documento PDF
-                  </Button>
+                  </CustomButton>
                 </View>
 
                 <Divider style={{ marginVertical: 8, backgroundColor: theme.colors.outlineVariant }} />

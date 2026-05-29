@@ -22,6 +22,8 @@ export default function CamaraIndex() {
       description: "Validar documentos PDF para novos comerciantes",
       icon: "account-check",
       route: "/components/AprovarComerciantes", 
+            count: "Pendentes",
+
       color: theme.colors.secondary,
     },
   ];

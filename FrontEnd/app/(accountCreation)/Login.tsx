@@ -58,6 +58,7 @@ const Login = () => {
         const cidadeEncontrada = dados.user?.city;
         const NIFEncontrado = dados.user?.NIF;
         const acceptedTermsEncontrado = dados.user?.acceptedInvoiceTerms || false;
+        const AvatarEncontrado = dados.user?.Avatar;
 
         if (idEncontrado && tokenEncontrado) {
           await login(
@@ -70,6 +71,7 @@ const Login = () => {
             cidadeEncontrada,
             NIFEncontrado,
             acceptedTermsEncontrado,
+            AvatarEncontrado,
           );
           router.replace("/(tabs)/Home");
         }

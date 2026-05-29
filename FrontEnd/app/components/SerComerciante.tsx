@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Dimensions } from 'react-native';
-import { Button, Text, Card, useTheme, Modal, Portal, IconButton } from 'react-native-paper';
+import { Button, Text, Card, useTheme, Modal, Portal, IconButton, Surface } from 'react-native-paper';
 import * as DocumentPicker from 'expo-document-picker';
 import { WebView } from 'react-native-webview';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +8,7 @@ import CustomTextInput from './CustomTextInput';
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_URL } from '@/constants/api';
 import { router, Stack } from "expo-router";
+import CustomButton from './CustomButton';
 
 
 interface IComercianteForm {
@@ -186,13 +187,26 @@ export default function SerComerciante() {
 };
   return (
     <>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+    <Surface
+    style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.colors.surface,
+        }}>
+      <ScrollView 
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+        className="pt-20"
+      >
        <Stack.Screen options={{ headerShown: false }} />
 
         <Text 
           variant="headlineMedium" 
-          style={{ marginBottom: 20, textAlign: 'center', fontWeight: 'bold' }}
-        >
+        style={{
+            color: theme.colors.primary,
+            fontWeight: "bold",
+            marginBottom: 10,
+          }}        >
           Tornar-se um Comerciante
         </Text>
 
@@ -220,11 +234,11 @@ export default function SerComerciante() {
           onChangeText={(text) => setFormData({ ...formData, tituloComercio: text })}
         />
 
-        <Card style={{ marginTop: 10, marginBottom: 20, backgroundColor: '#f9f9f9' }}>
+        <Card style={{ marginTop: 10, marginBottom: 20, backgroundColor: theme.colors.onBackground }}>
           <Card.Content>
-            <Button mode="contained-tonal" icon="file-upload" onPress={handlePickDocument}>
+            <CustomButton  icon="file-upload" onPress={handlePickDocument}>
               Selecionar PDF
-            </Button>
+            </CustomButton>
 
             {formData.documentoPDF && (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
@@ -232,28 +246,25 @@ export default function SerComerciante() {
                   ✓ {formData.documentoPDF.name}
                 </Text>
                 
-                <Button 
-                  mode="text" 
+                <CustomButton
                   icon="eye" 
                   loading={loadingPdf} 
                   disabled={loadingPdf} 
                   onPress={showModal}
                 >
                   Visualizar
-                </Button>
+                </CustomButton>
               </View>
             )}
           </Card.Content>
         </Card>
 
-        <Button 
-          mode="contained" 
+        <CustomButton 
           disabled={!formData.tituloComercio || !formData.donoComercio || !formData.documentoPDF}
             onPress={handleFinalSubmit}
-          style={{ marginTop: 10, paddingVertical: 4 }}
         >
           Enviar Solicitação
-        </Button>
+        </CustomButton>
       </ScrollView>
 
       <Portal>
@@ -310,6 +321,7 @@ export default function SerComerciante() {
           )}
         </Modal>
       </Portal>
+      </Surface>
     </>
   );
 }

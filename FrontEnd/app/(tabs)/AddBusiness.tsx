@@ -191,6 +191,14 @@ export default function AddBusiness() {
 
         {step === 1 && (
           <View>
+            <Text variant="headlineSmall"  style={{
+                        color: theme.colors.primary,
+                        fontWeight: "bold",
+                        marginBottom: 10,
+                        textAlign: "center",
+                        margin: 10
+                      }}>Novo Negócio</Text>
+
             <CustomTextInput
               label="Nome do Negócio"
               value={formData.nomeNegocio}
@@ -202,7 +210,13 @@ export default function AddBusiness() {
               onChangeText={(t) => setFormData({ ...formData, NIFnegocio: t })}
             />
             <View className="mb-2">
-              <Text variant="bodyMedium" className="mt-4 mb-2">
+              <Text variant="bodyMedium"  style={{
+                        color: theme.colors.primary,
+                        fontWeight: "bold",
+                        marginBottom: 10,
+                        textAlign: "center",
+                        margin: 10
+                      }}>
                 Categoria do Negócio:
               </Text>
               <ScrollView
@@ -233,17 +247,20 @@ export default function AddBusiness() {
             </View>
             <View style={{ marginVertical: 10 }}>
               <Text
-                style={{
-                  marginBottom: 15,
-                  fontSize: 14.5,
-                  color: theme.colors.onBackground,
-                }}
+                 style={{
+                        color: theme.colors.primary,
+                        fontWeight: "bold",
+                        marginBottom: 10,
+                        textAlign: "center",
+                        margin: 10
+                      }}
               >
                 Logótipo do Negócio:
               </Text>
               <TouchableRipple
                 onPress={selecionarLogotipo}
                 style={{
+                  alignSelf: "center",
                   height: 200,
                   width: 200,
                   borderWidth: 1,
@@ -354,7 +371,13 @@ export default function AddBusiness() {
               onChangeText={(t) => setFormData({ ...formData, emailDono: t })}
             />
             <View style={{ marginVertical: 15 }}>
-              <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+              <Text  style={{
+                        color: theme.colors.primary,
+                        fontWeight: "bold",
+                        marginBottom: 10,
+                        textAlign: "center",
+                        margin: 10
+                      }}>
                 Galeria de Fotos (Máx. 5)
               </Text>
               <ScrollView

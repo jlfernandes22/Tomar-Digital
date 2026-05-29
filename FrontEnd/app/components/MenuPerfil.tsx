@@ -14,6 +14,7 @@ import {
 } from "react-native-paper";
 import CustomButton from "./CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { API_URL } from "@/constants/api";
 
 const roleLabels: Record<string, string> = {
   cidadao: "Cidadão",
@@ -88,6 +89,7 @@ const ProfileDetails = () => {
                 title="Editar Perfil"
               />
               <Divider />
+              {user.role === 'cidadao' && (
               <Menu.Item
                 onPress={() => {
                   closeMenu();
@@ -96,7 +98,8 @@ const ProfileDetails = () => {
                 }}
                 leadingIcon="account"
                 title="Ser Comerciante"
-              />
+              /> )}
+              
               <Divider />
               <Menu.Item
                 onPress={() => {
@@ -118,6 +121,7 @@ const ProfileDetails = () => {
               <Menu.Item
                 onPress={() => {
                   closeMenu();
+                  router.push("/components/SobreAPP")
                 }}
                 leadingIcon="information-outline"
                 title="Sobre a App"
@@ -135,8 +139,8 @@ const ProfileDetails = () => {
 
               <Menu.Item
                 onPress={() => {
-                  closeMenu();
                   logout();
+                  closeMenu();
                 }}
                 leadingIcon="logout"
                 title="Terminar Sessão"
@@ -153,9 +157,22 @@ const ProfileDetails = () => {
               borderColor: theme.colors.outline,
             }}
           >
-            <Text style={{ fontSize: 40 }}>
-              {(user.name || user.email || "V").charAt(0)}
-            </Text>
+            {!user.Avatar && (
+             <Text className="text-4xl font-bold uppercase" style={{ color: theme.colors.primary }}>
+                 {(user.name || user.email || "V").charAt(0)}
+             </Text>
+            )}
+
+            {user.Avatar && (
+            <Image
+              source={{ uri: `${API_URL}/mostrarImagem/${user.Avatar}` }}
+              className="w-32 h-32 rounded-full items-center justify-center border-2"
+              style={{
+                backgroundColor: theme.colors.background,
+                borderColor: theme.colors.outline,
+              }}
+            />
+            )}
           </View>
 
           {/* NOME */}
