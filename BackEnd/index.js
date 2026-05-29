@@ -22,26 +22,21 @@ import Tesseract from 'tesseract.js';
 import CitiesAndCountries from "./models/CitiesAndCountries.js"
 import CitiesAncCountries from "./models/CitiesAndCountries.js";
 import { DocumentAnalysisClient, AzureKeyCredential } from "@azure/ai-form-recognizer";
-
+import nodemailer from "nodemailer";
 // ============================================================================
 // 1. CONFIGURAÇÃO BASE DO SERVIDOR E MIDDLEWARES
 // ============================================================================
-const SECRET_KEY = process.env.JWT_SECRET;
-const app = express();
-import nodemailer from "nodemailer";
 
-const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
-
+const SECRET_KEY = process.env.JWT_SECRET;
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "tomardigitalsuporte@gmail.com",
-    pass: process.env.GOOGLE_APP_PASSWORD, // The 16-character App Password
+    pass: process.env.GOOGLE_APP_PASSWORD,
   },
 });
 
-// Vai procurar a variável MONGO_URI. Se não a encontrar (por exemplo, se te esqueceres do .env), tenta o localhost como plano B
 const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 
 app.use(cors());
@@ -207,10 +202,15 @@ app.post("/registar", async (req, res) => {
   try {
     const { email, password, city ,name} = req.body;
 
-    // 1. Crie o código AQUI, antes de tentar enviar o e-mail
+    
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Palavra-passe não coincide" });
+    }
+
+   
     const code = Math.floor(100000 + Math.random() * 900000).toString(); 
 
-    // 2. Guarde o código no objeto do novo utilizador (certifique-se que o seu Model User tem este campo)
+    
     const newUser = new User({ 
       name,  
       email, 
@@ -222,48 +222,19 @@ app.post("/registar", async (req, res) => {
     
     await newUser.save();
 
-    // 3. Agora a variável 'code' existe e pode ser usada
+    
     await transporter.sendMail({
         from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
         to: email,
         subject: 'Confirme a sua conta',
         html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
     });
-
-    // 4. Resposta única e final
-    return res.status(201).json({ message: "Utilizador criado! Verifique o e-mail." });
-
-  } catch (error) {
-    console.error("Erro no registo:", error);
+  }catch(err){
+    return res.status(400).json({message: err})
+  }})
     
-    // Proteção contra o erro ERR_HTTP_HEADERS_SENT
-    if (!res.headersSent) {
-        return res.status(500).json({ message: "Erro ao registar utilizador" });
-    }
-  }
-});
 
-    // 4. Verificação de Intenção do Utilizador
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Palavra-passe não coincide" });
-    }
 
-    // 5. Cifragem (Hashing) com custo algorítmico 10 (Equilíbrio entre segurança e performance)
-    const salt = 10;
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new User({
-      name: email, // Por omissão, o nome assume o email até o utilizador editar o perfil
-      email: email,
-      password: hashedPassword,
-      city: city,
-    });
-
-    await newUser.save();
-    res.status(201).json({ message: "Utilizador criado com sucesso" });
-  } catch (err) {
-    console.error("Erro no registo: ", err);
-    res.status(400).json({ message: "Erro ao criar conta" });
 app.post("/verificar-codigo", async (req, res) => {
  
 
@@ -283,7 +254,7 @@ app.post("/verificar-codigo", async (req, res) => {
   await user.save();
 
   return res.status(200).json({ message: "Conta validada com sucesso!" });
-});
+})
 
 
 /**
@@ -1396,29 +1367,11 @@ app.post(
             .toFormat('webp')
             .webp({ quality: 80 })
             .toFile(targetPath);
+            
+          user.Avatar = `/uploads/imagens/${webpFilename}`;
         } finally {
           if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         }
-
-      if (!user) {
-        return res.status(404).json({ message: "Utilizador não encontrado." });
-      }
-
-      const { name, city, NIF, avatarId } = req.body;
-
-      if (name !== undefined) user.name = name;
-      if (city !== undefined) user.city = city;
-      if (NIF !== undefined) user.NIF = NIF;
-
-      // Associar o ID da imagem guardada no MongoDB ao perfil do utilizador
-      if (avatarId !== undefined) {
-        if (user.Avatar && user.Avatar !== avatarId) {
-          await Image.findByIdAndDelete(user.avatar).catch(err => 
-            console.error("Erro ao apagar imagem antiga:", err)
-          );
-        }
-        
-        user.Avatar = avatarId; 
       }
 
       await user.save();
