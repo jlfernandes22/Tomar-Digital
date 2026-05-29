@@ -19,6 +19,7 @@ import bagImg from "@/assets/otherIcons/bag-handle-sharp.png";
 import settingsImg from "@/assets/otherIcons/settings-sharp.png";
 import preferencesImg from "@/assets/otherIcons/options-sharp.png";
 import megaphone from "@/assets/CampaignIcons/megaphone-sharp.png";
+import logo from "@/assets/Logos/TomarDigitalLogo.png"
 
 export const images = {
   profileImg,
@@ -42,4 +43,5 @@ export const images = {
   settingsImg,
   preferencesImg,
   megaphone,
+  logo,
 };
