@@ -1,7 +1,7 @@
 import React from "react";
 import { View, ScrollView, Image, Linking } from "react-native";
 import { Text, Card, useTheme, Divider, Surface } from "react-native-paper";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "./CustomButton"; // Seu componente
 import { images } from "@/constants/images"; // Ajuste conforme seu caminho
@@ -15,12 +15,10 @@ const SobreAPP = () => {
 
   return (
     <Surface style={{flex:1,  backgroundColor: theme.colors.background}}>
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen options={{ 
-        title: "Sobre a Aplicação", 
-        headerShown: true,
-        headerShadowVisible: false 
-      }} />
+    <Stack.Screen options={{ headerShown: false }} />
+      
+    <SafeAreaView style={{ flex: 1 }} edges={['top',  'left', 'right']}>
+    
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* HEADER / LOGO */}
@@ -106,15 +104,16 @@ const SobreAPP = () => {
             
             {/* TEMOS DE FAZER EMAIL DE SUPORTE */}
             <CustomButton 
-              onPress={() => handleOpenLink('mailto:suporte@tomarlocal.pt')}
+              onPress={() => handleOpenLink('mailto:tomardigitalsuporte@gmail.com')}
               icon="email-outline"
             >
               Contactar Suporte
             </CustomButton>
 
-        {/* termos ??? */}
             <CustomButton 
-              onPress={() => handleOpenLink('')}
+                onPress={() => router.push({
+                  pathname: "/components/Termos",
+                })}
               buttonColor="transparent"
               textColor={theme.colors.primary}
             >
