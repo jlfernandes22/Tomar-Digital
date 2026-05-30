@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -9,31 +9,31 @@ import {
   FlatList,
   ScrollView,
   Dimensions,
-} from "react-native";
+} from 'react-native';
 
 import {
   Surface,
   Searchbar,
   IconButton,
   TouchableRipple,
-  useTheme,
   Text,
   FAB,
-} from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
-import { API_URL } from "@/constants/api";
-import Map from "../components/Map";
-import BusinessList from "../components/BusinessList";
-import CustomSnackBar from "../components/CustomSnackBar";
-import { useAuth } from "@/context/AuthContext";
-import CustomChip from "../components/CustomChip";
-import { calcularDistancia } from "../../utils/locationUtils";
-import { images } from "../../constants/images";
-import MapFocous from "@/constants/MapFocous";
+} from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useFocusEffect } from 'expo-router';
+import { API_URL } from '@/constants/api';
+import Map from '../components/Map';
+import BusinessList from '../components/BusinessList';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { useAuth } from '@/context/AuthContext';
+import CustomChip from '../components/CustomChip';
+import { calcularDistancia } from '../../utils/locationUtils';
+import { images } from '../../constants/images';
+import MapFocous from '@/constants/MapFocous';
 
 //interfaces
-import Negocio from "@/constants/Interfaces/Negocio";
+import Negocio from '@/constants/Interfaces/Negocio';
+import { useAppTheme } from '@/context/ThemeContext';
 
 export default function Index() {
   // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
@@ -41,10 +41,10 @@ export default function Index() {
   const [listaFiltrada, setListaFiltrada] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [category, setCategory] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const theme = useTheme();
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [category, setCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const { currentTheme: theme } = useAppTheme();
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [showCloseBusiness, setShowCloseBusiness] = useState(false);
   //vair ser usado para fazer zoom em qual dos negócios estiver perto do utilizador
@@ -68,13 +68,13 @@ export default function Index() {
   const { user } = useAuth();
 
   const categories = [
-    "Património & Museus",
-    "Restauração",
-    "Cafés & Pastelarias",
-    "Alojamento",
-    "Comércio Local",
-    "Lazer & Natureza",
-    "Serviços",
+    'Património & Museus',
+    'Restauração',
+    'Cafés & Pastelarias',
+    'Alojamento',
+    'Comércio Local',
+    'Lazer & Natureza',
+    'Serviços',
   ];
 
   const fetchNegocios = async () => {
@@ -82,15 +82,15 @@ export default function Index() {
     try {
       const response = await fetch(`${API_URL}/negocios`);
       const dados = await response.json();
-      console.log("fetchNegocios");
+      console.log('fetchNegocios');
       // Garantir que os dados mapeados seguem a interface
       const apenasAprovados = dados.filter(
-        (item: Negocio) => item.status === "aprovado",
+        (item: Negocio) => item.status === 'aprovado',
       );
       setListaNegocios(apenasAprovados);
       setLoading(false);
     } catch (error) {
-      console.log("Erro ao obter negócios", error);
+      console.log('Erro ao obter negócios', error);
     }
   };
 
@@ -116,7 +116,7 @@ export default function Index() {
       console.log(ids);
       setIdsFavorite(ids);
     } catch (error) {
-      console.log("Erro ao obter favoritos:", error);
+      console.log('Erro ao obter favoritos:', error);
     }
   };
 
@@ -125,20 +125,20 @@ export default function Index() {
     if (!user?.id) {
       //trocar para snackbar
       setSnackbarMessage(
-        "Aviso:\nTens de ter sessão inciada para guardar favoritos",
+        'Aviso:\nTens de ter sessão inciada para guardar favoritos',
       );
       return;
     }
 
     setLoadingFav(true);
     const currentFav = idsFavorite.includes(businessId);
-    const endpoint = currentFav ? "/retirarFavorito" : "/guardarFavorito";
+    const endpoint = currentFav ? '/retirarFavorito' : '/guardarFavorito';
 
     //coloca-se logo para atualizar logo para o utilizador
     if (currentFav) {
-      setIdsFavorite((prev) => prev.filter((id) => id !== businessId));
+      setIdsFavorite(prev => prev.filter(id => id !== businessId));
     } else {
-      setIdsFavorite((prev) => [...prev, businessId]);
+      setIdsFavorite(prev => [...prev, businessId]);
     }
 
     //console.log(isFavorite);
@@ -147,8 +147,8 @@ export default function Index() {
     //console.log(negocioSelecionado?._id);
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
           businessId: businessId,
@@ -159,12 +159,12 @@ export default function Index() {
       }
     } catch (error) {
       if (currentFav) {
-        setIdsFavorite((prev) => [...prev, businessId]);
+        setIdsFavorite(prev => [...prev, businessId]);
       } else {
-        setIdsFavorite((prev) => prev.filter((id) => id !== businessId));
+        setIdsFavorite(prev => prev.filter(id => id !== businessId));
       }
 
-      setSnackbarMessage("Erro:\n Não foi possível atualizar os favoritos.");
+      setSnackbarMessage('Erro:\n Não foi possível atualizar os favoritos.');
       setSnackbarVisible(true);
     } finally {
       setLoadingFav(false);
@@ -175,15 +175,15 @@ export default function Index() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSearchQuery(query);
 
-    if (query === "") {
+    if (query === '') {
       setListaFiltrada([]);
     } else {
-      const filtrados = listaNegocios.filter((item) => {
+      const filtrados = listaNegocios.filter(item => {
         const coincideNome = item.name
           ?.toLowerCase()
           .includes(query.toLowerCase());
 
-        const coincideCategoria = category === "" || item.category === category;
+        const coincideCategoria = category === '' || item.category === category;
 
         return coincideNome && coincideCategoria;
       });
@@ -194,16 +194,16 @@ export default function Index() {
 
   //Função para verificar se o negócio está na área do utilizador
   const inRange = (isManualClick = false) => {
-    console.log("inRange");
+    console.log('inRange');
     setLoading(true);
     if (listaNegocios.length === 0) {
-      console.log("não há negócios registados");
+      console.log('não há negócios registados');
       return;
     }
     //console.log(userLocation);
     if (!userLocation) return;
 
-    const closeBiz = filteredPins.filter((negocio) => {
+    const closeBiz = filteredPins.filter(negocio => {
       const distancia = calcularDistancia(
         negocio.location.lat,
         negocio.location.long,
@@ -216,7 +216,7 @@ export default function Index() {
     });
 
     if (closeBiz.length === 0 && isManualClick) {
-      setSnackbarMessage("Aviso:\nNão existem negócios por perto");
+      setSnackbarMessage('Aviso:\nNão existem negócios por perto');
       setSnackbarVisible(true);
       setLoading(false);
     }
@@ -255,8 +255,8 @@ export default function Index() {
     },
   ).current;
 
-  const filteredPins = listaNegocios.filter((pin) => {
-    if (category === "") return true;
+  const filteredPins = listaNegocios.filter(pin => {
+    if (category === '') return true;
     return pin.category === category;
   });
 
@@ -279,7 +279,7 @@ export default function Index() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View
-        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       >
         {/* showPin TRUE (Se estiver false, os pins não aparecem) */}
         <Map
@@ -287,12 +287,12 @@ export default function Index() {
           showPin={false}
           businesses={filteredPins}
           readOnly
-          onMarkerPress={(biz) => {
+          onMarkerPress={biz => {
             setNegocioSelecionado(biz);
             setShowCloseBusiness(false);
             setListaFiltrada([]);
           }}
-          onUserLocationUpdate={(coord) => setUserLocation(coord)}
+          onUserLocationUpdate={coord => setUserLocation(coord)}
         />
       </View>
 
@@ -308,16 +308,16 @@ export default function Index() {
           {listaFiltrada.length > 0 && (
             <View style={{ marginTop: 8, maxHeight: 300 }}>
               <FlatList
-                key={category || "all"}
+                key={category || 'all'}
                 data={listaFiltrada}
-                keyExtractor={(item) => item._id}
+                keyExtractor={item => item._id}
                 renderItem={({ item }) => (
                   <Surface
                     elevation={2}
                     style={{
                       borderRadius: 12,
                       marginBottom: 8,
-                      overflow: "hidden",
+                      overflow: 'hidden',
                     }}
                   >
                     <TouchableRipple
@@ -336,14 +336,14 @@ export default function Index() {
           )}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categories.map((cat) => (
+            {categories.map(cat => (
               <CustomChip
                 key={cat}
                 isSelected={category === cat}
                 onPress={() => {
-                  setCategory(category === cat ? "" : cat);
+                  setCategory(category === cat ? '' : cat);
                 }}
-                className="mr-1 h-[40px] mt-2"
+                className="mr-1 mt-2 h-[40px]"
               >
                 {cat}
               </CustomChip>
@@ -356,7 +356,7 @@ export default function Index() {
       {negocioSelecionado && !showCloseBusiness && (
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 50,
             left: 0,
             right: 0,
@@ -370,13 +370,13 @@ export default function Index() {
           <TouchableRipple
             style={{
               flex: 1,
-              justifyContent: "flex-end",
+              justifyContent: 'flex-end',
               paddingHorizontal: 20,
               paddingBottom: 10,
             }}
             onPress={() => {
               router.push({
-                pathname: "/components/DetalhesBusiness",
+                pathname: '/components/DetalhesBusiness',
                 params: { id: negocioSelecionado._id },
               });
             }}
@@ -388,14 +388,14 @@ export default function Index() {
                 backgroundColor: theme.colors.secondaryContainer,
                 borderRadius: 20,
                 padding: 20,
-                alignSelf: "center",
+                alignSelf: 'center',
               }}
             >
               <View
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
                 }}
               >
                 <View style={{ flex: 1 }}>
@@ -403,7 +403,7 @@ export default function Index() {
                     style={{
                       color: theme.colors.onSecondaryContainer,
                       fontSize: 22,
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                     }}
                   >
                     {negocioSelecionado.name}
@@ -446,7 +446,7 @@ export default function Index() {
                 </Text>
               </View>
 
-              <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                 {/* Botão de Favoritos */}
                 <TouchableRipple
                   disabled={loadingFav}
@@ -456,8 +456,8 @@ export default function Index() {
                       : theme.colors.surfaceVariant,
                     paddingHorizontal: 15,
                     borderRadius: 12,
-                    justifyContent: "center",
-                    alignItems: "center",
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     borderWidth: 1,
                     borderColor: isSelectedFavorite
                       ? theme.colors.error
@@ -469,7 +469,7 @@ export default function Index() {
                     <ActivityIndicator size={24} color={theme.colors.primary} />
                   ) : (
                     <IconButton
-                      icon={isSelectedFavorite ? "heart" : "heart-outline"}
+                      icon={isSelectedFavorite ? 'heart' : 'heart-outline'}
                       iconColor={
                         isSelectedFavorite
                           ? theme.colors.onErrorContainer
@@ -488,24 +488,24 @@ export default function Index() {
                     backgroundColor: theme.colors.primary,
                     paddingVertical: 14,
                     borderRadius: 12,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                   onPress={() => {
                     if (!negocioSelecionado) return;
                     const { lat, long } = negocioSelecionado.location;
 
-                    if (Platform.OS === "ios") {
+                    if (Platform.OS === 'ios') {
                       const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;
                       Linking.openURL(url).catch(() =>
                         Alert.alert(
-                          "Erro",
-                          "Não foi possível abrir o Apple Maps",
+                          'Erro',
+                          'Não foi possível abrir o Apple Maps',
                         ),
                       );
                     } else {
                       const url = `geo:${lat},${long}?q=${lat},${long}(${negocioSelecionado.name})`;
-                      Linking.canOpenURL(url).then((supported) => {
+                      Linking.canOpenURL(url).then(supported => {
                         if (supported) {
                           Linking.openURL(url);
                         } else {
@@ -520,7 +520,7 @@ export default function Index() {
                   <Text
                     style={{
                       color: theme.colors.onPrimary,
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       fontSize: 16,
                     }}
                   >
@@ -537,7 +537,7 @@ export default function Index() {
       {bizInArea.length > 0 && showCloseBusiness && (
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 20, // Mantém a lista na parte inferior
             left: 0,
             right: 0,
@@ -546,13 +546,13 @@ export default function Index() {
           }}
         >
           <FlatList
-            key={category || "all"}
+            key={category || 'all'}
             data={bizInArea}
-            keyExtractor={(item) => item._id}
+            keyExtractor={item => item._id}
             horizontal={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
-              paddingHorizontal: (Dimensions.get("window").width - 320) / 2,
+              paddingHorizontal: (Dimensions.get('window').width - 320) / 2,
               paddingBottom: 40,
             }}
             //props para fazer as animações conforme o id selecionado
@@ -570,7 +570,7 @@ export default function Index() {
                 <TouchableRipple
                   onPress={() => {
                     router.push({
-                      pathname: "/components/DetalhesBusiness",
+                      pathname: '/components/DetalhesBusiness',
                       params: { id: itemVisivelId },
                     });
                   }}
@@ -583,14 +583,14 @@ export default function Index() {
                       backgroundColor: theme.colors.secondaryContainer,
                       borderRadius: 20,
                       padding: 20,
-                      alignSelf: "flex-end",
+                      alignSelf: 'flex-end',
                     }}
                   >
                     <View
                       style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
                       }}
                     >
                       <View style={{ flex: 1 }}>
@@ -598,7 +598,7 @@ export default function Index() {
                           style={{
                             color: theme.colors.onSecondaryContainer,
                             fontSize: 22,
-                            fontWeight: "bold",
+                            fontWeight: 'bold',
                           }}
                         >
                           {item.name}
@@ -644,7 +644,7 @@ export default function Index() {
                     </View>
 
                     <View
-                      style={{ flexDirection: "row", gap: 10, marginTop: 10 }}
+                      style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}
                     >
                       {/* Controlo de estado para adicionar/remover o negócio aos favoritos do utilizador */}
                       <TouchableRipple
@@ -655,8 +655,8 @@ export default function Index() {
                             : theme.colors.surfaceVariant,
                           paddingHorizontal: 15,
                           borderRadius: 12,
-                          justifyContent: "center",
-                          alignItems: "center",
+                          justifyContent: 'center',
+                          alignItems: 'center',
                           borderWidth: 1,
                           borderColor: isFavorite
                             ? theme.colors.error
@@ -671,7 +671,7 @@ export default function Index() {
                           />
                         ) : (
                           <IconButton
-                            icon={isFavorite ? "heart" : "heart-outline"}
+                            icon={isFavorite ? 'heart' : 'heart-outline'}
                             iconColor={
                               isFavorite
                                 ? theme.colors.onErrorContainer
@@ -690,25 +690,25 @@ export default function Index() {
                           backgroundColor: theme.colors.primary,
                           paddingVertical: 14,
                           borderRadius: 12,
-                          alignItems: "center",
-                          justifyContent: "center",
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                         onPress={() => {
                           const { lat, long } = item.location;
 
-                          if (Platform.OS === "ios") {
+                          if (Platform.OS === 'ios') {
                             // Protocolo URL Scheme nativo para o Apple Maps
                             const url = `maps://?q=${item.name}&ll=${lat},${long}`;
                             Linking.openURL(url).catch(() =>
                               Alert.alert(
-                                "Erro",
-                                "Não foi possível abrir o Apple Maps",
+                                'Erro',
+                                'Não foi possível abrir o Apple Maps',
                               ),
                             );
                           } else {
                             // Protocolo Geo URI para integração com Google Maps no Android
                             const url = `geo:${lat},${long}?q=${lat},${long}(${item.name})`;
-                            Linking.canOpenURL(url).then((supported) => {
+                            Linking.canOpenURL(url).then(supported => {
                               if (supported) {
                                 Linking.openURL(url);
                               } else {
@@ -724,7 +724,7 @@ export default function Index() {
                         <Text
                           style={{
                             color: theme.colors.onPrimary,
-                            fontWeight: "bold",
+                            fontWeight: 'bold',
                             fontSize: 16,
                           }}
                         >
@@ -743,7 +743,7 @@ export default function Index() {
       <FAB
         icon={images.bagImg}
         style={{
-          position: "absolute",
+          position: 'absolute',
           margin: 16,
           right: 0,
           bottom: 160,
@@ -753,7 +753,7 @@ export default function Index() {
         loading={loading}
         onPress={() => {
           setShowCloseBusiness(true);
-          console.log("negociosFABpressed");
+          console.log('negociosFABpressed');
           inRange(true);
         }}
         disabled={loading}

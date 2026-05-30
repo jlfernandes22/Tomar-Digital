@@ -7,25 +7,25 @@ import {
   Keyboard,
   Image,
   View,
-} from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "@/constants/api";
-import { router } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { images } from "@/constants/images";
-import CustomButton from "../components/CustomButton";
-import CustomTextField from "../components/CustomTextInput";
-import { delay } from "../../utils/delay";
-import CustomSnackBar from "../components/CustomSnackBar";
-import { useAppTheme } from "@/context/ThemeContext";
-import { Surface } from "react-native-paper";
+} from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/constants/api';
+import { router } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { images } from '@/constants/images';
+import CustomButton from '../components/CustomButton';
+import CustomTextField from '../components/CustomTextInput';
+import { delay } from '../../utils/delay';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { useAppTheme } from '@/context/ThemeContext';
+import { Surface } from 'react-native-paper';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -36,8 +36,8 @@ const Login = () => {
       setLoading(true);
 
       const response = await fetch(`${API_URL}/iniciarSessao`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       console.log(`${API_URL}/iniciarSessao`);
@@ -45,7 +45,7 @@ const Login = () => {
       const dados = await response.json();
 
       if (response.ok) {
-        setSnackbarMessage("Sucesso!");
+        setSnackbarMessage('Sucesso!');
         setSnackbarVisible(true);
         await delay(500);
 
@@ -57,7 +57,8 @@ const Login = () => {
         const nomeEncontrado = dados.user?.name || email;
         const cidadeEncontrada = dados.user?.city;
         const NIFEncontrado = dados.user?.NIF;
-        const acceptedTermsEncontrado = dados.user?.acceptedInvoiceTerms || false;
+        const acceptedTermsEncontrado =
+          dados.user?.acceptedInvoiceTerms || false;
         const AvatarEncontrado = dados.user?.Avatar;
 
         if (idEncontrado && tokenEncontrado) {
@@ -73,16 +74,16 @@ const Login = () => {
             acceptedTermsEncontrado,
             AvatarEncontrado,
           );
-          router.replace("/(tabs)/Home");
+          router.replace('/(tabs)/Home');
         }
       } else {
         setLoading(false);
-        setSnackbarMessage("Erro no Login, " + dados.message);
+        setSnackbarMessage('Erro no Login, ' + dados.message);
         setSnackbarVisible(true);
       }
     } catch (error) {
       setLoading(false);
-      setSnackbarMessage("Erro: Não foi possível contactar o servidor.");
+      setSnackbarMessage('Erro: Não foi possível contactar o servidor.');
       setSnackbarVisible(true);
     }
   };
@@ -92,25 +93,25 @@ const Login = () => {
       {/* Imagem de Fundo */}
       <Image
         source={images.backgroundLogin}
-        className="absolute w-full h-full"
+        className="absolute h-full w-full"
         resizeMode="cover"
       />
 
       {/* OVERLAY ESCURO FIXO: Garante que a imagem escurece sempre, removendo a névoa branca */}
       <View
-        className="absolute w-full h-full"
-        style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
+        className="absolute h-full w-full"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
       />
 
       <SafeAreaView className="flex-1">
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
-              justifyContent: "center",
+              justifyContent: 'center',
               paddingBottom: 30,
             }}
             keyboardShouldPersistTaps="handled"

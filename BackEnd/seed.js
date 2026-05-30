@@ -1,14 +1,45 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
+import csv from "csv-parser";
+import "dotenv/config";
+
 import User from "./models/User.js";
 import Business from "./models/Business.js";
 import Campaign from "./models/Campaign.js";
 import Invoice from "./models/Invoice.js";
 import Favorite from "./models/Favorite.js";
-import "dotenv/config";
+import Cae from "./models/Cae.js";
+import CitiesAndCountries from "./models/CitiesAndCountries.js";
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 console.log("A ligar a:", MONGO_URI);
+
+/**
+ * ========================================================
+ * FUNÇÃO: Gerar NIFs matematicamente válidos (Fallback)
+ * ========================================================
+ * Usado apenas se o NIF real não for encontrado.
+ * @param {boolean} isCompany - Se true, começa por 5. Se false, 1, 2 ou 3.
+ */
+const generateValidNIF = (isCompany = false) => {
+  const prefix = isCompany ? '5' : ['1', '2', '3'][Math.floor(Math.random() * 3)];
+  let nif = prefix;
+  
+  for (let i = 0; i < 7; i++) {
+    nif += Math.floor(Math.random() * 10).toString();
+  }
+  
+  let sum = 0;
+  for (let i = 0; i < 8; i++) {
+    sum += parseInt(nif[i]) * (9 - i);
+  }
+  const remainder = sum % 11;
+  const checkDigit = remainder === 0 || remainder === 1 ? 0 : 11 - remainder;
+  
+  return parseInt(nif + checkDigit);
+};
 
 const seedDatabase = async () => {
   try {
@@ -21,200 +52,332 @@ const seedDatabase = async () => {
     await Campaign.deleteMany();
     await Invoice.deleteMany();
     await Favorite.deleteMany();
+    await Cae.deleteMany();
+    await CitiesAndCountries.deleteMany();
     console.log("🗑️ Dados antigos apagados com sucesso.");
 
+    // ==========================================
+    // 1. IMPORTAR DADOS DOS CSV (CAEs e Cidades)
+    // ==========================================
+    const fallbackCaes = [
+      { cae: "56101", descricao: "Restaurantes com espaço de dança e espetáculo", seccao: "I" },
+      { cae: "56102", descricao: "Restaurantes sem espaço de dança e espetáculo", seccao: "I" },
+      { cae: "56301", descricao: "Bares", seccao: "I" },
+      { cae: "56302", descricao: "Cafés e estabelecimentos de bebidas", seccao: "I" },
+      { cae: "55101", descricao: "Hotéis com restaurante", seccao: "I" },
+      { cae: "55102", descricao: "Hotéis sem restaurante", seccao: "I" },
+      { cae: "47111", descricao: "Supermercados", seccao: "G" },
+      { cae: "10711", descricao: "Panificação", seccao: "C" },
+      { cae: "10712", descricao: "Pastelaria", seccao: "C" },
+      { cae: "47730", descricao: "Comércio a retalho de produtos farmacêuticos", seccao: "G" },
+    ];
+
+    // --- PROCESSAR CAEs ---
+    const processCaeCSV = async () => {
+      const filePath = path.join(process.cwd(), "csvFiles", "caes.csv");
+      
+      // Verifica se o ficheiro não existe ou se está totalmente vazio (0 bytes)
+      if (!fs.existsSync(filePath) || fs.statSync(filePath).size === 0) {
+        console.warn(`⚠️ caes.csv não encontrado ou vazio. A usar fallback...`);
+        await Cae.insertMany(fallbackCaes);
+        console.log(`✅ ${fallbackCaes.length} CAEs de fallback inseridos.`);
+        return;
+      }
+
+      const results = [];
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on("data", (data) => {
+            // Mapeamento exato baseado nos teus cabeçalhos: "Secção", "CAE", "Descrição"
+            const seccao = data["Secção"] || data["seccao"] || data["Secao"];
+            const cae = data["CAE"] || data["cae"] || data["Codigo"];
+            const descricao = data["Descrição"] || data["descricao"] || data["Designacao"];
+
+            if (cae && descricao && seccao) {
+              results.push({ cae, descricao, seccao });
+            }
+          })
+          .on("end", resolve)
+          .on("error", reject);
+      });
+
+      if (results.length > 0) {
+        await Cae.insertMany(results);
+        console.log(`✅ ${results.length} CAEs inseridos a partir do CSV.`);
+      } else {
+        console.warn(`⚠️ Nenhum CAE mapeado no ficheiro. A usar fallback...`);
+        await Cae.insertMany(fallbackCaes);
+        console.log(`✅ ${fallbackCaes.length} CAEs de fallback inseridos.`);
+      }
+    };
+
+    // --- PROCESSAR CIDADES (Extraindo APENAS name, state_name, country_name) ---
+    const processCitiesCSV = async () => {
+      const filePath = path.join(process.cwd(), "csvFiles", "cities.csv");
+      if (!fs.existsSync(filePath)) return console.warn(`⚠️ cities.csv não encontrado.`);
+
+      const results = [];
+      console.log(`⏳ A ler e filtrar cities.csv (isto pode demorar uns segundos)...`);
+      
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(filePath)
+          .pipe(csv()) // O csv-parser lê a primeira linha e usa como chaves do objeto
+          .on("data", (data) => {
+            // Extrai APENAS os 3 campos que pediste
+            if (data.name && data.state_name && data.country_name) {
+              results.push({
+                name: data.name,
+                state_name: data.state_name,
+                country_name: data.country_name
+              });
+            }
+          })
+          .on("end", resolve)
+          .on("error", reject);
+      });
+
+      if (results.length > 0) {
+        // Inserir em lotes de 5000 para evitar estourar o limite de memória do MongoDB (BSON Limit)
+        const batchSize = 5000;
+        let insertedCount = 0;
+        
+        for (let i = 0; i < results.length; i += batchSize) {
+          const batch = results.slice(i, i + batchSize);
+          try {
+            // ordered: false faz com que o MongoDB ignore erros de duplicados e continue a inserir o resto
+            await CitiesAndCountries.insertMany(batch, { ordered: false }); 
+            insertedCount += batch.length;
+          } catch (err) {
+            // Captura inserções parciais caso haja algumas duplicadas no meio do lote
+            if (err.insertedCount) insertedCount += err.insertedCount;
+          }
+        }
+        console.log(`✅ ${insertedCount} Cidades (name, state, country) inseridas na base de dados.`);
+      } else {
+        console.warn(`⚠️ Nenhuma cidade válida encontrada no CSV.`);
+      }
+    };
+
+    await processCaeCSV();
+    await processCitiesCSV();
+
+    // ==========================================
+    // 2. CRIAR UTILIZADORES (Portugal + Mundo 🌍)
+    // ==========================================
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash("123456", saltRounds);
 
-    // ==========================================
-    // 1. CRIAR UTILIZADORES (Base + 100 Globais)
-    // ==========================================
+    // Utilizadores base de Tomar (mantidos)
     const baseUsers = [
-      {
-        name: "Câmara Municipal de Tomar",
-        email: "geral@cm-tomar.pt",
-        password: hashedPassword,
-        city: "Tomar",
-        role: "camara",
-        Points: 0,
-        NIF: 810433214,
-      },
-      {
-        name: "Hoang Wright",
-        email: "hoang.wright9675@iol.pt",
-        password: hashedPassword,
-        city: "Montemor-o-Velho",
-        role: "cidadao",
-        Points: 781,
-        NIF: 133890830,
-      },
-      {
-        name: "Ahmed Nelson",
-        email: "ahmed.nelson1520@iol.pt",
-        password: hashedPassword,
-        city: "Góis",
-        role: "comerciante",
-        Points: 0,
-        NIF: 359407811,
-      },
-      {
-        name: "Xiu Richter",
-        email: "xiu.richter950@hotmail.com",
-        password: hashedPassword,
-        city: "Ulsan",
-        role: "comerciante",
-        Points: 0,
-        NIF: 117182273,
-      },
-      {
-        name: "Bernardo Romano",
-        email: "bernardo.romano8646@yandex.com",
-        password: hashedPassword,
-        city: "Ashdod",
-        role: "comerciante",
-        Points: 0,
-        NIF: 538346574,
-      },
+      { name: "Câmara Municipal de Tomar", email: "geral@cm-tomar.pt", password: hashedPassword, city: "Tomar", role: "camara", Points: 0, NIF: 506415082 },
+      { name: "Hoang Wright", email: "hoang.wright9675@iol.pt", password: hashedPassword, city: "Tomar", role: "cidadao", Points: 781, NIF: generateValidNIF(false) },
     ];
 
-    // Gerador de mais de 100 utilizadores internacionais
-    const globalCities = [
-      "Nova Iorque",
-      "Tóquio",
-      "Londres",
-      "Paris",
-      "Tomar",
-      "Lisboa",
-      "Madrid",
-      "Munique",
-      "Sydney",
-      "Roma",
-      "Toronto",
-      "Rio de Janeiro",
-      "Cidade do Cabo",
-      "Berlim",
-      "Amsterdão",
-      "Seul",
-      "Banguecoque",
-      "Istambul",
-      "Buenos Aires",
-      "Lima",
-      "Atenas",
-      "Estocolmo",
-      "Oslo",
-      "Helsínquia",
-      "Porto",
-    ];
-    const firstNames = [
-      "James",
-      "Mary",
-      "John",
-      "Patricia",
-      "Robert",
-      "Jennifer",
-      "João",
-      "Ana",
-      "Carlos",
-      "Catarina",
-      "Kenji",
-      "Yuki",
-      "Lars",
-      "Ingrid",
-      "Omar",
-      "Fatima",
-      "Chen",
-      "Wei",
-      "Hans",
-      "Greta",
-      "Sofia",
-      "Liam",
-      "Noah",
-      "Emma",
-    ];
-    const lastNames = [
-      "Smith",
-      "Johnson",
-      "Williams",
-      "Brown",
-      "Garcia",
-      "Silva",
-      "Santos",
-      "Müller",
-      "Schmidt",
-      "Rossi",
-      "Dubois",
-      "Wang",
-      "Li",
-      "Kim",
-      "Sato",
-      "Ali",
-      "Johansson",
-      "Lopes",
-      "Gomes",
-      "Costa",
+    // Cidades Portuguesas reais (para distribuir utilizadores pelo país)
+    const portugueseCities = [
+      "Lisboa", "Porto", "Coimbra", "Braga", "Aveiro", "Faro", "Viseu", "Leiria", 
+      "Setúbal", "Évora", "Guarda", "Castelo Branco", "Portalegre", "Santarém", 
+      "Vila Real", "Bragança", "Viana do Castelo", "Ponta Delgada", "Funchal",
+      "Almada", "Amadora", "Queluz", "Agualva-Cacém", "Rio de Mouro", "Odivelas",
+      "Loures", "Oeiras", "Cascais", "Sintra", "Albufeira", "Portimão", "Lagos",
+      "Olhão", "Tavira", "Silves", "Loulé", "Vila do Conde", "Póvoa de Varzim",
+      "Guimarães", "Vizela", "Fafe", "Barcelos", "Esposende", "Paredes", "Penafiel",
+      "Lamego", "Peso da Régua", "Mirandela", "Chaves", "Valença", "Monção"
     ];
 
-    let generatedUsers = [];
-    for (let i = 0; i < 110; i++) {
-      const fName = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const lName = lastNames[Math.floor(Math.random() * lastNames.length)];
-      const city =
-        globalCities[Math.floor(Math.random() * globalCities.length)];
-      generatedUsers.push({
-        name: `${fName} ${lName}`,
-        email: `cidadao${i}@mail.com`,
+    // Cidades Internacionais (para simular turistas e utilizadores globais)
+    const internationalCities = [
+      { city: "Madrid", country: "Espanha" },
+      { city: "Barcelona", country: "Espanha" },
+      { city: "Paris", country: "França" },
+      { city: "Lyon", country: "França" },
+      { city: "Berlin", country: "Alemanha" },
+      { city: "Munich", country: "Alemanha" },
+      { city: "Rome", country: "Itália" },
+      { city: "Milan", country: "Itália" },
+      { city: "London", country: "Reino Unido" },
+      { city: "Manchester", country: "Reino Unido" },
+      { city: "Brussels", country: "Bélgica" },
+      { city: "Amsterdam", country: "Países Baixos" },
+      { city: "Zurich", country: "Suíça" },
+      { city: "Vienna", country: "Áustria" },
+      { city: "Prague", country: "República Checa" },
+      { city: "Warsaw", country: "Polónia" },
+      { city: "Stockholm", country: "Suécia" },
+      { city: "Copenhagen", country: "Dinamarca" },
+      { city: "Oslo", country: "Noruega" },
+      { city: "Helsinki", country: "Finlândia" },
+      { city: "Dublin", country: "Irlanda" },
+      { city: "Lisbon", country: "Portugal" }, // Para utilizadores estrangeiros que escrevem em inglês
+      { city: "Porto", country: "Portugal" },
+      { city: "São Paulo", country: "Brasil" },
+      { city: "Rio de Janeiro", country: "Brasil" },
+      { city: "Salvador", country: "Brasil" },
+      { city: "Brasília", country: "Brasil" },
+      { city: "Belo Horizonte", country: "Brasil" },
+      { city: "Curitiba", country: "Brasil" },
+      { city: "Florianópolis", country: "Brasil" },
+      { city: "New York", country: "EUA" },
+      { city: "Los Angeles", country: "EUA" },
+      { city: "Miami", country: "EUA" },
+      { city: "Toronto", country: "Canadá" },
+      { city: "Montreal", country: "Canadá" },
+      { city: "Tokyo", country: "Japão" },
+      { city: "Seoul", country: "Coreia do Sul" },
+      { city: "Sydney", country: "Austrália" },
+      { city: "Melbourne", country: "Austrália" },
+      { city: "Cape Town", country: "África do Sul" },
+    ];
+
+    // Nomes portugueses para cidadãos
+    const portugueseFirstNames = [
+      "João", "Maria", "António", "Ana", "Carlos", "Sofia", "Miguel", "Mariana",
+      "Pedro", "Rita", "Rui", "Inês", "Tiago", "Catarina", "Bruno", "Francisco",
+      "Beatriz", "Duarte", "Margarida", "Gonçalo", "Leonor", "Martim", "Matilde",
+      "Afonso", "Carolina", "Tomás", "Francisca", "Rodrigo", "Sara", "Diogo",
+      "Laura", "Gabriel", "Alice", "Vicente", "Benedita", "Salvador", "Camila",
+      "Bernardo", "Clara", "Lourenço", "Marta", "Simão", "Iara", "Nuno", "Júlia",
+      "Rafael", "Beatriz", "David", "Lara", "André", "Cristiana", "Luís", "Patrícia"
+    ];
+
+    const portugueseLastNames = [
+      "Silva", "Santos", "Ferreira", "Pereira", "Oliveira", "Costa", "Rodrigues",
+      "Martins", "Jesus", "Sousa", "Fernandes", "Gonçalves", "Gomes", "Lopes",
+      "Marques", "Alves", "Pinto", "Carvalho", "Ribeiro", "Moreira", "Mendes",
+      "Soares", "Nunes", "Dias", "Correia", "Machado", "Antunes", "Coelho",
+      "Vieira", "Teixeira", "Monteiro", "Ramos", "Henriques", "Cardoso", "Campos",
+      "Vaz", "Freitas", "Araújo", "Neves", "Pires", "Cunha", "Moura", "Fonseca",
+      "Tavares", "Baptista", "Barbosa", "Miranda", "Azevedo", "Lourenço", "Mota"
+    ];
+
+    // Nomes internacionais
+    const internationalNames = [
+      { first: "James", last: "Smith", country: "EUA" },
+      { first: "Emma", last: "Johnson", country: "Reino Unido" },
+      { first: "Lucas", last: "Garcia", country: "Espanha" },
+      { first: "Sophie", last: "Martin", country: "França" },
+      { first: "Luca", last: "Rossi", country: "Itália" },
+      { first: "Anna", last: "Müller", country: "Alemanha" },
+      { first: "Pedro", last: "Silva", country: "Brasil" },
+      { first: "Ana", last: "Santos", country: "Brasil" },
+      { first: "Yuki", last: "Tanaka", country: "Japão" },
+      { first: "Min-jun", last: "Kim", country: "Coreia do Sul" },
+      { first: "Liam", last: "O'Brien", country: "Irlanda" },
+      { first: "Olivia", last: "Brown", country: "Austrália" },
+      { first: "Noah", last: "Wilson", country: "Canadá" },
+      { first: "Amelia", last: "Taylor", country: "Nova Zelândia" },
+      { first: "Hugo", last: "Dubois", country: "Bélgica" },
+      { first: "Eva", last: "van Dijk", country: "Países Baixos" },
+      { first: "Erik", last: "Andersson", country: "Suécia" },
+      { first: "Sofia", last: "Nielsen", country: "Dinamarca" },
+      { first: "Mateo", last: "Lopez", country: "México" },
+      { first: "Valentina", last: "Rodriguez", country: "Argentina" },
+    ];
+
+    // Gerar cidadãos portugueses (150)
+    let portugueseCitizens = [];
+    for (let i = 0; i < 150; i++) {
+      const firstName = portugueseFirstNames[Math.floor(Math.random() * portugueseFirstNames.length)];
+      const lastName = portugueseLastNames[Math.floor(Math.random() * portugueseLastNames.length)];
+      const city = portugueseCities[Math.floor(Math.random() * portugueseCities.length)];
+      
+      portugueseCitizens.push({
+        name: `${firstName} ${lastName}`,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@mail.pt`,
         password: hashedPassword,
         city: city,
         role: "cidadao",
         Points: Math.floor(Math.random() * 1200),
-        NIF: Math.floor(100000000 + Math.random() * 900000000),
+        NIF: generateValidNIF(false),
       });
     }
 
-    const users = await User.insertMany([...baseUsers, ...generatedUsers]);
-    console.log(`✅ Foram criados ${users.length} utilizadores!`);
+    // Gerar cidadãos internacionais (100)
+    let internationalCitizens = [];
+    for (let i = 0; i < 100; i++) {
+      const nameData = internationalNames[Math.floor(Math.random() * internationalNames.length)];
+      const location = internationalCities[Math.floor(Math.random() * internationalCities.length)];
+      
+      internationalCitizens.push({
+        name: `${nameData.first} ${nameData.last}`,
+        email: `${nameData.first.toLowerCase()}.${nameData.last.toLowerCase()}${i}@globalmail.com`,
+        password: hashedPassword,
+        city: location.city,
+        role: "cidadao",
+        Points: Math.floor(Math.random() * 1200),
+        NIF: generateValidNIF(false), // NIF válido para testes, mesmo para estrangeiros
+      });
+    }
 
+    // Gerar comerciantes de outras cidades portuguesas (20) - para simular expansão
+    let merchantsOtherCities = [];
+    const merchantCities = ["Lisboa", "Porto", "Coimbra", "Braga", "Aveiro", "Faro", "Leiria", "Viseu"];
+    for (let i = 0; i < 20; i++) {
+      const firstName = portugueseFirstNames[Math.floor(Math.random() * portugueseFirstNames.length)];
+      const lastName = portugueseLastNames[Math.floor(Math.random() * portugueseLastNames.length)];
+      const city = merchantCities[Math.floor(Math.random() * merchantCities.length)];
+      
+      merchantsOtherCities.push({
+        name: `${firstName} ${lastName}`,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@comercio-${city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}.pt`,
+        password: hashedPassword,
+        city: city,
+        role: "comerciante",
+        Points: 0,
+        NIF: generateValidNIF(false),
+      });
+    }
+
+    // Comerciantes de Tomar (mantidos)
+    const merchantNamesTomar = [
+      "João Silva", "Maria Fernandes", "António Costa", "Ana Pereira", "Carlos Santos",
+      "Sofia Rodrigues", "Miguel Oliveira", "Mariana Gomes", "Pedro Martins", "Rita Ferreira",
+      "Rui Almeida", "Inês Carvalho", "Tiago Mendes", "Catarina Lopes", "Bruno Pinto",
+      "Francisco Nunes", "Beatriz Leal", "Duarte Marques", "Margarida Pinto", "Gonçalo Silva"
+    ];
+
+    let merchantsTomar = merchantNamesTomar.map((name, i) => ({
+      name,
+      email: name.toLowerCase().replace(/ /g, ".") + "@comercio-tomar.pt",
+      password: hashedPassword,
+      city: "Tomar",
+      role: "comerciante",
+      Points: 0,
+      NIF: generateValidNIF(false),
+    }));
+
+    // Inserir TODOS os utilizadores
+    const allUsers = [
+      ...baseUsers,
+      ...merchantsTomar,
+      ...merchantsOtherCities,
+      ...portugueseCitizens,
+      ...internationalCitizens
+    ];
+
+    const users = await User.insertMany(allUsers);
+    console.log(`✅ Foram criados ${users.length} utilizadores de Portugal e do Mundo!`);
+    console.log(`   🇵🇹 ${portugueseCitizens.length} cidadãos portugueses`);
+    console.log(`   🌍 ${internationalCitizens.length} cidadãos internacionais`);
+    console.log(`   🏪 ${merchantsTomar.length + merchantsOtherCities.length} comerciantes`);
+
+    // Helpers para aceder aos utilizadores
     const getU = (email) => users.find((u) => u.email === email);
-    const getRandomUser = () => users[Math.floor(Math.random() * users.length)];
+    const getCitizens = () => users.filter(u => u.role === "cidadao" || u.role === "camara");
+    const getMerchants = () => users.filter(u => u.role === "comerciante");
+    const getRandomCitizen = () => getCitizens()[Math.floor(Math.random() * getCitizens().length)];
 
     // ==========================================
-    // 2. CRIAR CAMPANHAS
+    // 3. CRIAR CAMPANHAS
     // ==========================================
     const campaignsData = [
       {
         createdBy: getU("geral@cm-tomar.pt")._id,
-        titulo: "Rota Templária 2026",
-        slogan: "Explore o património de Tomar e ganhe recompensas únicas.",
-        descricao:
-          "Visite os monumentos históricos de Tomar e acumule pontos para trocar por entradas grátis.",
-        estado: "ativa",
-        DataInicio: new Date("2026-01-01"),
-        DataExpiracao: new Date("2026-12-31"),
-        logo: "https://exemplo.com/rota-templaria.jpg",
-        panfleto: "https://exemplo.com/panfleto.pdf",
-        normas: "Válido em estabelecimentos aderentes.",
-        packs: [
-          {
-            pointsCost: 50,
-            rewardDescription: "Entrada Grátis no Convento",
-            stock: 100,
-            currentStock: 100,
-            maxPerUser: 2,
-          },
-          {
-            pointsCost: 100,
-            rewardDescription: "Pack Família Templária",
-            stock: 50,
-            currentStock: 50,
-            maxPerUser: 1,
-          },
-        ],
-      },
-      {
-        createdBy: getU("geral@cm-tomar.pt")._id,
         titulo: "Comércio Local Vivo",
         slogan: "Apoie os pequenos negócios do centro histórico.",
-        descricao: "Compre nas lojas locais de Tomar.",
+        descricao: "Compre nas lojas locais de Tomar e ganhe pontos.",
+        listaCAES: ["56101", "56102", "56301", "56302", "47111", "47730", "10712"], // Adicionado para cumprir o Schema
         estado: "ativa",
         DataInicio: new Date("2026-03-01"),
         DataExpiracao: new Date("2026-09-30"),
@@ -222,1938 +385,146 @@ const seedDatabase = async () => {
         panfleto: "https://exemplo.com/panfleto.pdf",
         normas: "Válido para compras superiores a 1€.",
         packs: [
-          {
-            pointsCost: 100,
-            rewardDescription: "Voucher 10€ no Comércio",
-            stock: 50,
-            currentStock: 50,
-            maxPerUser: 2,
-          },
+          { pointsCost: 100, rewardDescription: "Voucher 10€ no Comércio", stock: 50, currentStock: 50, maxPerUser: 2 },
+          { pointsCost: 250, rewardDescription: "Jantar para 2 pessoas", stock: 20, currentStock: 20, maxPerUser: 1 }
         ],
       },
+      {
+        createdBy: getU("geral@cm-tomar.pt")._id,
+        titulo: "Tomar Sustentável",
+        slogan: "Reduza a pegada ecológica e seja recompensado.",
+        descricao: "Campanha de incentivo à utilização de transportes suaves e compras em mercados locais.",
+        listaCAES: ["47111", "10711", "10712"], // Adicionado para cumprir o Schema
+        estado: "ativa",
+        DataInicio: new Date("2026-05-01"),
+        DataExpiracao: new Date("2026-12-31"),
+        logo: "https://exemplo.com/tomar-sustentavel.jpg",
+        panfleto: "https://exemplo.com/panfleto_sust.pdf",
+        normas: "Acumulação de pontos em mercados municipais.",
+        packs: [
+          { pointsCost: 50, rewardDescription: "Saco reutilizável Tomar", stock: 100, currentStock: 100, maxPerUser: 3 },
+          { pointsCost: 500, rewardDescription: "Bicicleta partilhada (1 mês)", stock: 10, currentStock: 10, maxPerUser: 1 }
+        ],
+      }
     ];
-
     const campaigns = await Campaign.insertMany(campaignsData);
     const getC = (titulo) => campaigns.find((c) => c.titulo === titulo);
-    console.log(`✅ Foram criadas ${campaigns.length} campanhas!`);
+    console.log(`✅ Foram criadas ${campaigns.length} campanhas locais!`);
 
     // ==========================================
-    // 3. CRIAR NEGÓCIOS (COORDENADAS REAIS DO OPENSTREETMAP)
+    // 4. CRIAR NEGÓCIOS REAIS EM TOMAR (Com location CORRETO para o Schema)
     // ==========================================
-    const businessesData = [
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pepe",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6037877, long: -8.4152225 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 786579303,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio0.jpg",
-        gallery: ["https://exemplo.com/negocio0_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Snack Bar 15",
-        category: "Restauração",
-        location: { lat: 39.6026868, long: -8.4145954 },
-        address: "Rua Infantaria 15, 25, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 896233790,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio1.jpg",
-        gallery: ["https://exemplo.com/negocio1_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Roda do Mouchão",
-        category: "Lazer & Natureza",
-        location: { lat: 39.605316, long: -8.4132604 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 339670711,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio2.jpg",
-        gallery: ["https://exemplo.com/negocio2_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Restaurante Piri-Piri",
-        category: "Restauração",
-        location: { lat: 39.6034878, long: -8.412692 },
-        address: "Rua dos Moinhos, 54, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 249827706,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio3.jpg",
-        gallery: ["https://exemplo.com/negocio3_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Casa Das Ratas",
-        category: "Restauração",
-        location: { lat: 39.6037622, long: -8.4120118 },
-        address: "Rua Doutor Joaquim Jacinto, 6, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 826600539,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio4.jpg",
-        gallery: ["https://exemplo.com/negocio4_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Casa Matreno",
-        category: "Restauração",
-        location: { lat: 39.6036967, long: -8.4119756 },
-        address: "Rua Doutor Joaquim Jacinto, 6, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 685582861,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio5.jpg",
-        gallery: ["https://exemplo.com/negocio5_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Cubos Café",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6024477, long: -8.4111967 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 553035110,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio6.jpg",
-        gallery: ["https://exemplo.com/negocio6_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Residencial Luz**",
-        category: "Alojamento",
-        location: { lat: 39.6039637, long: -8.4144674 },
-        address: "Rua Serpa Pinto, 144, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 200604502,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio7.jpg",
-        gallery: ["https://exemplo.com/negocio7_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Novo Banco",
-        category: "Serviços",
-        location: { lat: 39.6033209, long: -8.4101802 },
-        address: "Avenida Norton de Matos, 42, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 334760738,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio8.jpg",
-        gallery: ["https://exemplo.com/negocio8_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Café Paraíso",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6039473, long: -8.4140618 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 349817734,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio9.jpg",
-        gallery: ["https://exemplo.com/negocio9_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Farmácia Torres Pinheiro",
-        category: "Serviços",
-        location: { lat: 39.6043426, long: -8.4123427 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 128492780,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio10.jpg",
-        gallery: ["https://exemplo.com/negocio10_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Restaurante Tomaz",
-        category: "Restauração",
-        location: { lat: 39.6019013, long: -8.4125979 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 702632297,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio11.jpg",
-        gallery: ["https://exemplo.com/negocio11_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "D'Arco",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6036359, long: -8.4094671 },
-        address: "Rua Santa Iria, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 797808098,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio12.jpg",
-        gallery: ["https://exemplo.com/negocio12_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Millennium bcp",
-        category: "Serviços",
-        location: { lat: 39.6045026, long: -8.4089354 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 550455977,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio13.jpg",
-        gallery: ["https://exemplo.com/negocio13_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Millennium bcp",
-        category: "Serviços",
-        location: { lat: 39.6023263, long: -8.4131118 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 336696312,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio14.jpg",
-        gallery: ["https://exemplo.com/negocio14_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Divine",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6052057, long: -8.4092471 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 582334538,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio15.jpg",
-        gallery: ["https://exemplo.com/negocio15_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Farmácia da Misericórdia",
-        category: "Serviços",
-        location: { lat: 39.6015796, long: -8.4145909 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 969119330,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio16.jpg",
-        gallery: ["https://exemplo.com/negocio16_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Gelatomania",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6038829, long: -8.4143248 },
-        address: "Rua Serpa Pinto, 149, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 106977991,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio17.jpg",
-        gallery: ["https://exemplo.com/negocio17_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "O Tabuleiro",
-        category: "Restauração",
-        location: { lat: 39.6039522, long: -8.4145403 },
-        address: "Rua Serpa Pinto, 140/148, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 271432881,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio18.jpg",
-        gallery: ["https://exemplo.com/negocio18_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Café da Praça",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6038088, long: -8.4151287 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 465341213,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio19.jpg",
-        gallery: ["https://exemplo.com/negocio19_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Taverna Antiqua",
-        category: "Restauração",
-        location: { lat: 39.603737, long: -8.4154905 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 331191390,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio20.jpg",
-        gallery: ["https://exemplo.com/negocio20_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "O Infante",
-        category: "Restauração",
-        location: { lat: 39.6019017, long: -8.414698 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 461415646,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio21.jpg",
-        gallery: ["https://exemplo.com/negocio21_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Pastelaria Rosa",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6020664, long: -8.4132936 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 507943839,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio22.jpg",
-        gallery: ["https://exemplo.com/negocio22_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Café Pastelaria Acádia",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6019795, long: -8.4119339 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 469319644,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio23.jpg",
-        gallery: ["https://exemplo.com/negocio23_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Café Pic - Nic",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6039345, long: -8.4118061 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 966647391,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio24.jpg",
-        gallery: ["https://exemplo.com/negocio24_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Estrelas de Tomar",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6044719, long: -8.4122401 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 593303705,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio25.jpg",
-        gallery: ["https://exemplo.com/negocio25_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Theatro",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6023829, long: -8.4149756 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 506448196,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio26.jpg",
-        gallery: ["https://exemplo.com/negocio26_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Museu Municipal - Núcleo de Arte Contemporânea",
-        category: "Património & Museus",
-        location: { lat: 39.6047298, long: -8.4137268 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 414797776,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio27.jpg",
-        gallery: ["https://exemplo.com/negocio27_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Museu Luso-Hebraico Abraham Zacut",
-        category: "Património & Museus",
-        location: { lat: 39.6032277, long: -8.4138018 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 990566476,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio28.jpg",
-        gallery: ["https://exemplo.com/negocio28_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Museu Municipal - Galeria dos Paços do Concelho",
-        category: "Património & Museus",
-        location: { lat: 39.603578, long: -8.4155055 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 774996843,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio29.jpg",
-        gallery: ["https://exemplo.com/negocio29_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Casa - Museu Lopes-Graça",
-        category: "Património & Museus",
-        location: { lat: 39.6036068, long: -8.4123991 },
-        address: "Rua Dr. Joaquim Jacinto, 25, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 764130526,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio30.jpg",
-        gallery: ["https://exemplo.com/negocio30_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Restaurante Bela Vista",
-        category: "Restauração",
-        location: { lat: 39.6046353, long: -8.4106282 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 488302652,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio31.jpg",
-        gallery: ["https://exemplo.com/negocio31_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Benetton",
-        category: "Comércio Local",
-        location: { lat: 39.6043688, long: -8.4122056 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 856528252,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio32.jpg",
-        gallery: ["https://exemplo.com/negocio32_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pensão União",
-        category: "Alojamento",
-        location: { lat: 39.6041803, long: -8.4135168 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 174684276,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio33.jpg",
-        gallery: ["https://exemplo.com/negocio33_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "O Gráfica",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6034689, long: -8.4145799 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 149203558,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio34.jpg",
-        gallery: ["https://exemplo.com/negocio34_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Marylete",
-        category: "Comércio Local",
-        location: { lat: 39.6028913, long: -8.4146273 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 930075810,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio35.jpg",
-        gallery: ["https://exemplo.com/negocio35_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Covil dos Templários",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6018273, long: -8.4149702 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 410727955,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio36.jpg",
-        gallery: ["https://exemplo.com/negocio36_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Café Pastelaria - Pingo de Mel",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6020043, long: -8.4135254 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 349957310,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio37.jpg",
-        gallery: ["https://exemplo.com/negocio37_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Snack - Bar, Pastelaria - O Requinte",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6022824, long: -8.4132973 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 508157429,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio38.jpg",
-        gallery: ["https://exemplo.com/negocio38_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "O meu Café",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.60256, long: -8.412462 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 782560971,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio39.jpg",
-        gallery: ["https://exemplo.com/negocio39_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Casa dos Cubos",
-        category: "Lazer & Natureza",
-        location: { lat: 39.6023881, long: -8.4114707 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 274648506,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio40.jpg",
-        gallery: ["https://exemplo.com/negocio40_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "100 Montaditos",
-        category: "Restauração",
-        location: { lat: 39.6042962, long: -8.4125448 },
-        address: "Rua Serpa Pinto, 41, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 497478786,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio41.jpg",
-        gallery: ["https://exemplo.com/negocio41_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pautónia",
-        category: "Comércio Local",
-        location: { lat: 39.604364, long: -8.4127293 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 819595113,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio42.jpg",
-        gallery: ["https://exemplo.com/negocio42_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "O Siciliano",
-        category: "Restauração",
-        location: { lat: 39.6039183, long: -8.4125913 },
-        address: "Rua de São João, 37, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 386665249,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio43.jpg",
-        gallery: ["https://exemplo.com/negocio43_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Restaurante Nabão",
-        category: "Restauração",
-        location: { lat: 39.6048961, long: -8.4107185 },
-        address: "Rua Fonte do Choupo, 3, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 833953718,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio44.jpg",
-        gallery: ["https://exemplo.com/negocio44_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "O Jardim",
-        category: "Restauração",
-        location: { lat: 39.6046967, long: -8.4149324 },
-        address: "Rua Silva Magalhães, 54, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 754049436,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio45.jpg",
-        gallery: ["https://exemplo.com/negocio45_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Formas & Feitio",
-        category: "Comércio Local",
-        location: { lat: 39.6035346, long: -8.4119281 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 673528321,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio46.jpg",
-        gallery: ["https://exemplo.com/negocio46_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Restaurante Chinês - "Tian Chi Ge"',
-        category: "Restauração",
-        location: { lat: 39.6036457, long: -8.4118793 },
-        address: "Rua Everard, nº 75, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 882893941,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio47.jpg",
-        gallery: ["https://exemplo.com/negocio47_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Kokito's Coffe Club",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6037344, long: -8.4155515 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 596348124,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio48.jpg",
-        gallery: ["https://exemplo.com/negocio48_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "TENRUSKA",
-        category: "Comércio Local",
-        location: { lat: 39.6040359, long: -8.4141282 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 787194506,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio49.jpg",
-        gallery: ["https://exemplo.com/negocio49_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Moda itália",
-        category: "Comércio Local",
-        location: { lat: 39.6041258, long: -8.413247 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 838908273,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio50.jpg",
-        gallery: ["https://exemplo.com/negocio50_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "BMS",
-        category: "Comércio Local",
-        location: { lat: 39.6040889, long: -8.4133916 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 698020238,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio51.jpg",
-        gallery: ["https://exemplo.com/negocio51_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Glamour",
-        category: "Comércio Local",
-        location: { lat: 39.6041563, long: -8.4131344 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 335809993,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio52.jpg",
-        gallery: ["https://exemplo.com/negocio52_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Vanessa",
-        category: "Comércio Local",
-        location: { lat: 39.6041661, long: -8.4130841 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 835098955,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio53.jpg",
-        gallery: ["https://exemplo.com/negocio53_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Caixa Geral de Depósitos",
-        category: "Serviços",
-        location: { lat: 39.604052, long: -8.4135626 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 448195935,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio54.jpg",
-        gallery: ["https://exemplo.com/negocio54_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: 'Restaurante "Luanda"',
-        category: "Restauração",
-        location: { lat: 39.6053663, long: -8.4145369 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 924970419,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio55.jpg",
-        gallery: ["https://exemplo.com/negocio55_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Rialto",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6055085, long: -8.4149196 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 345938494,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio56.jpg",
-        gallery: ["https://exemplo.com/negocio56_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Mouchão",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6055585, long: -8.4150235 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 964411347,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio57.jpg",
-        gallery: ["https://exemplo.com/negocio57_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Insensato Café-Livraria",
-        category: "Restauração",
-        location: { lat: 39.6053458, long: -8.4149032 },
-        address: "Rua Silva Magalhães, 25, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 387484583,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio58.jpg",
-        gallery: ["https://exemplo.com/negocio58_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Padaria "Rosa"',
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6045905, long: -8.414928 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 709004943,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio59.jpg",
-        gallery: ["https://exemplo.com/negocio59_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pastelaria Combatente",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6046259, long: -8.4148538 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 437882805,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio60.jpg",
-        gallery: ["https://exemplo.com/negocio60_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Iguarias de Cá",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.604413, long: -8.4148323 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 636045484,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio61.jpg",
-        gallery: ["https://exemplo.com/negocio61_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Casa Manuel Guimarães",
-        category: "Património & Museus",
-        location: { lat: 39.6042716, long: -8.4149441 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 790256940,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio62.jpg",
-        gallery: ["https://exemplo.com/negocio62_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: 'Mercearia - "Ti Anica"',
-        category: "Comércio Local",
-        location: { lat: 39.6042117, long: -8.4148148 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 592688426,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio63.jpg",
-        gallery: ["https://exemplo.com/negocio63_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Le P'tit Français - Boulangerie - Croissanterie",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6030508, long: -8.4146459 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 253407200,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio64.jpg",
-        gallery: ["https://exemplo.com/negocio64_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Palco D' Especiarias",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6030194, long: -8.4147087 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 364814270,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio65.jpg",
-        gallery: ["https://exemplo.com/negocio65_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Sofibel - Pronto a vestir",
-        category: "Comércio Local",
-        location: { lat: 39.6027979, long: -8.414684 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 678722458,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio66.jpg",
-        gallery: ["https://exemplo.com/negocio66_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Loja do Chico",
-        category: "Comércio Local",
-        location: { lat: 39.6025136, long: -8.4147285 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 382116655,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio67.jpg",
-        gallery: ["https://exemplo.com/negocio67_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Susy",
-        category: "Comércio Local",
-        location: { lat: 39.6020493, long: -8.4146995 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 902099969,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio68.jpg",
-        gallery: ["https://exemplo.com/negocio68_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pastelaria Pic-Nic",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6037907, long: -8.4131261 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 727694430,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio69.jpg",
-        gallery: ["https://exemplo.com/negocio69_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Vinhas",
-        category: "Comércio Local",
-        location: { lat: 39.6033758, long: -8.4100588 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 726563708,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio70.jpg",
-        gallery: ["https://exemplo.com/negocio70_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Café "O Capitulo"',
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6034379, long: -8.4099176 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 528853029,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio71.jpg",
-        gallery: ["https://exemplo.com/negocio71_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Galerias Pardelhas",
-        category: "Comércio Local",
-        location: { lat: 39.6024828, long: -8.4127326 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 248532577,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio72.jpg",
-        gallery: ["https://exemplo.com/negocio72_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "O Lacinho - Lingerie",
-        category: "Comércio Local",
-        location: { lat: 39.6020458, long: -8.4133692 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 647099690,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio73.jpg",
-        gallery: ["https://exemplo.com/negocio73_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "BPI",
-        category: "Serviços",
-        location: { lat: 39.6019143, long: -8.4138643 },
-        address: "Avenida Cândido Madureira, 75, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 629908599,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio74.jpg",
-        gallery: ["https://exemplo.com/negocio74_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Café Convento",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6032186, long: -8.412492 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 197613238,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio75.jpg",
-        gallery: ["https://exemplo.com/negocio75_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "A Joaninha",
-        category: "Comércio Local",
-        location: { lat: 39.6035939, long: -8.4127485 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 217734861,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio76.jpg",
-        gallery: ["https://exemplo.com/negocio76_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Noveste",
-        category: "Comércio Local",
-        location: { lat: 39.603798, long: -8.4128504 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 264112119,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio77.jpg",
-        gallery: ["https://exemplo.com/negocio77_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: 'Café Restaurante "Moinhos"',
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6039742, long: -8.4130323 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 773715057,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio78.jpg",
-        gallery: ["https://exemplo.com/negocio78_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Pelourinho de Tomar",
-        category: "Lazer & Natureza",
-        location: { lat: 39.6059085, long: -8.4152643 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 830661141,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio79.jpg",
-        gallery: ["https://exemplo.com/negocio79_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Restaurante "A Grelha"',
-        category: "Restauração",
-        location: { lat: 39.6057803, long: -8.4156294 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 553290810,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio80.jpg",
-        gallery: ["https://exemplo.com/negocio80_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Tasquinha da Mitas",
-        category: "Restauração",
-        location: { lat: 39.604722, long: -8.4125643 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 513140753,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio81.jpg",
-        gallery: ["https://exemplo.com/negocio81_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Lusitânia",
-        category: "Restauração",
-        location: { lat: 39.6046982, long: -8.4126569 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 602564736,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio82.jpg",
-        gallery: ["https://exemplo.com/negocio82_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Beira Rio",
-        category: "Restauração",
-        location: { lat: 39.6046713, long: -8.4127387 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 694021782,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio83.jpg",
-        gallery: ["https://exemplo.com/negocio83_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Residencial Cavaleiros de Cristo***",
-        category: "Alojamento",
-        location: { lat: 39.6045986, long: -8.413041 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 112327652,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio84.jpg",
-        gallery: ["https://exemplo.com/negocio84_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Pastelaria Mila",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6043004, long: -8.4147075 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 830448745,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio85.jpg",
-        gallery: ["https://exemplo.com/negocio85_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Residencial Sinagoga***",
-        category: "Alojamento",
-        location: { lat: 39.6045707, long: -8.4145932 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 831980933,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio86.jpg",
-        gallery: ["https://exemplo.com/negocio86_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pastelaria Rosa",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6019305, long: -8.4131959 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 676567501,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio87.jpg",
-        gallery: ["https://exemplo.com/negocio87_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "A Tendinha",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6017131, long: -8.4139367 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 925276600,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio88.jpg",
-        gallery: ["https://exemplo.com/negocio88_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Bebégiro",
-        category: "Comércio Local",
-        location: { lat: 39.6015411, long: -8.4138629 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 219778234,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio89.jpg",
-        gallery: ["https://exemplo.com/negocio89_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Café STOP",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6019956, long: -8.4122238 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 415143362,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio90.jpg",
-        gallery: ["https://exemplo.com/negocio90_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Água na Boca",
-        category: "Restauração",
-        location: { lat: 39.6020802, long: -8.4127241 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 587182120,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio91.jpg",
-        gallery: ["https://exemplo.com/negocio91_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "A Brasinha",
-        category: "Restauração",
-        location: { lat: 39.6015876, long: -8.4136711 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 875340444,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio92.jpg",
-        gallery: ["https://exemplo.com/negocio92_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Fiaforte",
-        category: "Comércio Local",
-        location: { lat: 39.6018007, long: -8.4120576 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 382811832,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio93.jpg",
-        gallery: ["https://exemplo.com/negocio93_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Café Caravela",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6020696, long: -8.4116711 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 637500247,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio94.jpg",
-        gallery: ["https://exemplo.com/negocio94_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Café / Restaurante Ria Coa",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6019761, long: -8.4116384 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 645119047,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio95.jpg",
-        gallery: ["https://exemplo.com/negocio95_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Nigiri One",
-        category: "Restauração",
-        location: { lat: 39.6046189, long: -8.4095047 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 771410971,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio96.jpg",
-        gallery: ["https://exemplo.com/negocio96_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Telepizza",
-        category: "Restauração",
-        location: { lat: 39.6046779, long: -8.4102089 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 786066793,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio97.jpg",
-        gallery: ["https://exemplo.com/negocio97_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Secret Jeans",
-        category: "Comércio Local",
-        location: { lat: 39.6046065, long: -8.4085236 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 313579170,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio98.jpg",
-        gallery: ["https://exemplo.com/negocio98_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Pereirinha",
-        category: "Restauração",
-        location: { lat: 39.6031872, long: -8.4156212 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 264109919,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio99.jpg",
-        gallery: ["https://exemplo.com/negocio99_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Café Verdokas",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6075201, long: -8.4084571 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 273461957,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio100.jpg",
-        gallery: ["https://exemplo.com/negocio100_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Café "Os Pombinhos"',
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6073703, long: -8.4084329 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 936043811,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio101.jpg",
-        gallery: ["https://exemplo.com/negocio101_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Mhia",
-        category: "Comércio Local",
-        location: { lat: 39.6050576, long: -8.4092747 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 100614068,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio102.jpg",
-        gallery: ["https://exemplo.com/negocio102_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Casa Blanca",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6036661, long: -8.4136923 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 743111853,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio103.jpg",
-        gallery: ["https://exemplo.com/negocio103_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Abrigo da Alma",
-        category: "Restauração",
-        location: { lat: 39.6035039, long: -8.4130062 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 120912992,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio104.jpg",
-        gallery: ["https://exemplo.com/negocio104_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Restaurante Baía",
-        category: "Restauração",
-        location: { lat: 39.6030422, long: -8.415013 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 489747629,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio105.jpg",
-        gallery: ["https://exemplo.com/negocio105_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Claustro",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6043367, long: -8.4128296 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 503968757,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio106.jpg",
-        gallery: ["https://exemplo.com/negocio106_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Café Restaurante "D. Bacalhau"',
-        category: "Restauração",
-        location: { lat: 39.6080605, long: -8.4087939 },
-        address: "Rua da Fábrica de Fiação, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 357109965,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio107.jpg",
-        gallery: ["https://exemplo.com/negocio107_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: 'Snak "O Pocinhas"',
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6056941, long: -8.4098226 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 709194872,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio108.jpg",
-        gallery: ["https://exemplo.com/negocio108_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: 'Café "A Gaivota"',
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6016649, long: -8.4114317 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 191969690,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio109.jpg",
-        gallery: ["https://exemplo.com/negocio109_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: 'Restaurante "Económico"',
-        category: "Restauração",
-        location: { lat: 39.6021983, long: -8.4113971 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 976198296,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio110.jpg",
-        gallery: ["https://exemplo.com/negocio110_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "A Rosa",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6038203, long: -8.4150536 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 916690353,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio111.jpg",
-        gallery: ["https://exemplo.com/negocio111_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Tesouro dos Templários",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6040933, long: -8.4139143 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 235034324,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio112.jpg",
-        gallery: ["https://exemplo.com/negocio112_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Amor Lusitano",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6022328, long: -8.4126968 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 610330567,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio113.jpg",
-        gallery: ["https://exemplo.com/negocio113_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Cervejaria Noite e Sol",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6032643, long: -8.412212 },
-        address: "Rua Aurora de Macedo, 2b, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 277303722,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio114.jpg",
-        gallery: ["https://exemplo.com/negocio114_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Hamburgueria q.b.",
-        category: "Restauração",
-        location: { lat: 39.6034628, long: -8.4146568 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 751325257,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio115.jpg",
-        gallery: ["https://exemplo.com/negocio115_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Star Kebab & Pizza",
-        category: "Restauração",
-        location: { lat: 39.6046533, long: -8.4104033 },
-        address: "Rua Marquês de Pombal, 54, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 327416584,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio116.jpg",
-        gallery: ["https://exemplo.com/negocio116_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Tabernáculo do Rio",
-        category: "Restauração",
-        location: { lat: 39.6046466, long: -8.4105115 },
-        address: "Rua Marquês de Pombal, 60, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 910959828,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio117.jpg",
-        gallery: ["https://exemplo.com/negocio117_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Artistic Guesthouse",
-        category: "Alojamento",
-        location: { lat: 39.6022364, long: -8.4126297 },
-        address: "Avenida Cândido Madureira, 23, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 315984311,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio118.jpg",
-        gallery: ["https://exemplo.com/negocio118_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Sabores ao Rubro",
-        category: "Restauração",
-        location: { lat: 39.6040287, long: -8.4117928 },
-        address: "Rua João Carlos Everard, 91, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 865523129,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio119.jpg",
-        gallery: ["https://exemplo.com/negocio119_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Sabores do Oriente",
-        category: "Restauração",
-        location: { lat: 39.6035601, long: -8.4125085 },
-        address: "Rua Doutor Joaquim Jacinto, 31, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 821218382,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio120.jpg",
-        gallery: ["https://exemplo.com/negocio120_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Hotel Kamanga",
-        category: "Alojamento",
-        location: { lat: 39.6043706, long: -8.4089124 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 570406376,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio121.jpg",
-        gallery: ["https://exemplo.com/negocio121_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Café Santa Iria",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6044965, long: -8.41023 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 655742829,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio122.jpg",
-        gallery: ["https://exemplo.com/negocio122_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Hanne Café",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6042053, long: -8.4129585 },
-        address: "Rua Serpa Pinto, 57, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 366186631,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio123.jpg",
-        gallery: ["https://exemplo.com/negocio123_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Rei dos Frangos",
-        category: "Restauração",
-        location: { lat: 39.6018242, long: -8.4111604 },
-        address: "Rua São Gião, 54, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 463016614,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio124.jpg",
-        gallery: ["https://exemplo.com/negocio124_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Esperança",
-        category: "Restauração",
-        location: { lat: 39.6076388, long: -8.4090836 },
-        address: "Rua da Fábrica de Fiação, 56-A, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 694768704,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio125.jpg",
-        gallery: ["https://exemplo.com/negocio125_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Gira.sol",
-        category: "Restauração",
-        location: { lat: 39.6036981, long: -8.4123918 },
-        address: "Rua Doutor Joaquim Jacinto, 16, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 336456621,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio126.jpg",
-        gallery: ["https://exemplo.com/negocio126_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Family House Cup",
-        category: "Alojamento",
-        location: { lat: 39.6041476, long: -8.4131071 },
-        address: "Rua Serpa Pinto, 63, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 860038427,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio127.jpg",
-        gallery: ["https://exemplo.com/negocio127_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Estalagem de Santa Iria",
-        category: "Alojamento",
-        location: { lat: 39.6062082, long: -8.4132713 },
-        address: "Av. Marquês de Tomar, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 777641645,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio128.jpg",
-        gallery: ["https://exemplo.com/negocio128_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Mouchão Restaurante",
-        category: "Restauração",
-        location: { lat: 39.6061439, long: -8.4133265 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 163215224,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio129.jpg",
-        gallery: ["https://exemplo.com/negocio129_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Star Kitchen",
-        category: "Restauração",
-        location: { lat: 39.6046636, long: -8.4103177 },
-        address: "Rua Marquês de Pombal, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 133729406,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio130.jpg",
-        gallery: ["https://exemplo.com/negocio130_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Praça Restaurante",
-        category: "Restauração",
-        location: { lat: 39.6039551, long: -8.4148703 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 176082500,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio131.jpg",
-        gallery: ["https://exemplo.com/negocio131_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Hotel República",
-        category: "Alojamento",
-        location: { lat: 39.6038528, long: -8.4149065 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 399012686,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio132.jpg",
-        gallery: ["https://exemplo.com/negocio132_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Açúcar Ao Quadrado",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.605513, long: -8.4087295 },
-        address: "Rua Voluntários da República, 110, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 818309417,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio133.jpg",
-        gallery: ["https://exemplo.com/negocio133_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "Willi's Bar",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6050023, long: -8.4087185 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 678998028,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio134.jpg",
-        gallery: ["https://exemplo.com/negocio134_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Restaurante Nabão",
-        category: "Restauração",
-        location: { lat: 39.6049449, long: -8.4107302 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 713152854,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio135.jpg",
-        gallery: ["https://exemplo.com/negocio135_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Beira Rio",
-        category: "Restauração",
-        location: { lat: 39.6046672, long: -8.410634 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 360916298,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio136.jpg",
-        gallery: ["https://exemplo.com/negocio136_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("bernardo.romano8646@yandex.com")._id,
-        name: "O Paço",
-        category: "Alojamento",
-        location: { lat: 39.6050227, long: -8.4092644 },
-        address: "Rua Voluntários da República, 166, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 967043303,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio137.jpg",
-        gallery: ["https://exemplo.com/negocio137_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("ahmed.nelson1520@iol.pt")._id,
-        name: "Restaurante Paço D'Alma",
-        category: "Restauração",
-        location: { lat: 39.6052595, long: -8.4092661 },
-        address: "Rua Voluntários da República, 154, 2300-000 Tomar",
-        status: "aprovado",
-        NIF: 537077308,
-        campaigns: [
-          { campaign: getC("Comércio Local Vivo")._id, status: "aprovado" },
-        ],
-        logo: "https://exemplo.com/negocio138.jpg",
-        gallery: ["https://exemplo.com/negocio138_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
-      {
-        owner: getU("xiu.richter950@hotmail.com")._id,
-        name: "Cafetaria do Castelo",
-        category: "Cafés & Pastelarias",
-        location: { lat: 39.6040808, long: -8.4177524 },
-        address: "Tomar",
-        status: "aprovado",
-        NIF: 204078666,
-        campaigns: [],
-        logo: "https://exemplo.com/negocio139.jpg",
-        gallery: ["https://exemplo.com/negocio139_1.jpg"],
-        description: "Estabelecimento em Tomar.",
-      },
+    const realBusinesses = [
+      // Alojamento
+      { name: "Hotel dos Templários", category: "Alojamento", NIF: 500282315, address: "Largo Cândido dos Reis, nº1, Tomar", lat: 39.6065, long: -8.4120 },
+      { name: "Thomar Boutique Hotel", category: "Alojamento", NIF: 503695769, address: "Rua da República, Tomar", lat: 39.6040, long: -8.4130 },
+      { name: "Hotel República", category: "Alojamento", NIF: 514586354, address: "Praça da República, Tomar", lat: 39.6037, long: -8.4128 },
+      { name: "Vila Galé Collection Tomar", category: "Alojamento", NIF: 505127628, address: "Av. D. Nuno Álvares Pereira, Tomar", lat: 39.6045, long: -8.4090 },
+      { name: "Casa dos Ofícios Hotel", category: "Alojamento", NIF: null, address: "Rua Silva Magalhães, 71, Tomar", lat: 39.6035, long: -8.4110 },
+      { name: "Estalagem Santa Iria", category: "Alojamento", NIF: null, address: "Rua do Parque, Tomar", lat: 39.6058, long: -8.4115 },
+      
+      // Restauração
+      { name: "Restaurante Praça by Hotel República", category: "Restauração", NIF: 514586354, address: "Praça da República 41, Tomar", lat: 39.6037, long: -8.4128 },
+      { name: "Taverna Antiqua", category: "Restauração", NIF: 504523473, address: "Praça da República 23-25, Tomar", lat: 39.6036, long: -8.4125 },
+      { name: "Restaurante Sellium (Cervejaria Claustro)", category: "Restauração", NIF: 503968757, address: "Rua Serpa Pinto 48, Tomar", lat: 39.6039, long: -8.4140 },
+      { name: "Casa das Ratas", category: "Restauração", NIF: 508909651, address: "Rua Dr. Joaquim Jacinto 7, Tomar", lat: 39.6037, long: -8.4120 },
+      { name: "Restaurante Sabores ao Rubro", category: "Restauração", NIF: 501226010, address: "Rua de São João, Tomar", lat: 39.6035, long: -8.4135 },
+      { name: "Restaurante A Lúria", category: "Restauração", NIF: 510770940, address: "Rua dos Voluntários Tomarenses, Tomar", lat: 39.6030, long: -8.4140 },
+      { name: "Restaurante Beira Rio", category: "Restauração", NIF: 504349970, address: "Rua Alexandre Herculano 1-B, Tomar", lat: 39.6033, long: -8.4125 },
+      { name: "Restaurante Mouchão", category: "Restauração", NIF: 505223970, address: "Parque do Mouchão, Tomar", lat: 39.6058, long: -8.4100 },
+      { name: "A Tasquinha", category: "Restauração", NIF: 506314910, address: "Tomar", lat: 39.6045, long: -8.4135 },
+      { name: "Cantinho dos Sabores", category: "Restauração", NIF: 506014614, address: "Tomar", lat: 39.6020, long: -8.4150 },
+      
+      // Cafés & Pastelarias
+      { name: "Café Claustro", category: "Cafés & Pastelarias", NIF: 516413988, address: "Rua Lopo Dias de Sousa 7, Tomar", lat: 39.6042, long: -8.4122 },
+      { name: "Pastelaria Templária", category: "Cafés & Pastelarias", NIF: 502916958, address: "Rua 10 de Agosto de 1385, 30, Tomar", lat: 39.6040, long: -8.4125 },
+      { name: "Pastelaria Tropical", category: "Cafés & Pastelarias", NIF: 504975439, address: "Rua Professor Andrade, 2A/2B, Tomar", lat: 39.6032, long: -8.4130 },
+      { name: "Pastelaria Pic Nic 3", category: "Cafés & Pastelarias", NIF: null, address: "Alameda 1 de Março nº 14, Tomar", lat: 39.6045, long: -8.4130 },
+      { name: "Café Central", category: "Cafés & Pastelarias", NIF: 503629715, address: "Tomar", lat: 39.6038, long: -8.4126 },
+      { name: "Santa Iria - Café Bistrot", category: "Cafés & Pastelarias", NIF: null, address: "Rua Marquês de Pombal 57, Tomar", lat: 39.6028, long: -8.4145 },
+
+      // Comércio Local & Serviços
+      { name: "Centro Comercial Templários", category: "Comércio Local", NIF: 507857410, address: "Alameda 1 de Março, Tomar", lat: 39.6045, long: -8.4130 },
+      { name: "Talho Alto (Mercado Municipal)", category: "Comércio Local", NIF: null, address: "Mercado Municipal de Tomar", lat: 39.6025, long: -8.4120 },
+      { name: "Farmácia Central", category: "Serviços", NIF: null, address: "Rua Serpa Pinto, Tomar", lat: 39.6038, long: -8.4125 },
+      { name: "Livraria Estúdio 70", category: "Comércio Local", NIF: null, address: "Rua Serpa Pinto, Tomar", lat: 39.6037, long: -8.4126 },
+      { name: "Pingo Doce Tomar", category: "Comércio Local", NIF: 500104511, address: "Av. D. Nuno Álvares Pereira, Tomar", lat: 39.6070, long: -8.4100 },
+      
+      // Património & Museus / Lazer & Natureza
+      { name: "Convento de Cristo", category: "Património & Museus", NIF: null, address: "Colina do Castelo, Tomar", lat: 39.6045, long: -8.4165 },
+      { name: "Sinagoga de Tomar", category: "Património & Museus", NIF: null, address: "Rua Joaquim Jacinto 73, Tomar", lat: 39.6030, long: -8.4115 },
+      { name: "Parque do Mouchão", category: "Lazer & Natureza", NIF: null, address: "Parque do Mouchão, Tomar", lat: 39.6055, long: -8.4095 },
+      { name: "Mata Nacional dos Sete Montes", category: "Lazer & Natureza", NIF: null, address: "Tomar", lat: 39.6015, long: -8.4170 },
     ];
 
+    const merchantsList = getMerchants();
+
+    const businessesData = realBusinesses.map((b, index) => {
+      // Extrair lat/long para criar o objeto location correto
+      const { lat, long, ...rest } = b;
+      
+      return {
+        ...rest,
+        owner: merchantsList[index % merchantsList.length]._id,
+        NIF: b.NIF || generateValidNIF(true), 
+        status: "aprovado",
+        logo: `https://exemplo.com/logos/${b.name.replace(/ /g, '_').toLowerCase()}.jpg`,
+        gallery: [`https://exemplo.com/gallery/${b.name.replace(/ /g, '_').toLowerCase()}_1.jpg`],
+        description: `${b.name} - Estabelecimento de excelência no centro de Tomar, oferecendo os melhores produtos e serviços da região.`,
+        campaigns: [{ campaign: getC("Comércio Local Vivo")._id, status: "aprovado" }],
+        // ✅ CRIAR O OBJETO LOCATION CORRETAMENTE
+        location: {
+          lat: lat,
+          long: long
+        }
+      };
+    });
+
     const businesses = await Business.insertMany(businessesData);
-    console.log(
-      `✅ Foram criados ${businesses.length} negócios com coordenadas reais do OpenStreetMap!`,
-    );
+    console.log(`✅ Foram criados ${businesses.length} negócios reais em Tomar com NIFs autênticos, categorias válidas e LOCATION CORRETO!`);
 
     // ==========================================
-    // 4. CRIAR FATURAS (100% DINÂMICO = ZERO ERROS)
+    // 5. CRIAR FATURAS
     // ==========================================
+    const citizensList = getCitizens();
     let generatedInvoices = [];
-
-    for (let i = 0; i < 500; i++) {
-      const randomUser = getRandomUser();
-      const randomBusiness =
-        businesses[Math.floor(Math.random() * businesses.length)];
+    for (let i = 0; i < 400; i++) {
+      const randomCitizen = citizensList[Math.floor(Math.random() * citizensList.length)];
+      const randomBusiness = businesses[Math.floor(Math.random() * businesses.length)];
 
       generatedInvoices.push({
-        user: randomUser._id,
+        user: randomCitizen._id,
         business: randomBusiness._id,
         ATCUD: `F-${Math.floor(100000 + Math.random() * 900000)}-${i}`,
         hash: `HASH${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
         amount: parseFloat((Math.random() * 150 + 1).toFixed(2)),
-        purchaseDate: new Date(
-          Date.now() - Math.floor(Math.random() * 10000000000),
-        ),
+        purchaseDate: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(), // Convertido para String ISO
       });
     }
 
     await Invoice.insertMany(generatedInvoices);
-    console.log(
-      `✅ Foram criadas ${generatedInvoices.length} faturas de forma limpa e dinâmica!`,
-    );
+    console.log(`✅ Foram criadas ${generatedInvoices.length} faturas de forma limpa e dinâmica!`);
+
+    // ==========================================
+    // 6. CRIAR FAVORITOS
+    // ==========================================
+    let generatedFavorites = [];
+    const seen = new Set();
+    for (let i = 0; i < 200; i++) {
+      const randomCitizen = citizensList[Math.floor(Math.random() * citizensList.length)];
+      const randomBusiness = businesses[Math.floor(Math.random() * businesses.length)];
+      
+      const key = `${randomCitizen._id}-${randomBusiness._id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        generatedFavorites.push({
+          userId: randomCitizen._id,       // Corrigido de 'user' para 'userId'
+          businessId: randomBusiness._id,  // Corrigido de 'business' para 'businessId'
+        });
+      }
+    }
+    await Favorite.insertMany(generatedFavorites);
+    console.log(`✅ Foram criados ${generatedFavorites.length} favoritos de utilizadores a negócios!`);
 
     console.log("🎉 Seeding concluído sem erros!");
     process.exit(0);

@@ -1,12 +1,12 @@
-import React from "react";
-import { View, Image } from "react-native";
+import { useAppTheme } from '@/context/ThemeContext';
+import React from 'react';
+import { View, Image } from 'react-native';
 import {
   TouchableRipple,
   Text,
   ActivityIndicator,
-  useTheme,
   Icon,
-} from "react-native-paper";
+} from 'react-native-paper';
 
 interface PrimaryButtonProps {
   children: React.ReactNode;
@@ -35,36 +35,36 @@ const CustomButton = ({
   accessibilityRole,
   accessibilityLabel,
 }: PrimaryButtonProps) => {
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   // Cores ligadas ao Theme atual
   const bgColor = buttonColor ? buttonColor : theme.colors.primary;
-  const txtColor = textColor ? textColor : theme.colors.onPrimary;
+  const txtColor = textColor ? textColor : theme.colors.background;
 
   const isDisabled = disabled || loading;
 
   return (
     <View
-      className={className || ""}
+      className={className || ''}
       style={{
         backgroundColor: bgColor,
         borderRadius: 9999,
-        overflow: "hidden",
+        overflow: 'hidden',
         opacity: isDisabled ? 0.6 : 1,
       }}
     >
       <TouchableRipple
         onPress={isDisabled ? undefined : onPress}
         rippleColor="rgba(150, 150, 150, 0.3)"
-        accessibilityRole={accessibilityRole || "button"}
+        accessibilityRole={accessibilityRole || 'button'}
         accessibilityLabel={accessibilityLabel}
         disabled={isDisabled}
         style={{
           paddingVertical: 12,
           paddingHorizontal: 24,
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "row",
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'row',
         }}
       >
         <>
@@ -79,7 +79,7 @@ const CustomButton = ({
 
           {!loading && icon && (
             <View style={{ marginRight: 8 }}>
-              {typeof icon === "string" ? (
+              {typeof icon === 'string' ? (
                 <Icon source={icon} size={22} color={txtColor} />
               ) : (
                 <Image
@@ -96,7 +96,7 @@ const CustomButton = ({
               {
                 color: txtColor,
                 fontSize: 16,
-                fontWeight: "bold",
+                fontWeight: 'bold',
                 letterSpacing: 0.5,
               },
               labelStyle,

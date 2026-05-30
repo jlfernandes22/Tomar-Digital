@@ -1,21 +1,21 @@
-import React, { useState, useCallback } from "react";
-import { Image, FlatList, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
-import { API_URL } from "@/constants/api";
-import BusinessList from "../components/BusinessList";
-import { useAuth } from "@/context/AuthContext";
-import { images } from "@/constants/images";
+import React, { useState, useCallback } from 'react';
+import { Image, FlatList, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useFocusEffect } from 'expo-router';
+import { API_URL } from '@/constants/api';
+import BusinessList from '../components/BusinessList';
+import { useAuth } from '@/context/AuthContext';
+import { images } from '@/constants/images';
 import {
   Surface,
-  useTheme,
   Text,
   TouchableRipple,
   ActivityIndicator,
   Divider,
-} from "react-native-paper";
-import CustomButton from "../components/CustomButton";
-import CustomSnackBar from "../components/CustomSnackBar";
+} from 'react-native-paper';
+import CustomButton from '../components/CustomButton';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { useAppTheme } from '@/context/ThemeContext';
 
 interface Favorito {
   _id: string;
@@ -33,8 +33,8 @@ const Saved = () => {
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [loading, setLoading] = useState(true);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const theme = useTheme();
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { currentTheme: theme } = useAppTheme();
 
   const carregarFavoritos = async () => {
     if (!user?.id) return;
@@ -48,7 +48,7 @@ const Saved = () => {
 
       setFavoritos(listaFinal);
     } catch (error) {
-      setSnackbarMessage("Erro ao carregar favoritos\n" + error);
+      setSnackbarMessage('Erro ao carregar favoritos\n' + error);
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -63,25 +63,25 @@ const Saved = () => {
 
   const retirarFavorito = async (businessId: string) => {
     // 1. Atualiza a UI localmente primeiro (Optimistic Update)
-    setFavoritos((prev) =>
-      prev.filter((item) => item.businessId?._id !== businessId),
+    setFavoritos(prev =>
+      prev.filter(item => item.businessId?._id !== businessId),
     );
 
     try {
       const response = await fetch(`${API_URL}/retirarFavorito`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, businessId }),
       });
 
       if (response.ok) {
-        setSnackbarMessage("Removido com sucesso");
+        setSnackbarMessage('Removido com sucesso');
         setSnackbarVisible(true);
         // Não precisas de chamar carregarFavoritos() aqui se o filter correu bem
       } else {
         // Se falhar no servidor, recarregamos para repor o item na lista
         carregarFavoritos();
-        setSnackbarMessage("Erro ao remover do servidor");
+        setSnackbarMessage('Erro ao remover do servidor');
         setSnackbarVisible(true);
       }
     } catch (error) {
@@ -93,7 +93,7 @@ const Saved = () => {
     <SafeAreaView
       className="p-4"
       style={{ flex: 1, backgroundColor: theme.colors.background }}
-      edges={["top", "left", "right"]}
+      edges={['top', 'left', 'right']}
     >
       {/* Header Elegante */}
 
@@ -101,7 +101,7 @@ const Saved = () => {
         variant="headlineMedium"
         style={{
           color: theme.colors.primary,
-          fontWeight: "bold",
+          fontWeight: 'bold',
           marginBottom: 10,
         }}
       >
@@ -116,7 +116,7 @@ const Saved = () => {
       />
 
       {loading ? (
-        <View className="flex-1 justify-center items-center">
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator
             animating={true}
             size="large"
@@ -139,13 +139,13 @@ const Saved = () => {
                   marginBottom: 16,
                   borderWidth: 1,
                   borderColor: theme.colors.outlineVariant,
-                  overflow: "hidden",
+                  overflow: 'hidden',
                 }}
               >
                 <TouchableRipple
                   onPress={() => {
                     router.push({
-                      pathname: "/components/DetalhesBusiness",
+                      pathname: '/components/DetalhesBusiness',
                       params: { id: item.businessId?._id },
                     });
                   }}
@@ -153,9 +153,9 @@ const Saved = () => {
                 >
                   <View className="p-1 ">
                     <BusinessList
-                      name={item.businessId?.name || "Negócio não disponível"}
-                      category={item.businessId?.category || "N/A"}
-                      location={item.businessId?.location || ""}
+                      name={item.businessId?.name || 'Negócio não disponível'}
+                      category={item.businessId?.category || 'N/A'}
+                      location={item.businessId?.location || ''}
                     />
                   </View>
                 </TouchableRipple>
@@ -180,7 +180,7 @@ const Saved = () => {
             <View className="flex-1 items-center justify-center px-10 pb-20">
               <Image
                 source={images.favWaiting}
-                className="w-64 h-64 mb-8"
+                className="mb-8 h-64 w-64"
                 style={{
                   tintColor: theme.colors.onSurfaceVariant,
                   opacity: 0.6,
@@ -190,15 +190,15 @@ const Saved = () => {
 
               <Text
                 variant="headlineSmall"
-                style={{ color: theme.colors.onSurface, fontWeight: "bold" }}
-                className="text-center mb-2"
+                style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
+                className="mb-2 text-center"
               >
                 Lista vazia
               </Text>
               <Text
                 variant="bodyLarge"
                 style={{ color: theme.colors.onSurfaceVariant }}
-                className="text-center mb-10 opacity-70"
+                className="mb-10 text-center opacity-70"
               >
                 Parece que ainda não guardou nenhum dos tesouros de Tomar nos
                 seus favoritos.
@@ -207,8 +207,8 @@ const Saved = () => {
               <CustomButton
                 buttonColor={theme.colors.primary}
                 textColor={theme.colors.onPrimary}
-                onPress={() => router.push("/Home")}
-                className="w-full h-14"
+                onPress={() => router.push('/Home')}
+                className="h-14 w-full"
               >
                 Descobrir Negócios
               </CustomButton>

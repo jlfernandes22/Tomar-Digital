@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Platform } from "react-native";
+import React, { useState } from 'react';
+import { Platform } from 'react-native';
 import {
   FAB,
   Portal,
@@ -7,13 +7,19 @@ import {
   Surface,
   Text,
   SegmentedButtons,
-} from "react-native-paper";
-import { useAppTheme, ModeType, PaletteType } from "../../context/ThemeContext";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from 'react-native-paper';
+import { useAppTheme, ModeType, PaletteType } from '../../context/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ThemeSelectorFAB = () => {
   const [visible, setVisible] = useState(false);
-  const { currentTheme: theme, userMode, setUserMode, userPalette, setUserPalette } = useAppTheme();
+  const {
+    currentTheme: theme,
+    userMode,
+    setUserMode,
+    userPalette,
+    setUserPalette,
+  } = useAppTheme();
   const insets = useSafeAreaInsets();
 
   const showModal = () => setVisible(true);
@@ -31,7 +37,7 @@ const ThemeSelectorFAB = () => {
           {/* Surface utiliza a cor de fundo apropriada do tema atual */}
           <Surface
             style={{
-              backgroundColor: theme.colors.surfaceContainerHighest,
+              backgroundColor: theme.colors.surface,
               padding: 24,
               borderRadius: 16,
             }}
@@ -51,11 +57,11 @@ const ThemeSelectorFAB = () => {
             </Text>
             <SegmentedButtons
               value={userMode}
-              onValueChange={(value) => setUserMode(value as ModeType)}
+              onValueChange={value => setUserMode(value as ModeType)}
               buttons={[
-                { value: "system", label: "Auto" },
-                { value: "light", label: "Claro" },
-                { value: "dark", label: "Escuro" },
+                { value: 'system', label: 'Auto' },
+                { value: 'light', label: 'Claro' },
+                { value: 'dark', label: 'Escuro' },
               ]}
               style={{ marginBottom: 24 }}
             />
@@ -68,11 +74,11 @@ const ThemeSelectorFAB = () => {
             </Text>
             <SegmentedButtons
               value={userPalette}
-              onValueChange={(value) => setUserPalette(value as PaletteType)}
+              onValueChange={value => setUserPalette(value as PaletteType)}
               buttons={[
-                { value: "convento", label: "Convento" },
-                { value: "mata", label: "Mata" },
-                { value: "tabuleiros", label: "Tabuleiros" },
+                { value: 'convento', label: 'Convento' },
+                { value: 'mata', label: 'Mata' },
+                { value: 'tabuleiros', label: 'Tabuleiros' },
               ]}
               style={{ marginBottom: 24 }}
             />
@@ -84,10 +90,10 @@ const ThemeSelectorFAB = () => {
       <FAB
         icon="palette"
         style={{
-          position: "absolute",
+          position: 'absolute',
           margin: 16,
           right: 0,
-          bottom: Platform.OS == "ios" ? 90 : 80 + insets.bottom,
+          bottom: Platform.OS == 'ios' ? 90 : 80 + insets.bottom,
           backgroundColor: theme.colors.primary,
         }}
         onPress={showModal}

@@ -1,14 +1,15 @@
-import { Text, useTheme } from "react-native-paper";
-import { View } from "react-native";
-import React from "react";
+import { Text } from 'react-native-paper';
+import { View } from 'react-native';
+import React from 'react';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const BusinessList = ({ name, category, location, ownerName }: any) => {
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
   const formatLocation = () => {
-    if (!location) return "Localização indisponível";
+    if (!location) return 'Localização indisponível';
 
     // Se for o novo formato (Objeto com lat e long)
-    if (typeof location === "object" && location.lat && location.long) {
+    if (typeof location === 'object' && location.lat && location.long) {
       return `Lat: ${location.lat.toFixed(4)} | Long: ${location.long.toFixed(4)}`;
     }
 
@@ -17,16 +18,13 @@ const BusinessList = ({ name, category, location, ownerName }: any) => {
   };
 
   return (
-    <View
-      className="flex-row justify-between items-start p-4"
-      
-    >
+    <View className="flex-row items-start justify-between p-4">
       <View className="flex-1">
         <Text variant="titleLarge" className="font-bold">
           {name}
         </Text>
 
-        <Text variant="bodyMedium" className="italic mb-1 opacity-80">
+        <Text variant="bodyMedium" className="mb-1 italic opacity-80">
           {category}
         </Text>
 

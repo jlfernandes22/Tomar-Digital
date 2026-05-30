@@ -1,16 +1,15 @@
-import React from "react";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Stack } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider } from "../context/AuthContext";
-import { PaperProvider, useTheme } from "react-native-paper";
-import { ThemeProvider, useAppTheme } from "../context/ThemeContext";
-import ThemeSelectorFAB from "../app/components/ThemeSelectorFAB";
+import React from 'react';
+import { Stack } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from '../context/AuthContext';
+import { PaperProvider } from 'react-native-paper';
+import { ThemeProvider, useAppTheme } from '../context/ThemeContext';
+import ThemeSelectorFAB from '../app/components/ThemeSelectorFAB';
 import {
   ThemeProvider as NavThemeProvider,
   DefaultTheme,
-} from "@react-navigation/native";
-import "./globals.css";
+} from '@react-navigation/native';
+import './globals.css';
 
 const ThemeSelector = ({ children }: { children: React.ReactNode }) => {
   const { currentTheme } = useAppTheme();

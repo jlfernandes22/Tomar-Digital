@@ -5,13 +5,13 @@ import {
   ScrollView,
   Dimensions,
   Platform,
-} from "react-native";
-import React, { useEffect, useState } from "react";
-import { API_URL } from "@/constants/api";
-import { useAuth } from "@/context/AuthContext";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, Stack } from "expo-router";
-import { images } from "@/constants/images";
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { API_URL } from '@/constants/api';
+import { useAuth } from '@/context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, Stack } from 'expo-router';
+import { images } from '@/constants/images';
 import {
   Dialog,
   Divider,
@@ -19,12 +19,12 @@ import {
   Surface,
   Text,
   TouchableRipple,
-  useTheme,
 } from 'react-native-paper';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
 import { pickImage } from '@/utils/imagePicker';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
@@ -32,17 +32,17 @@ const EditProfile = () => {
   const [city, setCity] = useState(user?.city || '');
   const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : '');
   const [loading, setLoading] = useState(false);
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogText, setDialogText] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setName(user.name || "");
-      setCity(user.city || "");
-      setNIF(user.NIF ? String(user.NIF) : "");
-      setImage(user.Avatar || "");
+      setName(user.name || '');
+      setCity(user.city || '');
+      setNIF(user.NIF ? String(user.NIF) : '');
+      setImage(user.Avatar || '');
     }
   }, [user]);
 
@@ -59,23 +59,25 @@ const EditProfile = () => {
   const [message, setMessage] = useState('');
 
   const selecionarAvatar = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!');
-        return;
-      }
-      const resultado = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.5,
-      });
-  
-      if (!resultado.canceled) {
-          const uri = resultado.assets[0].uri;
-          setImage(uri); 
-        }
-    };
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert(
+        'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!',
+      );
+      return;
+    }
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!resultado.canceled) {
+      const uri = resultado.assets[0].uri;
+      setImage(uri);
+    }
+  };
 
   const hideDialog = async () => {
     setDialogVisible(false);
@@ -85,87 +87,89 @@ const EditProfile = () => {
   };
 
   const handleEdit = async () => {
-  setLoading(true);
-  try {
-    let avatarIdDefinitivo = null;
+    setLoading(true);
+    try {
+      let avatarIdDefinitivo = null;
 
-    if (image && (image.startsWith('file://') || image.startsWith('content://'))) {
-     const formData = new FormData();
+      if (
+        image &&
+        (image.startsWith('file://') || image.startsWith('content://'))
+      ) {
+        const formData = new FormData();
 
-     const uriLimpa = Platform.OS === 'android' ? image : image.replace('file://', '');
-      const filename = image.split('/').pop() || 'avatar.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image/jpeg`;
+        const uriLimpa =
+          Platform.OS === 'android' ? image : image.replace('file://', '');
+        const filename = image.split('/').pop() || 'avatar.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-       const fileToUpload = {
-        uri: uriLimpa,
-        name: filename,
-        type: type,
-      };
+        const fileToUpload = {
+          uri: uriLimpa,
+          name: filename,
+          type: type,
+        };
 
-      formData.append('image', fileToUpload as any);
+        formData.append('image', fileToUpload as any);
 
-      const uploadResponse = await fetch(`${API_URL}/uploadImage`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${user.token}`,
-          'Accept': 'application/json',
-        },
-      });
+        const uploadResponse = await fetch(`${API_URL}/uploadImage`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+            Accept: 'application/json',
+          },
+        });
 
+        if (!uploadResponse.ok) {
+          const erroBackend = await uploadResponse.text();
+          console.error('Erro detalhado do backend:', erroBackend);
+          throw new Error('Falha ao fazer upload da imagem de perfil.');
+        }
 
-      if (!uploadResponse.ok) {
-        const erroBackend = await uploadResponse.text();
-        console.error("Erro detalhado do backend:", erroBackend);
-        throw new Error("Falha ao fazer upload da imagem de perfil.");
+        const uploadResult = await uploadResponse.json();
+        avatarIdDefinitivo = uploadResult.id; // ID que o MongoDB gerou para a imagem
       }
 
-      const uploadResult = await uploadResponse.json();
-      avatarIdDefinitivo = uploadResult.id; // ID que o MongoDB gerou para a imagem
-    }
-
-    const response = await fetch(`${API_URL}/editarUser/${user.id}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: name,
-        city: city,
-        NIF: NIF ? Number(NIF) : null,
-        avatarId: avatarIdDefinitivo, 
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setSuccess(true);
-      setDialogText("Alteração de dados com sucesso");
-      setDialogVisible(true);
-      
-
-      updateUser({
-        ...user,
-        name: name,
-        city: city,
-        NIF: NIF ? Number(NIF) : null,
-        Avatar: avatarIdDefinitivo || user.Avatar 
+      const response = await fetch(`${API_URL}/editarUser/${user.id}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          city: city,
+          NIF: NIF ? Number(NIF) : null,
+          avatarId: avatarIdDefinitivo,
+        }),
       });
-    } else {
-      setDialogText("O servidor rejeitou as alterações.");
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess(true);
+        setDialogText('Alteração de dados com sucesso');
+        setDialogVisible(true);
+
+        updateUser({
+          ...user,
+          name: name,
+          city: city,
+          NIF: NIF ? Number(NIF) : null,
+          Avatar: avatarIdDefinitivo || user.Avatar,
+        });
+      } else {
+        setDialogText('O servidor rejeitou as alterações.');
+        setDialogVisible(true);
+        setSuccess(false);
+      }
+    } catch (error) {
+      console.error(error);
       setDialogVisible(true);
       setSuccess(false);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error(error);
-    setDialogVisible(true);
-    setSuccess(false);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -223,24 +227,25 @@ const EditProfile = () => {
                   </Text>
                 )}
                 {image && (
-                <Image
-                  source={{ 
-                    uri: image.startsWith('file://') || image.startsWith('content://')
-                      ? image                                 
-                      : `${API_URL}/mostrarImagem/${image}`   
-                  }}
-                  className="w-32 h-32 rounded-full items-center justify-center border-2"
-                  style={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.outline,
-                  }}
-                />
-              )}
+                  <Image
+                    source={{
+                      uri:
+                        image.startsWith('file://') ||
+                        image.startsWith('content://')
+                          ? image
+                          : `${API_URL}/mostrarImagem/${image}`,
+                    }}
+                    className="h-32 w-32 items-center justify-center rounded-full border-2"
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      borderColor: theme.colors.outline,
+                    }}
+                  />
+                )}
               </View>
 
-
               <TouchableRipple
-                className="relative size-11 bottom-8 left-11"
+                className="relative bottom-8 left-11 size-11"
                 onPress={selecionarAvatar}
                 rippleColor={theme.colors.secondary}
                 style={{

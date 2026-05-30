@@ -1,44 +1,44 @@
-import React, { useState } from "react";
-import { View, ScrollView, Image } from "react-native";
+import React, { useState } from 'react';
+import { View, ScrollView, Image } from 'react-native';
 import {
   Surface,
   Text,
-  useTheme,
   ProgressBar,
   TouchableRipple,
   IconButton,
-} from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "@/constants/api";
-import { useAuth } from "@/context/AuthContext";
-import Map from "@/app/components/Map";
-import { delay } from "../../utils/delay";
-import CustomTextInput from "../components/CustomTextInput";
-import CustomButton from "../components/CustomButton";
-import CustomSnackBar from "../components/CustomSnackBar";
-import CustomChip from "../components/CustomChip";
-import { pickImage } from "@/utils/imagePicker";
-import * as Location from "expo-location";
-import { router } from "expo-router";
-import getAddress from "../../utils/getAddress";
+} from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/constants/api';
+import { useAuth } from '@/context/AuthContext';
+import Map from '@/app/components/Map';
+import { delay } from '../../utils/delay';
+import CustomTextInput from '../components/CustomTextInput';
+import CustomButton from '../components/CustomButton';
+import CustomSnackBar from '../components/CustomSnackBar';
+import CustomChip from '../components/CustomChip';
+import { pickImage } from '@/utils/imagePicker';
+import * as Location from 'expo-location';
+import { router } from 'expo-router';
+import getAddress from '../../utils/getAddress';
+import { useAppTheme } from '@/context/ThemeContext';
 
 export default function AddBusiness() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
   const INITIAL_FORM_DATA = {
-    nomeNegocio: "",
-    NIFnegocio: "",
-    categoriaNegocio: "",
-    logotipoNegocio: "",
-    moradaNegocio: "",
-    freguesiaNegocio: "",
+    nomeNegocio: '',
+    NIFnegocio: '',
+    categoriaNegocio: '',
+    logotipoNegocio: '',
+    moradaNegocio: '',
+    freguesiaNegocio: '',
     localizacao: {
       latitude: 0,
       longitude: 0,
     },
-    telefoneDono: "",
-    emailDono: "",
-    descricaoNegocio: "",
+    telefoneDono: '',
+    emailDono: '',
+    descricaoNegocio: '',
     galeriaFotos: [] as string[],
   };
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
@@ -46,17 +46,17 @@ export default function AddBusiness() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const theme = useTheme();
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { currentTheme: theme } = useAppTheme();
 
   const categories = [
-    "Património & Museus",
-    "Restauração",
-    "Cafés & Pastelarias",
-    "Alojamento",
-    "Comércio Local",
-    "Lazer & Natureza",
-    "Serviços",
+    'Património & Museus',
+    'Restauração',
+    'Cafés & Pastelarias',
+    'Alojamento',
+    'Comércio Local',
+    'Lazer & Natureza',
+    'Serviços',
   ];
 
   const selecionarLogotipo = async () => {
@@ -68,12 +68,12 @@ export default function AddBusiness() {
       });
 
       // Se o utilizador escolheu uma imagem (e como não é múltipla, sabemos que é string)
-      if (uri && typeof uri === "string") {
+      if (uri && typeof uri === 'string') {
         setFormData({ ...formData, logotipoNegocio: uri });
       }
     } catch (error: any) {
       // O utilitário tratou das permissões, nós só mostramos o erro!
-      return("Erro: " + error.message);
+      return 'Erro: ' + error.message;
     }
   };
 
@@ -94,14 +94,13 @@ export default function AddBusiness() {
         });
       }
     } catch (error: any) {
-      return("Erro: " + error.message);
+      return 'Erro: ' + error.message;
     }
   };
 
-
   const handleNewBusiness = async () => {
     if (!user?.token) {
-      setSnackbarMessage("Erro: Sessão expirada.");
+      setSnackbarMessage('Erro: Sessão expirada.');
       setSnackbarVisible(true);
       return;
     }
@@ -114,7 +113,7 @@ export default function AddBusiness() {
       !formData.emailDono
     ) {
       setSnackbarMessage(
-        "Erro:\nPor favor, preencha todos os campos obrigatórios (incluindo E-mail).",
+        'Erro:\nPor favor, preencha todos os campos obrigatórios (incluindo E-mail).',
       );
       setSnackbarVisible(true);
       return;
@@ -123,9 +122,9 @@ export default function AddBusiness() {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/registarNegocio`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({
@@ -152,7 +151,7 @@ export default function AddBusiness() {
       if (response.ok) {
         //console.log(formData);
         console.log(formData.galeriaFotos);
-        setSnackbarMessage("Sucesso! Negócio registado.");
+        setSnackbarMessage('Sucesso! Negócio registado.');
         setSnackbarVisible(true);
         await delay(500);
 
@@ -163,11 +162,11 @@ export default function AddBusiness() {
 
         // Reset...
       } else {
-        setSnackbarMessage(data.message || "Erro no registo.");
+        setSnackbarMessage(data.message || 'Erro no registo.');
         setSnackbarVisible(true);
       }
     } catch (error) {
-      setSnackbarMessage("Erro de ligação ao servidor.");
+      setSnackbarMessage('Erro de ligação ao servidor.');
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -191,32 +190,40 @@ export default function AddBusiness() {
 
         {step === 1 && (
           <View>
-            <Text variant="headlineSmall"  style={{
-                        color: theme.colors.primary,
-                        fontWeight: "bold",
-                        marginBottom: 10,
-                        textAlign: "center",
-                        margin: 10
-                      }}>Novo Negócio</Text>
+            <Text
+              variant="headlineSmall"
+              style={{
+                color: theme.colors.primary,
+                fontWeight: 'bold',
+                marginBottom: 10,
+                textAlign: 'center',
+                margin: 10,
+              }}
+            >
+              Novo Negócio
+            </Text>
 
             <CustomTextInput
               label="Nome do Negócio"
               value={formData.nomeNegocio}
-              onChangeText={(t) => setFormData({ ...formData, nomeNegocio: t })}
+              onChangeText={t => setFormData({ ...formData, nomeNegocio: t })}
             />
             <CustomTextInput
               label="NIF"
               value={formData.NIFnegocio}
-              onChangeText={(t) => setFormData({ ...formData, NIFnegocio: t })}
+              onChangeText={t => setFormData({ ...formData, NIFnegocio: t })}
             />
             <View className="mb-2">
-              <Text variant="bodyMedium"  style={{
-                        color: theme.colors.primary,
-                        fontWeight: "bold",
-                        marginBottom: 10,
-                        textAlign: "center",
-                        margin: 10
-                      }}>
+              <Text
+                variant="bodyMedium"
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: 'bold',
+                  marginBottom: 10,
+                  textAlign: 'center',
+                  margin: 10,
+                }}
+              >
                 Categoria do Negócio:
               </Text>
               <ScrollView
@@ -228,7 +235,7 @@ export default function AddBusiness() {
                   paddingHorizontal: 5,
                 }}
               >
-                {categories.map((cat) => {
+                {categories.map(cat => {
                   const isSelected = formData.categoriaNegocio === cat;
                   return (
                     <CustomChip
@@ -237,7 +244,7 @@ export default function AddBusiness() {
                       onPress={() => {
                         setFormData({ ...formData, categoriaNegocio: cat });
                       }}
-                      className="p-1 m-1"
+                      className="m-1 p-1"
                     >
                       {cat}
                     </CustomChip>
@@ -247,25 +254,25 @@ export default function AddBusiness() {
             </View>
             <View style={{ marginVertical: 10 }}>
               <Text
-                 style={{
-                        color: theme.colors.primary,
-                        fontWeight: "bold",
-                        marginBottom: 10,
-                        textAlign: "center",
-                        margin: 10
-                      }}
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: 'bold',
+                  marginBottom: 10,
+                  textAlign: 'center',
+                  margin: 10,
+                }}
               >
                 Logótipo do Negócio:
               </Text>
               <TouchableRipple
                 onPress={selecionarLogotipo}
                 style={{
-                  alignSelf: "center",
+                  alignSelf: 'center',
                   height: 200,
                   width: 200,
                   borderWidth: 1,
                   borderColor: theme.colors.outline,
-                  borderStyle: "dashed",
+                  borderStyle: 'dashed',
                   borderRadius: 10,
                   backgroundColor: theme.colors.onBackground,
                 }}
@@ -273,13 +280,13 @@ export default function AddBusiness() {
                 {formData.logotipoNegocio ? (
                   <Image
                     source={{ uri: formData.logotipoNegocio }}
-                    style={{ width: "100%", height: "100%", borderRadius: 10 }}
+                    style={{ width: '100%', height: '100%', borderRadius: 10 }}
                   />
                 ) : (
                   <Text
                     style={{
                       color: theme.colors.background,
-                      textAlign: "center",
+                      textAlign: 'center',
                       margin: 60,
                     }}
                   >
@@ -296,14 +303,12 @@ export default function AddBusiness() {
             <CustomTextInput
               label="Morada completa do negócio:"
               value={formData.moradaNegocio}
-              onChangeText={(t) =>
-                setFormData({ ...formData, moradaNegocio: t })
-              }
+              onChangeText={t => setFormData({ ...formData, moradaNegocio: t })}
             />
             <CustomTextInput
               label="Freguesia:"
               value={formData.freguesiaNegocio}
-              onChangeText={(t) =>
+              onChangeText={t =>
                 setFormData({ ...formData, freguesiaNegocio: t })
               }
             />
@@ -312,12 +317,12 @@ export default function AddBusiness() {
                 marginTop: 15,
                 height: 350,
                 borderRadius: 10,
-                overflow: "hidden",
+                overflow: 'hidden',
               }}
             >
               <Map
                 showPin={true}
-                onLocationSelect={async (location) => {
+                onLocationSelect={async location => {
                   console.log(location);
                   setFormData({
                     ...formData,
@@ -335,11 +340,11 @@ export default function AddBusiness() {
 
                     setFormData({
                       ...formData,
-                      moradaNegocio: address || "",
+                      moradaNegocio: address || '',
                     });
                   } catch (err) {
                     console.error(
-                      "Erro ao obter a morada para o formulário:",
+                      'Erro ao obter a morada para o formulário:',
                       err,
                     );
                   }
@@ -354,36 +359,36 @@ export default function AddBusiness() {
             <CustomTextInput
               label="Telefone do Dono"
               value={formData.telefoneDono}
-              onChangeText={(t) =>
-                setFormData({ ...formData, telefoneDono: t })
-              }
+              onChangeText={t => setFormData({ ...formData, telefoneDono: t })}
             />
             <CustomTextInput
               label="Descrição Detalhada do Negócio"
               value={formData.descricaoNegocio}
-              onChangeText={(t) =>
+              onChangeText={t =>
                 setFormData({ ...formData, descricaoNegocio: t })
               }
             />
             <CustomTextInput
               label="E-mail do Dono"
               value={formData.emailDono}
-              onChangeText={(t) => setFormData({ ...formData, emailDono: t })}
+              onChangeText={t => setFormData({ ...formData, emailDono: t })}
             />
             <View style={{ marginVertical: 15 }}>
-              <Text  style={{
-                        color: theme.colors.primary,
-                        fontWeight: "bold",
-                        marginBottom: 10,
-                        textAlign: "center",
-                        margin: 10
-                      }}>
+              <Text
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: 'bold',
+                  marginBottom: 10,
+                  textAlign: 'center',
+                  margin: 10,
+                }}
+              >
                 Galeria de Fotos (Máx. 5)
               </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={{ flexDirection: "row" }}
+                style={{ flexDirection: 'row' }}
               >
                 {formData.galeriaFotos.length < 5 && (
                   <TouchableRipple
@@ -393,14 +398,14 @@ export default function AddBusiness() {
                       height: 100,
                       borderWidth: 1,
                       borderColor: theme.colors.outline,
-                      borderStyle: "dashed",
+                      borderStyle: 'dashed',
                       borderRadius: 8,
-                      justifyContent: "center",
-                      alignItems: "center",
+                      justifyContent: 'center',
+                      alignItems: 'center',
                       marginRight: 10,
                     }}
                   >
-                    <Text style={{ textAlign: "center", fontSize: 12 }}>
+                    <Text style={{ textAlign: 'center', fontSize: 12 }}>
                       + Foto
                     </Text>
                   </TouchableRipple>
@@ -409,7 +414,7 @@ export default function AddBusiness() {
                   uri ? (
                     <View
                       key={index}
-                      style={{ marginRight: 10, position: "relative" }}
+                      style={{ marginRight: 10, position: 'relative' }}
                     >
                       <Image
                         source={{ uri }}
@@ -420,7 +425,7 @@ export default function AddBusiness() {
                         size={20}
                         iconColor={theme.colors.error}
                         style={{
-                          position: "absolute",
+                          position: 'absolute',
                           top: -10,
                           right: -10,
                           backgroundColor: theme.colors.surfaceVariant,
@@ -442,8 +447,8 @@ export default function AddBusiness() {
 
         <View
           style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
+            flexDirection: 'row',
+            justifyContent: 'space-between',
             marginTop: 20,
           }}
         >

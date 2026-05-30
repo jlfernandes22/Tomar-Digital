@@ -1,6 +1,7 @@
-import { StyleSheet } from "react-native";
-import React from "react";
-import { Portal, Snackbar, Text, useTheme } from "react-native-paper";
+import { StyleSheet } from 'react-native';
+import React from 'react';
+import { Portal, Snackbar, Text } from 'react-native-paper';
+import { useAppTheme } from '@/context/ThemeContext';
 
 // Usar chavetas {} para receber as props.
 const CustomSnackBar = ({
@@ -13,9 +14,9 @@ const CustomSnackBar = ({
   onDismiss: () => void;
 }) => {
   // garante que não dá erro se a mensagem estiver vazia
-  const isError = message?.includes("Erro");
-  const isAviso = message?.includes("Aviso");
-  const theme = useTheme();
+  const isError = message?.includes('Erro');
+  const isAviso = message?.includes('Aviso');
+  const { currentTheme: theme } = useAppTheme();
 
   return (
     <Snackbar
@@ -25,10 +26,10 @@ const CustomSnackBar = ({
       style={{
         // CORES ESTÁTICAS: Vermelho para erros, Verde para sucesso
         backgroundColor: isError
-          ? "#DC2626"
+          ? '#DC2626'
           : isAviso
             ? theme.colors.primaryContainer
-            : "#16A34A",
+            : '#16A34A',
         borderRadius: 16,
         marginHorizontal: 16,
         marginBottom: 20, // Margem de segurança
@@ -36,16 +37,16 @@ const CustomSnackBar = ({
         elevation: 9999,
       }}
       action={{
-        label: "OK",
-        textColor: "#ffffff",
+        label: 'OK',
+        textColor: '#ffffff',
         onPress: onDismiss, // Usa a mesma função para fechar
       }}
     >
       <Text
         style={{
           fontSize: 15,
-          fontWeight: "500",
-          color: "white",
+          fontWeight: '500',
+          color: 'white',
         }}
       >
         {message}

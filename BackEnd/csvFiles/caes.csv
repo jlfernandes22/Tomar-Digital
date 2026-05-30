@@ -1,74 +1,74 @@
-_id,Secção,CAE,Descrição
-6a1021a95428bd9bfa9b99b2,"Secção A - Agricultura, floresta e pesca",01111,Cerealicultura (exceto arroz)
-6a1021a95428bd9bfa9b99b3,"Secção A - Agricultura, floresta e pesca",01112,Cultura de leguminosas secas e sementes oleaginosas
-6a1021a95428bd9bfa9b99b4,"Secção A - Agricultura, floresta e pesca",01120,Cultura de arroz
-6a1021a95428bd9bfa9b99b5,"Secção A - Agricultura, floresta e pesca",01130,"Cultura de produtos hortícolas e melões, raízes e tubérculos"
-6a1021a95428bd9bfa9b99b6,"Secção A - Agricultura, floresta e pesca",01140,Cultura de cana-de-açúcar
-6a1021a95428bd9bfa9b99b7,"Secção A - Agricultura, floresta e pesca",01160,Cultura de plantas têxteis
-6a1021a95428bd9bfa9b99b8,"Secção A - Agricultura, floresta e pesca",01191,Cultura de flores e de plantas ornamentais
-6a1021a95428bd9bfa9b99b9,"Secção A - Agricultura, floresta e pesca",01192,"Outras culturas temporárias, n.e."
-6a1021a95428bd9bfa9b99ba,"Secção A - Agricultura, floresta e pesca",01210,Viticultura
-6a1021a95428bd9bfa9b99bb,"Secção A - Agricultura, floresta e pesca",01220,Cultura de frutos tropicais e subtropicais
-6a1021a95428bd9bfa9b99bc,"Secção A - Agricultura, floresta e pesca",01230,Cultura de citrinos
-6a1021a95428bd9bfa9b99bd,"Secção A - Agricultura, floresta e pesca",01240,Cultura de pomóideas e prunóideas
-6a1021a95428bd9bfa9b99be,"Secção A - Agricultura, floresta e pesca",01251,Cultura de frutos de casca rija
-6a1021a95428bd9bfa9b99bf,"Secção A - Agricultura, floresta e pesca",01252,Cultura de outros frutos em árvores e arbustos
-6a1021a95428bd9bfa9b99c0,"Secção A - Agricultura, floresta e pesca",01261,Olivicultura
-6a1021a95428bd9bfa9b99c1,"Secção A - Agricultura, floresta e pesca",01262,Cultura de outros frutos oleaginosos
-6a1021a95428bd9bfa9b99c2,"Secção A - Agricultura, floresta e pesca",01270,Cultura de plantas destinadas à preparação de bebidas
-6a1021a95428bd9bfa9b99c3,"Secção A - Agricultura, floresta e pesca",01280,"Cultura de especiarias, plantas aromáticas, medicinais e farmacêuticas"
-6a1021a95428bd9bfa9b99c4,"Secção A - Agricultura, floresta e pesca",01290,Outras culturas permanentes
-6a1021a95428bd9bfa9b99c5,"Secção A - Agricultura, floresta e pesca",01300,Propagação de plantas
-6a1021a95428bd9bfa9b99c6,"Secção A - Agricultura, floresta e pesca",01410,Criação de bovinos para produção de leite
-6a1021a95428bd9bfa9b99c7,"Secção A - Agricultura, floresta e pesca",01420,Criação de outros bovinos e búfalos
-6a1021a95428bd9bfa9b99c8,"Secção A - Agricultura, floresta e pesca",01430,Criação de cavalos e outros equídeos
-6a1021a95428bd9bfa9b99c9,"Secção A - Agricultura, floresta e pesca",01440,Criação de camelos e camelídeos
-6a1021a95428bd9bfa9b99ca,"Secção A - Agricultura, floresta e pesca",01450,Criação de ovinos e caprinos
-6a1021a95428bd9bfa9b99cb,"Secção A - Agricultura, floresta e pesca",01460,Suinicultura
-6a1021a95428bd9bfa9b99cc,"Secção A - Agricultura, floresta e pesca",01470,Avicultura
-6a1021a95428bd9bfa9b99cd,"Secção A - Agricultura, floresta e pesca",01481,Apicultura
-6a1021a95428bd9bfa9b99ce,"Secção A - Agricultura, floresta e pesca",01482,Cunicultura
-6a1021a95428bd9bfa9b99cf,"Secção A - Agricultura, floresta e pesca",01483,Criação de animais de companhia
-6a1021a95428bd9bfa9b99d0,"Secção A - Agricultura, floresta e pesca",01484,Criação de insetos para alimentação
-6a1021a95428bd9bfa9b99d1,"Secção A - Agricultura, floresta e pesca",01485,"Outra produção animal, n.e."
-6a1021a95428bd9bfa9b99d2,"Secção A - Agricultura, floresta e pesca",01500,Produções agrícola e animal combinadas
-6a1021a95428bd9bfa9b99d3,"Secção A - Agricultura, floresta e pesca",01610,Atividades de apoio à agricultura
-6a1021a95428bd9bfa9b99d4,"Secção A - Agricultura, floresta e pesca",01620,Atividades de apoio à produção animal
-6a1021a95428bd9bfa9b99d5,"Secção A - Agricultura, floresta e pesca",01631,Preparação de produtos agrícolas para venda
-6a1021a95428bd9bfa9b99d6,"Secção A - Agricultura, floresta e pesca",01632,Preparação e tratamento de sementes para propagação
-6a1021a95428bd9bfa9b99d7,"Secção A - Agricultura, floresta e pesca",01701,Caça e repovoamento cinegético
-6a1021a95428bd9bfa9b99d8,"Secção A - Agricultura, floresta e pesca",01702,Atividades dos serviços relacionados com caça e repovoamento cinegético
-6a1021a95428bd9bfa9b99d9,"Secção A - Agricultura, floresta e pesca",02100,Silvicultura e outras atividades florestais (1)
-6a1021a95428bd9bfa9b99da,"Secção A - Agricultura, floresta e pesca",02200,Exploração florestal
-6a1021a95428bd9bfa9b99db,"Secção A - Agricultura, floresta e pesca",02300,"Extração de cortiça, resina e de outros produtos florestais, exceto madeira (2)"
-6a1021a95428bd9bfa9b99dc,"Secção A - Agricultura, floresta e pesca",02400,Serviços de apoio à silvicultura e à exploração florestal
-6a1021a95428bd9bfa9b99dd,"Secção A - Agricultura, floresta e pesca",03111,"Pesca marítima, exceto apanha de algas e de outros produtos do mar"
-6a1021a95428bd9bfa9b99de,"Secção A - Agricultura, floresta e pesca",03112,Apanha de algas e de outros produtos do mar
-6a1021a95428bd9bfa9b99df,"Secção A - Agricultura, floresta e pesca",03121,"Pesca em água doce, exceto apanha de produtos em água doce"
-6a1021a95428bd9bfa9b99e0,"Secção A - Agricultura, floresta e pesca",03122,Apanha de produtos em água doce
-6a1021a95428bd9bfa9b99e1,"Secção A - Agricultura, floresta e pesca",03210,Aquicultura em águas salgadas e salobras
-6a1021a95428bd9bfa9b99e2,"Secção A - Agricultura, floresta e pesca",03220,Aquicultura em água doce
-6a1021a95428bd9bfa9b99e3,"Secção A - Agricultura, floresta e pesca",03300,Atividades de apoio à pesca e à aquicultura
-6a1021a95428bd9bfa9b99e4,Secção B - Indústrias extrativas,05100,Extração de hulha
-6a1021a95428bd9bfa9b99e5,Secção B - Indústrias extrativas,05200,Extração de lenhite
-6a1021a95428bd9bfa9b99e6,Secção B - Indústrias extrativas,06100,Extração de petróleo bruto
-6a1021a95428bd9bfa9b99e7,Secção B - Indústrias extrativas,06200,Extração de gás natural
-6a1021a95428bd9bfa9b99e8,Secção B - Indústrias extrativas,07100,Extração de minérios de ferro
-6a1021a95428bd9bfa9b99e9,Secção B - Indústrias extrativas,07210,Extração de minérios de urânio e de tório
-6a1021a95428bd9bfa9b99ea,Secção B - Indústrias extrativas,07290,Extração de outros minérios metálicos não ferrosos
-6a1021a95428bd9bfa9b99eb,Secção B - Indústrias extrativas,08111,Extração de mármore e outras rochas carbonatadas
-6a1021a95428bd9bfa9b99ec,Secção B - Indústrias extrativas,08112,Extração de granito ornamental e rochas similares
-6a1021a95428bd9bfa9b99ed,Secção B - Indústrias extrativas,08113,"Extração de calcário, cré e gesso"
-6a1021a95428bd9bfa9b99ee,Secção B - Indústrias extrativas,08114,Extração de ardósia
-6a1021a95428bd9bfa9b99ef,Secção B - Indústrias extrativas,08121,"Extração de saibro, areia e pedra britada"
-6a1021a95428bd9bfa9b99f0,Secção B - Indústrias extrativas,08122,Extração de argilas e caulino
-6a1021a95428bd9bfa9b99f1,Secção B - Indústrias extrativas,08910,Extração de minerais para a indústria química e para a fabricação de adubos
-6a1021a95428bd9bfa9b99f2,Secção B - Indústrias extrativas,08920,Extração de turfa
-6a1021a95428bd9bfa9b99f3,Secção B - Indústrias extrativas,08931,Extração de sal marinho
-6a1021a95428bd9bfa9b99f4,Secção B - Indústrias extrativas,08932,Extração de sal gema
-6a1021a95428bd9bfa9b99f5,Secção B - Indústrias extrativas,08990,"Outras indústrias extrativas, n.e."
-6a1021a95428bd9bfa9b99f6,Secção B - Indústrias extrativas,09100,Atividades de apoio à extração de petróleo e de gás natural
-6a1021a95428bd9bfa9b99f7,Secção B - Indústrias extrativas,09900,Atividades de apoio a outras indústrias extrativas
+﻿_id,Secção,CAE,Descrição
+6a1021a95428bd9bfa9b99b2,"Secção A - Agricultura, floresta e pesca",1111,Cerealicultura (exceto arroz)
+6a1021a95428bd9bfa9b99b3,"Secção A - Agricultura, floresta e pesca",1112,Cultura de leguminosas secas e sementes oleaginosas
+6a1021a95428bd9bfa9b99b4,"Secção A - Agricultura, floresta e pesca",1120,Cultura de arroz
+6a1021a95428bd9bfa9b99b5,"Secção A - Agricultura, floresta e pesca",1130,"Cultura de produtos hortícolas e melões, raízes e tubérculos"
+6a1021a95428bd9bfa9b99b6,"Secção A - Agricultura, floresta e pesca",1140,Cultura de cana-de-açúcar
+6a1021a95428bd9bfa9b99b7,"Secção A - Agricultura, floresta e pesca",1160,Cultura de plantas têxteis
+6a1021a95428bd9bfa9b99b8,"Secção A - Agricultura, floresta e pesca",1191,Cultura de flores e de plantas ornamentais
+6a1021a95428bd9bfa9b99b9,"Secção A - Agricultura, floresta e pesca",1192,"Outras culturas temporárias, n.e."
+6a1021a95428bd9bfa9b99ba,"Secção A - Agricultura, floresta e pesca",1210,Viticultura
+6a1021a95428bd9bfa9b99bb,"Secção A - Agricultura, floresta e pesca",1220,Cultura de frutos tropicais e subtropicais
+6a1021a95428bd9bfa9b99bc,"Secção A - Agricultura, floresta e pesca",1230,Cultura de citrinos
+6a1021a95428bd9bfa9b99bd,"Secção A - Agricultura, floresta e pesca",1240,Cultura de pomóideas e prunóideas
+6a1021a95428bd9bfa9b99be,"Secção A - Agricultura, floresta e pesca",1251,Cultura de frutos de casca rija
+6a1021a95428bd9bfa9b99bf,"Secção A - Agricultura, floresta e pesca",1252,Cultura de outros frutos em árvores e arbustos
+6a1021a95428bd9bfa9b99c0,"Secção A - Agricultura, floresta e pesca",1261,Olivicultura
+6a1021a95428bd9bfa9b99c1,"Secção A - Agricultura, floresta e pesca",1262,Cultura de outros frutos oleaginosos
+6a1021a95428bd9bfa9b99c2,"Secção A - Agricultura, floresta e pesca",1270,Cultura de plantas destinadas à preparação de bebidas
+6a1021a95428bd9bfa9b99c3,"Secção A - Agricultura, floresta e pesca",1280,"Cultura de especiarias, plantas aromáticas, medicinais e farmacêuticas"
+6a1021a95428bd9bfa9b99c4,"Secção A - Agricultura, floresta e pesca",1290,Outras culturas permanentes
+6a1021a95428bd9bfa9b99c5,"Secção A - Agricultura, floresta e pesca",1300,Propagação de plantas
+6a1021a95428bd9bfa9b99c6,"Secção A - Agricultura, floresta e pesca",1410,Criação de bovinos para produção de leite
+6a1021a95428bd9bfa9b99c7,"Secção A - Agricultura, floresta e pesca",1420,Criação de outros bovinos e búfalos
+6a1021a95428bd9bfa9b99c8,"Secção A - Agricultura, floresta e pesca",1430,Criação de cavalos e outros equídeos
+6a1021a95428bd9bfa9b99c9,"Secção A - Agricultura, floresta e pesca",1440,Criação de camelos e camelídeos
+6a1021a95428bd9bfa9b99ca,"Secção A - Agricultura, floresta e pesca",1450,Criação de ovinos e caprinos
+6a1021a95428bd9bfa9b99cb,"Secção A - Agricultura, floresta e pesca",1460,Suinicultura
+6a1021a95428bd9bfa9b99cc,"Secção A - Agricultura, floresta e pesca",1470,Avicultura
+6a1021a95428bd9bfa9b99cd,"Secção A - Agricultura, floresta e pesca",1481,Apicultura
+6a1021a95428bd9bfa9b99ce,"Secção A - Agricultura, floresta e pesca",1482,Cunicultura
+6a1021a95428bd9bfa9b99cf,"Secção A - Agricultura, floresta e pesca",1483,Criação de animais de companhia
+6a1021a95428bd9bfa9b99d0,"Secção A - Agricultura, floresta e pesca",1484,Criação de insetos para alimentação
+6a1021a95428bd9bfa9b99d1,"Secção A - Agricultura, floresta e pesca",1485,"Outra produção animal, n.e."
+6a1021a95428bd9bfa9b99d2,"Secção A - Agricultura, floresta e pesca",1500,Produções agrícola e animal combinadas
+6a1021a95428bd9bfa9b99d3,"Secção A - Agricultura, floresta e pesca",1610,Atividades de apoio à agricultura
+6a1021a95428bd9bfa9b99d4,"Secção A - Agricultura, floresta e pesca",1620,Atividades de apoio à produção animal
+6a1021a95428bd9bfa9b99d5,"Secção A - Agricultura, floresta e pesca",1631,Preparação de produtos agrícolas para venda
+6a1021a95428bd9bfa9b99d6,"Secção A - Agricultura, floresta e pesca",1632,Preparação e tratamento de sementes para propagação
+6a1021a95428bd9bfa9b99d7,"Secção A - Agricultura, floresta e pesca",1701,Caça e repovoamento cinegético
+6a1021a95428bd9bfa9b99d8,"Secção A - Agricultura, floresta e pesca",1702,Atividades dos serviços relacionados com caça e repovoamento cinegético
+6a1021a95428bd9bfa9b99d9,"Secção A - Agricultura, floresta e pesca",2100,Silvicultura e outras atividades florestais (1)
+6a1021a95428bd9bfa9b99da,"Secção A - Agricultura, floresta e pesca",2200,Exploração florestal
+6a1021a95428bd9bfa9b99db,"Secção A - Agricultura, floresta e pesca",2300,"Extração de cortiça, resina e de outros produtos florestais, exceto madeira (2)"
+6a1021a95428bd9bfa9b99dc,"Secção A - Agricultura, floresta e pesca",2400,Serviços de apoio à silvicultura e à exploração florestal
+6a1021a95428bd9bfa9b99dd,"Secção A - Agricultura, floresta e pesca",3111,"Pesca marítima, exceto apanha de algas e de outros produtos do mar"
+6a1021a95428bd9bfa9b99de,"Secção A - Agricultura, floresta e pesca",3112,Apanha de algas e de outros produtos do mar
+6a1021a95428bd9bfa9b99df,"Secção A - Agricultura, floresta e pesca",3121,"Pesca em água doce, exceto apanha de produtos em água doce"
+6a1021a95428bd9bfa9b99e0,"Secção A - Agricultura, floresta e pesca",3122,Apanha de produtos em água doce
+6a1021a95428bd9bfa9b99e1,"Secção A - Agricultura, floresta e pesca",3210,Aquicultura em águas salgadas e salobras
+6a1021a95428bd9bfa9b99e2,"Secção A - Agricultura, floresta e pesca",3220,Aquicultura em água doce
+6a1021a95428bd9bfa9b99e3,"Secção A - Agricultura, floresta e pesca",3300,Atividades de apoio à pesca e à aquicultura
+6a1021a95428bd9bfa9b99e4,Secção B - Indústrias extrativas,5100,Extração de hulha
+6a1021a95428bd9bfa9b99e5,Secção B - Indústrias extrativas,5200,Extração de lenhite
+6a1021a95428bd9bfa9b99e6,Secção B - Indústrias extrativas,6100,Extração de petróleo bruto
+6a1021a95428bd9bfa9b99e7,Secção B - Indústrias extrativas,6200,Extração de gás natural
+6a1021a95428bd9bfa9b99e8,Secção B - Indústrias extrativas,7100,Extração de minérios de ferro
+6a1021a95428bd9bfa9b99e9,Secção B - Indústrias extrativas,7210,Extração de minérios de urânio e de tório
+6a1021a95428bd9bfa9b99ea,Secção B - Indústrias extrativas,7290,Extração de outros minérios metálicos não ferrosos
+6a1021a95428bd9bfa9b99eb,Secção B - Indústrias extrativas,8111,Extração de mármore e outras rochas carbonatadas
+6a1021a95428bd9bfa9b99ec,Secção B - Indústrias extrativas,8112,Extração de granito ornamental e rochas similares
+6a1021a95428bd9bfa9b99ed,Secção B - Indústrias extrativas,8113,"Extração de calcário, cré e gesso"
+6a1021a95428bd9bfa9b99ee,Secção B - Indústrias extrativas,8114,Extração de ardósia
+6a1021a95428bd9bfa9b99ef,Secção B - Indústrias extrativas,8121,"Extração de saibro, areia e pedra britada"
+6a1021a95428bd9bfa9b99f0,Secção B - Indústrias extrativas,8122,Extração de argilas e caulino
+6a1021a95428bd9bfa9b99f1,Secção B - Indústrias extrativas,8910,Extração de minerais para a indústria química e para a fabricação de adubos
+6a1021a95428bd9bfa9b99f2,Secção B - Indústrias extrativas,8920,Extração de turfa
+6a1021a95428bd9bfa9b99f3,Secção B - Indústrias extrativas,8931,Extração de sal marinho
+6a1021a95428bd9bfa9b99f4,Secção B - Indústrias extrativas,8932,Extração de sal gema
+6a1021a95428bd9bfa9b99f5,Secção B - Indústrias extrativas,8990,"Outras indústrias extrativas, n.e."
+6a1021a95428bd9bfa9b99f6,Secção B - Indústrias extrativas,9100,Atividades de apoio à extração de petróleo e de gás natural
+6a1021a95428bd9bfa9b99f7,Secção B - Indústrias extrativas,9900,Atividades de apoio a outras indústrias extrativas
 6a1021a95428bd9bfa9b99f8,Secção C - Indústrias transformadoras,10110,"Processamento e conservação de carne, exceto carne de aves"
 6a1021a95428bd9bfa9b99f9,Secção C - Indústrias transformadoras,10120,Processamento e conservação de carne de aves
 6a1021a95428bd9bfa9b99fa,Secção C - Indústrias transformadoras,10130,Fabricação de produtos à base de carne
