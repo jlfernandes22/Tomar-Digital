@@ -104,6 +104,7 @@ const ProfileDetails = () => {
               <Menu.Item
                 onPress={() => {
                   closeMenu();
+                  router.push('/components/Preferences');
                 }}
                 leadingIcon={({ size }) => (
                   <Image
