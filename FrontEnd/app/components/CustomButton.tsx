@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Image } from "react-native";
+import { View, Image, ViewStyle, StyleProp } from "react-native";
 import {
   TouchableRipple,
   Text,
@@ -12,6 +12,7 @@ interface PrimaryButtonProps {
   children: React.ReactNode;
   onPress: () => void;
   className?: string;
+  style?: StyleProp<ViewStyle>; 
   loading?: boolean;
   disabled?: boolean;
   buttonColor?: string;
@@ -28,6 +29,7 @@ const CustomButton = ({
   className,
   loading,
   disabled,
+  style,
   buttonColor,
   textColor,
   icon,
@@ -46,12 +48,15 @@ const CustomButton = ({
   return (
     <View
       className={className || ""}
-      style={{
+      style={[
+        {
         backgroundColor: bgColor,
         borderRadius: 9999,
         overflow: "hidden",
         opacity: isDisabled ? 0.6 : 1,
-      }}
+        }, style
+      ]}
+      
     >
       <TouchableRipple
         onPress={isDisabled ? undefined : onPress}
@@ -66,6 +71,7 @@ const CustomButton = ({
           alignItems: "center",
           flexDirection: "row",
         }}
+      
       >
         <>
           {loading && (

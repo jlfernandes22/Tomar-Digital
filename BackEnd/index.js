@@ -738,6 +738,30 @@ app.get("/meusNegocios", authorize(["comerciante"]), async (req, res) => {
   }
 });
 
+app.get("/negociosCae", authorize(["comerciante"]), async (req, res) => {
+  let { cae } = req.query;
+  
+  if (Array.isArray(cae)) cae = cae[0];
+  const caeLimpo = String(cae).replace(/[\[\]"']/g, '').trim();
+
+  try {
+    console.log("Procurando negócios onde listaCAES contém:", caeLimpo);
+    
+    // CORREÇÃO: Usar 'listaCAES: caeLimpo' funciona se o array contiver o valor
+    // O MongoDB faz o match automaticamente se o valor estiver no array
+    const negocios = await Business.find({ 
+      owner: req.user.id,
+      listaCAES: caeLimpo 
+    });
+    
+    console.log(`Negócios encontrados: ${negocios.length}`);
+    res.json(negocios);
+  } catch (error) {
+    console.error("Erro na busca:", error);
+    res.status(500).json({ message: "Erro ao buscar negócios" });
+  }
+});
+
 
 
 /**
@@ -1423,6 +1447,135 @@ app.get("/listaCampanhas", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json("Erro ao listar as campanhas");
+  }
+});
+
+// ==========================================
+//Verificar se um negócio pode aderir a uma campanha
+
+app.post("/campanhas/aderir", authorize(["comerciante"]), async (req, res) => {
+  const { businessId, campaignId } = req.body;
+  
+  try {
+    // 1. Encontra APENAS o negócio selecionado
+    const business = await Business.findById(businessId);
+    if (!business) return res.status(404).json({ message: "Negócio não encontrado" });
+
+    // 2. Verifica se já existe um pedido para esta campanha neste negócio
+    const jaAderiu = business.campaigns.find(c => c.campaign.toString() === campaignId);
+    if (jaAderiu) return res.status(400).json({ message: "Já submeteu candidatura para este negócio." });
+
+    // 3. Adiciona apenas a este negócio
+    business.campaigns.push({
+      campaign: campaignId,
+      status: "pendente",
+      requestDate: new Date()
+    });
+    
+    await business.save();
+    return res.status(200).json({ message: "Pedido enviado com sucesso!" });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Erro interno" });
+  }
+});
+// ==========================================
+// Listar campanhas compatíveis com os negócios do comerciante
+app.get("/campanhas/comerciante-disponiveis", authorize(["comerciante"]), async (req, res) => {
+  try {
+    const hoje = new Date();
+    const ownerId = req.user.id;
+    
+    const meusNegocios = await Business.find({ owner: ownerId, status: "aprovado" });
+    const todosOsMeusCaes = [...new Set(meusNegocios.flatMap(n => n.listaCAES || []))];
+
+    const totalCampanhasAtivas = await Campaign.countDocuments({ estado: "ativa" });
+
+    const campComDatasCertas = await Campaign.find({
+        estado: "ativa",
+        DataInicio: { $lte: hoje },
+        DataExpiracao: { $gte: hoje }
+    });
+    
+    campComDatasCertas.forEach(c => console.log(`   Campanha "${c.titulo}" tem listaCAES:`, c.listaCAES));
+
+    const campanhas = await Campaign.find({
+        DataInicio: { $lte: hoje },
+        DataExpiracao: { $gte: hoje },
+        listaCAES: { $in: todosOsMeusCaes },
+    });
+
+    return res.status(200).json(campanhas);
+  } catch (error) {
+    console.error("ERRO:", error);
+    return res.status(500).json({ message: "Erro" });
+  }
+});
+// =========================================================================
+// Câmara lista todos os negócios com candidaturas PENDENTES
+app.get("/candidaturasCampanha", authorize(["admin"]), async (req, res) => {
+  try {
+    // Busca todos os negócios e faz o populate da campanha
+    const businesses = await Business.find({}).populate('campaigns.campaign');
+    
+    let candidaturas = [];
+    
+    businesses.forEach(business => {
+      business.campaigns.forEach(cap => {
+        if (cap.status === "pendente") {
+          candidaturas.push({
+            businessId: business._id,
+            businessName: business.name,
+            campaignId: cap.campaign._id,
+            // Agora tens acesso ao título real
+            campaignTitle: cap.campaign.titulo, 
+            requestDate: cap.requestDate
+          });
+        }
+      });
+    });
+
+    res.json(candidaturas);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao buscar candidaturas" });
+  }
+});
+// =========================================================================
+// câmara envia a decisão (Aceitar ou Rejeitar)
+app.post("/decidirAdesaoCampanha",  authorize(["camara"]), async (req, res) => {
+  try {
+    const { businessId, campaignId, acao } = req.body; 
+
+    if (!businessId || !campaignId || !["aprovado", "rejeitado"].includes(acao)) {
+      return res.status(400).json({ message: "Dados inválidos. A ação deve ser 'aprovado' ou 'rejeitado'." });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({ message: "Negócio não encontrado." });
+    }
+
+    // Procura o pedido correto no array do negócio
+    const candidatura = business.campaigns.find(
+      (c) => c.campaign.toString() === campaignId.toString()
+    );
+
+    if (!candidatura) {
+      return res.status(404).json({ message: "Pedido de adesão não encontrado neste negócio." });
+    }
+
+    // Atualiza o estado conforme a decisão enviada pelo POST
+    candidatura.status = acao;
+    await business.save();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: `Candidatura avaliada com sucesso como: ${acao}.` 
+    });
+
+  } catch (error) {
+    console.error("Erro ao salvar decisão da câmara:", error);
+    res.status(500).json({ message: "Erro interno ao salvar decisão." });
   }
 });
 

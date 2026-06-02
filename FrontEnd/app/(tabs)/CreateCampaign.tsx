@@ -341,6 +341,7 @@ const CreateCampaign = () => {
 
       {showDatePicker && (
         <DateTimePicker
+        style={{backgroundColor: theme.colors.primary, margin: 10, alignSelf: "center"}}
           value={formData.dataExpiracao}
           mode="date"
           display={Platform.OS === 'ios' ? 'inline' : 'default'}

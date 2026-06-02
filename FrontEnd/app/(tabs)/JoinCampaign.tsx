@@ -27,21 +27,43 @@ export default function JoinCampaign() {
     setShowDetails(true);
   };
 
+  
+  
+
   const fetchCampaigns = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/listaCampanhas`);
-      const dados = await response.json();
+  setLoading(true); 
+  
+  try {
+    const isComerciante = user?.role === "comerciante"; 
+    
+    const url = isComerciante 
+      ? `${API_URL}/campanhas/comerciante-disponiveis` 
+      : `${API_URL}/listaCampanhas`;
 
-      console.log("CAMPANHAS RECEBIDAS:", dados[0]); // Vê no terminal as chaves que existem
+    const config: RequestInit = isComerciante ? {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${user?.token}` 
+      }
+    } : {
+      method: "GET"
+    };
 
-      setListCampaign(dados);
-    } catch (error) {
-      console.error("Erro ao carregar campanhas:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("A buscar campanhas em:", url);
+    const response = await fetch(url, config);
+        console.log("Resposta da API:", response);
+
+    const dados = await response.json();
+    setListCampaign(dados);
+
+  } catch (error) {
+    console.error("Erro fatal no fetchCampaigns:", error);
+    setListCampaign([]); 
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderItem = ({ item }: { item: any }) => (
     <Card
@@ -127,11 +149,16 @@ export default function JoinCampaign() {
         )}
 
         {/* 3.Modal */}
+       {showDetails && selectedCampaign && (
         <DetalhesCampanha
           visible={showDetails}
           campaign={selectedCampaign}
-          onClose={() => setShowDetails(false)}
+          onClose={() => {
+              setShowDetails(false);
+              setSelectedCampaign(null); // Limpa a seleção ao fechar
+          }}
         />
+      )}
       </SafeAreaView>
     </Surface>
   );
