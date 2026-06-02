@@ -1294,7 +1294,7 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       titulo, 
       slogan, 
       descricao, 
-      listaCAES,
+      listaCAES, 
       dataInicio, 
       dataExpiracao, 
       normas, 
@@ -1304,21 +1304,30 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
     let parsedPacks = [];
     if (packs) {
       try {
-        parsedPacks = JSON.parse(packs);
+        parsedPacks = typeof packs === 'string' ? JSON.parse(packs) : packs;
       } catch (parseError) {
-        console.error("Erro ao converter os packs de string para JSON:", parseError);
+        console.error("Erro ao converter os packs:", parseError);
         return res.status(400).json({ message: "O formato dos pacotes/packs é inválido." });
       }
     }
 
+    let parsedCAES = [];
+    if (listaCAES) {
+      try {
+        parsedCAES = typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES;
+      } catch (parseError) {
+        parsedCAES = typeof listaCAES === 'string' ? listaCAES.split(',') : listaCAES;
+      }
+    }
 
     let logoIdDefinitivo = null;
     let panfletoIdDefinitivo = null;
 
-    // 1.  LOGÓTIPO
-    if (req.files && req.files['logo']) {
+    // --- PROCESSAMENTO DO LOGÓTIPO ---
+    if (req.files && req.files['logo'] && req.files['logo'][0]) {
       const logoFile = req.files['logo'][0];
-      const logoBuffer = await sharp(logoFile.buffer)
+      
+      const logoBuffer = await sharp(logoFile.path)
         .resize({ width: 800 })
         .toFormat('webp')
         .webp({ quality: 80 })
@@ -1331,12 +1340,15 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       });
       await novaImagemLogo.save();
       logoIdDefinitivo = novaImagemLogo._id;
+      
+      try { fs.unlinkSync(logoFile.path); } catch (e) { console.log("Erro ao apagar logo temp:", e); }
     } 
 
-    // 2.  PANFLETO 
-    if (req.files && req.files['panfleto']) {
+    // --- PROCESSAMENTO DO PANFLETO ---
+    if (req.files && req.files['panfleto'] && req.files['panfleto'][0]) {
       const panfletoFile = req.files['panfleto'][0];
-      const panfletoBuffer = await sharp(panfletoFile.buffer)
+      
+      const panfletoBuffer = await sharp(panfletoFile.path)
         .resize({ width: 800 })
         .toFormat('webp')
         .webp({ quality: 80 })
@@ -1349,29 +1361,32 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       });
       await novaImagemPanfleto.save();
       panfletoIdDefinitivo = novaImagemPanfleto._id;
-    } 
+      
+      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.log("Erro ao apagar panfleto temp:", e); }
+    }
 
-    // 3. CRIAR A CAMPANHA 
+    // --- CRIAR A CAMPANHA ---
     const newCampaign = new Campaign({
       createdBy: req.user.id,
       titulo: titulo,            
       slogan: slogan,
       descricao: descricao,
-      listaCAES: listaCAES,
-      dataInicio: dataInicio,
-      DataExpiracao: dataExpiracao, 
+      listaCAES: parsedCAES, 
+      DataInicio: dataInicio ? new Date(dataInicio) : undefined, 
+      DataExpiracao: dataExpiracao ? new Date(dataExpiracao) : undefined,
       normas: normas,
       packs: parsedPacks,           
       logo: logoIdDefinitivo,       
       panfleto: panfletoIdDefinitivo 
     });
+    
     await newCampaign.save();
     
-    res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
+    return res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
     
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro ao gravar", details: err.message });
+    console.error("Erro no catch principal:", err);
+    return res.status(500).json({ message: "Erro ao gravar", details: err.message });
   }
 });
 

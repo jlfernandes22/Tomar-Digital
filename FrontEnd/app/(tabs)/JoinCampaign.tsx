@@ -49,12 +49,10 @@ export default function JoinCampaign() {
       onPress={() => handleOpenDetails(item)}
     >
       <Card.Content>
-        {/* 1. MUDAR DE item.title PARA item.titulo */}
         <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
           {String(item.titulo || "Sem título")}
         </Text>
 
-        {/* 2. MUDAR DE item.description PARA item.descricao */}
         <Text variant="bodyMedium" style={{ marginTop: 8 }}>
           {String(item.descricao || "Sem descrição")}
         </Text>
@@ -66,7 +64,6 @@ export default function JoinCampaign() {
             justifyContent: "space-between",
           }}
         >
-          {/* 3. MUDAR DE item.expirationDate PARA item.DataExpiracao (ou dataExpiracao) */}
           <Text variant="labelSmall">
             Expira:{" "}
             {item.DataExpiracao

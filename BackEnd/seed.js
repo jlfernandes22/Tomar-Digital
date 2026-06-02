@@ -193,6 +193,7 @@ const seedDatabase = async () => {
         logo: "https://exemplo.com/rota-templaria.jpg",
         panfleto: "https://exemplo.com/panfleto.pdf",
         normas: "Válido em estabelecimentos aderentes.",
+        
         packs: [
           {
             pointsCost: 50,

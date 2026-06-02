@@ -35,9 +35,6 @@ const CampaignSchema = new mongoose.Schema({
     required: true,
   },
 
-  //Data de inicio da campanha para verificar se a fatura é válida
-
-  //logo e flysheet teram de ser required no futuro
 
   logo: {
     type: String,

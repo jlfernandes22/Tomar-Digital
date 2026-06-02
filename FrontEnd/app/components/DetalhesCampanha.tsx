@@ -40,7 +40,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
         }}>
           
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>Detalhes</Text>
+            <Text variant="titleLarge" style={{ fontWeight: 'bold', color: theme.colors.primary }}>Detalhes</Text>
             <IconButton icon="close" size={24} onPress={onClose} />
           </View>
 
@@ -49,19 +49,20 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={{ paddingVertical: 10 }}>
               
-              {/* 1. CORREÇÃO: title -> titulo */}
               <Text variant="headlineSmall" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
                 {String(campaign.titulo || "Sem título")}
               </Text>
               
-              {/* 2. CORREÇÃO: description -> descricao */}
               <Text variant="bodyMedium" style={{ marginVertical: 15, color: theme.colors.onSurfaceVariant, lineHeight: 22 }}>
                 {String(campaign.descricao || "Sem descrição disponível")}
               </Text>
 
               <Divider style={{ marginVertical: 15 }} />
+              <Text variant="titleMedium" style={{fontWeight: "bold", color:theme.colors.primary}}>CAES abrangentes: 
 
-              <Text variant="titleMedium" style={{ fontWeight: 'bold', marginBottom: 15 }}>
+                {String(" " + campaign.listaCAES || "Sem CAES abrangentes")}
+              </Text>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold', color:theme.colors.primary, marginBottom: 15 }}>
                 Packs Disponíveis:
               </Text>
 
@@ -80,19 +81,14 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                   >
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <View style={{ flex: 1 }}>
-                        {/* 3. CORREÇÃO: pack.title -> pack.rewardDescription */}
                         <Text variant="bodyLarge" style={{ fontWeight: 'bold' }}>
                           {String(pack.rewardDescription || "Pack " + (index + 1))}
                         </Text>
-                        
-                        {/* Se tiveres um campo de descrição no pack, ajusta aqui, 
-                            senão podes remover este Text de baixo */}
                         <Text variant="bodySmall" style={{ marginTop: 4 }}>
                           Stock: {pack.stock} unidades
                         </Text>
                       </View>
                       
-                      {/* 4. CORREÇÃO: pack.price -> pack.pointsCost */}
                       <Text variant="titleMedium" style={{ color: theme.colors.primary, marginLeft: 10 }}>
                         {String(pack.pointsCost || 0)} pts
                       </Text>
@@ -118,7 +114,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                 resizeMode="contain" // Mantém a proporção da imagem
               />
               <Image
-                source={{ uri: `${API_URL}/mostrarImagem/${campaign.logo}` }}
+                source={{ uri: `${API_URL}/mostrarImagem/${campaign.panfleto}` }}
                 style={{
                   width: '100%', // ou um valor fixo como 200
                   height: 150,    // valor fixo obrigatório
