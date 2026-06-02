@@ -68,6 +68,13 @@ module.exports = {
         },
       ],
       'expo-secure-store',
+      [
+        'expo-file-system',
+        {
+          supportsOpeningDocumentsInPlace: true,
+          enableFileSharing: true,
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

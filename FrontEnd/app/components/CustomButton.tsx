@@ -20,6 +20,9 @@ interface PrimaryButtonProps {
   labelStyle?: any;
   accessibilityRole?: any;
   accessibilityLabel?: any;
+  numberOfLines?: number;
+  width?: any;
+  height?: any;
 }
 
 const CustomButton = ({
@@ -34,6 +37,9 @@ const CustomButton = ({
   labelStyle,
   accessibilityRole,
   accessibilityLabel,
+  numberOfLines,
+  width,
+  height,
 }: PrimaryButtonProps) => {
   const { currentTheme: theme } = useAppTheme();
 
@@ -48,9 +54,8 @@ const CustomButton = ({
       className={className || ''}
       style={{
         backgroundColor: bgColor,
-        borderRadius: 9999,
-        overflow: 'hidden',
-        opacity: isDisabled ? 0.6 : 1,
+        borderRadius: theme.roundness,
+        opacity: isDisabled ? 0.5 : 1,
       }}
     >
       <TouchableRipple
@@ -60,11 +65,16 @@ const CustomButton = ({
         accessibilityLabel={accessibilityLabel}
         disabled={isDisabled}
         style={{
+          minWidth: 44,
+          minHeight: 44,
           paddingVertical: 12,
           paddingHorizontal: 24,
           justifyContent: 'center',
           alignItems: 'center',
           flexDirection: 'row',
+          width: width,
+          height: height,
+          borderRadius: theme.roundness,
         }}
       >
         <>
@@ -101,7 +111,7 @@ const CustomButton = ({
               },
               labelStyle,
             ]}
-            numberOfLines={1}
+            numberOfLines={numberOfLines}
           >
             {children}
           </Text>

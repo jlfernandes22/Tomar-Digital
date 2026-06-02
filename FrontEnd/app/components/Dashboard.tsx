@@ -6,7 +6,7 @@ import {
   FlatList,
   Animated,
 } from 'react-native';
-import React, { Children, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { API_URL } from '@/constants/api';
@@ -14,9 +14,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PieChart } from 'react-native-chart-kit';
 import { BarChart } from 'react-native-gifted-charts';
 import { ExpandingDot } from 'react-native-animated-pagination-dots';
-
-import { Surface, Text, ActivityIndicator } from 'react-native-paper';
-import { RefreshControl } from 'react-native-gesture-handler';
+import {
+  Surface,
+  Text,
+  ActivityIndicator,
+  Divider,
+  Modal,
+  Portal,
+  IconButton,
+} from 'react-native-paper';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import { File, Paths } from 'expo-file-system';
+import CustomButton from './CustomButton';
+import CustomSnackBar from './CustomSnackBar';
+import WebView from 'react-native-webview';
+import { DashboardPdf } from '@/constants/html/DashboardPdf';
+import { exportDashboardToExcel } from '@/constants/excelUtils';
+import { curiosidades } from '@/constants/curiosidades';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -29,9 +44,17 @@ const Dashboard = () => {
     countries: [],
   });
   const [summary, setSummary] = useState({ totalUsers: 0, totalBusinesses: 0 });
-  const [loading, setLoading] = useState(true);
 
-  /* Largura calculada subtraindo paddings externos (16*2) e internos do cartão (16*2) */
+  const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
+
+  const [pdfDialogVisible, setPdfDialogVisible] = useState(false);
+  const [html, setHtml] = useState('');
+
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
   const chartWidth = screenWidth - 64;
   const chartHeight = 220;
   const CHART_COLORS = [
@@ -57,17 +80,23 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setAllInfo(data);
-        //console.log(allInfo.countries)
+
+        const utilizadoresReais = data.countries.reduce(
+          (soma: number, pais: any) => soma + pais.total,
+          0,
+        );
 
         setSummary({
-          totalUsers: data.totalUsers || 0,
+          totalUsers: utilizadoresReais,
           totalBusinesses: data.totalBusinesses || 0,
         });
       } else {
-        console.error('Erro na resposta:', response.status);
+        setSnackbarMessage('Erro: Servidor não devolveu os dados com sucesso.');
+        setSnackbarVisible(true);
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível carregar as estatísticas.');
+      setSnackbarMessage('Erro: Não foi possível carregar as estatísticas.');
+      setSnackbarVisible(true);
     } finally {
       setLoading(false);
     }
@@ -77,14 +106,10 @@ const Dashboard = () => {
     if (user?.token) fetchAllInfo();
   }, [user?.token]);
 
-  //função para formatar os dados vindos da API para obter distribuição geográfica
   const formatPieData = (dataArray: any[]) => {
-    // 1. Ordena os dados decrescentemente pelo total de utilizadores
     const sortedData = [...dataArray].sort((a, b) => b.total - a.total);
-
     let processedData = sortedData;
 
-    // 2. Se houver mais do que 5 itens, agrupa o excedente sob "Outros" para evitar sobrepor a legenda
     if (sortedData.length > 5) {
       const topItems = sortedData.slice(0, 5);
       const remainingItems = sortedData.slice(5);
@@ -102,7 +127,6 @@ const Dashboard = () => {
       ];
     }
 
-    // 3. Mapeia para a estrutura do gráfico utilizando as cores do tema da aplicação
     return processedData.map((item, index) => {
       const sliceColor =
         item._id === 'Outros'
@@ -121,15 +145,23 @@ const Dashboard = () => {
 
   const scrollX = React.useRef(new Animated.Value(0)).current;
 
-  //função para formatar os dados vindos da API para os negócios
   const formatBarData = (dataArray: any[]) => {
-    //console.log(dataArray[1].total)
-    return dataArray.map(item => ({
+    const sortedData = [...dataArray].sort((a, b) => b.total - a.total);
+
+    return sortedData.map(item => ({
       value: item.total,
       label: item._id,
       frontColor: theme.colors.primary,
       topLabelComponent: () => (
-        <Text style={{ fontSize: 16, marginBottom: 6, color: theme.colors.onSurface }}>{item.total}</Text>
+        <Text
+          style={{
+            fontSize: 16,
+            marginBottom: 6,
+            color: theme.colors.onSurface,
+          }}
+        >
+          {item.total}
+        </Text>
       ),
     }));
   };
@@ -147,12 +179,10 @@ const Dashboard = () => {
     decimalPlaces: 0,
   };
 
-  // 1. Filtrar para obter apenas os países estrangeiros (ignorar Portugal)
   const paisesEstrangeiros = allInfo.countries.filter(
     country => country._id && country._id.toLowerCase() !== 'portugal',
   );
 
-  // 2. Criar a estrutura para a FlatList renderizar os dois cartões
   const geographicCharts = [
     {
       id: '1',
@@ -168,17 +198,131 @@ const Dashboard = () => {
     },
   ];
 
+  // 1. Apenas constrói o HTML e abre o Modal do WebView
+  function createPDF() {
+    try {
+      const maxCat = Math.max(
+        ...allInfo.categories.map((c: any) => c.total),
+        1,
+      );
+      const maxCity = Math.max(...allInfo.cities.map((c: any) => c.total), 1);
+
+      const dataAtual = new Date().toLocaleDateString('pt-PT', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const htmlContent = DashboardPdf({
+        theme,
+        dataAtual,
+        summary,
+        allInfo,
+        maxCat,
+        maxCity,
+        paisesEstrangeiros,
+      });
+
+      setHtml(htmlContent);
+      setPdfDialogVisible(true);
+    } catch (error) {
+      setSnackbarMessage('Erro ao gerar a pré-visualização do PDF.');
+      setSnackbarVisible(true);
+    }
+  }
+
+  // 2. Ação de Imprimir a partir do Modal
+  const handlePrintPDF = async () => {
+    try {
+      await Print.printAsync({ html });
+    } catch (error) {
+      setSnackbarMessage('Ação de impressão cancelada ou falhou.');
+      setSnackbarVisible(true);
+    }
+  };
+
+  // 3. Ação de Guardar a partir do Modal
+  const handleSavePDF = async () => {
+    try {
+      setPdfLoading(true);
+      // Gera o ficheiro PDF temporário pelo expo-print
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+
+      // NOVA API: Cria instâncias de objetos File em vez de strings
+      const tempFile = new File(uri);
+      const finalFile = new File(Paths.document, 'Relatorio_TomarDigital.pdf');
+
+      // Move o ficheiro do diretório temporário (cache) para a pasta de documentos permanente
+      tempFile.move(finalFile);
+
+      // Pede ao utilizador para guardar
+      await Sharing.shareAsync(finalFile.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Guardar Relatório PDF',
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (error) {
+      setSnackbarMessage('Erro ao tentar guardar o PDF.');
+      setSnackbarVisible(true);
+    } finally {
+      setPdfLoading(false);
+      setPdfDialogVisible(false); // Fecha o dialog de qualquer forma
+    }
+  };
+
+  // 4. Ação do Excel (Independente)
+  const handleExportExcel = async () => {
+    setExcelLoading(true);
+    const result = await exportDashboardToExcel({
+      summary,
+      categories: allInfo.categories,
+      cities: allInfo.cities,
+      countries: allInfo.countries,
+    });
+
+    setExcelLoading(false);
+    if (!result.success) {
+      setSnackbarMessage('Erro ao gerar ficheiro Excel.');
+      setSnackbarVisible(true);
+    }
+  };
+
+  const handleRandomPhrase = () => {
+    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+  };
+  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+
   if (loading) {
     return (
-      <View
-        className="flex-1 items-center justify-center"
+      <Surface
+        className="flex-1 items-center justify-center p-6"
         style={{ backgroundColor: theme.colors.background }}
       >
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text variant="headlineLarge">
-          Por favor aguarde enquanto preparamos todos os dados
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary}
+          style={{ marginBottom: 20 }}
+        />
+
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          A preparar os dados...
         </Text>
-      </View>
+
+        <CustomButton
+          labelStyle={{ textAlign: 'center' }}
+          onPress={() => setRandomPhrase(handleRandomPhrase())}
+        >
+          Sabias que...{'\n '}
+          {randomPhrase}
+        </CustomButton>
+      </Surface>
     );
   }
 
@@ -188,7 +332,7 @@ const Dashboard = () => {
       edges={['top', 'left', 'right']}
     >
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-        <View>
+        <Surface style={{ paddingBottom: 80 }}>
           <Text
             variant="headlineMedium"
             style={{
@@ -314,7 +458,6 @@ const Dashboard = () => {
                             backgroundColor={'transparent'}
                             paddingLeft="15"
                             center={[3, 0]}
-                            /* Remoção da propriedade 'absolute' para melhor adaptação do layout */
                           />
                         </View>
                       ) : (
@@ -402,8 +545,126 @@ const Dashboard = () => {
               </View>
             </Surface>
           </View>
-        </View>
+          <Divider style={{ marginVertical: 20 }} />
+          <Text style={{ marginLeft: 8, marginBottom: 10, fontWeight: 'bold' }}>
+            Exportar Relatório
+          </Text>
+          <View
+            style={{
+              padding: 8,
+              flexDirection: 'row',
+              gap: 10,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                numberOfLines={2}
+                onPress={createPDF}
+                buttonColor={theme.colors.error}
+                icon="file-pdf-box"
+              >
+                Pré-visualizar PDF
+              </CustomButton>
+            </View>
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                numberOfLines={2}
+                onPress={handleExportExcel}
+                loading={excelLoading}
+                buttonColor="#15cc15"
+                icon="file-excel-box"
+              >
+                Exportar para Excel
+              </CustomButton>
+            </View>
+          </View>
+        </Surface>
       </ScrollView>
+
+      {/* PORTAL PARA O MODAL DO PDF E SNACKBAR */}
+      <Portal>
+        <Modal
+          visible={pdfDialogVisible}
+          onDismiss={() => setPdfDialogVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: theme.colors.background,
+            margin: 20,
+            borderRadius: 12,
+            overflow: 'hidden',
+            flex: 1,
+          }}
+        >
+          {/* Cabeçalho do Modal */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 8,
+              backgroundColor: theme.colors.surfaceContainer,
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{ marginLeft: 16, fontWeight: 'bold' }}
+            >
+              Relatório PDF
+            </Text>
+            <IconButton
+              icon="close"
+              size={24}
+              onPress={() => setPdfDialogVisible(false)}
+            />
+          </View>
+
+          {/* O WebView mostra o HTML exatamente como no teu código anterior */}
+          {pdfDialogVisible && (
+            <WebView
+              originWhitelist={['*']}
+              source={{ html }}
+              style={{ flex: 1 }}
+              scalesPageToFit={true}
+            />
+          )}
+
+          {/* Rodapé com as Acões de Imprimir / Guardar */}
+          <View
+            style={{
+              flexDirection: 'row',
+              padding: 12,
+              backgroundColor: theme.colors.surfaceContainer,
+              gap: 10,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                onPress={handlePrintPDF}
+                buttonColor={theme.colors.primary}
+                icon="printer"
+              >
+                Imprimir
+              </CustomButton>
+            </View>
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                onPress={handleSavePDF}
+                loading={pdfLoading}
+                buttonColor={theme.colors.secondaryContainer}
+                textColor={theme.colors.onSecondaryContainer}
+                icon="content-save"
+              >
+                Guardar
+              </CustomButton>
+            </View>
+          </View>
+        </Modal>
+
+        <CustomSnackBar
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          message={snackbarMessage}
+        />
+      </Portal>
     </SafeAreaView>
   );
 };

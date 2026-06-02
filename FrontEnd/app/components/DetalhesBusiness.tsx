@@ -19,6 +19,8 @@ import {
 import MapRefType from '@/constants/Interfaces/MapRefType';
 import NegocioInterface from '@/constants/Interfaces/Negocio';
 import { useAppTheme } from '@/context/ThemeContext';
+import { curiosidades } from '@/constants/curiosidades';
+import CustomButton from './CustomButton';
 
 const DetalhesBusiness = () => {
   const businessId = useLocalSearchParams();
@@ -48,18 +50,41 @@ const DetalhesBusiness = () => {
     }, []),
   );
 
+  const handleRandomPhrase = () => {
+    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+  };
+  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+
   if (loading) {
     return (
       <Surface
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: theme.colors.background,
-        }}
+        className="flex-1 items-center justify-center p-6"
+        style={{ backgroundColor: theme.colors.background }}
       >
-        <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary}
+          style={{ marginBottom: 20 }}
+        />
+
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          A preparar os dados...
+        </Text>
+
+        <CustomButton
+          labelStyle={{ textAlign: 'center' }}
+          onPress={() => setRandomPhrase(handleRandomPhrase())}
+        >
+          Sabias que...{'\n '}
+          {randomPhrase}
+        </CustomButton>
       </Surface>
     );
   }

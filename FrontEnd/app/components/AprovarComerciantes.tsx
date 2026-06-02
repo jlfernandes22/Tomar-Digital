@@ -25,6 +25,7 @@ import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import CustomButton from '../components/CustomButton';
 import { useAppTheme } from '@/context/ThemeContext';
+import { curiosidades } from '@/constants/curiosidades';
 
 interface PedidoComerciante {
   _id: string;
@@ -198,22 +199,41 @@ export default function AprovarComerciantes() {
     }
   };
 
+  const handleRandomPhrase = () => {
+    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+  };
+  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+
   if (loading) {
     return (
       <Surface
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: theme.colors.surface,
-        }}
+        className="flex-1 items-center justify-center p-6"
+        style={{ backgroundColor: theme.colors.background }}
       >
-        <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator
-          animating={true}
           size="large"
           color={theme.colors.primary}
+          style={{ marginBottom: 20 }}
         />
+
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          A preparar os dados...
+        </Text>
+
+        <CustomButton
+          labelStyle={{ textAlign: 'center' }}
+          onPress={() => setRandomPhrase(handleRandomPhrase())}
+        >
+          Sabias que...{'\n '}
+          {randomPhrase}
+        </CustomButton>
       </Surface>
     );
   }

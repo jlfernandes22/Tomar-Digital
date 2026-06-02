@@ -127,7 +127,7 @@ export default function SerComerciante() {
       // Validar se o ficheiro está mesmo acessível antes de travar o fetch
       const fileInfo = await FileSystem.getInfoAsync(cleanUri);
       if (!fileInfo.exists) {
-        console.log('❌ Ficheiro não encontrado no caminho:', cleanUri);
+        console.log('Ficheiro não encontrado no caminho:', cleanUri);
         setSnackBarText('Erro ao aceder ao ficheiro selecionado.');
         setShowSnackBar(true);
         setLoading(false);
@@ -163,7 +163,7 @@ export default function SerComerciante() {
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('✨ Sucesso no Backend:', responseData);
+        console.log('Sucesso no Backend:', responseData);
 
         setSnackBarText('Pedido enviado com sucesso!');
         setShowSnackBar(true);
@@ -177,12 +177,12 @@ export default function SerComerciante() {
         });
       } else {
         const errorText = await response.text();
-        console.log('❌ Erro retornado pelo Servidor:', errorText);
+        console.log('Erro retornado pelo Servidor:', errorText);
         setSnackBarText('Erro no servidor: ' + response.status);
         setShowSnackBar(true);
       }
     } catch (err: any) {
-      console.log('💥 Erro apanhado no bloco try/catch:', err.message);
+      console.log('Erro apanhado no bloco try/catch:', err.message);
       setSnackBarText('Erro na rede');
       setShowSnackBar(true);
     } finally {

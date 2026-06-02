@@ -16,6 +16,7 @@ import {
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
 import { useAppTheme } from '@/context/ThemeContext';
+import { curiosidades } from '@/constants/curiosidades';
 
 interface Favorito {
   _id: string;
@@ -89,6 +90,45 @@ const Saved = () => {
     }
   };
 
+  const handleRandomPhrase = () => {
+    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+  };
+  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+
+  if (loading) {
+    return (
+      <Surface
+        className="flex-1 items-center justify-center p-6"
+        style={{ backgroundColor: theme.colors.background }}
+      >
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary}
+          style={{ marginBottom: 20 }}
+        />
+
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          A preparar os dados...
+        </Text>
+
+        <CustomButton
+          labelStyle={{ textAlign: 'center' }}
+          onPress={() => setRandomPhrase(handleRandomPhrase())}
+        >
+          Sabias que...{'\n '}
+          {randomPhrase}
+        </CustomButton>
+      </Surface>
+    );
+  }
+
   return (
     <SafeAreaView
       className="p-4"
@@ -96,7 +136,6 @@ const Saved = () => {
       edges={['top', 'left', 'right']}
     >
       {/* Header Elegante */}
-
       <Text
         variant="headlineMedium"
         style={{
@@ -107,115 +146,102 @@ const Saved = () => {
       >
         Os Meus Favoritos
       </Text>
-
       <Divider
         style={{
           backgroundColor: theme.colors.outlineVariant,
           marginBottom: 16,
         }}
       />
-
-      {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            animating={true}
-            size="large"
-            color={theme.colors.primary}
-          />
-        </View>
-      ) : (
-        <FlatList
-          data={favoritos}
-          keyExtractor={(item: any) => item._id}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View className="relative">
-              {/* Card do Negócio */}
-              <Surface
-                elevation={1}
-                style={{
-                  backgroundColor: theme.colors.secondaryContainer,
-                  borderRadius: 12,
-                  marginBottom: 16,
-                  borderWidth: 1,
-                  borderColor: theme.colors.outlineVariant,
-                  overflow: 'hidden',
+      <FlatList
+        data={favoritos}
+        keyExtractor={(item: any) => item._id}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <View className="relative">
+            {/* Card do Negócio */}
+            <Surface
+              elevation={1}
+              style={{
+                backgroundColor: theme.colors.secondaryContainer,
+                borderRadius: 12,
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: theme.colors.outlineVariant,
+                overflow: 'hidden',
+              }}
+            >
+              <TouchableRipple
+                onPress={() => {
+                  router.push({
+                    pathname: '/components/DetalhesBusiness',
+                    params: { id: item.businessId?._id },
+                  });
                 }}
+                rippleColor="rgba(150, 150, 150, 0.2)"
               >
-                <TouchableRipple
-                  onPress={() => {
-                    router.push({
-                      pathname: '/components/DetalhesBusiness',
-                      params: { id: item.businessId?._id },
-                    });
-                  }}
-                  rippleColor="rgba(150, 150, 150, 0.2)"
-                >
-                  <View className="p-1 ">
-                    <BusinessList
-                      name={item.businessId?.name || 'Negócio não disponível'}
-                      category={item.businessId?.category || 'N/A'}
-                      location={item.businessId?.location || ''}
-                    />
-                  </View>
-                </TouchableRipple>
-                <View className="flex-row gap-x-3 px-4 pb-4">
-                  <CustomButton
-                    className="flex-1"
-                    buttonColor={theme.colors.errorContainer}
-                    textColor={theme.colors.onErrorContainer}
-                    onPress={() => {
-                      if (item.businessId) retirarFavorito(item.businessId._id);
-                    }}
-                  >
-                    Remover
-                  </CustomButton>
+                <View className="p-1 ">
+                  <BusinessList
+                    name={item.businessId?.name || 'Negócio não disponível'}
+                    category={item.businessId?.category || 'N/A'}
+                    location={item.businessId?.location || ''}
+                  />
                 </View>
-              </Surface>
+              </TouchableRipple>
+              <View className="flex-row gap-x-3 px-4 pb-4">
+                <CustomButton
+                  className="flex-1"
+                  buttonColor={theme.colors.error}
+                  onPress={() => {
+                    if (item.businessId) retirarFavorito(item.businessId._id);
+                  }}
+                >
+                  Remover
+                </CustomButton>
+              </View>
+            </Surface>
 
-              {/* Botão Remover - Integrado com o Tema de Erro */}
-            </View>
-          )}
-          ListEmptyComponent={
-            <View className="flex-1 items-center justify-center px-10 pb-20">
-              <Image
-                source={images.favWaiting}
-                className="mb-8 h-64 w-64"
-                style={{
-                  tintColor: theme.colors.onSurfaceVariant,
-                  opacity: 0.6,
-                }}
-                resizeMode="contain"
-              />
+            {/* Botão Remover - Integrado com o Tema de Erro */}
+          </View>
+        )}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center px-10 pb-20">
+            <Image
+              source={images.favWaiting}
+              className="mb-8 h-64 w-64"
+              style={{
+                tintColor: theme.colors.onSurfaceVariant,
+                opacity: 0.6,
+              }}
+              resizeMode="contain"
+            />
 
-              <Text
-                variant="headlineSmall"
-                style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
-                className="mb-2 text-center"
-              >
-                Lista vazia
-              </Text>
-              <Text
-                variant="bodyLarge"
-                style={{ color: theme.colors.onSurfaceVariant }}
-                className="mb-10 text-center opacity-70"
-              >
-                Parece que ainda não guardou nenhum dos tesouros de Tomar nos
-                seus favoritos.
-              </Text>
+            <Text
+              variant="headlineSmall"
+              style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
+              className="mb-2 text-center"
+            >
+              Lista vazia
+            </Text>
+            <Text
+              variant="bodyLarge"
+              style={{ color: theme.colors.onSurfaceVariant }}
+              className="mb-10 text-center opacity-70"
+            >
+              Parece que ainda não guardou nenhum dos tesouros de Tomar nos seus
+              favoritos.
+            </Text>
 
-              <CustomButton
-                buttonColor={theme.colors.primary}
-                textColor={theme.colors.onPrimary}
-                onPress={() => router.push('/Home')}
-                className="h-14 w-full"
-              >
-                Descobrir Negócios
-              </CustomButton>
-            </View>
-          }
-        />
-      )}
+            <CustomButton
+              buttonColor={theme.colors.primary}
+              textColor={theme.colors.onPrimary}
+              onPress={() => router.push('/Home')}
+              className="h-14 w-full"
+            >
+              Descobrir Negócios
+            </CustomButton>
+          </View>
+        }
+      />
 
       <CustomSnackBar
         visible={snackbarVisible}

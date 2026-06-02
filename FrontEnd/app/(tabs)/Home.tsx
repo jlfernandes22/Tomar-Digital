@@ -9,6 +9,7 @@ import {
   FlatList,
   ScrollView,
   Dimensions,
+  Animated,
 } from 'react-native';
 
 import {
@@ -34,6 +35,7 @@ import MapFocous from '@/constants/MapFocous';
 //interfaces
 import Negocio from '@/constants/Interfaces/Negocio';
 import { useAppTheme } from '@/context/ThemeContext';
+import { ExpandingDot } from 'react-native-animated-pagination-dots';
 
 export default function Index() {
   // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
@@ -264,8 +266,16 @@ export default function Index() {
     ? idsFavorite.includes(negocioSelecionado._id)
     : false;
 
+  const scrollX = React.useRef(new Animated.Value(0)).current;
   useEffect(() => {
     inRange(false);
+    if (category != '' && negocioSelecionado != null) {
+      setNegocioSelecionado(filteredPins[0]);
+      mapRef.current.focusOnLocation(
+        filteredPins[0].location.lat,
+        filteredPins[0].location.long,
+      );
+    }
   }, [category]);
 
   useFocusEffect(
@@ -335,7 +345,11 @@ export default function Index() {
             </View>
           )}
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            style={{ minHeight: 44, height: 55 }}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             {categories.map(cat => (
               <CustomChip
                 key={cat}
@@ -550,6 +564,12 @@ export default function Index() {
             data={bizInArea}
             keyExtractor={item => item._id}
             horizontal={true}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              {
+                useNativeDriver: false,
+              },
+            )}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: (Dimensions.get('window').width - 320) / 2,
@@ -735,6 +755,25 @@ export default function Index() {
                   </Surface>
                 </TouchableRipple>
               );
+            }}
+          />
+          <ExpandingDot
+            data={bizInArea}
+            expandingDotWidth={20}
+            scrollX={scrollX}
+            inActiveDotOpacity={0.6}
+            activeDotColor={theme.colors.primary}
+            inActiveDotColor={theme.colors.primary}
+            dotStyle={{
+              width: 5,
+              height: 5,
+              borderRadius: 5,
+            }}
+            containerStyle={{
+              width: 320,
+              backgroundColor: theme.colors.secondaryContainer,
+              borderRadius: 20,
+              padding: 10,
             }}
           />
         </View>

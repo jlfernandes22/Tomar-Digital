@@ -30,8 +30,9 @@ const CustomChip = ({
         onPress={onPress}
         icon={icon}
         showSelectedCheck={false}
-        // ESTILO DO CONTAINER
         style={{
+          minHeight: 44,
+          minWidth: 44,
           // Se selecionado: Laranja. Se não: Branco.
           backgroundColor: isSelected
             ? theme.colors.primaryContainer
@@ -54,6 +55,7 @@ const CustomChip = ({
           fontSize: 14,
           marginVertical: 0,
           paddingHorizontal: 4,
+          paddingVertical: 11,
         }}
       >
         {children}

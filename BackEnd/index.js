@@ -1276,47 +1276,66 @@ app.get("/listaCampanhas", async (req, res) => {
  */
 app.get("/dashboard", authorize(["camara"]), async (req, res) => {
   try {
-    const usersByCity = await User.aggregate([
-      {
-        $lookup: {
-          from: CitiesAndCountries.collection.name,
-          localField: "city",
-          foreignField: "name",
-          as: "locationData"
+
+    const [cityAndCountryStats, businessByCategory, totalUsersCount, totalBusinessesCount] = await Promise.all([
+
+    // Consulta 1: Agrupar cidades, fazer o Join, e devolver a lista
+      User.aggregate([
+        // Agrupar PRIMEIRO 
+        { $group: { _id: "$city", total: { $sum: 1 } } },
+        
+        // Fazer o lookup na lista que já está curta
+        {
+          $lookup: {
+            from: CitiesAndCountries.collection.name,
+            localField: "_id", // O _id agora é a city do $group
+            foreignField: "name",
+            as: "locationData"
+          }
+        },
+        { $unwind: { path: "$locationData", preserveNullAndEmptyArrays: false } },
+        { 
+          $project: { 
+            city: "$_id", 
+            country: "$locationData.country_name", 
+            total: 1 
+          } 
         }
-      },
-      { $unwind: { path: "$locationData", preserveNullAndEmptyArrays: false } },
-      { $match: { "locationData.country_name": "Portugal" } },
-      { $group: { _id: "$city", total: { $sum: 1 } } }
+      ]),
+
+      // Consulta 2: Agrupar os Negócios
+      Business.aggregate([{ $group: { _id: "$category", total: { $sum: 1 } } }]),
+
+      // Consulta 3: Contar Utilizadores
+      User.countDocuments(),
+
+      // Consulta 4: Contar Negócios
+      Business.countDocuments()
     ]);
 
-    const businessByCategory = await Business.aggregate([{ $group: { _id: "$category", total: { $sum: 1 } } }]);
+    // 2. Separar os dados de Cidades (Portugal) e Países rapidamente em JavaScript
+    const usersByCity = [];
+    const countryMap = {};
 
-    const usersByCountry = await User.aggregate([
-      {
-        $lookup: {
-          from: CitiesAndCountries.collection.name,
-          localField: "city",
-          foreignField: "name",
-          as: "locationData"
-        }
-      },
-      {
-        $unwind: {
-          path: "$locationData",
-          preserveNullAndEmptyArrays: false
-        }
-      },
-      {
-        $group: {
-          _id: "$locationData.country_name",
-          total: { $sum: 1 }
-        }
+    cityAndCountryStats.forEach(stat => {
+      // Preencher o array de cidades de Portugal
+      if (stat.country === "Portugal") {
+        usersByCity.push({ _id: stat.city, total: stat.total });
       }
-    ]);
 
-    const totalUsersCount = await User.countDocuments();
-    const totalBusinessesCount = await Business.countDocuments();
+      // Preencher o mapa global de Países
+      if (countryMap[stat.country]) {
+        countryMap[stat.country] += stat.total;
+      } else {
+        countryMap[stat.country] = stat.total;
+      }
+    });
+
+    // Converter o objeto do countryMap num Array limpo
+    const usersByCountry = Object.keys(countryMap).map(key => ({
+      _id: key,
+      total: countryMap[key]
+    }));
 
     res.status(200).json({
       cities: usersByCity,
