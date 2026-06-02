@@ -31,8 +31,10 @@ jobs:
 
     
       - name: Instalar dependências
+        working-directory: ./Frontend
         run: npm install
 
      
-      - name: 🛠️ Iniciar EAS Build (Android)
+      - name: Iniciar EAS Build (Android)
+        working-directory: ./Frontend
         run: eas build --platform android --profile preview --non-interactive
