@@ -1,0 +1,38 @@
+name: EAS Build Automatizado
+
+on:
+  push:
+    branches:
+      - main 
+      - develop
+
+jobs:
+  build_android:
+    name: Build Android (Preview)
+    runs-on: ubuntu-latest
+
+    steps:
+    
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+   
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm' 
+
+      - name: Setup Expo e EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+    
+      - name: Instalar dependências
+        run: npm install
+
+     
+      - name: 🛠️ Iniciar EAS Build (Android)
+        run: eas build --platform android --profile preview --non-interactive
