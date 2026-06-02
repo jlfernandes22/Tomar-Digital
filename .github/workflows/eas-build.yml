@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-          cache-dependency-path: ./Frontend/package-lock.json
+          cache-dependency-path: ./FrontEnd/package-lock.json
 
       - name: Setup Expo e EAS
         uses: expo/expo-github-action@v8
@@ -29,9 +29,9 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Instalar dependências
-        working-directory: ./Frontend
+        working-directory: ./FrontEnd
         run: npm install
 
       - name: Iniciar EAS Build (Android)
-        working-directory: ./Frontend
+        working-directory: ./FrontEnd
         run: eas build --platform android --profile preview --non-interactive
