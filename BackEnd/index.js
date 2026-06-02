@@ -427,10 +427,20 @@ app.post(
         emailDono,
         descricaoNegocio,
         galeriaFotos,
+        listaCAES,
         owner, // Caso a câmara esteja a registar por outro
       } = req.body;
 
       console.log(req.body);
+
+    let parsedCAES = [];
+        if (listaCAES) {
+          try {
+            parsedCAES = typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES;
+          } catch (parseError) {
+            parsedCAES = typeof listaCAES === 'string' ? listaCAES.split(',') : listaCAES;
+          }
+        }
 
       if (
         !nomeNegocio ||
@@ -448,7 +458,6 @@ app.post(
 
       const ownerId =
         req.user.role === "camara" ? owner || req.user.id : req.user.id;
-      //Verificar se já existe um negócio com o mesmo nome para este dono
       const existe = await Business.findOne({ nomeNegocio, owner: ownerId });
       if (existe) {
         return res.status(400).json({
@@ -456,8 +465,7 @@ app.post(
         });
       }
 
-      // Se for o comerciante a criar, o status deve ser 'pendente'
-      // Se for a camara, definir logo como 'aprovado'
+     
       const novoNegocio = new Business({
         name: nomeNegocio,
         category: categoriaNegocio,
@@ -472,6 +480,7 @@ app.post(
 
         phone: telefoneDono,
         email: emailDono,
+        listaCAES: parsedCAES,
         description: descricaoNegocio,
         gallery: galeriaFotos,
         owner: ownerId,
@@ -715,16 +724,11 @@ app.put("/editarNegocio", authorize(["camara"]), async (req, res) => {
  */
 app.get("/meusNegocios", authorize(["comerciante"]), async (req, res) => {
   try {
-    console.log("A procurar lojas para o dono:", req.user.id);
-
-    const negocios = await Business.find({
-      owner: req.user.id,
-    });
-
+    const negocios = await Business.find({ owner: req.user.id }).populate("owner", "name");
     console.log("Lojas encontradas:", negocios.length);
 
     if (!negocios || negocios.length === 0) {
-      return res.status(200).json([]); // Devolve array vazio se não houver lojas
+      return res.status(200).json([]); 
     }
 
     res.status(200).json(negocios);

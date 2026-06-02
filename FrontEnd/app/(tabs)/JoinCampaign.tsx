@@ -115,7 +115,6 @@ export default function JoinCampaign() {
         ) : (
           <FlatList
             data={ListCampaign}
-            // Usamos a função renderItem que defini acima
             renderItem={renderItem}
             keyExtractor={(item) => item._id?.toString()}
             contentContainerStyle={{ paddingBottom: 20 }}
@@ -128,7 +127,6 @@ export default function JoinCampaign() {
         )}
 
         {/* 3.Modal */}
-        {/* Ele fica aqui "escondido" e só aparece quando showDetails for true */}
         <DetalhesCampanha
           visible={showDetails}
           campaign={selectedCampaign}

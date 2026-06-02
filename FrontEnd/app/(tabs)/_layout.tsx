@@ -144,6 +144,16 @@ const _layout = () => {
       />
 
       <Tabs.Screen
+        name="MeusNegocios"
+        options={{
+          href: user?.role === "comerciante" ? "/MeusNegocios" : null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.bagImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="AddBusiness"
         options={{
           href: user?.role === "comerciante" ? "/AddBusiness" : null,
