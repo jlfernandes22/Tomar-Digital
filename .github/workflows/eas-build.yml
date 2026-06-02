@@ -12,16 +12,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    
       - name: Checkout do código
         uses: actions/checkout@v4
 
-   
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18.x
-          cache: 'npm' 
+          cache: 'npm'
+          cache-dependency-path: ./Frontend/package-lock.json
 
       - name: Setup Expo e EAS
         uses: expo/expo-github-action@v8
@@ -29,12 +28,10 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-    
       - name: Instalar dependências
         working-directory: ./Frontend
         run: npm install
 
-     
       - name: Iniciar EAS Build (Android)
         working-directory: ./Frontend
         run: eas build --platform android --profile preview --non-interactive
