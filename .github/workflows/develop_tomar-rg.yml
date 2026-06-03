@@ -25,6 +25,8 @@ jobs:
 
       - name: npm install, build, and test
         working-directory: ./BackEnd
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           npm install
           npm run build --if-present
