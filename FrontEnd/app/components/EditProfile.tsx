@@ -46,37 +46,17 @@ const EditProfile = () => {
     }
   }, [user]);
 
-  if (!user) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
   const [image, setImage] = useState(user.Avatar || null);
   const [visible, setvisible] = useState(false);
   const [message, setMessage] = useState('');
 
   const selecionarAvatar = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert(
-        'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!',
-      );
+    const status = await pickImage();
+    if (status == '') {
+      alert('Precisamos de escolher uma imagem');
       return;
     }
-    const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!resultado.canceled) {
-      const uri = resultado.assets[0].uri;
-      setImage(uri);
-    }
+    setImage(status);
   };
 
   const hideDialog = async () => {
@@ -89,59 +69,35 @@ const EditProfile = () => {
   const handleEdit = async () => {
     setLoading(true);
     try {
-      let avatarIdDefinitivo = null;
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('city', city);
+      if (NIF) formData.append('NIF', NIF);
 
       if (
         image &&
         (image.startsWith('file://') || image.startsWith('content://'))
       ) {
-        const formData = new FormData();
-
         const uriLimpa =
           Platform.OS === 'android' ? image : image.replace('file://', '');
         const filename = image.split('/').pop() || 'avatar.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-        const fileToUpload = {
+        formData.append('avatar', {
           uri: uriLimpa,
           name: filename,
           type: type,
-        };
-
-        formData.append('image', fileToUpload as any);
-
-        const uploadResponse = await fetch(`${API_URL}/uploadImage`, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-            Accept: 'application/json',
-          },
-        });
-
-        if (!uploadResponse.ok) {
-          const erroBackend = await uploadResponse.text();
-          console.error('Erro detalhado do backend:', erroBackend);
-          throw new Error('Falha ao fazer upload da imagem de perfil.');
-        }
-
-        const uploadResult = await uploadResponse.json();
-        avatarIdDefinitivo = uploadResult.id; // ID que o MongoDB gerou para a imagem
+        } as any);
       }
 
       const response = await fetch(`${API_URL}/editarUser/${user.id}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
-        body: JSON.stringify({
-          name: name,
-          city: city,
-          NIF: NIF ? Number(NIF) : null,
-          avatarId: avatarIdDefinitivo,
-        }),
+        body: formData,
       });
 
       if (response.ok) {
@@ -152,11 +108,14 @@ const EditProfile = () => {
 
         updateUser({
           ...user,
-          name: name,
-          city: city,
-          NIF: NIF ? Number(NIF) : null,
-          Avatar: avatarIdDefinitivo || user.Avatar,
+          name: data.user.name,
+          city: data.user.city,
+          NIF: data.user.NIF,
+          Avatar: data.user.avatar,
         });
+        console.log(data.user.avatar);
+
+        if (data.user.Avatar) setImage(data.user.Avatar);
       } else {
         setDialogText('O servidor rejeitou as alterações.');
         setDialogVisible(true);
@@ -164,12 +123,21 @@ const EditProfile = () => {
       }
     } catch (error) {
       console.error(error);
+      setDialogText('Ocorreu um erro ao comunicar com o servidor.');
       setDialogVisible(true);
       setSuccess(false);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -233,7 +201,7 @@ const EditProfile = () => {
                         image.startsWith('file://') ||
                         image.startsWith('content://')
                           ? image
-                          : `${API_URL}/mostrarImagem/${image}`,
+                          : `${API_URL}${image}`, // <-- LÊ O FICHEIRO DIRETAMENTE DO SERVIDOR!
                     }}
                     className="h-32 w-32 items-center justify-center rounded-full border-2"
                     style={{

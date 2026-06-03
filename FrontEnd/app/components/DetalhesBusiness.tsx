@@ -11,11 +11,11 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import MapRefType from '@/constants/Interfaces/MapRefType';
-import { API_URL } from '@/constants/api'; // Certifica-te que importas o teu API_URL
+import { API_URL } from '@/constants/api';
 
 const DetalhesBusiness = () => {
   const { dadosNegocio } = useLocalSearchParams<{ dadosNegocio: string }>();
-  const { businessId } = useLocalSearchParams<{ businessId: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [business, setBusiness] = useState(JSON.parse(dadosNegocio || '{}'));
   const [loading, setLoading] = useState(false);
   const hoje = new Date();
@@ -25,24 +25,23 @@ const DetalhesBusiness = () => {
   const mapRef = useRef<MapRefType>(null);
 
   useEffect(() => {
-    if (business) {
-      console.log('Conteúdo de campanhas:', JSON.stringify(business.campaigns));
-    }
-    if (!businessId) {
+    if (!id) {
       console.warn('Nenhum businessId fornecido');
       setLoading(false);
       return;
     }
 
     const fetchBusiness = async () => {
+      console.log('fetch business data');
       try {
         setLoading(true);
 
-        const response = await fetch(`${API_URL}/negocios/${businessId}`);
+        const response = await fetch(`${API_URL}/negocios/${id}`);
         if (!response.ok) throw new Error('Erro ao carregar');
         const data = await response.json();
         console.log('DADOS DO NEGOCIO:', JSON.stringify(data, null, 2));
-        setBusiness(data);
+        await setBusiness(data);
+        //console.log(business.location)
       } catch (e) {
         console.error('Erro ao buscar negócio:', e);
       } finally {
@@ -50,8 +49,13 @@ const DetalhesBusiness = () => {
       }
     };
 
+    if (business) {
+      console.log('Conteúdo de campanhas:', JSON.stringify(business.campaigns));
+    }
+
     fetchBusiness();
-  }, [businessId]);
+  }, [id]);
+
   if (loading) {
     return (
       <Surface
@@ -120,9 +124,19 @@ const DetalhesBusiness = () => {
           <View className="px-4">
             {business.logo ? (
               <Image
-                source={{ uri: business.logo }}
-                className="h-56 w-full rounded-2xl"
-                resizeMode="cover"
+                source={{
+                  uri:
+                    business.logo.startsWith('file://') ||
+                    business.logo.startsWith('content://') ||
+                    business.logo.startsWith('http')
+                      ? business.logo
+                      : `${API_URL}${business.logo}`,
+                }}
+                className="h-32 w-32 items-center justify-center rounded-full border-2"
+                style={{
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.outline,
+                }}
               />
             ) : (
               <Text>SEM logo</Text>
@@ -167,6 +181,45 @@ const DetalhesBusiness = () => {
             >
               {business.description || 'Sem descrição disponível.'}
             </Text>
+
+            {/* Secção da Galeria */}
+            {business.gallery && business.gallery.length > 0 && (
+              <View style={{ marginTop: 24 }}>
+                <Text
+                  variant="titleMedium"
+                  style={{ fontWeight: 'bold', marginBottom: 12 }}
+                >
+                  Galeria de Fotos
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="flex-row"
+                >
+                  {business.gallery.map((fotoUrl: string, index: number) => (
+                    <Image
+                      key={index}
+                      source={{
+                        uri:
+                          fotoUrl.startsWith('file://') ||
+                          fotoUrl.startsWith('content://') ||
+                          fotoUrl.startsWith('http')
+                            ? fotoUrl
+                            : `${API_URL}${fotoUrl}`,
+                      }}
+                      style={{
+                        width: 200,
+                        height: 150,
+                        borderRadius: 12,
+                        marginRight: 12,
+                        backgroundColor: theme.colors.surfaceVariant,
+                      }}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Secção de Campanhas - Hierarquia Corrigida */}
             <View style={{ marginTop: 24 }}>

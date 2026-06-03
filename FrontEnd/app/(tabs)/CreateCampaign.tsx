@@ -84,14 +84,6 @@ const CreateCampaign = () => {
   const [showSnackBar, setShowSnackBar] = useState(false);
   const [snackBarText, setSnackBarText] = useState('');
 
-  if (!user) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
   const onChangeDate = (event: any, selectedDate: any) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -558,6 +550,14 @@ if (formData.panfleto) {
   useEffect(() => {
     console.log('LOG CAES:', formData.listaCAES);
   }, [formData.listaCAES]);
+
+  if (!user) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>

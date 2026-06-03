@@ -169,7 +169,13 @@ const ProfileDetails = () => {
 
             {user.Avatar && (
               <Image
-                source={{ uri: `${API_URL}/mostrarImagem/${user.Avatar}` }}
+                source={{
+                  uri:
+                    user.Avatar.startsWith('file://') ||
+                    user.Avatar.startsWith('content://')
+                      ? user.Avatar
+                      : `${API_URL}${user.Avatar}`, // <-- LÊ O FICHEIRO DIRETAMENTE DO SERVIDOR!
+                }}
                 className="h-32 w-32 items-center justify-center rounded-full border-2"
                 style={{
                   backgroundColor: theme.colors.background,

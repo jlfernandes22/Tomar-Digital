@@ -39,7 +39,7 @@ const Map = forwardRef<MapRefType, MapProps>(
       latitude: number;
       longitude: number;
     } | null>(null);
-    //console.log(location);
+    console.log(location);
 
     const [selectedLocation, setSelectedLocation] = useState<{
       latitude: number;
@@ -57,6 +57,11 @@ const Map = forwardRef<MapRefType, MapProps>(
 
     useEffect(() => {
       if (location?.lat && location?.long) {
+        setSelectedLocation({
+          latitude: location.lat,
+          longitude: location.long,
+        });
+
         mapRef.current?.animateToRegion(
           {
             latitude: location.lat,
@@ -67,7 +72,7 @@ const Map = forwardRef<MapRefType, MapProps>(
           1000,
         );
       }
-    }, []);
+    }, [location]);
 
     /* useeffect para atualizar a localização do utilizador */
     useEffect(() => {

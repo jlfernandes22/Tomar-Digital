@@ -1,15 +1,19 @@
 import mongoose, { Schema } from "mongoose";
 
 const PacksSchema = new mongoose.Schema({
+  
+  rewardDescription: {
+    type: String,
+    required: true,
+  },
+
+
   pointsCost: {
     type: Number,
     required: true,
   },
 
-  rewardDescription: {
-    type: String,
-    required: true,
-  },
+  
 
   stock: {
     type: Number,

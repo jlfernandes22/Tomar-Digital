@@ -142,33 +142,32 @@ mongoose
 
 app.post('/uploadImage', uploadParaMemoria.single('image'), async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
     }
 
-    if (!req.file.buffer) {
-      console.error("Erro: O Multer recebeu o ficheiro mas o buffer está vazio. Verifica a configuração do memoryStorage.");
-      return res.status(500).json({ error: 'Erro interno ao ler os dados da imagem.' });
+    // Garante que a pasta existe
+    const targetFolder = 'uploads/imagens/';
+    if (!fs.existsSync(targetFolder)) {
+      fs.mkdirSync(targetFolder, { recursive: true });
     }
 
-    const webpBuffer = await sharp(req.file.buffer)
+    // 1. Preparar o nome e o caminho do ficheiro
+    const nomeSemExtensao = path.parse(req.file.originalname).name.replace(/\s+/g, '_');
+    const webpFilename = `${Date.now()}-${nomeSemExtensao}.webp`; // Nome único
+    const caminhoNoDisco = path.join(targetFolder, webpFilename); // Onde vai gravar no servidor
+    const caminhoParaBD = `/uploads/imagens/${webpFilename}`; // O que vai para o Front-End/BD
+
+    // 2. O Sharp processa a imagem na memória e GUARDA NO FILESYSTEM 
+    await sharp(req.file.buffer)
       .resize({ width: 800 }) 
       .toFormat('webp')
       .webp({ quality: 80 })  
-      .toBuffer();
-
-    const novaImagem = new Image({
-      nomeOriginal: req.file.originalname,
-      dados: webpBuffer,         
-      contentType: 'image/webp'  
-    });
-
-
-    await novaImagem.save();
+      .toFile(caminhoNoDisco); 
 
     res.status(201).json({ 
-      message: 'Imagem guardada com sucesso!', 
-      id: novaImagem._id 
+      message: 'Imagem guardada com sucesso no disco!', 
+      caminho: caminhoNoDisco,
     });
 
   } catch (error) {
@@ -183,14 +182,26 @@ app.get('/mostrarImagem/:id', async (req, res) => {
   try {
     let imagem = await Image.findById(req.params.id);
 
-    
     if (!imagem) {
       return res.status(404).json({ error: 'Imagem não encontrada .' });
     }
 
+    // Se tiver dados na BD (retrocompatibilidade), envia os dados directos
+    if (imagem.dados) {
+      res.set('Content-Type', imagem.contentType);
+      return res.send(imagem.dados);
+    }
+
+    // Caso contrário, lê o ficheiro do disco
+    const diskPath = path.join(process.cwd(), imagem.caminho);
+    if (!fs.existsSync(diskPath)) {
+      return res.status(404).json({ error: 'Ficheiro de imagem não encontrado no disco.' });
+    }
+
     res.set('Content-Type', imagem.contentType);
-    res.send(imagem.dados);
+    res.sendFile(diskPath);
   } catch (error) {
+    console.error('Erro ao procurar imagem:', error);
     res.status(500).json({ error: 'Erro ao procurar imagem.' });
   }
 });
@@ -401,6 +412,13 @@ app.get("/utilizador/:id", authorize(["camara"]), async (req, res) => {
   }
 });
 
+
+
+
+const uploadNegocio = upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'galeria', maxCount: 10 } // Permite o upload de até 10 fotos na galeria
+]);
 /**
  * @swagger
  * /registarNegocio:
@@ -449,28 +467,116 @@ app.get("/utilizador/:id", authorize(["camara"]), async (req, res) => {
  *       201:
  *         description: Negócio registado
  */
-app.post("/registarNegocio", authorize(["comerciante", "camara"]), async (req, res) => {
+app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio, async (req, res) => {
   try {
-    const { nomeNegocio, NIFnegocio, categoriaNegocio, logotipoNegocio, moradaNegocio, freguesiaNegocio, localizacao, telefoneDono, emailDono, descricaoNegocio, galeriaFotos, listaCAES, owner } = req.body;
+    const { 
+      nomeNegocio, NIFnegocio, categoriaNegocio, moradaNegocio, 
+      freguesiaNegocio, localizacao, telefoneDono, emailDono, 
+      descricaoNegocio, listaCAES, owner 
+    } = req.body;
 
-    if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono || !galeriaFotos || galeriaFotos.length === 0) {
-      return res.status(400).json({ message: "Dados incompletos." });
+    console.log(req.body)
+
+    // Validação da integridade dos dados obrigatórios
+    // Nota: O envio da galeria é processado separadamente através do req.files (Multer)
+    if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
+      return res.status(400).json({ message: "Dados essenciais incompletos." });
     }
 
+    // Conversão de estruturas de dados enviadas como texto via FormData
+    let parsedLocalizacao = localizacao ? (typeof localizacao === 'string' ? JSON.parse(localizacao) : localizacao) : null;
+    let parsedCAES = listaCAES ? (typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES) : [];
+
+    // Inicialização das variáveis de URL para persistência
+    let logoUrl = "";
+    let galeriaUrls = [];
+
+    // --- Processamento do Logótipo ---
+    if (req.files && req.files['logo'] && req.files['logo'][0]) {
+      const logoFile = req.files['logo'][0];
+      
+      // Obter o nome original do ficheiro e atribuir formato otimizado WebP
+      const nomeSemExtensao = path.parse(logoFile.filename).name;
+      const webpFilename = `${Date.now()}-${nomeSemExtensao}_logo.webp`;
+      const logoTargetPath = path.join('uploads/imagens/', webpFilename);
+
+      try {
+        await sharp(logoFile.path)
+          .resize({ width: 800 })
+          .toFormat('webp')
+          .webp({ quality: 80 })
+          .toFile(logoTargetPath);
+          
+        logoUrl = `/uploads/imagens/${webpFilename}`;
+      } catch (e) {
+        console.error("Erro no processamento do logo:", e);
+        try { fs.unlinkSync(logoFile.path); } catch (err) {}
+        return res.status(500).json({ message: "Erro ao processar o logótipo do negócio." });
+      }
+      
+      // Limpeza do ficheiro temporário
+      try { fs.unlinkSync(logoFile.path); } catch (e) {}
+    }
+
+    // --- Processamento da Galeria (Iteração de Múltiplas Fotos) ---
+    if (req.files && req.files['galeria'] && req.files['galeria'].length > 0) {
+      for (const fotoFile of req.files['galeria']) {
+        // Obter o nome original do ficheiro e atribuir formato otimizado WebP
+        const nomeSemExtensao = path.parse(fotoFile.filename).name;
+        const webpFilename = `${Date.now()}-${nomeSemExtensao}_galeria.webp`;
+        const fotoTargetPath = path.join('uploads/imagens/', webpFilename);
+        console.log(req.files['galeria'])
+        try {
+          await sharp(fotoFile.path)
+            .resize({ width: 1080 }) // Galeria otimizada com resolução adequada
+            .toFormat('webp')
+            .webp({ quality: 80 })
+            .toFile(fotoTargetPath);
+            
+          galeriaUrls.push(`/uploads/imagens/${webpFilename}`);
+        } catch (e) {
+          console.error("Erro ao processar foto da galeria:", e);
+        }
+        
+        // Limpeza do ficheiro temporário independentemente do resultado
+        try { fs.unlinkSync(fotoFile.path); } catch (e) {}
+      }
+    }
+
+    // Validação de presença de ficheiros na galeria do negócio
+    if (galeriaUrls.length === 0) {
+       return res.status(400).json({ message: "É obrigatório enviar pelo menos uma foto para a galeria do negócio." });
+    }
+
+    // --- Registo do Negócio na Base de Dados ---
+    // Determinação do proprietário em função dos privilégios de acesso
     const ownerId = req.user.role === "camara" ? owner || req.user.id : req.user.id;
+    
+    console.log(parsedLocalizacao)
+
     const novoNegocio = new Business({
-      name: nomeNegocio, category: categoriaNegocio, NIF: NIFnegocio, logo: logotipoNegocio, address: moradaNegocio,
+      name: nomeNegocio, 
+      category: categoriaNegocio, 
+      NIF: NIFnegocio, 
+      logo: logoUrl, 
+      address: moradaNegocio,
       parish: freguesiaNegocio,
-      location: { lat: Number(localizacao.latitude), long: Number(localizacao.longitude) },
-      phone: telefoneDono, email: emailDono, listaCAES: listaCAES, description: descricaoNegocio, gallery: galeriaFotos,
+      location: parsedLocalizacao ? { lat: Number(parsedLocalizacao.latitude), long: Number(parsedLocalizacao.longitude) } : undefined,
+      phone: telefoneDono, 
+      email: emailDono, 
+      listaCAES: parsedCAES, 
+      description: descricaoNegocio, 
+      gallery: galeriaUrls, 
       owner: ownerId,
       status: req.user.role === "camara" ? "aprovado" : "pendente"
     });
 
     await novoNegocio.save();
-    res.status(201).json({ message: "Negocio registado!", business: novoNegocio });
+    
+    res.status(201).json({ message: "Negócio registado com sucesso!", business: novoNegocio });
   } catch (error) {
-    res.status(500).json({ message: "Erro interno." });
+    console.error("Erro no registo de negócio:", error);
+    res.status(500).json({ message: "Erro interno ao tentar registar o negócio." });
   }
 });
 
@@ -666,6 +772,21 @@ app.delete("/apagarNegocio/:id", authorize(["camara"]), async (req, res) => {
   try {
     const business = await Business.findById(req.params.id);
     if (!business) return res.status(404).json({ erro: "Negócio não encontrado." });
+
+
+    //Apagar o logotipo do disco
+    if (business.logo) {
+      const logoPath = path.join(process.cwd(), business.logo.replace(/^\//, ''));
+      if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
+    }
+
+    // Apagar as fotos da galeria do disco
+    if (business.gallery && business.gallery.length > 0) {
+      business.gallery.forEach(fotoUrl => {
+        const fotoPath = path.join(process.cwd(), fotoUrl.replace(/^\//, ''));
+        if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+      });
+    }
 
     await business.deleteOne();
     res.status(200).json({ sucesso: "Negócio apagado com sucesso!" });
@@ -1178,67 +1299,82 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
   try {
     const { titulo, slogan, descricao, listaCAES, dataInicio, dataExpiracao, normas, packs } = req.body;
 
-    // 1. Parsing dos dados (mantive a tua lógica)
+    console.log(req.body);
+
     let parsedPacks = packs ? (typeof packs === 'string' ? JSON.parse(packs) : packs) : [];
     let parsedCAES = listaCAES ? (typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES) : [];
 
-    // 2. Declaração das variáveis de referência para os IDs das imagens
-    let logoId = null;
-    let panfletoId = null;
+    // Inicialização das variáveis de URL para garantir a sua disponibilidade no momento da persistência
+    let logoUrl = "";
+    let panfletoUrl = "";
 
-    // --- PROCESSAMENTO DO LOGÓTIPO ---
+    // --- Processamento do Logótipo ---
     if (req.files && req.files['logo'] && req.files['logo'][0]) {
       const logoFile = req.files['logo'][0];
-      const logoBuffer = await sharp(logoFile.path)
-        .resize({ width: 800 })
-        .toFormat('webp')
-        .webp({ quality: 80 })
-        .toBuffer();
-
-      const novaImagemLogo = new Image({
-        nomeOriginal: logoFile.originalname,
-        dados: logoBuffer,
-        contentType: 'image/webp'
-      });
-      await novaImagemLogo.save();
-      logoId = novaImagemLogo._id; // Atribuição correta
       
-      try { fs.unlinkSync(logoFile.path); } catch (e) { console.error("Erro ao apagar logo temp:", e); }
+      // Obter o nome original do ficheiro gerado pelo Multer
+      const nomeSemExtensao = path.parse(logoFile.filename).name;
+      const webpFilename = `${Date.now()}-${nomeSemExtensao}_logo.webp`;
+      const logoTargetPath = path.join('uploads/imagens/', webpFilename);
+      
+      try {
+        await sharp(logoFile.path)
+          .resize({ width: 800 })
+          .toFormat('webp')
+          .webp({ quality: 80 })
+          .toFile(logoTargetPath);
+          
+        logoUrl = `/uploads/imagens/${webpFilename}`; // Caminho relativo formatado para o Front-End
+      } catch (e) {
+        console.error("Erro no processamento do logo:", e);
+        try { fs.unlinkSync(logoFile.path); } catch (err) {}
+        return res.status(500).json({ message: "Erro ao processar o logótipo da campanha." });
+      }
+      
+      // Limpeza do ficheiro temporário
+      try { fs.unlinkSync(logoFile.path); } catch (e) { console.error("Erro ao apagar logo temporário:", e); }
     } 
 
-    // --- PROCESSAMENTO DO PANFLETO ---
+    // --- Processamento do Panfleto ---
     if (req.files && req.files['panfleto'] && req.files['panfleto'][0]) {
       const panfletoFile = req.files['panfleto'][0];
-      const panfletoBuffer = await sharp(panfletoFile.path)
-        .resize({ width: 800 })
-        .toFormat('webp')
-        .webp({ quality: 80 })
-        .toBuffer();
-
-      const novaImagemPanfleto = new Image({
-        nomeOriginal: panfletoFile.originalname,
-        dados: panfletoBuffer,
-        contentType: 'image/webp'
-      });
-      await novaImagemPanfleto.save();
-      panfletoId = novaImagemPanfleto._id; // Atribuição correta
       
-      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.error("Erro ao apagar panfleto temp:", e); }
+      // Obter o nome original do ficheiro gerado pelo Multer
+      const nomeSemExtensao = path.parse(panfletoFile.filename).name;
+      const webpFilename = `${Date.now()}-${nomeSemExtensao}_panfleto.webp`;
+      const panfletoTargetPath = path.join('uploads/imagens/', webpFilename);
+
+      try {
+        await sharp(panfletoFile.path)
+          .resize({ width: 800 })
+          .toFormat('webp')
+          .webp({ quality: 80 })
+          .toFile(panfletoTargetPath);
+          
+        panfletoUrl = `/uploads/imagens/${webpFilename}`; // Caminho relativo formatado para o Front-End
+      } catch (e) {
+        console.error("Erro no processamento do panfleto:", e);
+        try { fs.unlinkSync(panfletoFile.path); } catch (err) {}
+        return res.status(500).json({ message: "Erro ao processar o panfleto da campanha." });
+      }
+      
+      // Limpeza do ficheiro temporário
+      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.error("Erro ao apagar panfleto temporário:", e); }
     }
 
-    // --- CRIAR A CAMPANHA ---
+    // --- Registo da Campanha na Base de Dados ---
     const newCampaign = new Campaign({
       createdBy: req.user.id,
       titulo,
       slogan,
       descricao,
       listaCAES: parsedCAES, 
-      DataInicio: dataInicio ? new Date(dataInicio) : undefined, 
+      dataInicio: dataInicio ? new Date(dataInicio) : undefined, 
       DataExpiracao: dataExpiracao ? new Date(dataExpiracao) : undefined,
       normas,
       packs: parsedPacks,
-      logo: logoId,     // Usa a variável que declarámos acima
-      panfleto: panfletoId // Usa a variável que declarámos acima
+      logo: logoUrl,
+      panfleto: panfletoUrl
     });
     
     await newCampaign.save();
@@ -1517,12 +1653,21 @@ app.post(
       console.log(receivedNIF)
       // Tratamento Exclusivo da Imagem de Perfil (Avatar)
       if (req.file) {
+        console.log(req.file)
+        //Apagar o avatar antigo do disco (se existir)
+        if (user.Avatar && user.Avatar.startsWith('/uploads/')) {
+          const caminhoAntigo = path.join(process.cwd(), user.Avatar.replace(/^\//, ''));
+          if (fs.existsSync(caminhoAntigo)) {
+            fs.unlinkSync(caminhoAntigo);
+            console.log("Avatar antigo apagado do disco.");
+          }
+        }
+
         const nomeSemExtensao = path.parse(req.file.filename).name;
         const webpFilename = `${nomeSemExtensao}_avatar.webp`;
         const targetPath = path.join('uploads/imagens/', webpFilename);
 
         try {
-          // Crop inteligente automático focado na cara para quadrados 400x400
           await sharp(req.file.path)
             .resize({ width: 400, height: 400, fit: 'cover' })
             .toFormat('webp')
@@ -1531,6 +1676,7 @@ app.post(
             
           user.Avatar = `/uploads/imagens/${webpFilename}`;
         } finally {
+          console.log(user.Avatar)
           if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         }
       }

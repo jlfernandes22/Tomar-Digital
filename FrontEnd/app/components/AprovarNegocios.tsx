@@ -161,6 +161,7 @@ export default function AprovarNegocios() {
         className="flex-1 items-center justify-center p-6"
         style={{ backgroundColor: theme.colors.background }}
       >
+        <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator
           size="large"
           color={theme.colors.primary}
@@ -239,6 +240,7 @@ export default function AprovarNegocios() {
               dono => dono._id === item.owner,
             );
 
+            //console.log(item);
             return (
               <Surface
                 style={{

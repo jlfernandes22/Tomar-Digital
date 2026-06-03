@@ -64,7 +64,6 @@ export default function AddBusiness() {
     'Serviços',
   ];
 
-  // 🚀 CORREÇÃO: Utilização de 'as any' para evitar que o TS infira o tipo como 'never'
   const selecionarLogotipo = async () => {
     try {
       const resultado = await pickImage({
@@ -164,30 +163,75 @@ export default function AddBusiness() {
 
     setLoading(true);
     try {
+      const dataToSend = new FormData();
+      dataToSend.append('nomeNegocio', formData.nomeNegocio);
+      dataToSend.append('NIFnegocio', formData.NIFnegocio);
+      dataToSend.append('categoriaNegocio', formData.categoriaNegocio);
+      dataToSend.append('moradaNegocio', formData.moradaNegocio);
+      dataToSend.append('freguesiaNegocio', formData.freguesiaNegocio);
+      dataToSend.append('telefoneDono', formData.telefoneDono);
+      dataToSend.append('emailDono', formData.emailDono);
+      dataToSend.append('descricaoNegocio', formData.descricaoNegocio);
+
+      if (user?.id) {
+        dataToSend.append('owner', user.id);
+      }
+
+      if (formData.listaCAES && formData.listaCAES.length > 0) {
+        dataToSend.append('listaCAES', JSON.stringify(formData.listaCAES));
+      }
+
+      if (
+        formData.localizacao &&
+        formData.localizacao.latitude &&
+        formData.localizacao.longitude
+      ) {
+        dataToSend.append(
+          'localizacao',
+          JSON.stringify({
+            latitude: formData.localizacao.latitude,
+            longitude: formData.localizacao.longitude,
+          }),
+        );
+      }
+
+      // Adicionar o Logótipo
+      if (formData.logotipoNegocio) {
+        const logoUri = formData.logotipoNegocio;
+        const filename = logoUri.split('/').pop() || 'logo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+
+        dataToSend.append('logo', {
+          uri: logoUri,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      // Adicionar as Fotos da Galeria
+      if (formData.galeriaFotos && formData.galeriaFotos.length > 0) {
+        formData.galeriaFotos.forEach((fotoUri: string) => {
+          const filename = fotoUri.split('/').pop() || 'foto.jpg';
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image`;
+
+          dataToSend.append('galeria', {
+            uri: fotoUri,
+            name: filename,
+            type,
+          } as any);
+        });
+      }
+
       const response = await fetch(`${API_URL}/registarNegocio`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
+          // Nota: O 'Content-Type': 'multipart/form-data' é omitido propositadamente
+          // para que o fetch do React Native crie o cabeçalho correto com o 'boundary'.
         },
-        body: JSON.stringify({
-          nomeNegocio: formData.nomeNegocio,
-          NIFnegocio: formData.NIFnegocio,
-          categoriaNegocio: formData.categoriaNegocio,
-          logotipoNegocio: formData.logotipoNegocio,
-          moradaNegocio: formData.moradaNegocio,
-          freguesiaNegocio: formData.freguesiaNegocio,
-          listaCAES: formData.listaCAES,
-          localizacao: {
-            latitude: formData.localizacao.latitude,
-            longitude: formData.localizacao.longitude,
-          },
-          telefoneDono: formData.telefoneDono,
-          emailDono: formData.emailDono,
-          descricaoNegocio: formData.descricaoNegocio,
-          galeriaFotos: formData.galeriaFotos,
-          owner: user?.id,
-        }),
+        body: dataToSend,
       });
 
       const data = await response.json();
