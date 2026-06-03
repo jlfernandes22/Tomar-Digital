@@ -1,6 +1,7 @@
-import React from "react";
-import { View } from "react-native";
-import { Chip, useTheme } from "react-native-paper";
+import React from 'react';
+import { View } from 'react-native';
+import { Chip } from 'react-native-paper';
+import { useAppTheme } from '@/context/ThemeContext';
 
 interface CustomChipProps {
   children: string;
@@ -19,7 +20,7 @@ const CustomChip = ({
   icon,
   disabled,
 }: CustomChipProps) => {
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   return (
     <View className={className}>
@@ -29,8 +30,9 @@ const CustomChip = ({
         onPress={onPress}
         icon={icon}
         showSelectedCheck={false}
-        // ESTILO DO CONTAINER
         style={{
+          minHeight: 44,
+          minWidth: 44,
           // Se selecionado: Laranja. Se não: Branco.
           backgroundColor: isSelected
             ? theme.colors.primaryContainer
@@ -41,7 +43,7 @@ const CustomChip = ({
             : theme.colors.outline,
           borderRadius: 9999,
           height: 40,
-          justifyContent: "center",
+          justifyContent: 'center',
         }}
         // ESTILO DO TEXTO
         textStyle={{
@@ -49,10 +51,11 @@ const CustomChip = ({
           color: isSelected
             ? theme.colors.onPrimaryContainer
             : theme.colors.onSurface,
-          fontWeight: isSelected ? "bold" : "500",
+          fontWeight: isSelected ? 'bold' : '500',
           fontSize: 14,
           marginVertical: 0,
           paddingHorizontal: 4,
+          paddingVertical: 11,
         }}
       >
         {children}

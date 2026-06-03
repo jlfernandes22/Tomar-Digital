@@ -1,26 +1,27 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   FlatList,
   Alert,
   RefreshControl,
   ScrollView,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "@/constants/api";
-import { useAuth } from "@/context/AuthContext";
-import { router, Stack } from "expo-router";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/constants/api';
+import { useAuth } from '@/context/AuthContext';
+import { router, Stack } from 'expo-router';
 // Substituímos os componentes antigos pelos do Paper para suportar Dark Mode
 import {
   ActivityIndicator,
   TouchableRipple,
   Surface,
   Text,
-  useTheme,
   Divider,
-} from "react-native-paper";
-import CustomButton from "../components/CustomButton";
-import BusinessList from "../components/BusinessList";
+} from 'react-native-paper';
+import CustomButton from '../components/CustomButton';
+import BusinessList from '../components/BusinessList';
+import { useAppTheme } from '@/context/ThemeContext';
+import { curiosidades } from '@/constants/curiosidades';
 
 // 1. Interfaces MOVIDAS PARA FORA do componente
 interface Business {
@@ -49,13 +50,13 @@ export default function AprovarNegocios() {
     try {
       await carregarDados();
     } catch (err) {
-      Alert.alert("erro", "erro ao carregar informação");
+      Alert.alert('erro', 'erro ao carregar informação');
     } finally {
       setRefreshing(false);
     }
   };
 
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   const carregarDados = useCallback(async () => {
     // Se não há token, paramos o loading para não ficar preso
@@ -71,13 +72,13 @@ export default function AprovarNegocios() {
         fetch(`${API_URL}/business/pendentes`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         }),
         fetch(`${API_URL}/utilizador/negocioPendentes`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         }),
       ]);
@@ -85,7 +86,7 @@ export default function AprovarNegocios() {
       if (resPendentes.ok) setPendentes(await resPendentes.json());
       if (resOwners.ok) setPendOwners(await resOwners.json());
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível carregar os dados.");
+      Alert.alert('Erro', 'Não foi possível carregar os dados.');
     } finally {
       setLoading(false);
     }
@@ -98,50 +99,50 @@ export default function AprovarNegocios() {
   const handleAprovar = async (id: string) => {
     try {
       const response = await fetch(`${API_URL}/business/aprovar/${id}`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${user?.token}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
 
       if (response.ok) {
-        setPendentes((prev) => prev.filter((item) => item._id !== id));
+        setPendentes(prev => prev.filter(item => item._id !== id));
       } else {
-        Alert.alert("Erro", "O servidor recusou a aprovação.");
+        Alert.alert('Erro', 'O servidor recusou a aprovação.');
       }
     } catch (error) {
-      Alert.alert("Erro", "Falha ao aprovar.");
+      Alert.alert('Erro', 'Falha ao aprovar.');
     }
   };
 
   const handleDescartar = async (id: string) => {
     Alert.alert(
-      "Confirmar",
-      "Tens a certeza que queres descartar este pedido?",
+      'Confirmar',
+      'Tens a certeza que queres descartar este pedido?',
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: "Descartar",
-          style: "destructive",
+          text: 'Descartar',
+          style: 'destructive',
           onPress: async () => {
             try {
               const response = await fetch(
                 `${API_URL}/business/rejeitar/${id}`,
                 {
-                  method: "DELETE",
+                  method: 'DELETE',
                   headers: {
                     Authorization: `Bearer ${user?.token}`,
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                   },
                 },
               );
 
               if (response.ok) {
-                setPendentes((prev) => prev.filter((item) => item._id !== id));
+                setPendentes(prev => prev.filter(item => item._id !== id));
               }
             } catch (error) {
-              Alert.alert("Erro", "Falha ao descartar.");
+              Alert.alert('Erro', 'Falha ao descartar.');
             }
           },
         },
@@ -149,38 +150,55 @@ export default function AprovarNegocios() {
     );
   };
 
+  const handleRandomPhrase = () => {
+    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+  };
+  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+
   if (loading) {
     return (
       <Surface
-      
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: theme.colors.surface,
-        }}
+        className="flex-1 items-center justify-center p-6"
+        style={{ backgroundColor: theme.colors.background }}
       >
-        <Stack.Screen options={{ headerShown: false }} />
-
         <ActivityIndicator
-          animating={true}
           size="large"
           color={theme.colors.primary}
+          style={{ marginBottom: 20 }}
         />
+
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          A preparar os dados...
+        </Text>
+
+        <CustomButton
+          labelStyle={{ textAlign: 'center' }}
+          onPress={() => setRandomPhrase(handleRandomPhrase())}
+        >
+          Sabias que...{'\n '}
+          {randomPhrase}
+        </CustomButton>
       </Surface>
     );
   }
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
-      edges={["top", "left", "right"]}
+      edges={['top', 'left', 'right']}
       className="p-4"
     >
       <Text
         variant="headlineMedium"
         style={{
           color: theme.colors.primary,
-          fontWeight: "bold",
+          fontWeight: 'bold',
           marginBottom: 10,
         }}
       >
@@ -198,7 +216,7 @@ export default function AprovarNegocios() {
         <Text
           variant="bodyLarge"
           style={{ color: theme.colors.onSurfaceVariant }}
-          className="text-center mt-10"
+          className="mt-10 text-center"
         >
           Não há novos pedidos de Tomar.
         </Text>
@@ -214,11 +232,11 @@ export default function AprovarNegocios() {
             />
           }
           data={pendentes}
-          keyExtractor={(item) => item._id}
+          keyExtractor={item => item._id}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
             const donoEspecifico = pendOwners.find(
-              (dono) => dono._id === item.owner,
+              dono => dono._id === item.owner,
             );
 
             return (
@@ -228,7 +246,7 @@ export default function AprovarNegocios() {
                   marginBottom: 16,
                   borderWidth: 1,
                   borderColor: theme.colors.outlineVariant,
-                  overflow: "hidden",
+                  overflow: 'hidden',
                   backgroundColor: theme.colors.secondaryContainer,
                 }}
                 elevation={1}
@@ -236,7 +254,7 @@ export default function AprovarNegocios() {
                 <TouchableRipple
                   onPress={() => {
                     router.push({
-                      pathname: "/components/DetalhesBusiness",
+                      pathname: '/components/DetalhesBusiness',
                       params: { id: item._id },
                     });
                   }}
@@ -246,7 +264,7 @@ export default function AprovarNegocios() {
                     <BusinessList
                       name={item.name}
                       category={item.category}
-                      ownerName={donoEspecifico?.name || "A carregar..."}
+                      ownerName={donoEspecifico?.name || 'A carregar...'}
                     />
                   </View>
                 </TouchableRipple>

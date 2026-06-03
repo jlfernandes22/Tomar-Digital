@@ -3,7 +3,6 @@ import { View, ScrollView, Image, Pressable } from "react-native";
 import {
   Surface,
   Text,
-  useTheme,
   ProgressBar,
   HelperText,
   TextInput,
@@ -38,9 +37,9 @@ export default function AddBusiness() {
       latitude: 0,
       longitude: 0,
     },
-    telefoneDono: "",
-    emailDono: "",
-    descricaoNegocio: "",
+    telefoneDono: '',
+    emailDono: '',
+    descricaoNegocio: '',
     galeriaFotos: [] as string[],
   };
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
@@ -51,17 +50,17 @@ export default function AddBusiness() {
   const [erro, setErro] = useState("");
     
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const theme = useTheme();
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { currentTheme: theme } = useAppTheme();
 
   const categories = [
-    "Património & Museus",
-    "Restauração",
-    "Cafés & Pastelarias",
-    "Alojamento",
-    "Comércio Local",
-    "Lazer & Natureza",
-    "Serviços",
+    'Património & Museus',
+    'Restauração',
+    'Cafés & Pastelarias',
+    'Alojamento',
+    'Comércio Local',
+    'Lazer & Natureza',
+    'Serviços',
   ];
 
   // 🚀 CORREÇÃO: Utilização de 'as any' para evitar que o TS infira o tipo como 'never'
@@ -91,7 +90,6 @@ export default function AddBusiness() {
     }
   };
 
-  // 🚀 CORREÇÃO: Multi-upload com cast seguro para 'any' para aceitar o mapeamento do array
   const adicionarFotosGaleria = async () => {
     try {
       const resultado = await pickImage({
@@ -134,7 +132,7 @@ export default function AddBusiness() {
 
   const handleNewBusiness = async () => {
     if (!user?.token) {
-      setSnackbarMessage("Erro: Sessão expirada.");
+      setSnackbarMessage('Erro: Sessão expirada.');
       setSnackbarVisible(true);
       return;
     }
@@ -153,9 +151,9 @@ export default function AddBusiness() {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/registarNegocio`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({
@@ -188,11 +186,11 @@ export default function AddBusiness() {
         router.back();
         setStep(1);
       } else {
-        setSnackbarMessage(data.message || "Erro no registo.");
+        setSnackbarMessage(data.message || 'Erro no registo.');
         setSnackbarVisible(true);
       }
     } catch (error) {
-      setSnackbarMessage("Erro de ligação ao servidor.");
+      setSnackbarMessage('Erro de ligação ao servidor.');
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -263,7 +261,6 @@ export default function AddBusiness() {
                 onChangeText={(t) => setFormData({ ...formData, nomeNegocio: t })}
               />
               
-              {/* 🚀 CORREÇÃO: Alterado de TextInput nativo para CustomTextInput harmónico */}
               <TextInput
                 label="NIF"
                 value={formData.NIFnegocio}

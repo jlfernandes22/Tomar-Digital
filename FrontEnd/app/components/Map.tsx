@@ -1,21 +1,22 @@
-import { View } from "react-native";
+import { View } from 'react-native';
 import React, {
   useState,
   forwardRef,
   useImperativeHandle,
   useRef,
   useEffect,
-} from "react";
-import MapView, { Marker, Circle } from "react-native-maps";
-import { FAB, Portal, useTheme } from "react-native-paper";
-import * as Location from "expo-location";
-import CustomSnackBar from "./CustomSnackBar";
+} from 'react';
+import MapView, { Marker, Circle } from 'react-native-maps';
+import { FAB, Portal } from 'react-native-paper';
+import { useAppTheme } from '@/context/ThemeContext';
+import * as Location from 'expo-location';
+import CustomSnackBar from './CustomSnackBar';
 //interfaces
-import MapProps from "@/constants/Interfaces/MapProps";
-import MapRefType from "@/constants/Interfaces/MapRefType";
+import MapProps from '@/constants/Interfaces/MapProps';
+import MapRefType from '@/constants/Interfaces/MapRefType';
 
 //Estilo escuro do mapa fornecido pela IA
-import darkMapStyle from "@/constants/DarkMapStyle";
+import darkMapStyle from '@/constants/DarkMapStyle';
 
 // Adicionamos <MapRefType, MapProps>
 const Map = forwardRef<MapRefType, MapProps>(
@@ -31,7 +32,7 @@ const Map = forwardRef<MapRefType, MapProps>(
     },
     ref,
   ) => {
-    const theme = useTheme();
+    const { currentTheme: theme } = useAppTheme();
     const mapRef = useRef<MapView>(null);
     //localização do utilizador
     const [userLocation, setUserLocation] = useState<{
@@ -44,7 +45,7 @@ const Map = forwardRef<MapRefType, MapProps>(
       latitude: number;
       longitude: number;
     } | null>(null);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -82,7 +83,7 @@ const Map = forwardRef<MapRefType, MapProps>(
         try {
           setLoading(true);
           const { status } = await Location.requestForegroundPermissionsAsync();
-          if (status !== "granted") {
+          if (status !== 'granted') {
             //dizer ao utilizador que é necessário localização para usar todas as funcionalidades
             return;
           }
@@ -94,7 +95,7 @@ const Map = forwardRef<MapRefType, MapProps>(
               //distância necessária para atualizar localização
               distanceInterval: 10,
             },
-            (locationUpdate) => {
+            locationUpdate => {
               setUserLocation({
                 latitude: locationUpdate.coords.latitude,
                 longitude: locationUpdate.coords.longitude,
@@ -103,7 +104,7 @@ const Map = forwardRef<MapRefType, MapProps>(
           );
         } catch (err) {
           console.log(err);
-          setSnackbarMessage("Erro\nNão foi possível obter a sua localização");
+          setSnackbarMessage('Erro\nNão foi possível obter a sua localização');
           setSnackbarVisible(true);
         } finally {
           setLoading(false);
@@ -135,7 +136,7 @@ const Map = forwardRef<MapRefType, MapProps>(
     }));
 
     return (
-      <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
+      <View style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
         <MapView
           provider="google"
           ref={mapRef}
@@ -149,7 +150,7 @@ const Map = forwardRef<MapRefType, MapProps>(
           showsUserLocation={true}
           showsMyLocationButton={false}
           scrollEnabled={true}
-          onPress={(e) => {
+          onPress={e => {
             if (readOnly) return;
             const novasCoordenadas = e.nativeEvent.coordinate;
             setSelectedLocation(novasCoordenadas);
@@ -164,7 +165,7 @@ const Map = forwardRef<MapRefType, MapProps>(
                 radius={250}
                 strokeWidth={2}
                 strokeColor={theme.colors.primary}
-                fillColor={theme.colors.primaryContainer + "80"}
+                fillColor={theme.colors.primaryContainer + '80'}
               ></Circle>
             </>
           )}
@@ -173,7 +174,7 @@ const Map = forwardRef<MapRefType, MapProps>(
             <Marker coordinate={selectedLocation} />
           )}
 
-          {businesses.map((biz) => (
+          {businesses.map(biz => (
             <Marker
               tappable={true}
               key={biz._id || Math.random().toString()}
@@ -204,7 +205,7 @@ const Map = forwardRef<MapRefType, MapProps>(
 
         <FAB
           style={{
-            position: "absolute",
+            position: 'absolute',
             margin: 16,
             right: 0,
             bottom: 80,
@@ -215,13 +216,13 @@ const Map = forwardRef<MapRefType, MapProps>(
           disabled={loading}
           icon="crosshairs-gps"
           onPress={async () => {
-            console.log("get localization");
+            console.log('get localization');
             try {
               setLoading(true);
               const gpsSignal = await Location.hasServicesEnabledAsync();
 
               if (!gpsSignal) {
-                setSnackbarMessage("Aviso\nTem o GPS desativado");
+                setSnackbarMessage('Aviso\nTem o GPS desativado');
                 setSnackbarVisible(true);
                 setLoading(false);
                 return;
@@ -252,9 +253,9 @@ const Map = forwardRef<MapRefType, MapProps>(
                 setLoading(false);
               }, 1500);
             } catch (error) {
-              console.log("get localization error", error);
+              console.log('get localization error', error);
               setSnackbarMessage(
-                "Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades",
+                'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades',
               );
               setSnackbarVisible(true);
               setLoading(false); // Desliga se der erro
@@ -265,7 +266,7 @@ const Map = forwardRef<MapRefType, MapProps>(
         <Portal>
           <View
             style={{
-              position: "absolute",
+              position: 'absolute',
               bottom: 90, // Passa por cima do FAB (Temas)
               left: 0, // Fixa à esquerda
               right: 0, // Fixa à direita (dá a largura de 100%)
@@ -287,6 +288,6 @@ const Map = forwardRef<MapRefType, MapProps>(
   },
 );
 
-Map.displayName = "Map";
+Map.displayName = 'Map';
 
 export default Map;

@@ -15,7 +15,7 @@ const [business, setBusiness] = useState(JSON.parse(dadosNegocio || "{}"));
   const hoje = new Date();
   
   const router = useRouter();
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
   const mapRef = useRef<MapRefType>(null);
 
  useEffect(() => {

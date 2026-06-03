@@ -11,6 +11,7 @@ export interface User {
   name: string;
   city?: string;
   NIF?: number | null;
+  acceptedInvoiceTerms?: boolean;
   Avatar?: string | null,
 
 }
@@ -28,6 +29,7 @@ interface AuthContextData {
     name: string,
     city?: string,
     NIF?: number | null,
+    acceptedInvoiceTerms?: boolean,
     Avatar?: string | null,
   ) => Promise<void>;
   logout: () => Promise<void>;
@@ -89,6 +91,7 @@ export const AuthProvider = ({ children }: any) => {
     name: string,
     city?: string,
     NIF?: number | null,
+    acceptedInvoiceTerms?: boolean,
     Avatar?: string | null,
   ) => {
     try {
@@ -101,6 +104,7 @@ export const AuthProvider = ({ children }: any) => {
         name,
         city,
         NIF,
+        acceptedInvoiceTerms,
         Avatar,
 
       };

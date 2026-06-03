@@ -4,9 +4,8 @@ import {
   TouchableRipple,
   Text,
   ActivityIndicator,
-  useTheme,
   Icon,
-} from "react-native-paper";
+} from 'react-native-paper';
 
 interface PrimaryButtonProps {
   children: React.ReactNode;
@@ -21,6 +20,9 @@ interface PrimaryButtonProps {
   labelStyle?: any;
   accessibilityRole?: any;
   accessibilityLabel?: any;
+  numberOfLines?: number;
+  width?: any;
+  height?: any;
 }
 
 const CustomButton = ({
@@ -36,40 +38,45 @@ const CustomButton = ({
   labelStyle,
   accessibilityRole,
   accessibilityLabel,
+  numberOfLines,
+  width,
+  height,
 }: PrimaryButtonProps) => {
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
 
   // Cores ligadas ao Theme atual
   const bgColor = buttonColor ? buttonColor : theme.colors.primary;
-  const txtColor = textColor ? textColor : theme.colors.onPrimary;
+  const txtColor = textColor ? textColor : theme.colors.background;
 
   const isDisabled = disabled || loading;
 
   return (
     <View
-      className={className || ""}
-      style={[
-        {
+      className={className || ''}
+      style={{
         backgroundColor: bgColor,
-        borderRadius: 9999,
+        borderRadius: theme.roundness,
         overflow: "hidden",
-        opacity: isDisabled ? 0.6 : 1,
-        }, style
-      ]}
-      
+        opacity: isDisabled ? 0.5 : 1,
+      }}
     >
       <TouchableRipple
         onPress={isDisabled ? undefined : onPress}
         rippleColor="rgba(150, 150, 150, 0.3)"
-        accessibilityRole={accessibilityRole || "button"}
+        accessibilityRole={accessibilityRole || 'button'}
         accessibilityLabel={accessibilityLabel}
         disabled={isDisabled}
         style={{
+          minWidth: 44,
+          minHeight: 44,
           paddingVertical: 12,
           paddingHorizontal: 24,
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "row",
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'row',
+          width: width,
+          height: height,
+          borderRadius: theme.roundness,
         }}
       
       >
@@ -85,7 +92,7 @@ const CustomButton = ({
 
           {!loading && icon && (
             <View style={{ marginRight: 8 }}>
-              {typeof icon === "string" ? (
+              {typeof icon === 'string' ? (
                 <Icon source={icon} size={22} color={txtColor} />
               ) : (
                 <Image
@@ -102,12 +109,12 @@ const CustomButton = ({
               {
                 color: txtColor,
                 fontSize: 16,
-                fontWeight: "bold",
+                fontWeight: 'bold',
                 letterSpacing: 0.5,
               },
               labelStyle,
             ]}
-            numberOfLines={1}
+            numberOfLines={numberOfLines}
           >
             {children}
           </Text>

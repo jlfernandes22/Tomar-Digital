@@ -1,29 +1,29 @@
-import { ActivityIndicator, View, Image, ScrollView } from "react-native";
-import React, { useState } from "react";
-import { router } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { images } from "@/constants/images";
+import { ActivityIndicator, View, Image, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { router } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { images } from '@/constants/images';
 import {
   Surface,
   Text,
   TouchableRipple,
-  useTheme,
   Menu,
   IconButton,
   Divider,
-} from "react-native-paper";
-import CustomButton from "./CustomButton";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "@/constants/api";
+} from 'react-native-paper';
+import CustomButton from './CustomButton';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/constants/api';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const roleLabels: Record<string, string> = {
-  cidadao: "Cidadão",
-  comerciante: "Comerciante",
-  camara: "Câmara Municipal",
+  cidadao: 'Cidadão',
+  comerciante: 'Comerciante',
+  camara: 'Câmara Municipal',
 };
 
 const ProfileDetails = () => {
-  const theme = useTheme();
+  const { currentTheme: theme } = useAppTheme();
   const { logout, user } = useAuth();
 
   // 1. Criar o estado para controlar se o Menu está aberto ou fechado
@@ -35,11 +35,11 @@ const ProfileDetails = () => {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
-      edges={["top", "left", "right"]}
+      edges={['top', 'left', 'right']}
     >
       {!user ? (
         <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
         >
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
@@ -48,12 +48,12 @@ const ProfileDetails = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingBottom: 20,
-            alignItems: "center",
+            alignItems: 'center',
           }}
           showsVerticalScrollIndicator={false}
         >
           {/* Menu de Opções no Canto Superior Direito */}
-          <View className="w-full flex-row justify-end mt-4 mb-2">
+          <View className="mb-2 mt-4 w-full flex-row justify-end">
             <Menu
               visible={menuVisible}
               onDismiss={closeMenu}
@@ -61,7 +61,7 @@ const ProfileDetails = () => {
                 <IconButton
                   icon={({ size }) => (
                     <Image
-                      source={images.settingsImg} 
+                      source={images.settingsImg}
                       style={{
                         width: size,
                         height: size,
@@ -83,31 +83,32 @@ const ProfileDetails = () => {
               <Menu.Item
                 onPress={() => {
                   closeMenu();
-                  router.push("/components/EditProfile");
+                  router.push('/components/EditProfile');
                 }}
                 leadingIcon="pencil"
                 title="Editar Perfil"
               />
               <Divider />
               {user.role === 'cidadao' && (
-              <Menu.Item
-                onPress={() => {
-                  closeMenu();
-                 router.push("/components/SerComerciante");
+                <Menu.Item
+                  onPress={() => {
+                    closeMenu();
+                    router.push('/components/SerComerciante');
+                  }}
+                  leadingIcon="account"
+                  title="Ser Comerciante"
+                />
+              )}
 
-                }}
-                leadingIcon="account"
-                title="Ser Comerciante"
-              /> )}
-              
               <Divider />
               <Menu.Item
                 onPress={() => {
                   closeMenu();
+                  router.push('/components/Preferences');
                 }}
                 leadingIcon={({ size }) => (
                   <Image
-                    source={images.preferencesImg} 
+                    source={images.preferencesImg}
                     style={{
                       width: size,
                       height: size,
@@ -121,7 +122,7 @@ const ProfileDetails = () => {
               <Menu.Item
                 onPress={() => {
                   closeMenu();
-                  router.push("/components/SobreAPP")
+                  router.push('/components/SobreAPP');
                 }}
                 leadingIcon="information-outline"
                 title="Sobre a App"
@@ -151,30 +152,41 @@ const ProfileDetails = () => {
 
           {/* Avatar */}
           <View
-            className="w-32 h-32 border-2 rounded-full items-center justify-center mb-3"
+            className="mb-3 h-32 w-32 items-center justify-center rounded-full border-2"
             style={{
               backgroundColor: theme.colors.background,
               borderColor: theme.colors.outline,
             }}
           >
-            <Image
-              source={{ uri: `${API_URL}/mostrarImagem/${user.Avatar}` }}
-              className="w-32 h-32 rounded-full items-center justify-center border-2"
-              style={{
-                backgroundColor: theme.colors.background,
-                borderColor: theme.colors.outline,
-              }}
-            />
+            {!user.Avatar && (
+              <Text
+                className="text-4xl font-bold uppercase"
+                style={{ color: theme.colors.primary }}
+              >
+                {(user.name || user.email || 'V').charAt(0)}
+              </Text>
+            )}
+
+            {user.Avatar && (
+              <Image
+                source={{ uri: `${API_URL}/mostrarImagem/${user.Avatar}` }}
+                className="h-32 w-32 items-center justify-center rounded-full border-2"
+                style={{
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.outline,
+                }}
+              />
+            )}
           </View>
 
           {/* NOME */}
-          <Text style={{ fontWeight: "bold" }} className="text-xl mb-2">
+          <Text style={{ fontWeight: 'bold' }} className="mb-2 text-xl">
             {user.name}
           </Text>
 
           {/* Role */}
           <View
-            className="p-2 rounded-full border-2 mb-2"
+            className="mb-2 rounded-full border-2 p-2"
             style={{
               backgroundColor: theme.colors.secondaryContainer,
               borderColor: theme.colors.outline,
@@ -182,15 +194,15 @@ const ProfileDetails = () => {
           >
             <Text
               style={{ color: theme.colors.onBackground }}
-              className="text-base text-center"
+              className="text-center text-base"
             >
-              {roleLabels[user.role] || "Utilizador"}
+              {roleLabels[user.role] || 'Utilizador'}
             </Text>
           </View>
 
           {/* Saldo */}
           <View
-            className=" w-full py-6 rounded-xl mt-5 border-2 items-center px-4"
+            className=" mt-5 w-full items-center rounded-xl border-2 px-4 py-6"
             style={{
               backgroundColor: theme.colors.secondaryContainer,
               borderColor: theme.colors.outline,
@@ -199,21 +211,21 @@ const ProfileDetails = () => {
             accessibilityLabel={`Pontos disponíveis: ${user.Points}`}
           >
             <Text
-              style={{ fontWeight: "bold" }}
-              className="text-lg uppercase tracking-widest mb-1 text-center"
+              style={{ fontWeight: 'bold' }}
+              className="mb-1 text-center text-lg uppercase tracking-widest"
             >
               Pontos Disponíveis
             </Text>
             <Text
-              style={{ fontWeight: "bold" }}
-              className="text-5xl mb-6 text-center"
+              style={{ fontWeight: 'bold' }}
+              className="mb-6 text-center text-5xl"
             >
-              {!isNaN(Number(user.Points)) ? `${Number(user.Points)}` : "0"}
+              {!isNaN(Number(user.Points)) ? `${Number(user.Points)}` : '0'}
             </Text>
 
             <CustomButton
-              onPress={() => router.replace("/(tabs)/ScanScreen")}
-              className="w-full mt-2 shadow-md"
+              onPress={() => router.replace('/(tabs)/ScanScreen')}
+              className="mt-2 w-full shadow-md"
               buttonColor={theme.colors.primary}
               textColor={theme.colors.onPrimary}
               accessibilityRole="button"
@@ -222,14 +234,14 @@ const ProfileDetails = () => {
             >
               Ler QR-Code
             </CustomButton>
-            <View className="items-center mt-4">
-              <Text style={{ fontWeight: "300" }} className="text-center mb-2">
+            <View className="mt-4 items-center">
+              <Text style={{ fontWeight: '300' }} className="mb-2 text-center">
                 Acumula pontos por cada compra efetuada nas lojas aderentes de
                 Tomar
               </Text>
               <Text
-                style={{ color: theme.colors.onSurface, fontWeight: "bold" }}
-                className="text-base text-center"
+                style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
+                className="text-center text-base"
               >
                 - Necessário Contribuinte -
               </Text>
@@ -238,7 +250,7 @@ const ProfileDetails = () => {
 
           {/* E-mail */}
           <View
-            className=" w-full flex-row p-3 rounded-xl mt-5 border-2 items-center px-4"
+            className=" mt-5 w-full flex-row items-center rounded-xl border-2 p-3 px-4"
             style={{
               backgroundColor: theme.colors.secondaryContainer,
               borderColor: theme.colors.outline,
@@ -255,11 +267,11 @@ const ProfileDetails = () => {
               importantForAccessibility="no-hide-descendants"
             />
             <View style={{ marginLeft: 20 }}>
-              <Text style={{ fontWeight: "bold", fontSize: 15 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 15 }}>
                 Endereço de E-mail
               </Text>
               <Text
-                style={{ fontWeight: "bold", fontSize: 13 }}
+                style={{ fontWeight: 'bold', fontSize: 13 }}
                 numberOfLines={1}
               >
                 {user.email}

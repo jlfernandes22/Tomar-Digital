@@ -8,7 +8,7 @@ múltiplos temas dinâmicos (Light/Dark Mode e Paletas de Marca).
 REGRAS GERAIS E ABSOLUTAS (PROIBIDO IGNORAR):
 1. É ESTRITAMENTE PROIBIDO usar Hex Codes (ex: #FFFFFF, #000) no código dos ecrãs (exceto no ficheiro themes.js e CustomSnackBar).
 2. É ESTRITAMENTE PROIBIDO usar classes de cor do Tailwind (ex: bg-white, text-black, border-gray-200, bg-red-500).
-3. Todas as cores devem ser injetadas através do hook: `const theme = useTheme();`.
+3. Todas as cores devem ser injetadas através do hook: `const theme = useAppTheme();`.
 4. Todos os ecrãs devem suportar Dark Mode nativamente, o que significa que o contraste é garantido pelo emparelhamento correto das variáveis (ex: usar sempre `onPrimary` por cima de `primary`).
 
 ------------------------------------------------------------------------
