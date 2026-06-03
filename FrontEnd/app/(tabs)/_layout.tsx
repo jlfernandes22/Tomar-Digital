@@ -1,12 +1,12 @@
-import { images } from "@/constants/images";
-import { Tabs } from "expo-router";
-import React from "react";
-import TabIcon from "@/app/components/Tabicon";
-import { useAuth } from "@/context/AuthContext";
-import { BottomNavigation } from "react-native-paper";
-import { useAppTheme } from "@/context/ThemeContext";
-import { CommonActions } from "@react-navigation/native";
-import { Platform } from "react-native";
+import { images } from '@/constants/images';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import TabIcon from '@/app/components/Tabicon';
+import { useAuth } from '@/context/AuthContext';
+import { BottomNavigation } from 'react-native-paper';
+import { useAppTheme } from '@/context/ThemeContext';
+import { CommonActions } from '@react-navigation/native';
+import { Platform } from 'react-native';
 
 const _layout = () => {
   const { user } = useAuth();
@@ -19,28 +19,26 @@ const _layout = () => {
           Combina a limpeza de rotas ocultas do ecrã de login 
           com as regras de negócio de acessos da aplicação principal.
         */
-        const visibleRoutes = state.routes.filter((route) => {
+        const visibleRoutes = state.routes.filter(route => {
           const options = descriptors[route.key].options as any;
 
           // Se a rota está marcada como oculta ou não tem ícone, é filtrada
           if (!options.tabBarIcon || options.href === null) return false;
 
           // Regras de acesso restrito baseadas no Role do utilizador
-          if (route.name === "CamaraIndex" && user?.role !== "camara")
+          if (route.name === 'CamaraIndex' && user?.role !== 'camara')
             return false;
-          if (route.name === "DashboardTab" && user?.role !== "camara")
+          if (route.name === 'DashboardTab' && user?.role !== 'camara')
             return false;
-          if (route.name === "AddBusiness" && user?.role !== "comerciante")
+          if (route.name === 'AddBusiness' && user?.role !== 'comerciante')
             return false;
-          if (route.name === "MeusNegocios" && user?.role !== "comerciante")
+          if (route.name === 'MeusNegocios' && user?.role !== 'comerciante')
             return false;
-          if (route.name === "JoinCampaign" && user?.role !== "comerciante")
+          if (route.name === 'JoinCampaign' && user?.role !== 'comerciante')
             return false;
-          if (route.name === "ScanScreen") 
-            return false;
-          if (route.name === "EditProfile")
-             return false;
-          if (route.name === "CreateCampaign" && user?.role !== "camara")
+          if (route.name === 'ScanScreen') return false;
+          if (route.name === 'EditProfile') return false;
+          if (route.name === 'CreateCampaign' && user?.role !== 'camara')
             return false;
 
           return true;
@@ -48,7 +46,7 @@ const _layout = () => {
 
         const activeRoute = state.routes[state.index];
         const activeIndex = visibleRoutes.findIndex(
-          (r) => r.key === activeRoute.key,
+          r => r.key === activeRoute.key,
         );
 
         return (
@@ -62,7 +60,7 @@ const _layout = () => {
             }}
             safeAreaInsets={insets}
             style={{
-              backgroundColor: theme.colors.surfaceContainer,
+              backgroundColor: theme.colors.inverseOnSurface,
               ...Platform.select({
                 ios: {
                   // Aqui controlas SÓ o iPhone!
@@ -86,12 +84,12 @@ const _layout = () => {
               maxWidth: 64,
               height: 44,
               borderRadius: theme.roundness,
-              alignSelf: "center",
+              alignSelf: 'center',
             }}
             labeled={false}
             onTabPress={({ route, preventDefault }) => {
               const event = navigation.emit({
-                type: "tabPress",
+                type: 'tabPress',
                 target: route.key,
                 canPreventDefault: true,
               });

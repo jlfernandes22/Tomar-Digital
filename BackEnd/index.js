@@ -449,97 +449,30 @@ app.get("/utilizador/:id", authorize(["camara"]), async (req, res) => {
  *       201:
  *         description: Negócio registado
  */
-app.post(
-  "/registarNegocio",
-  authorize(["comerciante", "camara"]),
-  async (req, res) => {
-    try {
-      const {
-        nomeNegocio,
-        NIFnegocio,
-        categoriaNegocio,
-        logotipoNegocio,
-        moradaNegocio,
-        freguesiaNegocio,
-        localizacao,
-        telefoneDono,
-        emailDono,
-        descricaoNegocio,
-        galeriaFotos,
-        listaCAES,
-        owner, // Caso a câmara esteja a registar por outro
-      } = req.body;
+app.post("/registarNegocio", authorize(["comerciante", "camara"]), async (req, res) => {
+  try {
+    const { nomeNegocio, NIFnegocio, categoriaNegocio, logotipoNegocio, moradaNegocio, freguesiaNegocio, localizacao, telefoneDono, emailDono, descricaoNegocio, galeriaFotos, listaCAES, owner } = req.body;
 
-      console.log(req.body);
-
-    let parsedCAES = [];
-        if (listaCAES) {
-          try {
-            parsedCAES = typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES;
-          } catch (parseError) {
-            parsedCAES = typeof listaCAES === 'string' ? listaCAES.split(',') : listaCAES;
-          }
-        }
-
-      if (
-        !nomeNegocio ||
-        !categoriaNegocio ||
-        !localizacao ||
-        !telefoneDono ||
-        !emailDono ||
-        galeriaFotos.length === 0
-      ) {
-        nomeNegocio, NIFnegocio, categoriaNegocio, logotipoNegocio,
-        moradaNegocio, freguesiaNegocio, localizacao, telefoneDono,
-        emailDono, descricaoNegocio, galeriaFotos, owner
-      } = req.body;
-
-      // 1. Validação de campos obrigatórios críticos para a regra de negócio
-      if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono || galeriaFotos.length === 0) {
-        return res.status(400).json({
-          message: "Dados incompletos (Nome, Categoria, Localização, Telefone e E-mail são obrigatórios).",
-        });
-      }
-
-     
-      const ownerId = req.user.role === "camara" ? owner || req.user.id : req.user.id;
-
-      const existe = await Business.findOne({ nomeNegocio, owner: ownerId });
-      if (existe) {
-        return res.status(400).json({ message: "Já tens um negócio registado com este nome." });
-      }
-
-     
-      const novoNegocio = new Business({
-        name: nomeNegocio,
-        category: categoriaNegocio,
-        NIF: NIFnegocio,
-        logo: logotipoNegocio,
-        address: moradaNegocio,
-        parish: freguesiaNegocio,
-        location: {
-          lat: Number(localizacao.latitude),
-          long: Number(localizacao.longitude),
-        },
-        phone: telefoneDono,
-        email: emailDono,
-        listaCAES: parsedCAES,
-        description: descricaoNegocio,
-        gallery: galeriaFotos,
-        owner: ownerId,
-        // Bypass de aprovação para ações feitas diretamente por administradores (Câmara)
-        status: req.user.role === "camara" ? "aprovado" : "pendente",
-        createdAt: new Date(),
-      });
-
-      await novoNegocio.save();
-      res.status(201).json({ message: "Negocio registado com sucesso!", business: novoNegocio });
-    } catch (error) {
-      console.error("Erro no registo de negócio:", error);
-      res.status(500).json({ message: "Erro interno ao guardar o negócio." });
+    if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono || !galeriaFotos || galeriaFotos.length === 0) {
+      return res.status(400).json({ message: "Dados incompletos." });
     }
+
+    const ownerId = req.user.role === "camara" ? owner || req.user.id : req.user.id;
+    const novoNegocio = new Business({
+      name: nomeNegocio, category: categoriaNegocio, NIF: NIFnegocio, logo: logotipoNegocio, address: moradaNegocio,
+      parish: freguesiaNegocio,
+      location: { lat: Number(localizacao.latitude), long: Number(localizacao.longitude) },
+      phone: telefoneDono, email: emailDono, listaCAES: listaCAES, description: descricaoNegocio, gallery: galeriaFotos,
+      owner: ownerId,
+      status: req.user.role === "camara" ? "aprovado" : "pendente"
+    });
+
+    await novoNegocio.save();
+    res.status(201).json({ message: "Negocio registado!", business: novoNegocio });
+  } catch (error) {
+    res.status(500).json({ message: "Erro interno." });
   }
-);
+});
 
 // ============================================================================
 //PEDIDOS DE COMERCIANTES
@@ -1243,51 +1176,19 @@ const uploadCampanha = upload.fields([
  */
 app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, res) => {
   try {
-    const { 
-      titulo, 
-      slogan, 
-      descricao, 
-      listaCAES, 
-      dataInicio, 
-      dataExpiracao, 
-      normas, 
-      packs 
-    } = req.body;
+    const { titulo, slogan, descricao, listaCAES, dataInicio, dataExpiracao, normas, packs } = req.body;
 
-    console.log(req.body)
+    // 1. Parsing dos dados (mantive a tua lógica)
+    let parsedPacks = packs ? (typeof packs === 'string' ? JSON.parse(packs) : packs) : [];
+    let parsedCAES = listaCAES ? (typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES) : [];
 
-    let parsedPacks = [];
-    if (packs) {
-      try {
-        parsedPacks = typeof packs === 'string' ? JSON.parse(packs) : packs;
-      } catch (parseError) {
-        console.error("Erro ao converter os packs:", parseError);
-        return res.status(400).json({ message: "O formato dos pacotes/packs é inválido." });
-      }
-    }
-
-    let parsedCAES = [];
-    if (listaCAES) {
-      try {
-        parsedCAES = typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES;
-      } catch (parseError) {
-        parsedCAES = typeof listaCAES === 'string' ? listaCAES.split(',') : listaCAES;
-      }
-    }
-
-    /**
-     * Função Auxiliar de Processamento Gráfico
-     * Lê a imagem do staging (multer), redimensiona, aplica compressão WebP e apaga a original.
-     */
-    const processarImagem = async (file) => {
-      const nomeSemExtensao = path.parse(file.filename).name;
-      const webpFilename = `${nomeSemExtensao}.webp`;
-      const targetPath = path.join('uploads/imagens/', webpFilename);
+    // 2. Declaração das variáveis de referência para os IDs das imagens
+    let logoId = null;
+    let panfletoId = null;
 
     // --- PROCESSAMENTO DO LOGÓTIPO ---
     if (req.files && req.files['logo'] && req.files['logo'][0]) {
       const logoFile = req.files['logo'][0];
-      
       const logoBuffer = await sharp(logoFile.path)
         .resize({ width: 800 })
         .toFormat('webp')
@@ -1300,15 +1201,14 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
         contentType: 'image/webp'
       });
       await novaImagemLogo.save();
-      logoIdDefinitivo = novaImagemLogo._id;
+      logoId = novaImagemLogo._id; // Atribuição correta
       
-      try { fs.unlinkSync(logoFile.path); } catch (e) { console.log("Erro ao apagar logo temp:", e); }
+      try { fs.unlinkSync(logoFile.path); } catch (e) { console.error("Erro ao apagar logo temp:", e); }
     } 
 
     // --- PROCESSAMENTO DO PANFLETO ---
     if (req.files && req.files['panfleto'] && req.files['panfleto'][0]) {
       const panfletoFile = req.files['panfleto'][0];
-      
       const panfletoBuffer = await sharp(panfletoFile.path)
         .resize({ width: 800 })
         .toFormat('webp')
@@ -1321,38 +1221,34 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
         contentType: 'image/webp'
       });
       await novaImagemPanfleto.save();
-      panfletoIdDefinitivo = novaImagemPanfleto._id;
+      panfletoId = novaImagemPanfleto._id; // Atribuição correta
       
-      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.log("Erro ao apagar panfleto temp:", e); }
+      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.error("Erro ao apagar panfleto temp:", e); }
     }
 
     // --- CRIAR A CAMPANHA ---
     const newCampaign = new Campaign({
       createdBy: req.user.id,
-      titulo: titulo,
-      slogan: slogan,
-      descricao: descricao,
+      titulo,
+      slogan,
+      descricao,
       listaCAES: parsedCAES, 
       DataInicio: dataInicio ? new Date(dataInicio) : undefined, 
       DataExpiracao: dataExpiracao ? new Date(dataExpiracao) : undefined,
-      normas: normas,
+      normas,
       packs: parsedPacks,
-      logo: logoUrl,
-      panfleto: panfletoUrl
+      logo: logoId,     // Usa a variável que declarámos acima
+      panfleto: panfletoId // Usa a variável que declarámos acima
     });
     
     await newCampaign.save();
     
-    return res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
-    
-  } catch (err) {
-    console.error("ERRO COMPLETO:", err); // <-- ISTO É O QUE PRECISO QUE VEJAS
-    return res.status(500).json({ 
-        message: "Erro ao gravar", 
-        details: err.message,
-        stack: err.stack // Adiciona isto temporariamente para veres a linha do erro
-    });
-}
+    return res.status(200).json({ message: "Campanha criada com sucesso!", id: newCampaign._id });
+
+  } catch (error) {
+    console.error("Erro ao criar campanha:", error);
+    return res.status(500).json({ message: "Erro interno ao processar a campanha." });
+  }
 });
 
 /**

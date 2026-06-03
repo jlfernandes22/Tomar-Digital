@@ -1,5 +1,6 @@
-import React from "react";
-import { View, Image, ViewStyle, StyleProp } from "react-native";
+import { useAppTheme } from '@/context/ThemeContext';
+import React from 'react';
+import { View, Image, ViewStyle, StyleProp } from 'react-native';
 import {
   TouchableRipple,
   Text,
@@ -11,7 +12,7 @@ interface PrimaryButtonProps {
   children: React.ReactNode;
   onPress: () => void;
   className?: string;
-  style?: StyleProp<ViewStyle>; 
+  style?: StyleProp<ViewStyle>;
   loading?: boolean;
   disabled?: boolean;
   buttonColor?: string;
@@ -54,9 +55,9 @@ const CustomButton = ({
     <View
       className={className || ''}
       style={{
-        backgroundColor: bgColor,
+        backgroundColor: theme.colors.primary,
         borderRadius: theme.roundness,
-        overflow: "hidden",
+        overflow: 'hidden',
         opacity: isDisabled ? 0.5 : 1,
       }}
     >
@@ -78,7 +79,6 @@ const CustomButton = ({
           height: height,
           borderRadius: theme.roundness,
         }}
-      
       >
         <>
           {loading && (
