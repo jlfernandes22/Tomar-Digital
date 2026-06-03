@@ -32,10 +32,14 @@ const _layout = () => {
             return false;
           if (route.name === "AddBusiness" && user?.role !== "comerciante")
             return false;
+          if (route.name === "MeusNegocios" && user?.role !== "comerciante")
+            return false;
           if (route.name === "JoinCampaign" && user?.role !== "comerciante")
             return false;
-          if (route.name === "ScanScreen") return false;
-          if (route.name === "EditProfile") return false;
+          if (route.name === "ScanScreen") 
+            return false;
+          if (route.name === "EditProfile")
+             return false;
           if (route.name === "CreateCampaign" && user?.role !== "camara")
             return false;
 
@@ -136,7 +140,6 @@ const _layout = () => {
       <Tabs.Screen
         name="CamaraIndex"
         options={{
-          href: user?.role === "camara" ? "/CamaraIndex" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.camaraImg} color={color} />
           ),
@@ -144,9 +147,17 @@ const _layout = () => {
       />
 
       <Tabs.Screen
+        name="MeusNegocios"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.bagImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="AddBusiness"
         options={{
-          href: user?.role === "comerciante" ? "/AddBusiness" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.addImg} color={color} />
           ),
@@ -156,7 +167,6 @@ const _layout = () => {
       <Tabs.Screen
         name="JoinCampaign"
         options={{
-          href: user?.role === "comerciante" ? "/JoinCampaign" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.campaignImg} color={color} />
           ),
@@ -165,7 +175,6 @@ const _layout = () => {
       <Tabs.Screen
         name="ScanScreen"
         options={{
-          href: user?.role === "cidadao" ? "/ScanScreen" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.qrCodeImg} color={color} />
           ),
@@ -174,7 +183,6 @@ const _layout = () => {
       <Tabs.Screen
         name="CreateCampaign"
         options={{
-          href: user?.role === "camara" ? "/CreateCampaign" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.campaignImg} color={color} />
           ),
@@ -183,7 +191,6 @@ const _layout = () => {
       <Tabs.Screen
         name="DashboardTab"
         options={{
-          href: user?.role === "camara" ? "/DashboardTab" : null,
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.statsImg} color={color} />
           ),

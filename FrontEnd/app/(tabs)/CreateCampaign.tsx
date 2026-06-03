@@ -434,6 +434,7 @@ const CreateCampaign = () => {
 
       {showDatePicker && (
         <DateTimePicker
+        style={{backgroundColor: theme.colors.primary, margin: 10, alignSelf: "center"}}
           value={formData.dataExpiracao}
           mode="date"
           display={Platform.OS === 'ios' ? 'inline' : 'default'}
@@ -452,81 +453,107 @@ const CreateCampaign = () => {
   );
 
   const handleFinalSubmit = async () => {
-    setLoading(true);
+  setLoading(true);
 
-    if (formData.pacotes.length === 0) {
-      setSnackBarText('Erro: Adicione pacotes.');
-      setLoading(false);
-      return;
-    }
+  if (formData.pacotes.length === 0) {
+    setSnackBarText("Erro: Adicione pacotes.");
+    setLoading(false);
+    return;
+  }
 
-    const payload = {
-      titulo: formData.tituloCampanha,
-      slogan: formData.slogan,
-      descricao: formData.descricaoCampanha,
-      listaCAES: formData.listaCAES,
-      dataInicio: formData.dataInicio.toISOString(),
-      dataExpiracao: formData.dataExpiracao.toISOString(),
-      normas: formData.normas,
-      logo: formData.logo,
-      panfleto: formData.panfleto,
-      packs: formData.pacotes.map(p => ({
-        rewardDescription: p.descricaoRecompensa,
-        pointsCost: Number(p.custoEmPontos),
-        stock: Number(p.stockInicial),
-        maxPerUser: Number(p.maximoPorUser),
-      })),
-    };
+  try {
+    const data = new FormData();
 
-    try {
-      const response = await fetch(`${API_URL}/criarCampanha`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+    data.append("titulo", formData.tituloCampanha);
+    data.append("slogan", formData.slogan);
+    data.append("descricao", formData.descricaoCampanha);
+    data.append("normas", formData.normas);
+    data.append("dataInicio", formData.dataInicio.toISOString());
+    data.append("dataExpiracao", formData.dataExpiracao.toISOString());
+
+    data.append("listaCAES", JSON.stringify(formData.listaCAES));
+
+    const packsPayload = formData.pacotes.map(p => ({
+      rewardDescription: p.descricaoRecompensa,
+      pointsCost: Number(p.custoEmPontos),
+      stock: Number(p.stockInicial),
+      maxPerUser: Number(p.maximoPorUser)
+    }));
+    data.append("packs", JSON.stringify(packsPayload));
+
+if (formData.logo) {
+  const logoParts = formData.logo.split('.');
+  const logoType = logoParts[logoParts.length - 1];
+  
+  // @ts-ignore 
+  data.append("logo", {
+    uri: formData.logo,
+    name: `logo.${logoType}`,
+    type: `image/${logoType === 'jpg' ? 'jpeg' : logoType}`,
+  });
+}
+
+if (formData.panfleto) {
+  const panfletoParts = formData.panfleto.split('.');
+  const panfletoType = panfletoParts[panfletoParts.length - 1];
+
+  // @ts-ignore
+  data.append("panfleto", {
+    uri: formData.panfleto,
+    name: `panfleto.${panfletoType}`,
+    type: `image/${panfletoType === 'jpg' ? 'jpeg' : panfletoType}`,
+  });
+}
+
+    const response = await fetch(`${API_URL}/criarCampanha`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: data, 
+    });
+
+    if (response.ok) {
+      setSnackBarText("Campanha criada!");
+      setShowSnackBar(true);
+
+      setFormData({
+        tituloCampanha: '',
+        slogan: '',
+        descricaoCampanha: '',
+        listaCAES: [],
+        dataExpiracao: new Date(),
+        dataInicio: new Date(),
+        normas: '',
+        logo: '',
+        panfleto: '',
+        pacotes: []
       });
 
-      if (response.ok) {
-        setSnackBarText('Campanha criada!');
-        setShowSnackBar(true);
+      setCaeInput("");
+      setErro("");
+      setPacote({
+        descricaoRecompensa: '',
+        custoEmPontos: '',
+        stockInicial: '',
+        maximoPorUser: '1'
+      });
 
-        setFormData({
-          tituloCampanha: '',
-          slogan: '',
-          descricaoCampanha: '',
-          listaCAES: [],
-          dataExpiracao: new Date(),
-          dataInicio: new Date(),
-          normas: '',
-          logo: '',
-          panfleto: '',
-          pacotes: [],
-        });
-
-        setCaeInput('');
-        setErro('');
-        setPacote({
-          descricaoRecompensa: '',
-          custoEmPontos: '',
-          stockInicial: '',
-          maximoPorUser: '1',
-        });
-
-        setStep(1);
-      } else {
-        const errorData = await response.json();
-        setSnackBarText('Erro: ' + errorData.message);
-        setShowSnackBar(true);
-      }
-    } catch (err) {
-      setSnackBarText('Erro na rede');
+      setStep(1);
+    } else {
+      const errorData = await response.json();
+      setSnackBarText("Erro: " + errorData.message);
       setShowSnackBar(true);
-    } finally {
-      setLoading(false);
     }
-  };
+    console.log(response)
+  } catch (err) {
+    console.error("Erro ao submeter campanha:", err);
+    setSnackBarText("Erro na rede ou no upload.");
+    setShowSnackBar(true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     console.log('LOG CAES:', formData.listaCAES);

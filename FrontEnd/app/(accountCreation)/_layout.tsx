@@ -1,5 +1,5 @@
 import { images } from "@/constants/images";
-import { Tabs, useSegments } from "expo-router";
+import { Tabs } from "expo-router";
 import React from "react";
 import TabIcon from "@/app/components/Tabicon";
 import { useAuth } from "@/context/AuthContext";
@@ -7,17 +7,20 @@ import { BottomNavigation } from "react-native-paper";
 import { useAppTheme } from "@/context/ThemeContext";
 import { CommonActions } from "@react-navigation/native";
 import { Platform } from "react-native";
-import { usePathname } from 'expo-router';
 
 const _layout = () => {
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
-  const pathname = usePathname();
-  const isValidationPage = pathname.includes('Validar');
-  
+
   return (
     <Tabs
-      tabBar={isValidationPage ? () => null : ({ navigation, state, descriptors, insets }) => {
+      tabBar={({ navigation, state, descriptors, insets }) => {
+        
+        const currentRoute = state.routes[state.index];
+        if (currentRoute.name === 'Validar') {
+          return null; 
+        }
+
         const visibleRoutes = state.routes.filter((route) => {
           if (route.name === 'Validar') return false;
           const options = descriptors[route.key].options as any;
@@ -88,7 +91,16 @@ const _layout = () => {
           tabBarIcon: ({ color }) => <TabIcon icon={images.loginImg} color={color} />,
         }}
       />
+      
+      <Tabs.Screen
+        name="Validar"
+        options={{
+          href: null, 
+          tabBarStyle: { display: 'none' }, 
+        }}
+      />
     </Tabs>
   );
 };
+
 export default _layout;

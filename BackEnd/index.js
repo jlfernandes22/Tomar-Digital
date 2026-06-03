@@ -455,6 +455,40 @@ app.post(
   async (req, res) => {
     try {
       const {
+        nomeNegocio,
+        NIFnegocio,
+        categoriaNegocio,
+        logotipoNegocio,
+        moradaNegocio,
+        freguesiaNegocio,
+        localizacao,
+        telefoneDono,
+        emailDono,
+        descricaoNegocio,
+        galeriaFotos,
+        listaCAES,
+        owner, // Caso a câmara esteja a registar por outro
+      } = req.body;
+
+      console.log(req.body);
+
+    let parsedCAES = [];
+        if (listaCAES) {
+          try {
+            parsedCAES = typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES;
+          } catch (parseError) {
+            parsedCAES = typeof listaCAES === 'string' ? listaCAES.split(',') : listaCAES;
+          }
+        }
+
+      if (
+        !nomeNegocio ||
+        !categoriaNegocio ||
+        !localizacao ||
+        !telefoneDono ||
+        !emailDono ||
+        galeriaFotos.length === 0
+      ) {
         nomeNegocio, NIFnegocio, categoriaNegocio, logotipoNegocio,
         moradaNegocio, freguesiaNegocio, localizacao, telefoneDono,
         emailDono, descricaoNegocio, galeriaFotos, owner
@@ -467,7 +501,7 @@ app.post(
         });
       }
 
-      // Determinação de Propriedade: Se for a Câmara a registar em nome de outrem, usa o 'owner' enviado no body.
+     
       const ownerId = req.user.role === "camara" ? owner || req.user.id : req.user.id;
 
       const existe = await Business.findOne({ nomeNegocio, owner: ownerId });
@@ -475,6 +509,7 @@ app.post(
         return res.status(400).json({ message: "Já tens um negócio registado com este nome." });
       }
 
+     
       const novoNegocio = new Business({
         name: nomeNegocio,
         category: categoriaNegocio,
@@ -488,6 +523,7 @@ app.post(
         },
         phone: telefoneDono,
         email: emailDono,
+        listaCAES: parsedCAES,
         description: descricaoNegocio,
         gallery: galeriaFotos,
         owner: ownerId,
@@ -506,7 +542,7 @@ app.post(
 );
 
 // ============================================================================
-// 6. GESTÃO DE PEDIDOS DE COMERCIANTES (PROCESSO DE ONBOARDING)
+//PEDIDOS DE COMERCIANTES
 // ============================================================================
 
 /**
@@ -658,9 +694,19 @@ app.get("/negocios", async (req, res) => {
  */
 app.get("/negocios/:id", async (req, res) => {
   try {
-    const negocio = await Business.findById(req.params.id);
+    
+    const negocio = await Business.findById(req.params.id)
+      .populate({
+        path: 'campaigns.campaign', 
+        model: 'Campaign' 
+      });
+    if (!negocio) {
+      return res.status(404).json({ message: "Negócio não encontrado." });
+    }
+
     res.json(negocio);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Erro ao encontrar id." });
   }
 });
@@ -714,14 +760,45 @@ app.put("/editarNegocio", authorize(["camara"]), async (req, res) => {
  */
 app.get("/meusNegocios", authorize(["comerciante"]), async (req, res) => {
   try {
-    const negocios = await Business.find({ owner: req.user.id });
-    if (!negocios || negocios.length === 0) return res.status(200).json([]);
+    const negocios = await Business.find({ owner: req.user.id }).populate("owner", "name");
+    console.log("Lojas encontradas:", negocios.length);
+
+    if (!negocios || negocios.length === 0) {
+      return res.status(200).json([]); 
+    }
+
     res.status(200).json(negocios);
   } catch (error) {
     console.error("Erro na rota /meusNegocios:", error);
     res.status(500).json({ message: "Erro ao procurar lojas." });
   }
 });
+
+app.get("/negociosCae", authorize(["comerciante"]), async (req, res) => {
+  let { cae } = req.query;
+  
+  if (Array.isArray(cae)) cae = cae[0];
+  const caeLimpo = String(cae).replace(/[\[\]"']/g, '').trim();
+
+  try {
+    console.log("Procurando negócios onde listaCAES contém:", caeLimpo);
+    
+    // CORREÇÃO: Usar 'listaCAES: caeLimpo' funciona se o array contiver o valor
+    // O MongoDB faz o match automaticamente se o valor estiver no array
+    const negocios = await Business.find({ 
+      owner: req.user.id,
+      listaCAES: caeLimpo 
+    });
+    
+    console.log(`Negócios encontrados: ${negocios.length}`);
+    res.json(negocios);
+  } catch (error) {
+    console.error("Erro na busca:", error);
+    res.status(500).json({ message: "Erro ao buscar negócios" });
+  }
+});
+
+
 
 /**
  * @swagger
@@ -1166,19 +1243,37 @@ const uploadCampanha = upload.fields([
  */
 app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, res) => {
   try {
-    const { titulo, slogan, descricao, listaCAES, dataInicio, dataExpiracao, normas, packs } = req.body;
+    const { 
+      titulo, 
+      slogan, 
+      descricao, 
+      listaCAES, 
+      dataInicio, 
+      dataExpiracao, 
+      normas, 
+      packs 
+    } = req.body;
+
+    console.log(req.body)
 
     let parsedPacks = [];
     if (packs) {
       try {
-        parsedPacks = JSON.parse(packs);
+        parsedPacks = typeof packs === 'string' ? JSON.parse(packs) : packs;
       } catch (parseError) {
+        console.error("Erro ao converter os packs:", parseError);
         return res.status(400).json({ message: "O formato dos pacotes/packs é inválido." });
       }
     }
 
-    let logoUrl = "";
-    let panfletoUrl = "";
+    let parsedCAES = [];
+    if (listaCAES) {
+      try {
+        parsedCAES = typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES;
+      } catch (parseError) {
+        parsedCAES = typeof listaCAES === 'string' ? listaCAES.split(',') : listaCAES;
+      }
+    }
 
     /**
      * Função Auxiliar de Processamento Gráfico
@@ -1189,49 +1284,75 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       const webpFilename = `${nomeSemExtensao}.webp`;
       const targetPath = path.join('uploads/imagens/', webpFilename);
 
-      try {
-        await sharp(file.path)
-          .resize({ width: 800 })
-          .toFormat('webp')
-          .webp({ quality: 80 })
-          .toFile(targetPath);
-      } finally {
-        // Bloco Finally garante a limpeza do disco mesmo se o Sharp lançar uma excepção (Ficheiro corrompido)
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-      }
+    // --- PROCESSAMENTO DO LOGÓTIPO ---
+    if (req.files && req.files['logo'] && req.files['logo'][0]) {
+      const logoFile = req.files['logo'][0];
+      
+      const logoBuffer = await sharp(logoFile.path)
+        .resize({ width: 800 })
+        .toFormat('webp')
+        .webp({ quality: 80 })
+        .toBuffer();
 
-      return `/uploads/imagens/${webpFilename}`; // URL relativo pronto a consumir pelo Front-End
-    };
+      const novaImagemLogo = new Image({
+        nomeOriginal: logoFile.originalname,
+        dados: logoBuffer,
+        contentType: 'image/webp'
+      });
+      await novaImagemLogo.save();
+      logoIdDefinitivo = novaImagemLogo._id;
+      
+      try { fs.unlinkSync(logoFile.path); } catch (e) { console.log("Erro ao apagar logo temp:", e); }
+    } 
 
-    // Aplicação da otimização aos ficheiros recebidos
-    if (req.files && req.files['logo']) {
-      logoUrl = await processarImagem(req.files['logo'][0]);
+    // --- PROCESSAMENTO DO PANFLETO ---
+    if (req.files && req.files['panfleto'] && req.files['panfleto'][0]) {
+      const panfletoFile = req.files['panfleto'][0];
+      
+      const panfletoBuffer = await sharp(panfletoFile.path)
+        .resize({ width: 800 })
+        .toFormat('webp')
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      const novaImagemPanfleto = new Image({
+        nomeOriginal: panfletoFile.originalname,
+        dados: panfletoBuffer,
+        contentType: 'image/webp'
+      });
+      await novaImagemPanfleto.save();
+      panfletoIdDefinitivo = novaImagemPanfleto._id;
+      
+      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.log("Erro ao apagar panfleto temp:", e); }
     }
-    if (req.files && req.files['panfleto']) {
-      panfletoUrl = await processarImagem(req.files['panfleto'][0]);
-    }
 
+    // --- CRIAR A CAMPANHA ---
     const newCampaign = new Campaign({
       createdBy: req.user.id,
       titulo: titulo,
       slogan: slogan,
       descricao: descricao,
-      listaCAES: listaCAES,
-      dataInicio: dataInicio,
-      DataExpiracao: dataExpiracao,
+      listaCAES: parsedCAES, 
+      DataInicio: dataInicio ? new Date(dataInicio) : undefined, 
+      DataExpiracao: dataExpiracao ? new Date(dataExpiracao) : undefined,
       normas: normas,
       packs: parsedPacks,
       logo: logoUrl,
       panfleto: panfletoUrl
     });
-
+    
     await newCampaign.save();
-    res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
-
+    
+    return res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
+    
   } catch (err) {
-    console.error("Erro na criação da campanha: ", err);
-    res.status(500).json({ message: "Erro ao gravar", details: err.message });
-  }
+    console.error("ERRO COMPLETO:", err); // <-- ISTO É O QUE PRECISO QUE VEJAS
+    return res.status(500).json({ 
+        message: "Erro ao gravar", 
+        details: err.message,
+        stack: err.stack // Adiciona isto temporariamente para veres a linha do erro
+    });
+}
 });
 
 /**
@@ -1258,9 +1379,134 @@ app.get("/listaCampanhas", async (req, res) => {
   }
 });
 
-// ============================================================================
-// 10. ESTATÍSTICAS (DASHBOARD CÂMARA)
-// ============================================================================
+// ==========================================
+//Verificar se um negócio pode aderir a uma campanha
+
+app.post("/campanhas/aderir", authorize(["comerciante"]), async (req, res) => {
+  const { businessId, campaignId } = req.body;
+  
+  try {
+    // 1. Encontra APENAS o negócio selecionado
+    const business = await Business.findById(businessId);
+    if (!business) return res.status(404).json({ message: "Negócio não encontrado" });
+
+    // 2. Verifica se já existe um pedido para esta campanha neste negócio
+    const jaAderiu = business.campaigns.find(c => c.campaign.toString() === campaignId);
+    if (jaAderiu) return res.status(400).json({ message: "Já submeteu candidatura para este negócio." });
+
+    // 3. Adiciona apenas a este negócio
+    business.campaigns.push({
+      campaign: campaignId,
+      status: "pendente",
+      requestDate: new Date()
+    });
+    
+    await business.save();
+    return res.status(200).json({ message: "Pedido enviado com sucesso!" });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Erro interno" });
+  }
+});
+// ==========================================
+// Listar campanhas compatíveis com os negócios do comerciante
+app.get("/campanhas/comerciante-disponiveis", authorize(["comerciante"]), async (req, res) => {
+  try {
+    const hoje = new Date();
+    const ownerId = req.user.id;
+    
+    const meusNegocios = await Business.find({ owner: ownerId, status: "aprovado" });
+    const todosOsMeusCaes = [...new Set(meusNegocios.flatMap(n => n.listaCAES || []))];
+
+    const totalCampanhasAtivas = await Campaign.countDocuments({ estado: "ativa" });
+
+    const campComDatasCertas = await Campaign.find({
+        estado: "ativa",
+        DataInicio: { $lte: hoje },
+        DataExpiracao: { $gte: hoje }
+    });
+    
+    campComDatasCertas.forEach(c => console.log(`   Campanha "${c.titulo}" tem listaCAES:`, c.listaCAES));
+
+    const campanhas = await Campaign.find({
+        DataInicio: { $lte: hoje },
+        DataExpiracao: { $gte: hoje },
+        listaCAES: { $in: todosOsMeusCaes },
+    });
+
+    return res.status(200).json(campanhas);
+  } catch (error) {
+    console.error("ERRO:", error);
+    return res.status(500).json({ message: "Erro" });
+  }
+});
+// =========================================================================
+// Câmara lista todos os negócios com candidaturas PENDENTES
+app.get("/candidaturasCampanha", authorize(["camara"]), async (req, res) => {
+  try {
+
+    const businesses = await Business.find({}).populate('campaigns.campaign');
+    
+    let candidaturas = [];
+    
+    businesses.forEach(business => {
+      business.campaigns.forEach(cap => {
+        if (cap.status === "pendente") {
+          candidaturas.push({
+            businessId: business._id,
+            businessName: business.name,
+            campaignId: cap.campaign._id,
+            campaignTitle: cap.campaign.titulo, 
+            requestDate: cap.requestDate
+          });
+        }
+      });
+    });
+
+    res.json(candidaturas);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao buscar candidaturas" });
+  }
+});
+
+// =========================================================================
+// câmara envia a decisão (Aceitar ou Rejeitar candidaturas)
+app.post("/decidirAdesaoCampanha",  authorize(["camara"]), async (req, res) => {
+  try {
+    const { businessId, campaignId, acao } = req.body; 
+
+    if (!businessId || !campaignId || !["aprovado", "rejeitado"].includes(acao)) {
+      return res.status(400).json({ message: "Dados inválidos. A ação deve ser 'aprovado' ou 'rejeitado'." });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) {
+      return res.status(404).json({ message: "Negócio não encontrado." });
+    }
+
+    // Procura o pedido correto no array do negócio
+    const candidatura = business.campaigns.find(
+      (c) => c.campaign.toString() === campaignId.toString()
+    );
+
+    if (!candidatura) {
+      return res.status(404).json({ message: "Pedido de adesão não encontrado neste negócio." });
+    }
+
+    // Atualiza o estado conforme a decisão enviada 
+    candidatura.status = acao;
+    await business.save();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: `Candidatura avaliada com sucesso como: ${acao}.` 
+    });
+
+  } catch (error) {
+    console.error("Erro ao salvar decisão da câmara:", error);
+    res.status(500).json({ message: "Erro interno ao salvar decisão." });
+  }
+});
 
 /**
  * @swagger

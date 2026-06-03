@@ -27,6 +27,16 @@ export default function CamaraIndex() {
 
       color: theme.colors.secondary,
     },
+
+     {
+      title: "Candidaturas a Campanhas",
+      description: "Aprovar negócios a participar em campanhas",
+      icon: "store-search",
+      route: "/components/CandidaturasCampanha", 
+            count: "Pendentes",
+
+      color: theme.colors.secondary,
+    },
   ];
 
   return (

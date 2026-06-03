@@ -1,266 +1,177 @@
-import { ScrollView, StyleSheet, View, Image } from 'react-native';
-import React, { useCallback, useRef, useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Map from './Map';
-import {
-  Stack,
-  useFocusEffect,
-  useLocalSearchParams,
-  useRouter,
-} from 'expo-router';
-import { API_URL } from '@/constants/api';
-import { Ionicons } from '@expo/vector-icons';
-import {
-  ActivityIndicator,
-  IconButton,
-  Surface,
-  Text,
-} from 'react-native-paper';
-import MapRefType from '@/constants/Interfaces/MapRefType';
-import NegocioInterface from '@/constants/Interfaces/Negocio';
-import { useAppTheme } from '@/context/ThemeContext';
-import { curiosidades } from '@/constants/curiosidades';
-import CustomButton from './CustomButton';
+import { ScrollView, View, Image, Dimensions } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Map from "./Map";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { IconButton, Surface, Text, useTheme, ActivityIndicator } from "react-native-paper";
+import MapRefType from "@/constants/Interfaces/MapRefType";
+import { API_URL } from "@/constants/api"; // Certifica-te que importas o teu API_URL
 
 const DetalhesBusiness = () => {
-  const businessId = useLocalSearchParams();
-  const [business, setBusiness] = useState<NegocioInterface>();
-  const [loading, setLoading] = useState(true); // Começa em true para mostrar o spinner inicial
+const { dadosNegocio } = useLocalSearchParams<{ dadosNegocio: string }>();
+const { businessId } = useLocalSearchParams<{ businessId: string }>();
+const [business, setBusiness] = useState(JSON.parse(dadosNegocio || "{}"));
+  const [loading, setLoading] = useState(false);
+  const hoje = new Date();
+  
   const router = useRouter();
   const { currentTheme: theme } = useAppTheme();
   const mapRef = useRef<MapRefType>(null);
 
-  const handleBusiness = async () => {
-    setLoading(true);
+ useEffect(() => {
+  if (business) {
+    console.log("Conteúdo de campanhas:", JSON.stringify(business.campaigns));
+  }
+  if (!businessId) {
+    console.warn("Nenhum businessId fornecido");
+    setLoading(false);
+    return;
+  }
+
+
+  
+  const fetchBusiness = async () => {
     try {
-      const response = await fetch(`${API_URL}/negocios/${businessId.id}`);
-      const dados = await response.json();
-      setBusiness(dados);
-      //console.log(dados.location);
-    } catch (error) {
-      console.log('Não foi possível obter a informação sobre o negócio', error);
+      setLoading(true); 
+      
+      const response = await fetch(`${API_URL}/negocios/${businessId}`);
+      if (!response.ok) throw new Error("Erro ao carregar");
+      const data = await response.json();
+console.log("DADOS DO NEGOCIO:", JSON.stringify(data, null, 2)); 
+setBusiness(data);
+    } catch (e) {
+      console.error("Erro ao buscar negócio:", e);
     } finally {
       setLoading(false);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      handleBusiness();
-    }, []),
-  );
-
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
-
+  fetchBusiness();
+}, [businessId]);
   if (loading) {
     return (
-      <Surface
-        className="flex-1 items-center justify-center p-6"
-        style={{ backgroundColor: theme.colors.background }}
-      >
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          A preparar os dados...
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-        >
-          Sabias que...{'\n '}
-          {randomPhrase}
-        </CustomButton>
+      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
       </Surface>
     );
   }
 
-  if (business) {
-    return (
-      <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-          <Stack.Screen options={{ headerShown: false }} />
+const campanhasAtivas = business.campaigns?.filter((c: any) => {
+  const inicio = new Date(c.campaign.DataInicio);
+  const fim = new Date(c.campaign.DataExpiracao);
+  
+  return (
+    c.status === "aprovado" && 
+    hoje >= inicio && 
+    hoje <= fim
+  );
+}) || [];
 
-          {/* --- CABEÇALHO LIMPO --- */}
-          <View className="flex-row items-center px-2 py-1">
-            <IconButton
-              icon="arrow-left"
-              size={24}
-              iconColor={theme.colors.onBackground}
-              onPress={() => router.back()}
-            />
+
+  if (!business) {
+    return (
+      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Text variant="bodyLarge">Não foi possível carregar o negócio.</Text>
+        <IconButton icon="arrow-left" mode="contained" style={{ marginTop: 16 }} onPress={() => router.back()} />
+      </Surface>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+        <Stack.Screen options={{ headerShown: false }} />
+
+        <View className="flex-row items-center px-3 py-2">
+          <IconButton icon="arrow-left" size={24} iconColor={theme.colors.onBackground} onPress={() => router.back()} />
+          <Text variant="titleMedium" className="font-bold flex-1 ml-1" style={{ color: theme.colors.onBackground }}>Voltar</Text>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+          <View className="px-4">
+            {business.logo ? (
+              <Image source={{ uri: business.logo }} className="w-full h-56 rounded-2xl" resizeMode="cover" />
+            ) : (
+              <Text>SEM logo</Text>
+            )}
           </View>
 
-          {/* --- CORPO DA PÁGINA --- */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 60 }}
-          >
-            {/* HERÓI (Imagem) - Bleed ligeiro nas margens para um look moderno */}
-            <View className="px-4">
-              {business.logo !== '' && (
-                <Image
-                  source={{ uri: business.logo as string }}
-                  // Altura reduzida para h-64. Sombras suaves adicionadas.
-                  className="h-64 w-full rounded-2xl shadow-sm"
-                  style={{ backgroundColor: theme.colors.surfaceVariant }}
-                  resizeMode="cover"
-                />
-              )}
-            </View>
+          <View className="px-5 mt-5">
+            <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: "600", textTransform: "uppercase" }}>
+              {business.category}
+            </Text>
 
-            {/* CONTEÚDO PRINCIPAL (Tudo alinhado perfeitamente à esquerda com px-5) */}
-            <View className="mt-5 px-5">
-              {/* Título e Categoria */}
-              <View className="mb-2 flex-row items-center justify-between">
-                <Text
-                  variant="headlineLarge"
-                  className="mr-3 flex-1 font-bold"
-                  style={{
-                    color: theme.colors.primary,
-                    fontWeight: 'bold',
-                    marginBottom: 10,
-                    textAlign: 'center',
-                    margin: 10,
-                  }}
-                >
-                  {business.name}
-                </Text>
-              </View>
+            <Text variant="headlineMedium" className="font-bold mt-1" style={{ color: theme.colors.onBackground }}>
+              {business.name}
+            </Text>
 
-              {/* Tag da Categoria Limpa */}
-              <View
-                className="mb-6 flex-row items-center self-start rounded-lg px-3 py-1.5"
-                style={{
-                  backgroundColor: theme.colors.secondaryContainer,
-                  alignSelf: 'center',
-                }}
-              >
-                <Ionicons
-                  name="pricetag-outline"
-                  size={14}
-                  color={theme.colors.onSecondaryContainer}
-                  style={{ marginRight: 6 }}
-                />
-                <Text
-                  variant="labelMedium"
-                  style={{
-                    color: theme.colors.onSecondaryContainer,
-                    fontWeight: 'bold',
-                    marginBottom: 10,
-                    textAlign: 'center',
-                    margin: 10,
-                  }}
-                >
-                  {business.category}
-                </Text>
-              </View>
+            {business.owner?.name && (
+              <Text variant="bodyMedium" className="mt-1" style={{ opacity: 0.7 }}>Por {business.owner.name}</Text>
+            )}
 
-              {/* Descrição sem margens estranhas */}
-              <Text
-                variant="bodyLarge"
-                className="mb-8 leading-6"
-                style={{
-                  color: theme.colors.onSurfaceVariant,
-                  alignSelf: 'center',
-                }}
-              >
-                {business.description}
+            <View className="h-6" />
+
+            <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant }}>
+              {business.description || "Sem descrição disponível."}
+            </Text>
+
+            {/* Secção de Campanhas - Hierarquia Corrigida */}
+            <View style={{ marginTop: 24 }}>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold', marginBottom: 8 }}>
+                Campanhas Ativas:
               </Text>
-
-              {/* Galeria de fotos */}
-              {business.gallery && business.gallery.length > 0 && (
-                <View className="mb-8">
-                  {/* Cabeçalho de secção minimalista (sem a bolha à volta) */}
-                  <Text
-                    variant="titleLarge"
-                    className="mb-4 font-bold"
-                    style={{
-                      color: theme.colors.onBackground,
-                      fontWeight: 'bold',
-                      marginBottom: 10,
-                      textAlign: 'center',
-                      margin: 10,
+              
+              {campanhasAtivas.length > 0 ? (
+                campanhasAtivas.map((c: any, index: number) => (
+                  <Surface 
+                    key={index} 
+                    elevation={1} 
+                    style={{ 
+                      marginBottom: 10, 
+                      padding: 16, 
+                      borderRadius: 12,
+                      backgroundColor: theme.colors.surfaceVariant 
                     }}
                   >
-                    Galeria
-                  </Text>
-
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {business.gallery.map((uri: string, index: number) =>
-                      uri ? (
-                        <Image
-                          key={index}
-                          source={{ uri }}
-                          className="mr-3 h-32 w-32 rounded-xl"
-                          style={{
-                            backgroundColor: theme.colors.surfaceVariant,
-                          }}
-                          resizeMode="cover"
-                        />
-                      ) : null,
-                    )}
-                  </ScrollView>
-                </View>
-              )}
-
-              {/* Secção do Mapa */}
-              <View className="mb-4">
-                <Text
-                  variant="titleLarge"
-                  className="mb-4 font-bold"
-                  style={{
-                    color: theme.colors.onBackground,
-                    fontWeight: 'bold',
-                    marginBottom: 10,
-                    textAlign: 'center',
-                    margin: 10,
-                  }}
-                >
-                  Localização
+                    <Text variant="titleSmall" style={{ fontWeight: 'bold' }}>
+                      {c.campaign?.titulo || "Campanha sem título"}
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Válida até: {new Date(c.campaign.DataExpiracao).toLocaleDateString()}
+                    </Text>
+                  </Surface>
+                ))
+              ) : (
+                <Text variant="bodyMedium" style={{ fontStyle: 'italic', opacity: 0.7 }}>
+                  Não existem campanhas ativas neste momento.
                 </Text>
-
-                <View
-                  className="h-[20rem] overflow-hidden rounded-2xl border"
-                  style={{ borderColor: theme.colors.outlineVariant }}
-                >
-                  <Map
-                    ref={mapRef}
-                    location={business.location}
-                    showPin={true}
-                    readOnly
-                  />
-                </View>
-              </View>
+              )}
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Surface>
-    );
-  }
 
-  // 3. ESTADO DE ERRO/VAZIO
-  return (
-    <SafeAreaView
-      style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-    >
-      <Stack.Screen options={{ headerShown: false }} />
-      <Text variant="bodyLarge">Não foi possível carregar o negócio.</Text>
-    </SafeAreaView>
+            {/* Mapa */}
+            <Surface 
+              style={{ 
+                marginTop: 32, 
+                borderRadius: 16, 
+                elevation: 4, 
+                backgroundColor: theme.colors.surface 
+              }}
+            >
+              <View style={{ 
+                borderRadius: 16, 
+                overflow: 'hidden', 
+                height: 240, 
+                borderWidth: 1, 
+                borderColor: theme.colors.outlineVariant 
+              }}>
+                <Map ref={mapRef} location={business.location} showPin={true} readOnly />
+              </View>
+            </Surface>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
