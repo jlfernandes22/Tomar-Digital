@@ -658,11 +658,19 @@ app.get("/negocios", async (req, res) => {
  */
 app.get("/negocios/:id", async (req, res) => {
   try {
-    console.log(req.params.id);
-    const negocio = await Business.findById(req.params.id);
-    console.log(negocio);
+    
+    const negocio = await Business.findById(req.params.id)
+      .populate({
+        path: 'campaigns.campaign', 
+        model: 'Campaign' 
+      });
+    if (!negocio) {
+      return res.status(404).json({ message: "Negócio não encontrado." });
+    }
+
     res.json(negocio);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Erro ao encontrar id." });
   }
 });
@@ -1329,6 +1337,8 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
       packs 
     } = req.body;
 
+    console.log(req.body)
+
     let parsedPacks = [];
     if (packs) {
       try {
@@ -1413,9 +1423,13 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
     return res.status(200).json({ message: "Sucesso!", id: newCampaign._id });
     
   } catch (err) {
-    console.error("Erro no catch principal:", err);
-    return res.status(500).json({ message: "Erro ao gravar", details: err.message });
-  }
+    console.error("ERRO COMPLETO:", err); // <-- ISTO É O QUE PRECISO QUE VEJAS
+    return res.status(500).json({ 
+        message: "Erro ao gravar", 
+        details: err.message,
+        stack: err.stack // Adiciona isto temporariamente para veres a linha do erro
+    });
+}
 });
 
 
@@ -1513,9 +1527,9 @@ app.get("/campanhas/comerciante-disponiveis", authorize(["comerciante"]), async 
 });
 // =========================================================================
 // Câmara lista todos os negócios com candidaturas PENDENTES
-app.get("/candidaturasCampanha", authorize(["admin"]), async (req, res) => {
+app.get("/candidaturasCampanha", authorize(["camara"]), async (req, res) => {
   try {
-    // Busca todos os negócios e faz o populate da campanha
+
     const businesses = await Business.find({}).populate('campaigns.campaign');
     
     let candidaturas = [];
@@ -1527,7 +1541,6 @@ app.get("/candidaturasCampanha", authorize(["admin"]), async (req, res) => {
             businessId: business._id,
             businessName: business.name,
             campaignId: cap.campaign._id,
-            // Agora tens acesso ao título real
             campaignTitle: cap.campaign.titulo, 
             requestDate: cap.requestDate
           });
@@ -1540,8 +1553,9 @@ app.get("/candidaturasCampanha", authorize(["admin"]), async (req, res) => {
     res.status(500).json({ message: "Erro ao buscar candidaturas" });
   }
 });
+
 // =========================================================================
-// câmara envia a decisão (Aceitar ou Rejeitar)
+// câmara envia a decisão (Aceitar ou Rejeitar candidaturas)
 app.post("/decidirAdesaoCampanha",  authorize(["camara"]), async (req, res) => {
   try {
     const { businessId, campaignId, acao } = req.body; 
@@ -1564,7 +1578,7 @@ app.post("/decidirAdesaoCampanha",  authorize(["camara"]), async (req, res) => {
       return res.status(404).json({ message: "Pedido de adesão não encontrado neste negócio." });
     }
 
-    // Atualiza o estado conforme a decisão enviada pelo POST
+    // Atualiza o estado conforme a decisão enviada 
     candidatura.status = acao;
     await business.save();
 

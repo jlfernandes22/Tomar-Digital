@@ -113,53 +113,58 @@ const MyBusinesses = () => {
           renderItem={({ item }) => (
             <View className="relative">
               <Surface
-                elevation={1}
-                style={{
-                  backgroundColor: theme.colors.secondaryContainer,
-                  borderRadius: 12,
-                  marginBottom: 16,
-                  borderWidth: 1,
-                  borderColor: theme.colors.outlineVariant,
-                  overflow: "hidden",
-                }}
-              >
-                <TouchableRipple
-                  onPress={() => {
-                    router.push({
-                      pathname: "/components/DetalhesBusiness",
-                      params: { dadosNegocio: JSON.stringify(item)},
-                    });
-                  }}
-                  rippleColor="rgba(150, 150, 150, 0.2)"
-                >
-                  <View className="p-4">
-                    <BusinessList
-                      name={item.name}
-                      category={item.category}
-                      location={item.location}
-                    />
-                    
-                    <Text
-                      variant="bodySmall"
-                      style={{
-                        marginTop: 8,
-                        color: theme.colors.onSecondaryContainer,
-                        fontStyle: "italic",
-                        opacity: 0.8,
-                      }}
-                    >
-                      Dono do Estabelecimento: {item.owner?.name || "N/A"}
-                    </Text>
-                  </View>
-                </TouchableRipple>
-
-              </Surface>
+  elevation={1}
+  style={{
+    backgroundColor: theme.colors.secondaryContainer,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.outlineVariant,
+    // Remova o overflow: "hidden" daqui
+  }}
+>
+  {/* Adicione uma View interna para gerir o corte */}
+  <View style={{ 
+    borderRadius: 12, 
+    overflow: "hidden" 
+  }}>
+    <TouchableRipple
+      onPress={() => {
+        router.push({
+          pathname: "/components/DetalhesBusiness",
+          params: { businessId: item._id},
+        });
+      }}
+      rippleColor="rgba(150, 150, 150, 0.2)"
+    >
+      <View className="p-4">
+        <BusinessList
+          name={item.name}
+          category={item.category}
+          location={item.location}
+        />
+        
+        <Text
+          variant="bodySmall"
+          style={{
+            marginTop: 8,
+            color: theme.colors.onSecondaryContainer,
+            fontStyle: "italic",
+            opacity: 0.8,
+          }}
+        >
+          Dono do Estabelecimento: {item.owner?.name || "N/A"}
+        </Text>
+      </View>
+    </TouchableRipple>
+  </View>
+</Surface>
             </View>
           )}
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center px-10 pb-20">
               <Image
-                source={images.favWaiting}
+                source={images.bagImg}
                 className="w-64 h-64 mb-8"
                 style={{
                   tintColor: theme.colors.onSurfaceVariant,

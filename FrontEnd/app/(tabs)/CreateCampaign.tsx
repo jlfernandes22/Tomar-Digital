@@ -452,6 +452,7 @@ if (formData.panfleto) {
       setSnackBarText("Erro: " + errorData.message);
       setShowSnackBar(true);
     }
+    console.log(response)
   } catch (err) {
     console.error("Erro ao submeter campanha:", err);
     setSnackBarText("Erro na rede ou no upload.");

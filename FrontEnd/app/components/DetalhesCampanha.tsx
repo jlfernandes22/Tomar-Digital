@@ -36,16 +36,15 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
     });
 
     const textoResposta = await response.text(); // Lê como texto primeiro
-    console.log("Status da resposta:", response.status);
-    console.log("Corpo da resposta:", textoResposta);
+    
 
     if (response.ok) {
       alert("Sucesso!");
       onClose();
     } else {
-      alert("Erro do servidor: " + response.status);
-    }
-  } catch (error) {
+  alert(textoResposta)   
+ }
+  } catch (error) { 
     console.log("Erro capturado no Catch:", error); // ISTO DIZ-NOS O PROBLEMA REAL
     alert("Erro de conexão!");
   } finally {
@@ -79,7 +78,7 @@ useEffect(() => {
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
-        <Surface style={{ width: '100%', maxHeight: '80%', borderRadius: 24, padding: 20 }}>
+        <Surface style={{ width: '100%', maxHeight: '100%', borderRadius: 24, padding: 20 }}>
           
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text variant="titleLarge" style={{ color: theme.colors.primary }}>Detalhes</Text>
@@ -98,7 +97,7 @@ useEffect(() => {
                     onPress={() => setNegocioSelecionado(negocio._id)}
                     style={{ 
                       marginBottom: 8,
-                      backgroundColor: negocioSelecionado === negocio._id ? theme.colors.primary : theme.colors.surfaceVariant 
+                      backgroundColor: negocioSelecionado === negocio._id ? theme.colors.primary : theme.colors.secondary 
                     }}
                   >
                     {negocio.name}

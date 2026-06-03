@@ -3,7 +3,16 @@ import { View, FlatList, Alert, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
 import { useAuth } from "@/context/AuthContext";
-import { ActivityIndicator, Surface, Text, useTheme, Divider, Button } from "react-native-paper";
+import { router, Stack } from 'expo-router';
+import { 
+  ActivityIndicator, 
+  Surface, 
+  Text, 
+  useTheme, 
+  Button, 
+  TouchableRipple, 
+  Divider
+} from "react-native-paper";
 
 interface Candidatura {
   businessId: string;
@@ -21,7 +30,6 @@ export default function CandidaturasCampanha() {
   const theme = useTheme();
 
   const carregarCandidaturas = async () => {
-    setRefreshing(true); // Se estiver a refrescar
     try {
       const response = await fetch(`${API_URL}/candidaturasCampanha`, {
         headers: { 
@@ -29,26 +37,18 @@ export default function CandidaturasCampanha() {
           "Content-Type": "application/json"
         },
       });
-
-      // LÊ O CORPO DA RESPOSTA MESMO EM ERRO
-      const responseData = await response.text(); 
-      console.log("Status da resposta:", response.status);
-      console.log("Corpo da resposta:", responseData);
-
-     
-
-      const data = JSON.parse(responseData);
+      const data = await response.json();
       setCandidaturas(data);
-      
     } catch (err) {
-      console.error("Erro detalhado ao carregar:", err);
-      Alert.alert("Erro", "Não foi possível carregar as candidaturas. Verifique o console.");
+      console.error("Erro ao carregar:", err);
+      Alert.alert("Erro", "Não foi possível carregar as candidaturas.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
-const handleDecidir = async (businessId: string, campaignId: string, novoStatus: string) => {
+
+  const handleDecidir = async (businessId: string, campaignId: string, novoStatus: string) => {
   try {
     const response = await fetch(`${API_URL}/decidirAdesaoCampanha`, {
       method: "POST",
@@ -56,51 +56,80 @@ const handleDecidir = async (businessId: string, campaignId: string, novoStatus:
         "Content-Type": "application/json",
         "Authorization": `Bearer ${user?.token}`
       },
-      body: JSON.stringify({ businessId, campaignId, status: novoStatus })
+      // Aqui está a correção: usar 'acao' em vez de 'action' ou 'status'
+      body: JSON.stringify({ 
+        businessId, 
+        campaignId, 
+        acao: novoStatus 
+      }) 
     });
 
+    const data = await response.json();
+    
     if (response.ok) {
-      const data = await response.json();
-      
-      // LOG DE VERIFICAÇÃO (Como pediste)
-      console.log("Estado do negócio após decisão:", data.business);
-
-      // ESTA LINHA FAZ O ITEM DESAPARECER DO ECRÃ INSTANTANEAMENTE
       setCandidaturas(prev => prev.filter(c => 
         !(c.businessId === businessId && c.campaignId === campaignId)
       ));
-      
       Alert.alert("Sucesso", `Candidatura ${novoStatus} com sucesso!`);
     } else {
-      Alert.alert("Erro", "Não foi possível processar a decisão.");
+      Alert.alert("Erro", data.message || "Erro ao processar");
     }
   } catch (err) {
     console.error("Erro na decisão:", err);
   }
+  
 };
 
   useEffect(() => { carregarCandidaturas(); }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 16 }}>
-      <Text variant="headlineSmall" style={{ marginBottom: 16 }}>Candidaturas Pendentes</Text>
-      
+    <SafeAreaView style={{ flex: 1 }}>
+        <Stack.Screen options={{ headerShown: false }} />
+      <Text
+              variant="headlineMedium"
+              style={{
+                color: theme.colors.primary,
+                fontWeight: "bold",
+                margin: 10,
+              }}
+            >
+              Novas Candidaturas a Campanhas
+            </Text>
+            <Divider
+        style={{
+          backgroundColor: theme.colors.outlineVariant,
+          marginBottom: 16,
+        }}
+      />
       {loading ? (
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
           data={candidaturas}
+          contentContainerStyle={{ padding: 16 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={carregarCandidaturas} />}
-          keyExtractor={(item, index) => `${item.businessId}-${item.campaignId}`}
+          keyExtractor={(item) => `${item.businessId}-${item.campaignId}`}
           renderItem={({ item }) => (
-            <Surface style={{ padding: 16, marginBottom: 12, borderRadius: 8 }} elevation={2}>
-              <Text variant="titleMedium">{item.businessName}</Text>
-              <Text variant="bodyMedium">Campanha: {item.campaignTitle}</Text>
-              <Text variant="labelSmall" style={{ marginTop: 8, color: theme.colors.outline }}>
-                Data do pedido: {new Date(item.requestDate).toLocaleDateString()}
-              </Text>
-              
-              <View style={{ flexDirection: "row", marginTop: 16, gap: 10 }}>
+            <Surface style={{ marginBottom: 12, borderRadius: 8 }} elevation={2}>
+              <TouchableRipple  
+                onPress={() => router.push({
+                  pathname: "/components/DetalhesBusiness",
+                  params: { businessId: item.businessId, campaignId: item.campaignId }
+                })}
+                rippleColor="rgba(150, 150, 150, 0.2)"
+              >
+                <View style={{ padding: 16 }}>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{item.businessName}</Text>
+                  <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Campanha: {item.campaignTitle}
+                  </Text>
+                  <Text variant="labelSmall" style={{ marginTop: 8, color: theme.colors.outline }}>
+                    Data: {new Date(item.requestDate).toLocaleDateString()}
+                  </Text>
+                </View>
+              </TouchableRipple>
+
+              <View style={{ flexDirection: "row", padding: 16, paddingTop: 0, gap: 10 }}>
                 <Button 
                   mode="contained" 
                   onPress={() => handleDecidir(item.businessId, item.campaignId, "aprovado")}
@@ -118,7 +147,7 @@ const handleDecidir = async (businessId: string, campaignId: string, novoStatus:
               </View>
             </Surface>
           )}
-          ListEmptyComponent={<Text style={{ textAlign: "center" }}>Não existem candidaturas pendentes.</Text>}
+          ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 20 }}>Não existem candidaturas pendentes.</Text>}
         />
       )}
     </SafeAreaView>
