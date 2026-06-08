@@ -14,8 +14,10 @@ import { delay } from '../../utils/delay';
 import CustomSnackBar from '../components/CustomSnackBar';
 import { Checkbox, Dialog, Portal, Button } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 export default function ScanScreen() {
+  const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user, updateUser } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
@@ -63,15 +65,19 @@ export default function ScanScreen() {
         style={{ backgroundColor: theme.colors.background }}
       >
         <Text className="mb-4 text-center">
-          Precisamos de acesso à câmara para ler o QR Code.
+          {t('scan.camera_permission_reason')}
         </Text>
         <TouchableOpacity
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('scan.give_permission_title')}
+          accessibilityHint={t('accessibility.allow_camera')}
           onPress={requestPermission}
           className="rounded-xl p-4"
           style={{ backgroundColor: theme.colors.primary }}
         >
           <Text className="font-bold" style={{ color: theme.colors.onPrimary }}>
-            Dar Permissão
+            {t('scan.give_permission_btn')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -113,15 +119,15 @@ export default function ScanScreen() {
           updateUser({ acceptedInvoiceTerms: acceptedTerms });
           setMessage(
             acceptedTerms
-              ? 'Termos de fatura aceites'
-              : 'Consentimento de termos revogado',
+              ? t('scan.terms_accepted_msg')
+              : t('scan.terms_revoked_msg'),
           );
           setVisibility(true);
         } else {
           // Reverte o estado visual para sincronizar com o do contexto em caso de falha
           setAcceptedTerms(user?.acceptedInvoiceTerms || false);
           setMessage(
-            `Erro ao atualizar termos: ${result.message || 'Tente novamente'}`,
+            `${t('scan.error_terms_update')}${result.message || t('common.error')}`,
           );
           setVisibility(true);
         }
@@ -129,7 +135,7 @@ export default function ScanScreen() {
         console.error('Erro ao atualizar termos no servidor:', error);
         // Reverte o estado visual em caso de falha de ligação
         setAcceptedTerms(user?.acceptedInvoiceTerms || false);
-        setMessage('Falha ao comunicar com o servidor para atualizar termos.');
+        setMessage(t('scan.error_comm_server'));
         setVisibility(true);
       }
     }
@@ -175,27 +181,43 @@ export default function ScanScreen() {
         body: formData,
       });
 
+      if (response.status === 429) {
+        setMessage(t('common.error_429'));
+        setVisibility(true);
+        setLoading(false);
+        return;
+      }
+
       const result = await response.json();
 
       if (response.ok) {
         updateUser({ Points: result.saldoAtual ?? result.novoSaldoTotal });
 
         setMessage(
-          `Sucesso!\nGanhaste ${result.pontosGanhos}€ de saldo!\nNovo saldo: ${result.saldoAtual}€`,
+          t('scan.success_earned', {
+            pontos: result.pontosGanhos,
+            saldo: result.saldoAtual,
+          }),
         );
         setVisibility(true);
         await delay(1500);
         router.replace('/(tabs)/Home');
       } else {
         setMessage(
-          `Erro\n${result.message || result.erro || 'Falha na validação'}`,
+          t('scan.error_validation', {
+            msg: result.message || result.erro || t('common.error'),
+          }),
         );
         setVisibility(true);
         isProcessing.current = false;
       }
     } catch (error: any) {
       console.error(error);
-      setMessage(`Erro\n${error.message || 'Falha na ligação ao servidor'}`);
+      setMessage(
+        t('scan.error_validation', {
+          msg: error.message || t('scan.error_connection'),
+        }),
+      );
       setVisibility(true);
       isProcessing.current = false;
     } finally {
@@ -223,8 +245,7 @@ export default function ScanScreen() {
           style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
         >
           <Text className="text-center text-sm font-semibold leading-5 text-white">
-            Por favor, tire uma fotografia à fatura inteira. Certifique-se de
-            que o seu NIF, o NIF da empresa e o QR Code estão bem visíveis.
+            {t('scan.instruction')}
           </Text>
         </View>
 
@@ -247,19 +268,31 @@ export default function ScanScreen() {
         >
           {/* Gestão dos Termos e Condições (Link Discreto) */}
           <TouchableOpacity
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={
+              acceptedTerms
+                ? t('scan.terms_accepted')
+                : t('scan.terms_read_accept')
+            }
+            accessibilityHint={t('accessibility.open_terms')}
             onPress={() => setTermsDialogVisible(true)}
             className="mb-6"
           >
             <Text className="text-center text-xs text-gray-400 underline">
               {acceptedTerms
-                ? 'Termos e Condições Aceites (Rever)'
-                : 'Ler e Aceitar os Termos e Condições'}
+                ? t('scan.terms_accepted')
+                : t('scan.terms_read_accept')}
             </Text>
           </TouchableOpacity>
 
           {/* Botão de Captura (Shutter) */}
           <View className="items-center justify-center">
             <TouchableOpacity
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('scan.take_photo_title')}
+              accessibilityHint={t('accessibility.take_photo')}
               onPress={handleTakeAndSend}
               disabled={!acceptedTerms || loading}
               className="h-20 w-20 items-center justify-center rounded-full"
@@ -291,7 +324,7 @@ export default function ScanScreen() {
                 color: acceptedTerms ? theme.colors.primary : '#aaaaaa',
               }}
             >
-              Tirar Foto e Enviar
+              {t('scan.take_photo_btn')}
             </Text>
           </View>
         </View>
@@ -305,16 +338,13 @@ export default function ScanScreen() {
           style={{ backgroundColor: theme.colors.surface }}
         >
           <Dialog.Title style={{ color: theme.colors.onSurface }}>
-            Termos e Condições
+            {t('campaign.terms')}
           </Dialog.Title>
           <Dialog.Content>
             <Text
               style={{ color: theme.colors.onSurfaceVariant, marginBottom: 16 }}
             >
-              Para garantir a validade e combater a fraude, a imagem capturada
-              da sua fatura será enviada e analisada automaticamente pelo nosso
-              servidor para extrair e validar o seu NIF, o NIF do
-              estabelecimento e o Código ATCUD.
+              {t('scan.privacy_notice')}
             </Text>
 
             <View className="flex-row items-center rounded-lg border border-gray-300/30 p-3">
@@ -328,17 +358,18 @@ export default function ScanScreen() {
                 style={{ color: theme.colors.onSurface }}
                 onPress={() => setAcceptedTerms(!acceptedTerms)}
               >
-                Li e consinto a partilha e processamento de dados para esta
-                validação.
+                {t('scan.consent_text')}
               </Text>
             </View>
           </Dialog.Content>
           <Dialog.Actions>
             <Button
+              accessible={true}
+              accessibilityLabel={t('accessibility.close_message')}
               onPress={handleConfirmTerms}
               textColor={theme.colors.primary}
             >
-              {acceptedTerms ? 'Confirmar' : 'Fechar'}
+              {acceptedTerms ? t('common.confirm') : t('common.close_window')}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -352,7 +383,7 @@ export default function ScanScreen() {
         >
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text className="mt-4 text-base font-bold text-white">
-            A processar fatura de forma segura...
+            {t('scan.processing')}
           </Text>
         </View>
       )}

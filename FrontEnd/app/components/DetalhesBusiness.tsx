@@ -1,4 +1,5 @@
 import { ScrollView, View, Image, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Map from './Map';
@@ -14,6 +15,7 @@ import MapRefType from '@/constants/Interfaces/MapRefType';
 import { API_URL } from '@/constants/api';
 
 const DetalhesBusiness = () => {
+  const { t, i18n } = useTranslation();
   const { dadosNegocio } = useLocalSearchParams<{ dadosNegocio: string }>();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [business, setBusiness] = useState(JSON.parse(dadosNegocio || '{}'));
@@ -85,12 +87,14 @@ const DetalhesBusiness = () => {
         }}
       >
         <Stack.Screen options={{ headerShown: false }} />
-        <Text variant="bodyLarge">Não foi possível carregar o negócio.</Text>
+        <Text variant="bodyLarge">{t('merchant.error_load_business', { defaultValue: 'Não foi possível carregar o negócio.' })}</Text>
         <IconButton
           icon="arrow-left"
           mode="contained"
           style={{ marginTop: 16 }}
           onPress={() => router.back()}
+          accessible={true}
+          accessibilityLabel={t('accessibility.go_back', { defaultValue: 'Voltar atrás' })}
         />
       </Surface>
     );
@@ -107,13 +111,15 @@ const DetalhesBusiness = () => {
             size={24}
             iconColor={theme.colors.onBackground}
             onPress={() => router.back()}
+            accessible={true}
+            accessibilityLabel={t('accessibility.go_back', { defaultValue: 'Voltar atrás' })}
           />
           <Text
             variant="titleMedium"
             className="ml-1 flex-1 font-bold"
             style={{ color: theme.colors.onBackground }}
           >
-            Voltar
+            {t('common.back_btn', { defaultValue: 'Voltar' })}
           </Text>
         </View>
 
@@ -139,7 +145,7 @@ const DetalhesBusiness = () => {
                 }}
               />
             ) : (
-              <Text>SEM logo</Text>
+              <Text>{t('merchant.no_logo', { defaultValue: 'SEM logo' })}</Text>
             )}
           </View>
 
@@ -152,7 +158,7 @@ const DetalhesBusiness = () => {
                 textTransform: 'uppercase',
               }}
             >
-              {business.category}
+              {t(`categories.${business.category}`, { defaultValue: business.category })}
             </Text>
 
             <Text
@@ -169,7 +175,7 @@ const DetalhesBusiness = () => {
                 className="mt-1"
                 style={{ opacity: 0.7 }}
               >
-                Por {business.owner.name}
+                {t('merchant.by_owner', { owner: business.owner.name, defaultValue: `Por ${business.owner.name}` })}
               </Text>
             )}
 
@@ -179,7 +185,7 @@ const DetalhesBusiness = () => {
               variant="bodyLarge"
               style={{ color: theme.colors.onSurfaceVariant }}
             >
-              {business.description || 'Sem descrição disponível.'}
+              {business.description || t('common.no_description_available', { defaultValue: 'Sem descrição disponível.' })}
             </Text>
 
             {/* Secção da Galeria */}
@@ -189,7 +195,7 @@ const DetalhesBusiness = () => {
                   variant="titleMedium"
                   style={{ fontWeight: 'bold', marginBottom: 12 }}
                 >
-                  Galeria de Fotos
+                  {t('merchant.photo_gallery', { defaultValue: 'Galeria de Fotos' })}
                 </Text>
                 <ScrollView
                   horizontal
@@ -227,7 +233,7 @@ const DetalhesBusiness = () => {
                 variant="titleMedium"
                 style={{ fontWeight: 'bold', marginBottom: 8 }}
               >
-                Campanhas Ativas:
+                {t('merchant.active_campaigns', { defaultValue: 'Campanhas Ativas:' })}
               </Text>
 
               {campanhasAtivas.length > 0 ? (
@@ -243,14 +249,14 @@ const DetalhesBusiness = () => {
                     }}
                   >
                     <Text variant="titleSmall" style={{ fontWeight: 'bold' }}>
-                      {c.campaign?.titulo || 'Campanha sem título'}
+                      {c.campaign?.titulo || t('common.no_title_campaign', { defaultValue: 'Campanha sem título' })}
                     </Text>
                     <Text
                       variant="bodySmall"
                       style={{ color: theme.colors.onSurfaceVariant }}
                     >
-                      Válida até:{' '}
-                      {new Date(c.campaign.DataExpiracao).toLocaleDateString()}
+                      {t('merchant.valid_until', { defaultValue: 'Válida até:' })}{' '}
+                      {new Date(c.campaign.DataExpiracao).toLocaleDateString(i18n.language === 'pt' ? 'pt-PT' : 'en-US')}
                     </Text>
                   </Surface>
                 ))
@@ -259,7 +265,7 @@ const DetalhesBusiness = () => {
                   variant="bodyMedium"
                   style={{ fontStyle: 'italic', opacity: 0.7 }}
                 >
-                  Não existem campanhas ativas neste momento.
+                  {t('merchant.no_active_campaigns', { defaultValue: 'Não existem campanhas ativas neste momento.' })}
                 </Text>
               )}
             </View>

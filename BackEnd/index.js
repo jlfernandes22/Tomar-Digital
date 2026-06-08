@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import cors from "cors";
 import bcrypt from "bcrypt";
@@ -43,6 +44,25 @@ app.use(cors());
 // Limite de 20mb estabelecido para suportar uploads de PDFs e panfletos de alta resolução
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
+
+// 2. Criar o Limite Global (ex: 100 pedidos a cada 15 minutos por IP)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos em milissegundos
+  max: 100, // Máximo de 100 pedidos por janela de tempo
+  message: { message: "Muitos pedidos realizados, por favor tente novamente mais tarde." },
+  standardHeaders: true, // Envia os cabeçalhos 'RateLimit-*' para o Frontend
+  legacyHeaders: false, // Desativa os cabeçalhos antigos 'X-RateLimit-*'
+});
+
+// Aplica o limite global a TODAS as rotas
+app.use(globalLimiter);
+
+// 3. Criar o Limite Estrito (ex: 5 tentativas por minuto por IP)
+const strictLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 5, // Apenas 5 tentativas permitidas por minuto
+  message: { message: "Demasiadas tentativas. Por favor, aguarde 1 minuto." }
+});
 
 // Torna a pasta 'uploads' pública para que o Front-End possa consumir as imagens e PDFs via URL
 app.use('/uploads', express.static('uploads'));
@@ -209,7 +229,7 @@ app.get('/mostrarImagem/:id', async (req, res) => {
 
 //////////////////////
 //Registar utilizador
-app.post("/registar", async (req, res) => {
+app.post("/registar", strictLimiter, async (req, res) => {
   try {
     const { email, password, city ,name} = req.body;
 
@@ -246,7 +266,7 @@ app.post("/registar", async (req, res) => {
     
 
 
-app.post("/verificar-codigo", async (req, res) => {
+app.post("/verificar-codigo", strictLimiter, async (req, res) => {
  
 
   const { email, code } = req.body;
@@ -291,7 +311,7 @@ app.post("/verificar-codigo", async (req, res) => {
  *       400:
  *         description: Credenciais inválidas
  */
-app.post("/iniciarSessao", async (req, res) => {
+app.post("/iniciarSessao", strictLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email: email });
@@ -1053,7 +1073,7 @@ app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
  *       400:
  *         description: Erro na validação da fatura
  */
-app.post("/lerFatura", authorize(["cidadao", "comerciante", "camara"]), upload.single('ReceiptImage'), async (req, res) => {
+app.post("/lerFatura", strictLimiter, authorize(["cidadao", "comerciante", "camara"]), upload.single('ReceiptImage'), async (req, res) => {
   // A lógica permanece inalterada pois já contém um excelente rigor de verificação (RFC/ATCUD).
   try {
     const { QRCodeData } = req.body;

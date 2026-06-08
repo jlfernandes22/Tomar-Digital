@@ -21,6 +21,7 @@ interface PrimaryButtonProps {
   labelStyle?: any;
   accessibilityRole?: any;
   accessibilityLabel?: any;
+  accessibilityHint?: string;
   numberOfLines?: number;
   width?: any;
   height?: any;
@@ -39,6 +40,7 @@ const CustomButton = ({
   labelStyle,
   accessibilityRole,
   accessibilityLabel,
+  accessibilityHint,
   numberOfLines,
   width,
   height,
@@ -55,17 +57,19 @@ const CustomButton = ({
     <View
       className={className || ''}
       style={{
-        backgroundColor: theme.colors.primary,
+        backgroundColor: bgColor,
         borderRadius: theme.roundness,
         overflow: 'hidden',
         opacity: isDisabled ? 0.5 : 1,
       }}
     >
       <TouchableRipple
+        accessible={true}
         onPress={isDisabled ? undefined : onPress}
         rippleColor="rgba(150, 150, 150, 0.3)"
         accessibilityRole={accessibilityRole || 'button'}
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
         disabled={isDisabled}
         style={{
           minWidth: 44,

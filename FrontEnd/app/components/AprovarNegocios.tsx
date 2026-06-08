@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   FlatList,
@@ -39,6 +40,7 @@ interface Owner {
 }
 
 export default function AprovarNegocios() {
+  const { t } = useTranslation();
   const [pendentes, setPendentes] = useState<Business[]>([]);
   const [pendOwners, setPendOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function AprovarNegocios() {
     try {
       await carregarDados();
     } catch (err) {
-      Alert.alert('erro', 'erro ao carregar informação');
+      Alert.alert(t('common.error'), t('camara.error_load_info'));
     } finally {
       setRefreshing(false);
     }
@@ -86,7 +88,7 @@ export default function AprovarNegocios() {
       if (resPendentes.ok) setPendentes(await resPendentes.json());
       if (resOwners.ok) setPendOwners(await resOwners.json());
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível carregar os dados.');
+      Alert.alert(t('common.error'), t('camara.error_load'));
     } finally {
       setLoading(false);
     }
@@ -109,21 +111,21 @@ export default function AprovarNegocios() {
       if (response.ok) {
         setPendentes(prev => prev.filter(item => item._id !== id));
       } else {
-        Alert.alert('Erro', 'O servidor recusou a aprovação.');
+        Alert.alert(t('common.error'), t('camara.server_reject_approve'));
       }
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao aprovar.');
+      Alert.alert(t('common.error'), t('camara.fail_approve'));
     }
   };
 
   const handleDescartar = async (id: string) => {
     Alert.alert(
-      'Confirmar',
-      'Tens a certeza que queres descartar este pedido?',
+      t('common.confirm'),
+      t('camara.reject_confirm_biz', { defaultValue: 'Tens a certeza que queres descartar este pedido?' }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
         {
-          text: 'Descartar',
+          text: t('common.discard', { defaultValue: 'Descartar' }),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -142,7 +144,7 @@ export default function AprovarNegocios() {
                 setPendentes(prev => prev.filter(item => item._id !== id));
               }
             } catch (error) {
-              Alert.alert('Erro', 'Falha ao descartar.');
+              Alert.alert(t('common.error'), t('camara.fail_discard'));
             }
           },
         },
@@ -176,15 +178,16 @@ export default function AprovarNegocios() {
             marginBottom: 10,
           }}
         >
-          A preparar os dados...
+          {t('common.loading')}
         </Text>
 
         <CustomButton
           labelStyle={{ textAlign: 'center' }}
           onPress={() => setRandomPhrase(handleRandomPhrase())}
+          accessibilityLabel={t('accessibility.discover_curiosity')}
+          accessibilityHint={t('accessibility.see_curiosity')}
         >
-          Sabias que...{'\n '}
-          {randomPhrase}
+          {t('saved.did_you_know', { phrase: t(randomPhrase) })}
         </CustomButton>
       </Surface>
     );
@@ -203,7 +206,7 @@ export default function AprovarNegocios() {
           marginBottom: 10,
         }}
       >
-        Pedidos de Novos Negócios Pendentes
+        {t('camara.businesses_title')}
       </Text>
 
       <Divider
@@ -219,7 +222,7 @@ export default function AprovarNegocios() {
           style={{ color: theme.colors.onSurfaceVariant }}
           className="mt-10 text-center"
         >
-          Não há novos pedidos de Tomar.
+          {t('camara.no_new_businesses')}
         </Text>
       ) : (
         <FlatList
@@ -254,6 +257,10 @@ export default function AprovarNegocios() {
                 elevation={1}
               >
                 <TouchableRipple
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('accessibility.open_details_name', { name: item.name, defaultValue: `Ver detalhes de ${item.name}` })}
+                  accessibilityHint={t('accessibility.open_details')}
                   onPress={() => {
                     router.push({
                       pathname: '/components/DetalhesBusiness',
@@ -266,7 +273,7 @@ export default function AprovarNegocios() {
                     <BusinessList
                       name={item.name}
                       category={item.category}
-                      ownerName={donoEspecifico?.name || 'A carregar...'}
+                      ownerName={donoEspecifico?.name || t('common.loading_short', { defaultValue: 'A carregar...' })}
                     />
                   </View>
                 </TouchableRipple>
@@ -278,8 +285,10 @@ export default function AprovarNegocios() {
                     onPress={() => handleAprovar(item._id)}
                     textColor={theme.colors.onPrimary}
                     buttonColor={theme.colors.primary}
+                    accessibilityLabel={t('accessibility.accept_business_name', { name: item.name, defaultValue: `Aceitar negócio ${item.name}` })}
+                    accessibilityHint={t('accessibility.approve_business')}
                   >
-                    Aceitar
+                    {t('common.accept', { defaultValue: 'Aceitar' })}
                   </CustomButton>
 
                   {/* Botão DESCARTAR */}
@@ -288,8 +297,10 @@ export default function AprovarNegocios() {
                     onPress={() => handleDescartar(item._id)}
                     buttonColor={theme.colors.errorContainer}
                     textColor={theme.colors.onErrorContainer}
+                    accessibilityLabel={t('accessibility.discard_business_name', { name: item.name, defaultValue: `Descartar negócio ${item.name}` })}
+                    accessibilityHint={t('accessibility.reject_business')}
                   >
-                    Descartar
+                    {t('common.discard', { defaultValue: 'Descartar' })}
                   </CustomButton>
                 </View>
               </Surface>

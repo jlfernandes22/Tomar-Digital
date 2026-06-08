@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Linking } from 'react-native';
 import { Text, Card, Divider, Surface } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -8,6 +9,7 @@ import CustomButton from './CustomButton'; // Seu componente
 import { images } from '@/constants/images'; // Ajuste conforme seu caminho
 
 const SobreAPP = () => {
+  const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
 
   const handleOpenLink = (url: string) => {
@@ -67,17 +69,13 @@ const SobreAPP = () => {
                   color: theme.colors.primary,
                 }}
               >
-                A Nossa Missão
+                {t('about.our_mission', { defaultValue: 'A Nossa Missão' })}
               </Text>
               <Text
                 variant="bodyMedium"
                 style={{ lineHeight: 22, textAlign: 'justify' }}
               >
-                A <Text style={{ fontWeight: 'bold' }}>Tomar+Digital</Text>{' '}
-                nasceu para renovar o coração da nossa cidade. O nosso objetivo
-                é criar uma ponte digital entre o cidadão e o comércio local,
-                recompensando a fidelidade e incentivando o crescimento da
-                economia local.
+                {t('about.mission_desc', { defaultValue: 'A Tomar+Digital nasceu para renovar o coração da nossa cidade. O nosso objetivo é criar uma ponte digital entre o cidadão e o comércio local, recompensando a fidelidade e incentivando o crescimento da economia local.' })}
               </Text>
             </View>
 
@@ -88,7 +86,7 @@ const SobreAPP = () => {
               variant="titleMedium"
               style={{ fontWeight: 'bold', marginBottom: 16 }}
             >
-              Como valorizamos a sua compra:
+              {t('about.how_we_value', { defaultValue: 'Como valorizamos a sua compra:' })}
             </Text>
 
             <View style={{ gap: 16 }}>
@@ -100,8 +98,8 @@ const SobreAPP = () => {
                 elevation={0}
               >
                 <Card.Title
-                  title="Acumule Pontos usando o Contribuinte"
-                  subtitle="Leia o QR-Code das suas faturas"
+                  title={t('about.feature_1_title', { defaultValue: 'Acumule Pontos usando o Contribuinte' })}
+                  subtitle={t('about.feature_1_desc', { defaultValue: 'Leia o QR-Code das suas faturas' })}
                   left={props => (
                     <Image
                       source={images.qrCodeImg}
@@ -120,8 +118,8 @@ const SobreAPP = () => {
                 elevation={0}
               >
                 <Card.Title
-                  title="Apoie o Comércio Local"
-                  subtitle="Descubra lojas aderentes próximas"
+                  title={t('about.feature_2_title', { defaultValue: 'Apoie o Comércio Local' })}
+                  subtitle={t('about.feature_2_desc', { defaultValue: 'Descubra lojas aderentes próximas' })}
                   left={props => (
                     <Image
                       source={images.settingsImg}
@@ -140,8 +138,8 @@ const SobreAPP = () => {
                 elevation={0}
               >
                 <Card.Title
-                  title="Receba Benefícios"
-                  subtitle="Troque pontos por descontos ou pacotes"
+                  title={t('about.feature_3_title', { defaultValue: 'Receba Benefícios' })}
+                  subtitle={t('about.feature_3_desc', { defaultValue: 'Troque pontos por descontos ou pacotes' })}
                   left={props => (
                     <Image
                       source={images.preferencesImg}
@@ -171,7 +169,7 @@ const SobreAPP = () => {
                   color: theme.colors.onPrimaryContainer,
                 }}
               >
-                Segurança & RGPD
+                {t('about.security_gdpr', { defaultValue: 'Segurança & RGPD' })}
               </Text>
               <Text
                 variant="bodySmall"
@@ -180,9 +178,7 @@ const SobreAPP = () => {
                   lineHeight: 18,
                 }}
               >
-                Levamos a sua privacidade a sério. Todos os dados de faturação e
-                informações pessoais são encriptados e tratados de acordo com as
-                normas europeias de proteção de dados.
+                {t('about.security_desc', { defaultValue: 'Levamos a sua privacidade a sério. Todos os dados de faturação e informações pessoais são encriptados e tratados de acordo com as normas europeias de proteção de dados.' })}
               </Text>
             </Surface>
 
@@ -192,7 +188,7 @@ const SobreAPP = () => {
                 variant="labelLarge"
                 style={{ textAlign: 'center', marginBottom: 8 }}
               >
-                Precisa de Ajuda?
+                {t('about.need_help', { defaultValue: 'Precisa de Ajuda?' })}
               </Text>
 
               {/* TEMOS DE FAZER EMAIL DE SUPORTE */}
@@ -202,7 +198,7 @@ const SobreAPP = () => {
                 }
                 icon="email-outline"
               >
-                Contactar Suporte
+                {t('about.contact_support', { defaultValue: 'Contactar Suporte' })}
               </CustomButton>
 
               <CustomButton
@@ -214,7 +210,7 @@ const SobreAPP = () => {
                 buttonColor="transparent"
                 textColor={theme.colors.primary}
               >
-                Termos de Utilização
+                {t('about.terms_of_use', { defaultValue: 'Termos de Utilização' })}
               </CustomButton>
             </View>
 
@@ -223,7 +219,7 @@ const SobreAPP = () => {
               style={{ marginTop: 60, marginBottom: 20, alignItems: 'center' }}
             >
               <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-                Desenvolvido em parceria com o
+                {t('about.developed_by', { defaultValue: 'Desenvolvido em parceria com o' })}
               </Text>
               <Text variant="labelLarge" style={{ fontWeight: 'bold' }}>
                 Softinsa + IPT

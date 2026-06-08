@@ -4,8 +4,10 @@ import { useLocalSearchParams, router, Stack, useFocusEffect } from 'expo-router
 import { API_URL } from '@/constants/api';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
+import { useTranslation } from 'react-i18next';
 
 const Validar = () => {
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const email = params.email as string;
 
@@ -20,24 +22,29 @@ const Validar = () => {
         body: JSON.stringify({ email: email, code: code })
       });
 
+      if (response.status === 429) {
+        Alert.alert(t('common.error'), t('common.error_429'));
+        return;
+      }
+
       const data = await response.json();
       
       if (response.ok) {
-        Alert.alert("Sucesso!", "Conta validada!");
+        Alert.alert(t('common.success') + "!", t('validar.success'));
         router.replace("/Login");
       } else {
         const novasTentativas = tentativas + 1;
         setTentativas(novasTentativas);
 
         if (novasTentativas >= 3) {
-          Alert.alert("Bloqueado", "Excedeu o número de tentativas.");
+          Alert.alert(t('validar.blocked'), t('validar.exceeded_attempts'));
           router.replace("/Register"); 
         } else {
-          Alert.alert("Erro", `Código inválido. Tentativa ${novasTentativas}/3`);
+          Alert.alert(t('common.error'), t('validar.invalid_code_attempt', { attempt: novasTentativas }));
         }
       }
     } catch (error) {
-      Alert.alert("Erro", "Erro ao conectar ao servidor");
+      Alert.alert(t('common.error'), t('validar.error_connection'));
     }
   };
 
@@ -62,23 +69,23 @@ const Validar = () => {
   options={{ 
     headerBackVisible: false, 
     gestureEnabled: false,
-    title: "Validação"
+    title: t('validar.title')
   }} 
 />
       <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 20 }}>
-        Validação
+        {t('validar.title')}
       </Text>
 
       <CustomTextInput
-        placeholder="Digite o código de 6 dígitos"
+        placeholder={t('validar.placeholder')}
         onChangeText={setCode}
         keyboardType="numeric"
-        label="Código"
+        label={t('validar.code')}
         value={code}
       />
 
       <CustomButton onPress={handleVerify}>
-        Confirmar
+        {t('common.confirm')}
       </CustomButton>
     </View>
   );

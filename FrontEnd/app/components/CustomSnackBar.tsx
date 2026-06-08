@@ -14,8 +14,8 @@ const CustomSnackBar = ({
   onDismiss: () => void;
 }) => {
   // garante que não dá erro se a mensagem estiver vazia
-  const isError = message?.includes('Erro');
-  const isAviso = message?.includes('Aviso');
+  const isError = message.includes('Erro') || message.includes('Error');
+  const isAviso = message?.includes('Aviso') || message.includes('Warning');
   const { currentTheme: theme } = useAppTheme();
 
   return (

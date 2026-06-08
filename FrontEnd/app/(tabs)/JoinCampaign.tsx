@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, ScrollView, FlatList } from 'react-native';
 import {
   ActivityIndicator,
@@ -15,6 +16,7 @@ import DetalhesCampanha from '@/app/components/DetalhesCampanha';
 import { useAppTheme } from '@/context/ThemeContext';
 
 export default function JoinCampaign() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [ListCampaign, setListCampaign] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
@@ -72,11 +74,11 @@ export default function JoinCampaign() {
     >
       <Card.Content>
         <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-          {String(item.titulo || 'Sem título')}
+          {String(item.titulo || t('common.no_title', { defaultValue: 'Sem título' }))}
         </Text>
 
         <Text variant="bodyMedium" style={{ marginTop: 8 }}>
-          {String(item.descricao || 'Sem descrição')}
+          {String(item.descricao || t('common.no_description', { defaultValue: 'Sem descrição' }))}
         </Text>
 
         <View
@@ -87,14 +89,14 @@ export default function JoinCampaign() {
           }}
         >
           <Text variant="labelSmall">
-            Expira:{' '}
+            {t('campaign.expires_label', { defaultValue: 'Expira:' })}{' '}
             {item.DataExpiracao
               ? new Date(item.DataExpiracao).toLocaleDateString()
               : 'N/A'}
           </Text>
 
           <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
-            Ver mais...
+            {t('campaign.see_more')}
           </Text>
         </View>
       </Card.Content>
@@ -117,7 +119,7 @@ export default function JoinCampaign() {
             marginBottom: 10,
           }}
         >
-          Juntar-me a uma Campanha
+          {t('campaign.join_title')}
         </Text>
 
         <Divider
@@ -142,7 +144,7 @@ export default function JoinCampaign() {
             contentContainerStyle={{ paddingBottom: 20 }}
             ListEmptyComponent={
               <Text style={{ textAlign: 'center', marginTop: 20 }}>
-                Não há campanhas disponíveis de momento.
+                {t('campaign.no_campaigns')}
               </Text>
             }
           />

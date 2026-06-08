@@ -6,8 +6,10 @@ import {
   View,
   Image,
   Pressable,
+  Alert
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -50,6 +52,7 @@ interface ICampanhaForm {
 }
 
 const CreateCampaign = () => {
+  const { t, i18n } = useTranslation();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
@@ -83,6 +86,8 @@ const CreateCampaign = () => {
   const [loading, setLoading] = useState(false);
   const [showSnackBar, setShowSnackBar] = useState(false);
   const [snackBarText, setSnackBarText] = useState('');
+  const [logoLoading, setLogoLoading] = useState(false);
+  const [panfletoLoading, setPanfletoLoading] = useState(false);
 
   const onChangeDate = (event: any, selectedDate: any) => {
     setShowDatePicker(false);
@@ -100,7 +105,7 @@ const CreateCampaign = () => {
 
     if (!descricaoRecompensa || !custoEmPontos || !stockInicial) {
       setSnackBarText(
-        'Erro: Preencha a descrição, o custo e o stock do pacote.',
+        t('campaign.error_empty_pack', { defaultValue: 'Erro: Preencha a descrição, o custo e o stock do pacote.' }),
       );
       setShowSnackBar(true);
       setLoading(false);
@@ -128,11 +133,11 @@ const CreateCampaign = () => {
         maximoPorUser: '1',
       });
 
-      setSnackBarText('Pacote adicionado com sucesso!');
+      setSnackBarText(t('campaign.success_add_pack', { defaultValue: 'Pacote adicionado com sucesso!' }));
       setShowSnackBar(true);
     } catch (err) {
       console.error('Erro na adição do pacote: ', err);
-      setSnackBarText('Erro ao formatar os dados do pacote.');
+      setSnackBarText(t('campaign.error_format_pack', { defaultValue: 'Erro ao formatar os dados do pacote.' }));
       setShowSnackBar(true);
     } finally {
       setLoading(false);
@@ -140,11 +145,10 @@ const CreateCampaign = () => {
   };
 
   const selecionarLogo = async () => {
+    setLogoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert(
-        'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!',
-      );
+      Alert.alert(t('common.warning'), t('campaign.need_photo_logo', { defaultValue: 'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!' }));
       return;
     }
     const resultado = await ImagePicker.launchImageLibraryAsync({
@@ -158,14 +162,14 @@ const CreateCampaign = () => {
       const uri = resultado.assets[0].uri;
       setFormData({ ...formData, logo: uri });
     }
+    setLogoLoading(false);
   };
 
   const selecionarPanfleto = async () => {
+    setPanfletoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert(
-        'Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!',
-      );
+      Alert.alert(t('common.warning'), t('campaign.need_photo_flyer', { defaultValue: 'Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!' }));
       return;
     }
     const resultado = await ImagePicker.launchImageLibraryAsync({
@@ -179,15 +183,16 @@ const CreateCampaign = () => {
       const uri = resultado.assets[0].uri;
       setFormData({ ...formData, panfleto: uri });
     }
+    setPanfletoLoading(false);
   };
 
   const handleAdicionarCae = () => {
     if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
-      setErro('O CAE deve ter 5 numeros.');
+      setErro(t('campaign.cae_length_error', { defaultValue: 'O CAE deve ter 5 numeros.' }));
       return;
     }
     if (formData.listaCAES.includes(caeInput)) {
-      setErro('Este CAE já foi adicionado.');
+      setErro(t('campaign.cae_duplicate_error', { defaultValue: 'Este CAE já foi adicionado.' }));
       return;
     }
     setErro('');
@@ -216,20 +221,20 @@ const CreateCampaign = () => {
           textAlign: 'center',
         }}
       >
-        Identidade
+        {t('campaign.identity')}
       </Text>
       <CustomTextInput
-        label="Título da Campanha"
+        label={t('campaign.create_title')}
         value={formData.tituloCampanha}
         onChangeText={val => setFormData({ ...formData, tituloCampanha: val })}
       />
       <CustomTextInput
-        label="Slogan"
+        label={t('campaign.slogan')}
         value={formData.slogan}
         onChangeText={val => setFormData({ ...formData, slogan: val })}
       />
       <CustomTextInput
-        label="Descrição"
+        label={t('campaign.description')}
         value={formData.descricaoCampanha}
         onChangeText={val =>
           setFormData({ ...formData, descricaoCampanha: val })
@@ -246,7 +251,7 @@ const CreateCampaign = () => {
           margin: 10,
         }}
       >
-        CAES Abrangentes da Campanha
+        {t('campaign.caes_covered')}
       </Text>
 
       <View
@@ -259,8 +264,8 @@ const CreateCampaign = () => {
       >
         <TextInput
           mode="outlined"
-          label="Adicionar CAE"
-          placeholder="Ex: 01111"
+          label={t('addBusiness.add_cae')}
+          placeholder={t('addBusiness.cae_placeholder')}
           maxLength={5}
           keyboardType="numeric"
           value={caeInput}
@@ -270,7 +275,13 @@ const CreateCampaign = () => {
           }}
           style={{ flex: 1, height: 48 }}
         />
-        <CustomButton onPress={handleAdicionarCae}>+</CustomButton>
+        <CustomButton 
+          onPress={handleAdicionarCae}
+          accessibilityLabel={t('addBusiness.add_cae')}
+          accessibilityHint={t('accessibility.add_cae_campaign')}
+        >
+          +
+        </CustomButton>
       </View>
 
       <HelperText
@@ -313,7 +324,14 @@ const CreateCampaign = () => {
                 elevation: 2,
               }}
             >
-              <Pressable onPress={() => handleRemoverCae(cae)} hitSlop={10}>
+              <Pressable 
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('accessibility.remove_cae_name', { name: cae, defaultValue: `Remover CAE ${cae}` })}
+                accessibilityHint={t('accessibility.remove_cae')}
+                onPress={() => handleRemoverCae(cae)} 
+                hitSlop={10}
+              >
                 <Text
                   style={{
                     color: '#fff',
@@ -348,10 +366,16 @@ const CreateCampaign = () => {
               margin: 10,
             }}
           >
-            Logótipo
+            {t('campaign.logo')}
           </Text>
-          <CustomButton icon="image" onPress={selecionarLogo}>
-            {formData.logo ? 'Alterar' : 'Upload'}
+          <CustomButton
+            icon="image"
+            onPress={selecionarLogo}
+            loading={logoLoading}
+            accessibilityLabel={formData.logo ? t('campaign.change_logo', { defaultValue: 'Alterar Logótipo' }) : t('campaign.upload_logo', { defaultValue: 'Upload Logótipo' })}
+            accessibilityHint={t('accessibility.choose_image')}
+          >
+            {formData.logo ? t('common.change', { defaultValue: 'Alterar' }) : t('common.upload', { defaultValue: 'Upload' })}
           </CustomButton>
           {formData.logo && (
             <Image
@@ -377,10 +401,16 @@ const CreateCampaign = () => {
               margin: 10,
             }}
           >
-            Panfleto
+            {t('campaign.flyer')}
           </Text>
-          <CustomButton icon="file-image" onPress={selecionarPanfleto}>
-            {formData.panfleto ? 'Alterar' : 'Upload'}
+          <CustomButton
+            icon="file-image"
+            onPress={selecionarPanfleto}
+            loading={panfletoLoading}
+            accessibilityLabel={formData.panfleto ? t('campaign.change_flyer', { defaultValue: 'Alterar Panfleto' }) : t('campaign.upload_flyer', { defaultValue: 'Upload Panfleto' })}
+            accessibilityHint={t('accessibility.choose_flyer')}
+          >
+            {formData.panfleto ? t('common.change', { defaultValue: 'Alterar' }) : t('common.upload', { defaultValue: 'Upload' })}
           </CustomButton>
           {formData.panfleto && (
             <Image
@@ -410,23 +440,32 @@ const CreateCampaign = () => {
           margin: 10,
         }}
       >
-        Prazos e Regras
+        {t('campaign.rules')}
       </Text>
 
       <Text
         variant="labelMedium"
         style={{ marginBottom: 5, textAlign: 'center' }}
       >
-        Data de Expiração:
+        {t('campaign.expire_date')}
       </Text>
 
-      <CustomButton icon="calendar" onPress={() => setShowDatePicker(true)}>
-        {formData.dataExpiracao.toLocaleDateString('pt-PT')}
+      <CustomButton 
+        icon="calendar" 
+        onPress={() => setShowDatePicker(true)}
+        accessibilityLabel={t('campaign.select_date')}
+        accessibilityHint={t('accessibility.open_calendar')}
+      >
+        {formData.dataExpiracao.toLocaleDateString(i18n.language === 'pt' ? 'pt-PT' : 'en-US')}
       </CustomButton>
 
       {showDatePicker && (
         <DateTimePicker
-        style={{backgroundColor: theme.colors.primary, margin: 10, alignSelf: "center"}}
+          style={{
+            backgroundColor: theme.colors.primary,
+            margin: 10,
+            alignSelf: 'center',
+          }}
           value={formData.dataExpiracao}
           mode="date"
           display={Platform.OS === 'ios' ? 'inline' : 'default'}
@@ -437,7 +476,7 @@ const CreateCampaign = () => {
 
       <CustomTextInput
         multiline={true}
-        label="Termos e Condições"
+        label={t('campaign.terms')}
         value={formData.normas}
         onChangeText={val => setFormData({ ...formData, normas: val })}
       />
@@ -445,107 +484,107 @@ const CreateCampaign = () => {
   );
 
   const handleFinalSubmit = async () => {
-  setLoading(true);
+    setLoading(true);
 
-  if (formData.pacotes.length === 0) {
-    setSnackBarText("Erro: Adicione pacotes.");
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const data = new FormData();
-
-    data.append("titulo", formData.tituloCampanha);
-    data.append("slogan", formData.slogan);
-    data.append("descricao", formData.descricaoCampanha);
-    data.append("normas", formData.normas);
-    data.append("dataInicio", formData.dataInicio.toISOString());
-    data.append("dataExpiracao", formData.dataExpiracao.toISOString());
-
-    data.append("listaCAES", JSON.stringify(formData.listaCAES));
-
-    const packsPayload = formData.pacotes.map(p => ({
-      rewardDescription: p.descricaoRecompensa,
-      pointsCost: Number(p.custoEmPontos),
-      stock: Number(p.stockInicial),
-      maxPerUser: Number(p.maximoPorUser)
-    }));
-    data.append("packs", JSON.stringify(packsPayload));
-
-if (formData.logo) {
-  const logoParts = formData.logo.split('.');
-  const logoType = logoParts[logoParts.length - 1];
-  
-  // @ts-ignore 
-  data.append("logo", {
-    uri: formData.logo,
-    name: `logo.${logoType}`,
-    type: `image/${logoType === 'jpg' ? 'jpeg' : logoType}`,
-  });
-}
-
-if (formData.panfleto) {
-  const panfletoParts = formData.panfleto.split('.');
-  const panfletoType = panfletoParts[panfletoParts.length - 1];
-
-  // @ts-ignore
-  data.append("panfleto", {
-    uri: formData.panfleto,
-    name: `panfleto.${panfletoType}`,
-    type: `image/${panfletoType === 'jpg' ? 'jpeg' : panfletoType}`,
-  });
-}
-
-    const response = await fetch(`${API_URL}/criarCampanha`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: data, 
-    });
-
-    if (response.ok) {
-      setSnackBarText("Campanha criada!");
-      setShowSnackBar(true);
-
-      setFormData({
-        tituloCampanha: '',
-        slogan: '',
-        descricaoCampanha: '',
-        listaCAES: [],
-        dataExpiracao: new Date(),
-        dataInicio: new Date(),
-        normas: '',
-        logo: '',
-        panfleto: '',
-        pacotes: []
-      });
-
-      setCaeInput("");
-      setErro("");
-      setPacote({
-        descricaoRecompensa: '',
-        custoEmPontos: '',
-        stockInicial: '',
-        maximoPorUser: '1'
-      });
-
-      setStep(1);
-    } else {
-      const errorData = await response.json();
-      setSnackBarText("Erro: " + errorData.message);
-      setShowSnackBar(true);
+    if (formData.pacotes.length === 0) {
+      setSnackBarText(t('campaign.error_no_packs', { defaultValue: 'Erro: Adicione pacotes.' }));
+      setLoading(false);
+      return;
     }
-    console.log(response)
-  } catch (err) {
-    console.error("Erro ao submeter campanha:", err);
-    setSnackBarText("Erro na rede ou no upload.");
-    setShowSnackBar(true);
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      const data = new FormData();
+
+      data.append('titulo', formData.tituloCampanha);
+      data.append('slogan', formData.slogan);
+      data.append('descricao', formData.descricaoCampanha);
+      data.append('normas', formData.normas);
+      data.append('dataInicio', formData.dataInicio.toISOString());
+      data.append('dataExpiracao', formData.dataExpiracao.toISOString());
+
+      data.append('listaCAES', JSON.stringify(formData.listaCAES));
+
+      const packsPayload = formData.pacotes.map(p => ({
+        rewardDescription: p.descricaoRecompensa,
+        pointsCost: Number(p.custoEmPontos),
+        stock: Number(p.stockInicial),
+        maxPerUser: Number(p.maximoPorUser),
+      }));
+      data.append('packs', JSON.stringify(packsPayload));
+
+      if (formData.logo) {
+        const logoParts = formData.logo.split('.');
+        const logoType = logoParts[logoParts.length - 1];
+
+        // @ts-ignore
+        data.append('logo', {
+          uri: formData.logo,
+          name: `logo.${logoType}`,
+          type: `image/${logoType === 'jpg' ? 'jpeg' : logoType}`,
+        });
+      }
+
+      if (formData.panfleto) {
+        const panfletoParts = formData.panfleto.split('.');
+        const panfletoType = panfletoParts[panfletoParts.length - 1];
+
+        // @ts-ignore
+        data.append('panfleto', {
+          uri: formData.panfleto,
+          name: `panfleto.${panfletoType}`,
+          type: `image/${panfletoType === 'jpg' ? 'jpeg' : panfletoType}`,
+        });
+      }
+
+      const response = await fetch(`${API_URL}/criarCampanha`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: data,
+      });
+
+      if (response.ok) {
+        setSnackBarText(t('campaign.success_created', { defaultValue: 'Campanha criada!' }));
+        setShowSnackBar(true);
+
+        setFormData({
+          tituloCampanha: '',
+          slogan: '',
+          descricaoCampanha: '',
+          listaCAES: [],
+          dataExpiracao: new Date(),
+          dataInicio: new Date(),
+          normas: '',
+          logo: '',
+          panfleto: '',
+          pacotes: [],
+        });
+
+        setCaeInput('');
+        setErro('');
+        setPacote({
+          descricaoRecompensa: '',
+          custoEmPontos: '',
+          stockInicial: '',
+          maximoPorUser: '1',
+        });
+
+        setStep(1);
+      } else {
+        const errorData = await response.json();
+        setSnackBarText(t('common.error') + ': ' + errorData.message);
+        setShowSnackBar(true);
+      }
+      console.log(response);
+    } catch (err) {
+      console.error('Erro ao submeter campanha:', err);
+      setSnackBarText(t('campaign.error_network', { defaultValue: 'Erro na rede ou no upload.' }));
+      setShowSnackBar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     console.log('LOG CAES:', formData.listaCAES);
@@ -567,7 +606,7 @@ if (formData.panfleto) {
           style={{ flex: 1 }}
         >
           <Text style={{ textAlign: 'right', marginBottom: 5 }}>
-            Passo {step} de {totalSteps}
+            {t('addBusiness.step_info', { step, totalSteps })}
           </Text>
           <ProgressBar
             progress={step / totalSteps}
@@ -591,34 +630,39 @@ if (formData.panfleto) {
                     margin: 10,
                   }}
                 >
-                  Configurar Pacotes
+                  {t('campaign.config_packages')}
                 </Text>
 
                 <CustomTextInput
-                  label="Descrição da Recompensa"
+                  label={t('campaign.reward_desc')}
                   value={pacote.descricaoRecompensa}
                   onChangeText={t =>
                     setPacote({ ...pacote, descricaoRecompensa: t })
                   }
                 />
                 <CustomTextInput
-                  label="Custo em Pontos"
+                  label={t('campaign.cost_points')}
                   value={pacote.custoEmPontos}
                   onChangeText={t => setPacote({ ...pacote, custoEmPontos: t })}
                 />
                 <CustomTextInput
-                  label="Stock Inicial"
+                  label={t('campaign.initial_stock')}
                   value={pacote.stockInicial}
                   onChangeText={t => setPacote({ ...pacote, stockInicial: t })}
                 />
 
-                <CustomButton onPress={addPack} className="m-5">
-                  + Adicionar este Pacote
+                <CustomButton 
+                  onPress={addPack} 
+                  className="m-5"
+                  accessibilityLabel={t('campaign.add_package')}
+                  accessibilityHint={t('accessibility.add_package_list')}
+                >
+                  + {t('campaign.add_package')}
                 </CustomButton>
 
                 {formData.pacotes.length > 0 && (
                   <View style={{ marginTop: 10 }}>
-                    <Text variant="titleMedium">Packs na lista:</Text>
+                    <Text variant="titleMedium">{t('campaign.packs_list')}</Text>
                     {formData.pacotes.map((p, i) => (
                       <Surface
                         key={i}
@@ -630,7 +674,7 @@ if (formData.panfleto) {
                         }}
                       >
                         <Text>
-                          • {p.descricaoRecompensa} ({p.custoEmPontos} pts)
+                          {t('campaign.package_item', { desc: p.descricaoRecompensa, points: p.custoEmPontos })}
                         </Text>
                       </Surface>
                     ))}
@@ -648,18 +692,29 @@ if (formData.panfleto) {
             }}
           >
             {step > 1 && (
-              <CustomButton onPress={() => setStep(step - 1)}>
-                Anterior
+              <CustomButton 
+                onPress={() => setStep(step - 1)}
+                accessibilityLabel={t('addBusiness.prev_step')}
+              >
+                {t('common.back', { defaultValue: 'Anterior' })}
               </CustomButton>
             )}
 
             {step < totalSteps ? (
-              <CustomButton onPress={() => setStep(step + 1)}>
-                Próximo
+              <CustomButton 
+                onPress={() => setStep(step + 1)}
+                accessibilityLabel={t('addBusiness.next_step')}
+              >
+                {t('common.next', { defaultValue: 'Próximo' })}
               </CustomButton>
             ) : (
-              <CustomButton onPress={handleFinalSubmit} loading={loading}>
-                Criar Campanha
+              <CustomButton 
+                onPress={handleFinalSubmit} 
+                loading={loading}
+                accessibilityLabel={t('campaign.submit_create')}
+                accessibilityHint={t('accessibility.submit_campaign')}
+              >
+                {t('campaign.submit_create', { defaultValue: 'Criar Campanha' })}
               </CustomButton>
             )}
           </View>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Pressable } from 'react-native';
 import {
   Surface,
@@ -23,6 +24,7 @@ import { IconButton } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 
 export default function AddBusiness() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
@@ -91,7 +93,7 @@ export default function AddBusiness() {
         setFormData({ ...formData, logotipoNegocio: resultado });
       }
     } catch (error: any) {
-      setSnackbarMessage('Erro ao carregar imagem: ' + error.message);
+      setSnackbarMessage(t('addBusiness.error_load_image', { error: error.message, defaultValue: `Erro ao carregar imagem: ${error.message}` }));
       setSnackbarVisible(true);
     }
   };
@@ -136,14 +138,14 @@ export default function AddBusiness() {
         });
       }
     } catch (error: any) {
-      setSnackbarMessage('Erro ao carregar galeria: ' + error.message);
+      setSnackbarMessage(t('addBusiness.error_load_gallery', { error: error.message, defaultValue: `Erro ao carregar galeria: ${error.message}` }));
       setSnackbarVisible(true);
     }
   };
 
   const handleNewBusiness = async () => {
     if (!user?.token) {
-      setSnackbarMessage('Erro: Sessão expirada.');
+      setSnackbarMessage(t('addBusiness.error_session_expired', { defaultValue: 'Erro: Sessão expirada.' }));
       setSnackbarVisible(true);
       return;
     }
@@ -154,9 +156,7 @@ export default function AddBusiness() {
       !formData.telefoneDono ||
       !formData.emailDono
     ) {
-      setSnackbarMessage(
-        'Erro:\nPor favor, preencha todos os campos obrigatórios.',
-      );
+      setSnackbarMessage(t('addBusiness.error_mandatory_fields', { defaultValue: 'Erro:\nPor favor, preencha todos os campos obrigatórios.' }));
       setSnackbarVisible(true);
       return;
     }
@@ -237,18 +237,18 @@ export default function AddBusiness() {
       const data = await response.json();
 
       if (response.ok) {
-        setSnackbarMessage('Sucesso! Negócio registado.');
+        setSnackbarMessage(t('addBusiness.success_registered', { defaultValue: 'Sucesso! Negócio registado.' }));
         setSnackbarVisible(true);
         await delay(500);
         setFormData(INITIAL_FORM_DATA);
         router.back();
         setStep(1);
       } else {
-        setSnackbarMessage(data.message || 'Erro no registo.');
+        setSnackbarMessage(data.message || t('addBusiness.error_registration', { defaultValue: 'Erro no registo.' }));
         setSnackbarVisible(true);
       }
     } catch (error) {
-      setSnackbarMessage('Erro de ligação ao servidor.');
+      setSnackbarMessage(t('addBusiness.error_server_conn', { defaultValue: 'Erro de ligação ao servidor.' }));
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -260,11 +260,11 @@ export default function AddBusiness() {
 
   const handleAdicionarCae = () => {
     if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
-      setErro('O CAE deve ter exatamente 5 números.');
+      setErro(t('addBusiness.cae_length_error', { defaultValue: 'O CAE deve ter exatamente 5 números.' }));
       return;
     }
     if (formData.listaCAES.includes(caeInput)) {
-      setErro('Este código CAE já foi adicionado.');
+      setErro(t('addBusiness.cae_duplicate_error', { defaultValue: 'Este código CAE já foi adicionado.' }));
       return;
     }
     setErro('');
@@ -290,7 +290,7 @@ export default function AddBusiness() {
       >
         {/* Barra de Progresso e Paginação Baseada no CreateCampaign */}
         <Text style={{ textAlign: 'right', marginBottom: 5 }}>
-          Passo {step} de {totalSteps}
+          {t('addBusiness.step_info', { step, totalSteps, defaultValue: `Passo ${step} de ${totalSteps}` })}
         </Text>
         <ProgressBar
           progress={step / totalSteps}
@@ -314,17 +314,17 @@ export default function AddBusiness() {
                   textAlign: 'center',
                 }}
               >
-                Novo Negócio
+                {t('addBusiness.new_business', { defaultValue: 'Novo Negócio' })}
               </Text>
 
               <CustomTextInput
-                label="Nome do Negócio"
+                label={t('addBusiness.business_name', { defaultValue: 'Nome do Negócio' })}
                 value={formData.nomeNegocio}
                 onChangeText={t => setFormData({ ...formData, nomeNegocio: t })}
               />
 
               <TextInput
-                label="NIF"
+                label={t('addBusiness.nif', { defaultValue: 'NIF' })}
                 value={formData.NIFnegocio}
                 onChangeText={t => setFormData({ ...formData, NIFnegocio: t })}
                 keyboardType="numeric"
@@ -342,7 +342,7 @@ export default function AddBusiness() {
                   margin: 10,
                 }}
               >
-                CAES do Negócio
+                {t('addBusiness.business_caes', { defaultValue: 'CAES do Negócio' })}
               </Text>
 
               <View
@@ -354,8 +354,8 @@ export default function AddBusiness() {
                 }}
               >
                 <TextInput
-                  label="Adicionar CAE"
-                  placeholder="Ex: 01111"
+                  label={t('addBusiness.add_cae', { defaultValue: 'Adicionar CAE' })}
+                  placeholder={t('addBusiness.cae_placeholder', { defaultValue: 'Ex: 01111' })}
                   maxLength={5}
                   keyboardType="numeric"
                   value={caeInput}
@@ -365,7 +365,13 @@ export default function AddBusiness() {
                   }}
                   style={{ flex: 1 }}
                 />
-                <CustomButton onPress={handleAdicionarCae}>+</CustomButton>
+                <CustomButton 
+                  onPress={handleAdicionarCae}
+                  accessibilityLabel={t('addBusiness.add_cae', { defaultValue: 'Adicionar CAE' })}
+                  accessibilityHint={t('accessibility.add_cae_list', { defaultValue: 'Clica para adicionar o código CAE à lista' })}
+                >
+                  +
+                </CustomButton>
               </View>
 
               <HelperText
@@ -414,6 +420,10 @@ export default function AddBusiness() {
                       }}
                     >
                       <Pressable
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('accessibility.remove_cae_name', { name: cae, defaultValue: `Remover CAE ${cae}` })}
+                        accessibilityHint={t('accessibility.remove_cae', { defaultValue: 'Clica para remover este CAE' })}
                         onPress={() => handleRemoverCae(cae)}
                         hitSlop={10}
                       >
@@ -444,7 +454,7 @@ export default function AddBusiness() {
                   margin: 10,
                 }}
               >
-                Categoria do Negócio
+                {t('addBusiness.business_category', { defaultValue: 'Categoria do Negócio' })}
               </Text>
               <ScrollView
                 horizontal
@@ -460,7 +470,7 @@ export default function AddBusiness() {
                       setFormData({ ...formData, categoriaNegocio: cat })
                     }
                   >
-                    {cat}
+                    {t(`categories.${cat}`, { defaultValue: cat })}
                   </CustomChip>
                 ))}
               </ScrollView>
@@ -478,12 +488,15 @@ export default function AddBusiness() {
                     textAlign: 'center',
                   }}
                 >
-                  Logótipo do Estabelecimento
+                  {t('addBusiness.business_logo', { defaultValue: 'Logótipo do Estabelecimento' })}
                 </Text>
-                <CustomButton icon="image" onPress={selecionarLogotipo}>
-                  {formData.logotipoNegocio
-                    ? 'Alterar Logótipo'
-                    : 'Upload Logótipo'}
+                <CustomButton 
+                  icon="image" 
+                  onPress={selecionarLogotipo}
+                  accessibilityLabel={formData.logotipoNegocio ? t('addBusiness.change_logo', { defaultValue: 'Alterar Logótipo' }) : t('addBusiness.upload_logo', { defaultValue: 'Upload Logótipo' })}
+                  accessibilityHint={t('accessibility.choose_business_image', { defaultValue: 'Clica para escolher uma imagem do estabelecimento' })}
+                >
+                  {formData.logotipoNegocio ? t('addBusiness.change_logo', { defaultValue: 'Alterar Logótipo' }) : t('addBusiness.upload_logo', { defaultValue: 'Upload Logótipo' })}
                 </CustomButton>
                 {formData.logotipoNegocio && (
                   <Image
@@ -513,12 +526,12 @@ export default function AddBusiness() {
                   margin: 10,
                 }}
               >
-                Localização
+                {t('addBusiness.location_title', { defaultValue: 'Localização' })}
               </Text>
 
               <CustomTextInput
-                label="Morada completa do negócio"
-                placeholder="Ex: Rua, nº, Tomar"
+                label={t('addBusiness.full_address', { defaultValue: 'Morada completa do negócio' })}
+                placeholder={t('addBusiness.address_placeholder', { defaultValue: 'Ex: Rua, nº, Tomar' })}
                 value={formData.moradaNegocio}
                 onChangeText={t =>
                   setFormData({ ...formData, moradaNegocio: t })
@@ -526,8 +539,8 @@ export default function AddBusiness() {
               />
 
               <CustomTextInput
-                label="Freguesia"
-                placeholder="Ex: São João Baptista"
+                label={t('addBusiness.parish', { defaultValue: 'Freguesia' })}
+                placeholder={t('addBusiness.parish_placeholder', { defaultValue: 'Ex: São João Baptista' })}
                 value={formData.freguesiaNegocio}
                 onChangeText={t =>
                   setFormData({ ...formData, freguesiaNegocio: t })
@@ -588,11 +601,11 @@ export default function AddBusiness() {
                   margin: 10,
                 }}
               >
-                Informações de Contacto
+                {t('addBusiness.contact_info', { defaultValue: 'Informações de Contacto' })}
               </Text>
 
               <CustomTextInput
-                label="Telefone do Dono"
+                label={t('addBusiness.owner_phone', { defaultValue: 'Telefone do Dono' })}
                 value={formData.telefoneDono}
                 onChangeText={t =>
                   setFormData({ ...formData, telefoneDono: t })
@@ -600,13 +613,13 @@ export default function AddBusiness() {
                 keyboardType="phone-pad"
               />
               <CustomTextInput
-                label="E-mail do Dono"
+                label={t('addBusiness.owner_email', { defaultValue: 'E-mail do Dono' })}
                 value={formData.emailDono}
                 onChangeText={t => setFormData({ ...formData, emailDono: t })}
                 keyboardType="email-address"
               />
               <CustomTextInput
-                label="Descrição Detalhada do Negócio"
+                label={t('addBusiness.business_desc', { defaultValue: 'Descrição Detalhada do Negócio' })}
                 value={formData.descricaoNegocio}
                 onChangeText={t =>
                   setFormData({ ...formData, descricaoNegocio: t })
@@ -624,11 +637,16 @@ export default function AddBusiness() {
                   margin: 10,
                 }}
               >
-                Galeria de Fotos ({formData.galeriaFotos.length}/5)
+                {t('addBusiness.photo_gallery', { count: formData.galeriaFotos.length, defaultValue: `Galeria de Fotos (${formData.galeriaFotos.length}/5)` })}
               </Text>
 
-              <CustomButton icon="file-image" onPress={adicionarFotosGaleria}>
-                Adicionar Imagens
+              <CustomButton 
+                icon="file-image" 
+                onPress={adicionarFotosGaleria}
+                accessibilityLabel={t('addBusiness.add_images', { defaultValue: 'Adicionar imagens à galeria' })}
+                accessibilityHint={t('accessibility.choose_images_limit', { defaultValue: 'Clica para escolher até 5 imagens' })}
+              >
+                {t('addBusiness.add_images', { defaultValue: 'Adicionar Imagens' })}
               </CustomButton>
 
               <ScrollView
@@ -659,6 +677,9 @@ export default function AddBusiness() {
                       />
                       <IconButton
                         icon="close-circle"
+                        accessible={true}
+                        accessibilityLabel={t('accessibility.remove_image', { defaultValue: 'Remover imagem' })}
+                        accessibilityHint={t('accessibility.remove_image_gallery', { defaultValue: 'Clica para remover esta imagem da galeria' })}
                         size={20}
                         iconColor={theme.colors.error}
                         style={{
@@ -692,13 +713,18 @@ export default function AddBusiness() {
             marginTop: 20,
           }}
         >
-          {step > 1 && <CustomButton onPress={prevStep}>Anterior</CustomButton>}
+          {step > 1 && <CustomButton accessibilityLabel={t('addBusiness.prev_step', { defaultValue: 'Voltar ao passo anterior' })} onPress={prevStep}>{t('common.back', { defaultValue: 'Anterior' })}</CustomButton>}
 
           {step < totalSteps ? (
-            <CustomButton onPress={nextStep}>Próximo</CustomButton>
+            <CustomButton accessibilityLabel={t('addBusiness.next_step', { defaultValue: 'Avançar para o próximo passo' })} onPress={nextStep}>{t('common.next', { defaultValue: 'Próximo' })}</CustomButton>
           ) : (
-            <CustomButton loading={loading} onPress={handleNewBusiness}>
-              Enviar Negócio
+            <CustomButton 
+              loading={loading} 
+              onPress={handleNewBusiness}
+              accessibilityLabel={t('addBusiness.submit_register', { defaultValue: 'Submeter e registar negócio' })}
+              accessibilityHint={t('accessibility.submit_business', { defaultValue: 'Clica para enviar os dados do teu negócio para aprovação' })}
+            >
+              {t('addBusiness.send_business', { defaultValue: 'Enviar Negócio' })}
             </CustomButton>
           )}
         </View>

@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ import { pickImage } from '@/utils/imagePicker';
 import { useAppTheme } from '@/context/ThemeContext';
 
 const EditProfile = () => {
+  const { t } = useTranslation();
   const { user, updateUser } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [city, setCity] = useState(user?.city || '');
@@ -53,7 +55,7 @@ const EditProfile = () => {
   const selecionarAvatar = async () => {
     const status = await pickImage();
     if (status == '') {
-      alert('Precisamos de escolher uma imagem');
+      alert(t('profile.error_choose_image', { defaultValue: 'Precisamos de escolher uma imagem' }));
       return;
     }
     setImage(status);
@@ -103,7 +105,7 @@ const EditProfile = () => {
       if (response.ok) {
         const data = await response.json();
         setSuccess(true);
-        setDialogText('Alteração de dados com sucesso');
+        setDialogText(t('profile.success_edit', { defaultValue: 'Alteração de dados com sucesso' }));
         setDialogVisible(true);
 
         updateUser({
@@ -117,13 +119,13 @@ const EditProfile = () => {
 
         if (data.user.Avatar) setImage(data.user.Avatar);
       } else {
-        setDialogText('O servidor rejeitou as alterações.');
+        setDialogText(t('profile.error_server_rejected', { defaultValue: 'O servidor rejeitou as alterações.' }));
         setDialogVisible(true);
         setSuccess(false);
       }
     } catch (error) {
       console.error(error);
-      setDialogText('Ocorreu um erro ao comunicar com o servidor.');
+      setDialogText(t('common.error_comm_server', { defaultValue: 'Ocorreu um erro ao comunicar com o servidor.' }));
       setDialogVisible(true);
       setSuccess(false);
     } finally {
@@ -158,7 +160,7 @@ const EditProfile = () => {
               marginBottom: 10,
             }}
           >
-            Editar Informações do Perfil
+            {t('profile.edit_profile_info', { defaultValue: 'Editar Informações do Perfil' })}
           </Text>
 
           <Divider
@@ -216,6 +218,10 @@ const EditProfile = () => {
                 className="relative bottom-8 left-11 size-11"
                 onPress={selecionarAvatar}
                 rippleColor={theme.colors.secondary}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('accessibility.change_profile_photo', { defaultValue: 'Alterar fotografia de perfil' })}
+                accessibilityHint={t('accessibility.choose_new_image_hint', { defaultValue: 'Clica para escolher uma nova imagem para o teu perfil' })}
                 style={{
                   borderColor: theme.colors.outline,
                   borderRadius: 50,
@@ -239,12 +245,12 @@ const EditProfile = () => {
               <CustomTextInput
                 value={name}
                 onChangeText={setName}
-                label="Nome"
+                label={t('profile.name_label', { defaultValue: 'Nome' })}
                 className="mb-4 w-full"
               />
 
               <CustomTextInput
-                label="Cidade"
+                label={t('profile.city_label', { defaultValue: 'Cidade' })}
                 value={city}
                 onChangeText={setCity}
                 className="mb-4 w-full"
@@ -252,7 +258,7 @@ const EditProfile = () => {
 
               {user.NIF == null && (
                 <CustomTextInput
-                  label="NIF"
+                  label={t('profile.nif_label', { defaultValue: 'NIF' })}
                   value={NIF}
                   onChangeText={setNIF}
                   isNIF
@@ -268,8 +274,10 @@ const EditProfile = () => {
                 onPress={handleEdit}
                 loading={loading}
                 className="mb-3 w-full"
+                accessibilityLabel={t('accessibility.confirm_profile_changes', { defaultValue: 'Confirmar alterações ao perfil' })}
+                accessibilityHint={t('accessibility.save_info_hint', { defaultValue: 'Clica para guardar as tuas informações' })}
               >
-                Confirmar Alterações
+                {t('profile.confirm_changes', { defaultValue: 'Confirmar Alterações' })}
               </CustomButton>
 
               <CustomButton
@@ -278,17 +286,19 @@ const EditProfile = () => {
                 onPress={() => router.back()}
                 className="w-full"
                 disabled={loading}
+                accessibilityLabel={t('accessibility.cancel_profile_edits', { defaultValue: 'Cancelar edições ao perfil' })}
+                accessibilityHint={t('accessibility.discard_changes_hint', { defaultValue: 'Clica para descartar as alterações e voltar atrás' })}
               >
-                Cancelar
+                {t('common.cancel', { defaultValue: 'Cancelar' })}
               </CustomButton>
               <Portal>
                 <Dialog visible={dialogVisible} onDismiss={hideDialog}>
-                  <Dialog.Title>{success ? 'Sucesso' : 'Erro'}</Dialog.Title>
+                  <Dialog.Title>{success ? t('common.success_alert', { defaultValue: 'Sucesso' }) : t('common.error_alert', { defaultValue: 'Erro' })}</Dialog.Title>
                   <Dialog.Content>
                     <Text variant="bodyMedium">{dialogText}</Text>
                   </Dialog.Content>
 
-                  <CustomButton onPress={hideDialog}>Ok</CustomButton>
+                  <CustomButton onPress={hideDialog} accessibilityLabel={t('accessibility.close_message', { defaultValue: 'Fechar mensagem' })}>Ok</CustomButton>
                 </Dialog>
               </Portal>
             </View>

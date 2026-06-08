@@ -46,6 +46,7 @@ module.exports = {
       bundler: 'metro',
     },
     plugins: [
+      'expo-localization',
       'expo-router',
       'expo-web-browser',
       [
