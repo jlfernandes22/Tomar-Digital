@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { View, FlatList, Alert, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_URL } from "@/constants/api";
@@ -23,6 +24,7 @@ interface Candidatura {
 }
 
 export default function CandidaturasCampanha() {
+  const { t } = useTranslation();
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +43,7 @@ export default function CandidaturasCampanha() {
       setCandidaturas(data);
     } catch (err) {
       console.error("Erro ao carregar:", err);
-      Alert.alert("Erro", "Não foi possível carregar as candidaturas.");
+      Alert.alert(t('common.error'), t('campaign.error_load'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -70,9 +72,9 @@ export default function CandidaturasCampanha() {
       setCandidaturas(prev => prev.filter(c => 
         !(c.businessId === businessId && c.campaignId === campaignId)
       ));
-      Alert.alert("Sucesso", `Candidatura ${novoStatus} com sucesso!`);
+      Alert.alert(t('common.success'), t('campaign.success_status', { status: t(`common.${novoStatus}`, { defaultValue: novoStatus }), defaultValue: `Candidatura ${novoStatus} com sucesso!` }));
     } else {
-      Alert.alert("Erro", data.message || "Erro ao processar");
+      Alert.alert(t('common.error'), data.message || t('common.error_process', { defaultValue: "Erro ao processar" }));
     }
   } catch (err) {
     console.error("Erro na decisão:", err);
@@ -93,7 +95,7 @@ export default function CandidaturasCampanha() {
                 margin: 10,
               }}
             >
-              Novas Candidaturas a Campanhas
+              {t('campaign.pending_requests')}
             </Text>
             <Divider
         style={{
@@ -112,6 +114,10 @@ export default function CandidaturasCampanha() {
           renderItem={({ item }) => (
             <Surface style={{ marginBottom: 12, borderRadius: 8 }} elevation={2}>
               <TouchableRipple  
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('accessibility.view_application_name', { name: item.businessName, defaultValue: `Ver detalhes da candidatura de ${item.businessName}` })}
+                accessibilityHint={t('accessibility.open_campaign_details')}
                 onPress={() => router.push({
                   pathname: "/components/DetalhesBusiness",
                   params: { businessId: item.businessId, campaignId: item.campaignId }
@@ -121,10 +127,10 @@ export default function CandidaturasCampanha() {
                 <View style={{ padding: 16 }}>
                   <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{item.businessName}</Text>
                   <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Campanha: {item.campaignTitle}
+                    {t('campaign.campaign_name', { title: item.campaignTitle })}
                   </Text>
                   <Text variant="labelSmall" style={{ marginTop: 8, color: theme.colors.outline }}>
-                    Data: {new Date(item.requestDate).toLocaleDateString()}
+                    {t('campaign.request_date', { date: new Date(item.requestDate).toLocaleDateString() })}
                   </Text>
                 </View>
               </TouchableRipple>
@@ -134,20 +140,22 @@ export default function CandidaturasCampanha() {
                   mode="contained" 
                   onPress={() => handleDecidir(item.businessId, item.campaignId, "aprovado")}
                   style={{ flex: 1, backgroundColor: theme.colors.primary }}
+                  accessibilityLabel={t('accessibility.approve_application_name', { name: item.businessName, defaultValue: `Aprovar candidatura de ${item.businessName}` })}
                 >
-                  Aprovar
+                  {t('common.approve', { defaultValue: 'Aprovar' })}
                 </Button>
                 <Button 
                   mode="outlined" 
                   onPress={() => handleDecidir(item.businessId, item.campaignId, "rejeitado")}
                   style={{ flex: 1 }}
+                  accessibilityLabel={t('accessibility.reject_application_name', { name: item.businessName, defaultValue: `Rejeitar candidatura de ${item.businessName}` })}
                 >
-                  Rejeitar
+                  {t('common.reject', { defaultValue: 'Rejeitar' })}
                 </Button>
               </View>
             </Surface>
           )}
-          ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 20 }}>Não existem candidaturas pendentes.</Text>}
+          ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 20 }}>{t('campaign.no_requests')}</Text>}
         />
       )}
     </SafeAreaView>

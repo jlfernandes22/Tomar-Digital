@@ -11,6 +11,7 @@ import { FAB, Portal } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 import * as Location from 'expo-location';
 import CustomSnackBar from './CustomSnackBar';
+import { useTranslation } from 'react-i18next';
 //interfaces
 import MapProps from '@/constants/Interfaces/MapProps';
 import MapRefType from '@/constants/Interfaces/MapRefType';
@@ -33,6 +34,7 @@ const Map = forwardRef<MapRefType, MapProps>(
     ref,
   ) => {
     const { currentTheme: theme } = useAppTheme();
+    const { t } = useTranslation();
     const mapRef = useRef<MapView>(null);
     //localização do utilizador
     const [userLocation, setUserLocation] = useState<{
@@ -109,7 +111,7 @@ const Map = forwardRef<MapRefType, MapProps>(
           );
         } catch (err) {
           console.log(err);
-          setSnackbarMessage('Erro\nNão foi possível obter a sua localização');
+          setSnackbarMessage(t('map.error_location', { defaultValue: 'Erro\nNão foi possível obter a sua localização' }));
           setSnackbarVisible(true);
         } finally {
           setLoading(false);
@@ -220,6 +222,10 @@ const Map = forwardRef<MapRefType, MapProps>(
           loading={loading}
           disabled={loading}
           icon="crosshairs-gps"
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={t('accessibility.find_gps', { defaultValue: 'Encontrar a minha localização atual' })}
+          accessibilityHint={t('accessibility.focus_gps', { defaultValue: 'Clica para focar o mapa na tua localização GPS' })}
           onPress={async () => {
             console.log('get localization');
             try {
@@ -227,7 +233,7 @@ const Map = forwardRef<MapRefType, MapProps>(
               const gpsSignal = await Location.hasServicesEnabledAsync();
 
               if (!gpsSignal) {
-                setSnackbarMessage('Aviso\nTem o GPS desativado');
+                setSnackbarMessage(t('map.warning_gps_disabled', { defaultValue: 'Aviso\nTem o GPS desativado' }));
                 setSnackbarVisible(true);
                 setLoading(false);
                 return;
@@ -259,9 +265,7 @@ const Map = forwardRef<MapRefType, MapProps>(
               }, 1500);
             } catch (error) {
               console.log('get localization error', error);
-              setSnackbarMessage(
-                'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades',
-              );
+              setSnackbarMessage(t('map.warning_activate_gps', { defaultValue: 'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades' }));
               setSnackbarVisible(true);
               setLoading(false); // Desliga se der erro
             }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Dimensions } from 'react-native';
 import {
   Button,
@@ -28,6 +29,7 @@ interface IComercianteForm {
 }
 
 export default function SerComerciante() {
+  const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
 
@@ -74,7 +76,7 @@ export default function SerComerciante() {
 
   const showModal = async () => {
     if (!formData.documentoPDF?.uri) {
-      alert('Por favor, selecione um arquivo primeiro.');
+      alert(t('serComerciante.alert_select_file', { defaultValue: 'Por favor, selecione um arquivo primeiro.' }));
       return;
     }
 
@@ -90,7 +92,7 @@ export default function SerComerciante() {
       setVisible(true);
     } catch (error) {
       console.log('❌ Erro ao processar o PDF para o Modal:', error);
-      alert('Não foi possível gerar a pré-visualização.');
+      alert(t('serComerciante.alert_preview_error', { defaultValue: 'Não foi possível gerar a pré-visualização.' }));
     } finally {
       setLoadingPdf(false);
     }
@@ -103,13 +105,13 @@ export default function SerComerciante() {
 
   const handleFinalSubmit = async () => {
     if (!user || !user.token) {
-      setSnackBarText('Sessão expirada. Faça login novamente.');
+      setSnackBarText(t('serComerciante.error_session', { defaultValue: 'Sessão expirada. Faça login novamente.' }));
       setShowSnackBar(true);
       return;
     }
 
     if (!formData.documentoPDF?.uri) {
-      setSnackBarText('Por favor, selecione um documento PDF.');
+      setSnackBarText(t('serComerciante.error_no_pdf', { defaultValue: 'Por favor, selecione um documento PDF.' }));
       setShowSnackBar(true);
       return;
     }
@@ -128,7 +130,7 @@ export default function SerComerciante() {
       const fileInfo = await FileSystem.getInfoAsync(cleanUri);
       if (!fileInfo.exists) {
         console.log('Ficheiro não encontrado no caminho:', cleanUri);
-        setSnackBarText('Erro ao aceder ao ficheiro selecionado.');
+        setSnackBarText(t('serComerciante.error_file_access', { defaultValue: 'Erro ao aceder ao ficheiro selecionado.' }));
         setShowSnackBar(true);
         setLoading(false);
         return;
@@ -165,7 +167,7 @@ export default function SerComerciante() {
         const responseData = await response.json();
         console.log('Sucesso no Backend:', responseData);
 
-        setSnackBarText('Pedido enviado com sucesso!');
+        setSnackBarText(t('serComerciante.success_sent', { defaultValue: 'Pedido enviado com sucesso!' }));
         setShowSnackBar(true);
 
         setFormData({
@@ -178,12 +180,12 @@ export default function SerComerciante() {
       } else {
         const errorText = await response.text();
         console.log('Erro retornado pelo Servidor:', errorText);
-        setSnackBarText('Erro no servidor: ' + response.status);
+        setSnackBarText(t('common.error_server', { status: response.status, defaultValue: `Erro no servidor: ${response.status}` }));
         setShowSnackBar(true);
       }
     } catch (err: any) {
       console.log('Erro apanhado no bloco try/catch:', err.message);
-      setSnackBarText('Erro na rede');
+      setSnackBarText(t('common.error_network', { defaultValue: 'Erro na rede' }));
       setShowSnackBar(true);
     } finally {
       setLoading(false);
@@ -213,11 +215,11 @@ export default function SerComerciante() {
               marginBottom: 10,
             }}
           >
-            Tornar-se um Comerciante
+            {t('serComerciante.title', { defaultValue: 'Tornar-se um Comerciante' })}
           </Text>
 
           <CustomTextInput
-            label="Dono do Comércio"
+            label={t('serComerciante.owner_name', { defaultValue: 'Dono do Comércio' })}
             value={user?.name || ''}
             onChangeText={text =>
               setFormData({ ...formData, donoComercio: text })
@@ -225,7 +227,7 @@ export default function SerComerciante() {
           />
 
           <CustomTextInput
-            label="Telefone do Dono do Comércio"
+            label={t('serComerciante.owner_phone', { defaultValue: 'Telefone do Dono do Comércio' })}
             value={formData.telefoneDono}
             onChangeText={text =>
               setFormData({ ...formData, telefoneDono: text })
@@ -233,13 +235,13 @@ export default function SerComerciante() {
           />
 
           <CustomTextInput
-            label="E-mail do Dono do Comércio"
+            label={t('serComerciante.owner_email', { defaultValue: 'E-mail do Dono do Comércio' })}
             value={user?.email || ''}
             onChangeText={text => setFormData({ ...formData, emailDono: text })}
           />
 
           <CustomTextInput
-            label="Nome da Empresa / Loja"
+            label={t('serComerciante.company_name', { defaultValue: 'Nome da Empresa / Loja' })}
             value={formData.tituloComercio}
             onChangeText={text =>
               setFormData({ ...formData, tituloComercio: text })
@@ -254,8 +256,13 @@ export default function SerComerciante() {
             }}
           >
             <Card.Content>
-              <CustomButton icon="file-upload" onPress={handlePickDocument}>
-                Selecionar PDF
+              <CustomButton 
+                icon="file-upload" 
+                onPress={handlePickDocument}
+                accessibilityLabel={t('accessibility.select_pdf', { defaultValue: 'Selecionar documento PDF do dispositivo' })}
+                accessibilityHint={t('accessibility.choose_pdf', { defaultValue: 'Clica para escolher um documento comprovativo' })}
+              >
+                {t('serComerciante.select_pdf', { defaultValue: 'Selecionar PDF' })}
               </CustomButton>
 
               {formData.documentoPDF && (
@@ -283,8 +290,10 @@ export default function SerComerciante() {
                     loading={loadingPdf}
                     disabled={loadingPdf}
                     onPress={showModal}
+                    accessibilityLabel={t('accessibility.view_selected_doc', { defaultValue: 'Visualizar documento selecionado' })}
+                    accessibilityHint={t('accessibility.view_doc_chosen', { defaultValue: 'Clica para ver o documento que escolheste' })}
                   >
-                    Visualizar
+                    {t('common.view', { defaultValue: 'Visualizar' })}
                   </CustomButton>
                 </View>
               )}
@@ -298,8 +307,10 @@ export default function SerComerciante() {
               !formData.documentoPDF
             }
             onPress={handleFinalSubmit}
+            accessibilityLabel={t('accessibility.send_request_merchant', { defaultValue: 'Enviar solicitação para ser comerciante' })}
+            accessibilityHint={t('accessibility.send_approval', { defaultValue: 'Clica para enviar o teu pedido para aprovação' })}
           >
-            Enviar Solicitação
+            {t('serComerciante.send_request', { defaultValue: 'Enviar Solicitação' })}
           </CustomButton>
         </ScrollView>
 
@@ -333,7 +344,13 @@ export default function SerComerciante() {
               >
                 {formData.documentoPDF?.name}
               </Text>
-              <IconButton icon="close" size={24} onPress={hideModal} />
+              <IconButton 
+                icon="close" 
+                size={24} 
+                onPress={hideModal} 
+                accessible={true}
+                accessibilityLabel={t('accessibility.close_pdf', { defaultValue: 'Fechar visualização do PDF' })}
+              />
             </View>
 
             {pdfBase64 && (

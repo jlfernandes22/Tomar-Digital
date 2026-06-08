@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Modal, ScrollView } from 'react-native';
 import {
   Surface,
@@ -19,6 +20,7 @@ interface DetalhesProps {
 }
 
 const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
+  const { t } = useTranslation();
   const [passo, setPasso] = useState(1);
   const [loading, setLoading] = useState(false);
   const [meusNegocios, setMeusNegocios] = useState<any[]>([]);
@@ -49,14 +51,14 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
       const textoResposta = await response.text(); // Lê como texto primeiro
 
       if (response.ok) {
-        alert('Sucesso!');
+        alert(t('common.success_alert', { defaultValue: 'Sucesso!' }));
         onClose();
       } else {
         alert(textoResposta);
       }
     } catch (error) {
       console.log('Erro capturado no Catch:', error); // ISTO DIZ-NOS O PROBLEMA REAL
-      alert('Erro de conexão!');
+      alert(t('common.error_connection', { defaultValue: 'Erro de conexão!' }));
     } finally {
       setLoading(false);
     }
@@ -121,9 +123,9 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             }}
           >
             <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-              Detalhes
+              {t('campaign.details', { defaultValue: 'Detalhes' })}
             </Text>
-            <IconButton icon="close" size={24} onPress={onClose} />
+            <IconButton icon="close" size={24} onPress={onClose} accessible={true} accessibilityLabel={t('accessibility.close_window', { defaultValue: 'Fechar janela' })} />
           </View>
 
           <Divider style={{ marginVertical: 10 }} />
@@ -132,7 +134,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             {passo === 1 ? (
               <View>
                 <Text variant="titleMedium" style={{ marginBottom: 10 }}>
-                  1. Selecione o negócio:
+                  {t('campaign.select_business_step1', { defaultValue: '1. Selecione o negócio:' })}
                 </Text>
                 {meusNegocios.map(negocio => (
                   <View key={negocio._id} style={{ marginBottom: 12 }}>
@@ -143,6 +145,8 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                           ? '#FFF'
                           : theme.colors.onSurface
                       }
+                      accessibilityLabel={t('accessibility.select_name', { name: negocio.name, defaultValue: `Selecionar ${negocio.name}` })}
+                      accessibilityHint={t('accessibility.select_business_campaign', { defaultValue: 'Clica para selecionar este negócio para a campanha' })}
                     >
                       {negocio.name}
                     </CustomButton>
@@ -156,28 +160,30 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                   onPress={() =>
                     negocioSelecionado
                       ? setPasso(2)
-                      : alert('Selecione um negócio!')
+                      : alert(t('campaign.select_business_alert', { defaultValue: 'Selecione um negócio!' }))
                   }
+                  accessibilityLabel={t('accessibility.continue_confirmation', { defaultValue: 'Continuar para a confirmação' })}
                 >
-                  Continuar
+                  {t('common.continue', { defaultValue: 'Continuar' })}
                 </CustomButton>
               </View>
             ) : (
               <View style={{ alignItems: 'center', padding: 20 }}>
                 <Text style={{ textAlign: 'center', marginBottom: 20 }}>
-                  Confirma a adesão à campanha "{campaign.titulo}"?
+                  {t('campaign.confirm_join_campaign', { title: campaign.titulo, defaultValue: `Confirma a adesão à campanha "${campaign.titulo}"?` })}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <CustomButton onPress={() => setPasso(1)}>
-                    Voltar
+                  <CustomButton onPress={() => setPasso(1)} accessibilityLabel={t('addBusiness.prev_step', { defaultValue: 'Voltar ao passo anterior' })}>
+                    {t('common.back', { defaultValue: 'Voltar' })}
                   </CustomButton>
                   <CustomButton
                     style={{ backgroundColor: theme.colors.onBackground }}
                     onPress={handleAderir}
                     loading={loading}
                     disabled={loading}
+                    accessibilityLabel={t('accessibility.confirm_join', { defaultValue: 'Confirmar adesão à campanha' })}
                   >
-                    {loading ? 'A enviar...' : 'Confirmar'}
+                    {loading ? t('common.sending', { defaultValue: 'A enviar...' }) : t('common.confirm_btn', { defaultValue: 'Confirmar' })}
                   </CustomButton>
                 </View>
               </View>

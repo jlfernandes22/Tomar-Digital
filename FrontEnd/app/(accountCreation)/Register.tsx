@@ -7,68 +7,79 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-} from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "@/constants/api";
-import { router } from "expo-router";
-import { images } from "@/constants/images";
-import { delay } from "../../utils/delay";
-import CustomButton from "../components/CustomButton";
-import CustomTextField from "../components/CustomTextInput";
-import CustomSnackBar from "../components/CustomSnackBar";
-import { useAppTheme } from "@/context/ThemeContext";
-import { Surface } from "react-native-paper";
+} from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/constants/api';
+import { router } from 'expo-router';
+import { images } from '@/constants/images';
+import { delay } from '../../utils/delay';
+import CustomButton from '../components/CustomButton';
+import CustomTextField from '../components/CustomTextInput';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { useAppTheme } from '@/context/ThemeContext';
+import { Surface } from 'react-native-paper';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const Register = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [city, setCity] = useState("");
+  const { t } = useTranslation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [city, setCity] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const { currentTheme: theme } = useAppTheme();
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    setLoading(true);
     if (!email || !password) {
-      setSnackbarMessage(
-        "Aviso:\nPor favor, preencha pelo menos email e password.",
-      );
+      setSnackbarMessage(t('register.warning_empty'));
       setSnackbarVisible(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      setSnackbarMessage("Aviso:\nAs palavras-passe não coincidem!");
+      setSnackbarMessage(t('register.warning_mismatch'));
       setSnackbarVisible(true);
       return;
     }
 
     try {
       const response = await fetch(`${API_URL}/registar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, confirmPassword, city }),
       });
+
+      if (response.status === 429) {
+        setSnackbarMessage(t('common.error_429'));
+        setSnackbarVisible(true);
+        setLoading(false);
+        return;
+      }
 
       const dados = await response.json();
 
       if (response.ok) {
-        setSnackbarMessage("Sucesso:\nA redirecionar...");
+        setLoading(false);
+        setSnackbarMessage(t('register.success'));
         setSnackbarVisible(true);
         await delay(500);
         router.replace({
-          pathname: "/Validar", 
-          params: { email: email } // Passamos o email para a próxima tela
-});
+          pathname: '/Validar',
+          params: { email: email }, // Passamos o email para a próxima tela
+        });
       } else {
         setSnackbarMessage(
-          "Erro:\n" + (dados.message || "Não foi possível criar a conta."),
+          t('register.error') + (dados.message || t('register.error_generic')),
         );
         setSnackbarVisible(true);
       }
     } catch (err) {
-      setSnackbarMessage("Erro:\nVerifique a sua ligação à internet.");
+      setSnackbarMessage(t('register.error_server'));
       setSnackbarVisible(true);
     }
   };
@@ -77,26 +88,36 @@ const Register = () => {
     <View className="flex-1">
       <Image
         source={images.backgroundRegister}
-        className="absolute w-full h-full"
+        className="absolute h-full w-full"
         resizeMode="cover"
       />
 
-      {/* OVERLAY ESCURO FIXO */}
       <View
-        className="absolute w-full h-full"
-        style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
+        className="absolute h-full w-full"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
       />
 
       <SafeAreaView className="flex-1 bg-transparent">
+        <View
+          style={{
+            width: '100%',
+            alignItems: 'flex-end',
+            paddingRight: 10,
+            paddingTop: 10,
+            zIndex: 10,
+          }}
+        >
+          <LanguageSwitcher />
+        </View>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === "android" ? 20 : 0}
+          keyboardVerticalOffset={Platform.OS === 'android' ? 20 : 0}
         >
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
-              justifyContent: "center",
+              justifyContent: 'center',
               paddingBottom: 40,
             }}
             keyboardShouldPersistTaps="handled"
@@ -116,11 +137,11 @@ const Register = () => {
                     className="mb-8 text-center text-4xl font-bold"
                     style={{ color: theme.colors.primary }}
                   >
-                    Criar conta
+                    {t('register.title')}
                   </Text>
 
                   <CustomTextField
-                    label="Email"
+                    label={t('register.email')}
                     value={email}
                     onChangeText={setEmail}
                     isEmail
@@ -128,14 +149,14 @@ const Register = () => {
                   />
 
                   <CustomTextField
-                    label="Cidade (Ex: Tomar)"
+                    label={t('register.city')}
                     value={city}
                     onChangeText={setCity}
                     className="mb-5"
                   />
 
                   <CustomTextField
-                    label="Palavra-passe"
+                    label={t('register.password')}
                     value={password}
                     onChangeText={setPassword}
                     isPassword
@@ -143,15 +164,22 @@ const Register = () => {
                   />
 
                   <CustomTextField
-                    label="Confirmar Palavra-passe"
+                    label={t('register.confirm_password')}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     isPassword
                     className="mb-8"
                   />
 
-                  <CustomButton onPress={handleRegister}>
-                    Criar Conta
+                  <CustomButton
+                    onPress={handleRegister}
+                    loading={loading}
+                    accessibilityLabel={t('register.register_button')}
+                    accessibilityHint={t('accessibility.register_hint', {
+                      defaultValue: 'Clica para criar uma nova conta',
+                    })}
+                  >
+                    {t('register.register_button')}
                   </CustomButton>
                 </Surface>
               </View>

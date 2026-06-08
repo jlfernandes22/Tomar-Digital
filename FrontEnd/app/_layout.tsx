@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../context/AuthContext';
@@ -10,6 +10,10 @@ import {
   DefaultTheme,
 } from '@react-navigation/native';
 import './globals.css';
+import { initI18n } from '../i18n';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 const ThemeSelector = ({ children }: { children: React.ReactNode }) => {
   const { currentTheme } = useAppTheme();
@@ -36,6 +40,31 @@ const ThemeSelector = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function RootLayout() {
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    async function prepare() {
+      try {
+        await initI18n();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+    prepare();
+  }, []);
+
+  useEffect(() => {
+    if (appIsReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
+
   return (
     <AuthProvider>
       <ThemeProvider>

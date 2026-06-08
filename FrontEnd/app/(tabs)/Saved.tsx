@@ -17,6 +17,7 @@ import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
 import { useAppTheme } from '@/context/ThemeContext';
 import { curiosidades } from '@/constants/curiosidades';
+import { useTranslation } from 'react-i18next';
 
 interface Favorito {
   _id: string;
@@ -30,6 +31,7 @@ interface Favorito {
 }
 
 const Saved = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,7 @@ const Saved = () => {
 
       setFavoritos(listaFinal);
     } catch (error) {
-      setSnackbarMessage('Erro ao carregar favoritos\n' + error);
+      setSnackbarMessage(t('common.error') + '\n' + error);
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -76,13 +78,13 @@ const Saved = () => {
       });
 
       if (response.ok) {
-        setSnackbarMessage('Removido com sucesso');
+        setSnackbarMessage(t('common.success'));
         setSnackbarVisible(true);
         // Não precisas de chamar carregarFavoritos() aqui se o filter correu bem
       } else {
         // Se falhar no servidor, recarregamos para repor o item na lista
         carregarFavoritos();
-        setSnackbarMessage('Erro ao remover do servidor');
+        setSnackbarMessage(t('common.error'));
         setSnackbarVisible(true);
       }
     } catch (error) {
@@ -115,15 +117,16 @@ const Saved = () => {
             marginBottom: 10,
           }}
         >
-          A preparar os dados...
+          {t('common.loading')}
         </Text>
 
         <CustomButton
           labelStyle={{ textAlign: 'center' }}
           onPress={() => setRandomPhrase(handleRandomPhrase())}
+          accessibilityLabel={t('accessibility.discover_curiosity')}
+          accessibilityHint={t('accessibility.see_curiosity')}
         >
-          Sabias que...{'\n '}
-          {randomPhrase}
+          {t('saved.did_you_know', { phrase: t(randomPhrase) })}
         </CustomButton>
       </Surface>
     );
@@ -144,7 +147,7 @@ const Saved = () => {
           marginBottom: 10,
         }}
       >
-        Os Meus Favoritos
+        {t('saved.title')}
       </Text>
       <Divider
         style={{
@@ -171,6 +174,14 @@ const Saved = () => {
               }}
             >
               <TouchableRipple
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  item.businessId?.name
+                    ? t('accessibility.open_details_name', { name: item.businessId.name })
+                    : t('accessibility.open_details_generic')
+                }
+                accessibilityHint={t('accessibility.open_details')}
                 onPress={() => {
                   router.push({
                     pathname: '/components/DetalhesBusiness',
@@ -181,8 +192,8 @@ const Saved = () => {
               >
                 <View className="p-1 ">
                   <BusinessList
-                    name={item.businessId?.name || 'Negócio não disponível'}
-                    category={item.businessId?.category || 'N/A'}
+                    name={item.businessId?.name || t('saved.business_not_available')}
+                    category={item.businessId?.category ? t(`categories.${item.businessId.category}` as any, { defaultValue: item.businessId.category }) : 'N/A'}
                     location={item.businessId?.location || ''}
                   />
                 </View>
@@ -191,11 +202,13 @@ const Saved = () => {
                 <CustomButton
                   className="flex-1"
                   buttonColor={theme.colors.error}
+                  accessibilityLabel={item.businessId?.name ? `${t('saved.remove')} ${item.businessId.name}` : t('saved.remove')}
+                  accessibilityHint={t('accessibility.remove_favorite')}
                   onPress={() => {
                     if (item.businessId) retirarFavorito(item.businessId._id);
                   }}
                 >
-                  Remover
+                  {t('saved.remove')}
                 </CustomButton>
               </View>
             </Surface>
@@ -220,15 +233,14 @@ const Saved = () => {
               style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
               className="mb-2 text-center"
             >
-              Lista vazia
+              {t('common.empty_list')}
             </Text>
             <Text
               variant="bodyLarge"
               style={{ color: theme.colors.onSurfaceVariant }}
               className="mb-10 text-center opacity-70"
             >
-              Parece que ainda não guardou nenhum dos tesouros de Tomar nos seus
-              favoritos.
+              {t('saved.empty_message')}
             </Text>
 
             <CustomButton
@@ -236,8 +248,10 @@ const Saved = () => {
               textColor={theme.colors.onPrimary}
               onPress={() => router.push('/Home')}
               className="h-14 w-full"
+              accessibilityLabel={t('saved.discover_businesses')}
+              accessibilityHint={t('accessibility.go_home')}
             >
-              Descobrir Negócios
+              {t('saved.discover_businesses')}
             </CustomButton>
           </View>
         }

@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from "react";
-import { Image, FlatList, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
-import { API_URL } from "@/constants/api";
-import BusinessList from "../components/BusinessList";
-import { useAuth } from "@/context/AuthContext";
-import { images } from "@/constants/images";
+import React, { useState, useCallback } from 'react';
+import { Image, FlatList, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useFocusEffect } from 'expo-router';
+import { API_URL } from '@/constants/api';
+import BusinessList from '../components/BusinessList';
+import { useAuth } from '@/context/AuthContext';
+import { images } from '@/constants/images';
 import {
   Surface,
   useTheme,
@@ -13,9 +13,10 @@ import {
   TouchableRipple,
   ActivityIndicator,
   Divider,
-} from "react-native-paper";
-import CustomButton from "../components/CustomButton";
-import CustomSnackBar from "../components/CustomSnackBar";
+} from 'react-native-paper';
+import CustomSnackBar from '../components/CustomSnackBar';
+import { useTranslation } from 'react-i18next';
+import CustomButton from '../components/CustomButton';
 
 interface Business {
   _id: string;
@@ -29,16 +30,17 @@ interface Business {
   status: string;
   owner: {
     _id: string;
-    name: string; 
+    name: string;
   };
 }
 
 const MyBusinesses = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [negocios, setNegocios] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const theme = useTheme();
 
   const carregarNegocios = async () => {
@@ -46,21 +48,24 @@ const MyBusinesses = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/meusNegocios`, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`, 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error("Não foi possível carregar os teus estabelecimentos.");
+        throw new Error(t('myBusinesses.error_load'));
       }
 
       const dados = await response.json();
       setNegocios(Array.isArray(dados) ? dados : []);
     } catch (error: any) {
-      setSnackbarMessage("Erro ao carregar os negócios:\n" + error.message);
+      console.error('Erro ao carregar favoritos', error);
+      setSnackbarMessage(
+        t('myBusinesses.error_load_msg', { error: error.message }),
+      );
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -77,17 +82,17 @@ const MyBusinesses = () => {
     <SafeAreaView
       className="p-4"
       style={{ flex: 1, backgroundColor: theme.colors.background }}
-      edges={["top", "left", "right"]}
+      edges={['top', 'left', 'right']}
     >
       <Text
         variant="headlineMedium"
         style={{
           color: theme.colors.primary,
-          fontWeight: "bold",
+          fontWeight: 'bold',
           marginBottom: 10,
         }}
       >
-        Os Meus Negócios
+        {t('myBusinesses.title')}
       </Text>
 
       <Divider
@@ -98,7 +103,7 @@ const MyBusinesses = () => {
       />
 
       {loading ? (
-        <View className="flex-1 justify-center items-center">
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator
             animating={true}
             size="large"
@@ -113,59 +118,67 @@ const MyBusinesses = () => {
           renderItem={({ item }) => (
             <View className="relative">
               <Surface
-  elevation={1}
-  style={{
-    backgroundColor: theme.colors.secondaryContainer,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.outlineVariant,
-    // Remova o overflow: "hidden" daqui
-  }}
->
-  {/* Adicione uma View interna para gerir o corte */}
-  <View style={{ 
-    borderRadius: 12, 
-    overflow: "hidden" 
-  }}>
-    <TouchableRipple
-      onPress={() => {
-        router.push({
-          pathname: "/components/DetalhesBusiness",
-          params: { businessId: item._id},
-        });
-      }}
-      rippleColor="rgba(150, 150, 150, 0.2)"
-    >
-      <View className="p-4">
-        <BusinessList
-          name={item.name}
-          category={item.category}
-          location={item.location}
-        />
-        
-        <Text
-          variant="bodySmall"
-          style={{
-            marginTop: 8,
-            color: theme.colors.onSecondaryContainer,
-            fontStyle: "italic",
-            opacity: 0.8,
-          }}
-        >
-          Dono do Estabelecimento: {item.owner?.name || "N/A"}
-        </Text>
-      </View>
-    </TouchableRipple>
-  </View>
-</Surface>
+                elevation={1}
+                style={{
+                  backgroundColor: theme.colors.secondaryContainer,
+                  borderRadius: 12,
+                  marginBottom: 16,
+                  borderWidth: 1,
+                  borderColor: theme.colors.outlineVariant,
+                  // Remova o overflow: "hidden" daqui
+                }}
+              >
+                {/* Adicione uma View interna para gerir o corte */}
+                <View
+                  style={{
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <TouchableRipple
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={item.name}
+                    accessibilityHint={t('accessibility.open_details')}
+                    onPress={() => {
+                      router.push({
+                        pathname: '/components/DetalhesBusiness',
+                        params: { businessId: item._id },
+                      });
+                    }}
+                    rippleColor="rgba(150, 150, 150, 0.2)"
+                  >
+                    <View className="p-4">
+                      <BusinessList
+                        name={item.name}
+                        category={item.category}
+                        location={item.location}
+                      />
+
+                      <Text
+                        variant="bodySmall"
+                        style={{
+                          marginTop: 8,
+                          color: theme.colors.onSecondaryContainer,
+                          fontStyle: 'italic',
+                          opacity: 0.8,
+                        }}
+                      >
+                        {t('myBusinesses.owner_name', {
+                          name: item.owner?.name || 'N/A',
+                        })}
+                      </Text>
+                    </View>
+                  </TouchableRipple>
+                </View>
+              </Surface>
             </View>
           )}
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center px-10 pb-20">
               <Image
                 source={images.bagImg}
-                className="w-64 h-64 mb-8"
+                className="mb-8 h-64 w-64"
                 style={{
                   tintColor: theme.colors.onSurfaceVariant,
                   opacity: 0.6,
@@ -175,27 +188,29 @@ const MyBusinesses = () => {
 
               <Text
                 variant="headlineSmall"
-                style={{ color: theme.colors.onSurface, fontWeight: "bold" }}
-                className="text-center mb-2"
+                style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
+                className="mb-2 text-center"
               >
-                Nenhum negócio registado
+                {t('myBusinesses.no_businesses')}
               </Text>
               <Text
                 variant="bodyLarge"
                 style={{ color: theme.colors.onSurfaceVariant }}
-                className="text-center mb-10 opacity-70"
+                className="mb-10 text-center opacity-70"
               >
-                Ainda não adicionou nenhum estabelecimento à rede sob a sua conta de comerciante.
+                {t('myBusinesses.empty_message')}
               </Text>
 
               <CustomButton
                 buttonColor={theme.colors.primary}
                 textColor={theme.colors.onPrimary}
-                onPress={() => router.push("/(tabs)/AddBusiness")}
-                className="w-full h-14"
+                onPress={() => router.push('/(tabs)/AddBusiness')}
+                className="h-14 w-full"
                 icon="plus"
+                accessibilityLabel={t('myBusinesses.register_new')}
+                accessibilityHint={t('accessibility.register_business')}
               >
-                Registar Novo Negócio
+                {t('myBusinesses.register_new')}
               </CustomButton>
             </View>
           }

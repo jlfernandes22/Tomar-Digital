@@ -19,8 +19,19 @@ const QrCodeFAB = () => {
 
   const isScanScreen = segments.includes('ScanScreen');
 
+  const isCreateCampaign = segments.includes('CreateCampaign');
+
+  const isAddBusiness = segments.includes('AddBusiness');
+
   // If ANY of these are true, don't render the button
-  if (isInitializing || isRootIndex || isAuthFlow || isScanScreen) {
+  if (
+    isInitializing ||
+    isRootIndex ||
+    isAuthFlow ||
+    isScanScreen ||
+    isCreateCampaign ||
+    isAddBusiness
+  ) {
     return null;
   }
 
@@ -39,6 +50,10 @@ const QrCodeFAB = () => {
           }}
           onPress={() => router.push('/(tabs)/ScanScreen')}
           color={theme.colors.onPrimary}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Ler fatura QR Code"
+          accessibilityHint="Clica para abrir a câmara e ler o código QR da tua fatura"
         />
       </Portal>
     </>

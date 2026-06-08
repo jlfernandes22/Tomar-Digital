@@ -20,8 +20,11 @@ import { delay } from '../../utils/delay';
 import CustomSnackBar from '../components/CustomSnackBar';
 import { useAppTheme } from '@/context/ThemeContext';
 import { Surface } from 'react-native-paper';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -42,10 +45,17 @@ const Login = () => {
       });
       console.log(`${API_URL}/iniciarSessao`);
 
+      if (response.status === 429) {
+        setSnackbarMessage(t('common.error_429'));
+        setSnackbarVisible(true);
+        setLoading(false);
+        return;
+      }
+
       const dados = await response.json();
 
       if (response.ok) {
-        setSnackbarMessage('Sucesso!');
+        setSnackbarMessage(t('login.success'));
         setSnackbarVisible(true);
         await delay(500);
 
@@ -78,12 +88,12 @@ const Login = () => {
         }
       } else {
         setLoading(false);
-        setSnackbarMessage('Erro no Login, ' + dados.message);
+        setSnackbarMessage(t('login.error_login') + dados.message);
         setSnackbarVisible(true);
       }
     } catch (error) {
       setLoading(false);
-      setSnackbarMessage('Erro: Não foi possível contactar o servidor.');
+      setSnackbarMessage(t('login.error_server'));
       setSnackbarVisible(true);
     }
   };
@@ -97,13 +107,23 @@ const Login = () => {
         resizeMode="cover"
       />
 
-      {/* OVERLAY ESCURO FIXO: Garante que a imagem escurece sempre, removendo a névoa branca */}
       <View
         className="absolute h-full w-full"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
       />
 
       <SafeAreaView className="flex-1">
+        <View
+          style={{
+            width: '100%',
+            alignItems: 'flex-end',
+            paddingRight: 10,
+            paddingTop: 10,
+            zIndex: 10,
+          }}
+        >
+          <LanguageSwitcher />
+        </View>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -119,24 +139,23 @@ const Login = () => {
           >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View className="w-[90%] self-center">
-                {/* CARTÃO DO FORMULÁRIO: Isola os inputs num fundo sólido legível */}
                 <Surface
                   elevation={2}
                   style={{
                     backgroundColor: theme.colors.surfaceContainer,
                     padding: 32,
-                    borderRadius: theme.roundness === 0 ? 0 : 24, // Fica quadrado nos Tabuleiros, redondo nos restantes
+                    borderRadius: theme.roundness === 0 ? 0 : 24,
                   }}
                 >
                   <Text
                     className="mb-8 text-center text-4xl font-bold"
                     style={{ color: theme.colors.primary }}
                   >
-                    Iniciar Sessão
+                    {t('login.title')}
                   </Text>
 
                   <CustomTextField
-                    label="Email"
+                    label={t('login.email')}
                     value={email}
                     onChangeText={setEmail}
                     isEmail
@@ -144,15 +163,22 @@ const Login = () => {
                   />
 
                   <CustomTextField
-                    label="Palavra-passe"
+                    label={t('login.password')}
                     value={password}
                     onChangeText={setPassword}
                     isPassword
                     className="mb-8"
                   />
 
-                  <CustomButton onPress={handleLogin} loading={loading}>
-                    Iniciar Sessão
+                  <CustomButton
+                    onPress={handleLogin}
+                    loading={loading}
+                    accessibilityLabel={t('login.login_button')}
+                    accessibilityHint={t('accessibility.login_hint', {
+                      defaultValue: 'Clica para iniciar sessão na aplicação',
+                    })}
+                  >
+                    {t('login.login_button')}
                   </CustomButton>
                 </Surface>
               </View>

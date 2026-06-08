@@ -36,8 +36,10 @@ import MapFocous from '@/constants/MapFocous';
 import Negocio from '@/constants/Interfaces/Negocio';
 import { useAppTheme } from '@/context/ThemeContext';
 import { ExpandingDot } from 'react-native-animated-pagination-dots';
+import { useTranslation } from 'react-i18next';
 
 export default function Index() {
+  const { t } = useTranslation();
   // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
   const [listaNegocios, setListaNegocios] = useState<Negocio[]>([]);
   const [listaFiltrada, setListaFiltrada] = useState<Negocio[]>([]);
@@ -126,9 +128,7 @@ export default function Index() {
   const toggleFavorite = async (businessId: string) => {
     if (!user?.id) {
       //trocar para snackbar
-      setSnackbarMessage(
-        'Aviso:\nTens de ter sessão inciada para guardar favoritos',
-      );
+      setSnackbarMessage(t('home.warning_session'));
       return;
     }
 
@@ -166,7 +166,7 @@ export default function Index() {
         setIdsFavorite(prev => prev.filter(id => id !== businessId));
       }
 
-      setSnackbarMessage('Erro:\n Não foi possível atualizar os favoritos.');
+      setSnackbarMessage(t('home.error_update_fav'));
       setSnackbarVisible(true);
     } finally {
       setLoadingFav(false);
@@ -218,7 +218,7 @@ export default function Index() {
     });
 
     if (closeBiz.length === 0 && isManualClick) {
-      setSnackbarMessage('Aviso:\nNão existem negócios por perto');
+      setSnackbarMessage(t('home.warning_no_nearby'));
       setSnackbarVisible(true);
       setLoading(false);
     }
@@ -309,7 +309,7 @@ export default function Index() {
       <SafeAreaView style={{ flex: 1 }} pointerEvents="box-none">
         <View style={{ marginTop: 10 }}>
           <Searchbar
-            placeholder="Procurar negócio..."
+            placeholder={t('home.search_placeholder')}
             onChangeText={onChangeSearch}
             value={searchQuery}
             style={{ borderRadius: 12, marginHorizontal: 12 }}
@@ -331,13 +331,17 @@ export default function Index() {
                     }}
                   >
                     <TouchableRipple
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={item.name}
+                      accessibilityHint={t('accessibility.focus_business')}
                       onPress={() => {
                         MapFocous(item, mapRef);
                         setListaFiltrada([]);
                         setNegocioSelecionado(item); // Define o negócio ao clicar na lista
                       }}
                     >
-                      <BusinessList name={item.name} category={item.category} />
+                      <BusinessList name={item.name} category={t(`categories.${item.category}` as any, { defaultValue: item.category })} />
                     </TouchableRipple>
                   </Surface>
                 )}
@@ -359,7 +363,7 @@ export default function Index() {
                 }}
                 className="mr-1 mt-2 h-[40px]"
               >
-                {cat}
+                {t(`categories.${cat}` as any, { defaultValue: cat })}
               </CustomChip>
             ))}
           </ScrollView>
@@ -382,6 +386,10 @@ export default function Index() {
         >
           {/* 2. Imitamos o contentContainerStyle da FlatList para ter as margens perfeitas */}
           <TouchableRipple
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={negocioSelecionado.name}
+            accessibilityHint={t('accessibility.open_details')}
             style={{
               flex: 1,
               justifyContent: 'flex-end',
@@ -428,11 +436,14 @@ export default function Index() {
                       fontSize: 14,
                     }}
                   >
-                    {negocioSelecionado.category}
+                    {t(`categories.${negocioSelecionado.category}` as any, { defaultValue: negocioSelecionado.category })}
                   </Text>
                 </View>
                 <IconButton
                   icon="close"
+                  accessible={true}
+                  accessibilityLabel={t('common.close_window')}
+                  accessibilityHint={t('accessibility.close_info')}
                   iconColor={theme.colors.onSecondaryContainer}
                   onPress={() => {
                     setNegocioSelecionado(null);
@@ -463,6 +474,9 @@ export default function Index() {
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                 {/* Botão de Favoritos */}
                 <TouchableRipple
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={isSelectedFavorite ? `Remover ${negocioSelecionado.name} dos favoritos` : `Adicionar ${negocioSelecionado.name} aos favoritos`}
                   disabled={loadingFav}
                   style={{
                     backgroundColor: isSelectedFavorite
@@ -484,12 +498,13 @@ export default function Index() {
                   ) : (
                     <IconButton
                       icon={isSelectedFavorite ? 'heart' : 'heart-outline'}
-                      iconColor={
+                      accessible={true}
+                      accessibilityLabel={
                         isSelectedFavorite
-                          ? theme.colors.onErrorContainer
-                          : theme.colors.onSurfaceVariant
+                          ? t('accessibility.remove_favorite_name', { name: negocioSelecionado.name })
+                          : t('accessibility.add_favorite_name', { name: negocioSelecionado.name })
                       }
-                      size={24}
+                      iconColor={theme.colors.error}
                       style={{ margin: 0 }}
                     />
                   )}
@@ -497,6 +512,10 @@ export default function Index() {
 
                 {/* Botão de Navegação (Mapa Externo) */}
                 <TouchableRipple
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={negocioSelecionado.name}
+                  accessibilityHint={t('accessibility.open_map')}
                   style={{
                     flex: 1,
                     backgroundColor: theme.colors.primary,
@@ -513,8 +532,8 @@ export default function Index() {
                       const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;
                       Linking.openURL(url).catch(() =>
                         Alert.alert(
-                          'Erro',
-                          'Não foi possível abrir o Apple Maps',
+                          t('common.error'),
+                          t('home.error_apple_maps'),
                         ),
                       );
                     } else {
@@ -538,7 +557,7 @@ export default function Index() {
                       fontSize: 16,
                     }}
                   >
-                    VER NO MAPA
+                    {t('home.see_on_map')}
                   </Text>
                 </TouchableRipple>
               </View>
@@ -588,6 +607,10 @@ export default function Index() {
               const isFavorite = idsFavorite.includes(item._id);
               return (
                 <TouchableRipple
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.name}
+                  accessibilityHint={t('accessibility.open_details')}
                   onPress={() => {
                     router.push({
                       pathname: '/components/DetalhesBusiness',
@@ -629,11 +652,14 @@ export default function Index() {
                             fontSize: 14,
                           }}
                         >
-                          {item.category}
+                          {t(`categories.${item.category}` as any, { defaultValue: item.category })}
                         </Text>
                       </View>
                       <IconButton
                         icon="close"
+                        accessible={true}
+                        accessibilityLabel={t('common.close_window')}
+                        accessibilityHint={t('accessibility.close_business')}
                         iconColor={theme.colors.onSecondaryContainer}
                         // Esvazia o array de resultados de proximidade, o que desmonta este componente da UI
                         onPress={() => {
@@ -668,6 +694,9 @@ export default function Index() {
                     >
                       {/* Controlo de estado para adicionar/remover o negócio aos favoritos do utilizador */}
                       <TouchableRipple
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={isFavorite ? `Remover ${item.name} dos favoritos` : `Adicionar ${item.name} aos favoritos`}
                         disabled={loadingFav}
                         style={{
                           backgroundColor: isFavorite
@@ -692,12 +721,13 @@ export default function Index() {
                         ) : (
                           <IconButton
                             icon={isFavorite ? 'heart' : 'heart-outline'}
-                            iconColor={
+                            accessible={true}
+                            accessibilityLabel={
                               isFavorite
-                                ? theme.colors.onErrorContainer
-                                : theme.colors.onSurfaceVariant
+                                ? t('accessibility.remove_favorite_name', { name: item.name })
+                                : t('accessibility.add_favorite_name', { name: item.name })
                             }
-                            size={24}
+                            iconColor={theme.colors.error}
                             style={{ margin: 0 }}
                           />
                         )}
@@ -705,6 +735,10 @@ export default function Index() {
 
                       {/* Ação de Deep Linking para aplicações de navegação externas */}
                       <TouchableRipple
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={item.name}
+                        accessibilityHint={t('accessibility.open_map')}
                         style={{
                           flex: 1,
                           backgroundColor: theme.colors.primary,
@@ -721,8 +755,8 @@ export default function Index() {
                             const url = `maps://?q=${item.name}&ll=${lat},${long}`;
                             Linking.openURL(url).catch(() =>
                               Alert.alert(
-                                'Erro',
-                                'Não foi possível abrir o Apple Maps',
+                                t('common.error'),
+                                t('home.error_apple_maps'),
                               ),
                             );
                           } else {
@@ -748,7 +782,7 @@ export default function Index() {
                             fontSize: 16,
                           }}
                         >
-                          VER NO MAPA
+                          {t('home.see_on_map')}
                         </Text>
                       </TouchableRipple>
                     </View>
@@ -780,6 +814,10 @@ export default function Index() {
       )}
 
       <FAB
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={t('home.search_near')}
+        accessibilityHint={t('accessibility.search_area')}
         icon={images.bagImg}
         style={{
           position: 'absolute',

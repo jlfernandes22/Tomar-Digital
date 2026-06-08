@@ -1,5 +1,6 @@
 import { ActivityIndicator, View, Image, ScrollView } from 'react-native';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { images } from '@/constants/images';
@@ -23,6 +24,7 @@ const roleLabels: Record<string, string> = {
 };
 
 const ProfileDetails = () => {
+  const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { logout, user } = useAuth();
 
@@ -53,7 +55,7 @@ const ProfileDetails = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Menu de Opções no Canto Superior Direito */}
-          <View className="mb-2 mt-4 w-full flex-row justify-end">
+          <View className="mb-2 mt-4 w-full flex-row justify-end items-center gap-2">
             <Menu
               visible={menuVisible}
               onDismiss={closeMenu}
@@ -72,6 +74,9 @@ const ProfileDetails = () => {
                   mode="outlined"
                   size={24}
                   onPress={openMenu}
+                  accessible={true}
+                  accessibilityLabel={t('accessibility.open_settings', { defaultValue: 'Abrir menu de definições' })}
+                  accessibilityHint={t('accessibility.account_options_hint', { defaultValue: 'Clica para ver as opções da conta' })}
                   style={{
                     borderColor: theme.colors.outline,
                     backgroundColor: theme.colors.background,
@@ -86,7 +91,7 @@ const ProfileDetails = () => {
                   router.push('/components/EditProfile');
                 }}
                 leadingIcon="pencil"
-                title="Editar Perfil"
+                title={t('profile.edit_profile', { defaultValue: 'Editar Perfil' })}
               />
               <Divider />
               {user.role === 'cidadao' && (
@@ -96,7 +101,7 @@ const ProfileDetails = () => {
                     router.push('/components/SerComerciante');
                   }}
                   leadingIcon="account"
-                  title="Ser Comerciante"
+                  title={t('profile.become_merchant', { defaultValue: 'Ser Comerciante' })}
                 />
               )}
 
@@ -116,7 +121,7 @@ const ProfileDetails = () => {
                     }}
                   />
                 )}
-                title="Preferências"
+                title={t('profile.preferences', { defaultValue: 'Preferências' })}
               />
               <Divider />
               <Menu.Item
@@ -125,7 +130,7 @@ const ProfileDetails = () => {
                   router.push('/components/SobreAPP');
                 }}
                 leadingIcon="information-outline"
-                title="Sobre a App"
+                title={t('profile.about_app', { defaultValue: 'Sobre a App' })}
               />
               <Divider />
               <Menu.Item
@@ -133,7 +138,7 @@ const ProfileDetails = () => {
                   closeMenu();
                 }}
                 leadingIcon="delete"
-                title="Apagar Conta"
+                title={t('profile.delete_account', { defaultValue: 'Apagar Conta' })}
                 titleStyle={{ color: theme.colors.error }}
               />
               <Divider />
@@ -144,7 +149,7 @@ const ProfileDetails = () => {
                   closeMenu();
                 }}
                 leadingIcon="logout"
-                title="Terminar Sessão"
+                title={t('profile.logout', { defaultValue: 'Terminar Sessão' })}
                 titleStyle={{ color: theme.colors.error }}
               />
             </Menu>
@@ -202,7 +207,7 @@ const ProfileDetails = () => {
               style={{ color: theme.colors.onBackground }}
               className="text-center text-base"
             >
-              {roleLabels[user.role] || 'Utilizador'}
+              {t(`roles.${user.role}`, { defaultValue: roleLabels[user.role] || 'Utilizador' })}
             </Text>
           </View>
 
@@ -214,13 +219,13 @@ const ProfileDetails = () => {
               borderColor: theme.colors.outline,
             }}
             accessible={true}
-            accessibilityLabel={`Pontos disponíveis: ${user.Points}`}
+            accessibilityLabel={t('accessibility.available_points_value', { points: user.Points, defaultValue: `Pontos disponíveis: ${user.Points}` })}
           >
             <Text
               style={{ fontWeight: 'bold' }}
               className="mb-1 text-center text-lg uppercase tracking-widest"
             >
-              Pontos Disponíveis
+              {t('profile.available_points', { defaultValue: 'Pontos Disponíveis' })}
             </Text>
             <Text
               style={{ fontWeight: 'bold' }}
@@ -235,21 +240,21 @@ const ProfileDetails = () => {
               buttonColor={theme.colors.primary}
               textColor={theme.colors.onPrimary}
               accessibilityRole="button"
-              accessibilityLabel="Ler QR-Code de fatura"
+              accessibilityLabel={t('accessibility.scan_invoice_qr', { defaultValue: 'Ler QR-Code de fatura' })}
+              accessibilityHint={t('accessibility.open_camera_invoice', { defaultValue: 'Clica para abrir a câmara e ler a fatura' })}
               icon={images.qrCodeImg}
             >
-              Ler QR-Code
+              {t('profile.scan_qr', { defaultValue: 'Ler QR-Code' })}
             </CustomButton>
             <View className="mt-4 items-center">
               <Text style={{ fontWeight: '300' }} className="mb-2 text-center">
-                Acumula pontos por cada compra efetuada nas lojas aderentes de
-                Tomar
+                {t('profile.accumulate_points_desc', { defaultValue: 'Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar' })}
               </Text>
               <Text
                 style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
                 className="text-center text-base"
               >
-                - Necessário Contribuinte -
+                {t('profile.vat_required', { defaultValue: '- Necessário Contribuinte -' })}
               </Text>
             </View>
           </View>
@@ -274,7 +279,7 @@ const ProfileDetails = () => {
             />
             <View style={{ marginLeft: 20 }}>
               <Text style={{ fontWeight: 'bold', fontSize: 15 }}>
-                Endereço de E-mail
+                {t('profile.email_address', { defaultValue: 'Endereço de E-mail' })}
               </Text>
               <Text
                 style={{ fontWeight: 'bold', fontSize: 13 }}

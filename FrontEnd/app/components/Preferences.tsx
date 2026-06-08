@@ -5,9 +5,18 @@ import { ModeType, PaletteType, useAppTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import ThemeSelector from './ThemeSelector';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LANGUAGE_KEY } from '../../i18n';
+import { useTranslation } from 'react-i18next';
 
 const Preferences = () => {
   const { currentTheme: theme } = useAppTheme();
+  const { i18n, t } = useTranslation();
+
+  const handleLanguageChange = async (value: string) => {
+    await i18n.changeLanguage(value);
+    await AsyncStorage.setItem(LANGUAGE_KEY, value);
+  };
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -39,6 +48,28 @@ const Preferences = () => {
         />
 
         <ThemeSelector></ThemeSelector>
+
+        <Text
+          variant="titleMedium"
+          style={{ fontWeight: 'bold', marginTop: 24, marginBottom: 10 }}
+        >
+          {t('common.language') || 'Idioma da Aplicação'}
+        </Text>
+        <SegmentedButtons
+          value={i18n.language}
+          onValueChange={handleLanguageChange}
+          buttons={[
+            {
+              value: 'pt',
+              label: `🇵🇹 ${t('preferences.lang_pt', { defaultValue: 'Português' })}`,
+            },
+            {
+              value: 'en',
+              label: `🇬🇧 ${t('preferences.lang_en', { defaultValue: 'English' })}`,
+            },
+          ]}
+          style={{ marginBottom: 16 }}
+        />
       </SafeAreaView>
     </Surface>
   );

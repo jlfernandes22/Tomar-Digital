@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   FlatList,
@@ -37,6 +38,7 @@ interface PedidoComerciante {
 }
 
 export default function AprovarComerciantes() {
+  const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -68,10 +70,10 @@ export default function AprovarComerciantes() {
         const data = await response.json();
         setPendentes(data);
       } else {
-        Alert.alert('Erro', 'Não foi possível obter a lista do servidor.');
+        Alert.alert(t('common.error'), t('camara.error_list'));
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível carregar os dados.');
+      Alert.alert(t('common.error'), t('camara.error_load'));
     } finally {
       setLoading(false);
     }
@@ -86,7 +88,7 @@ export default function AprovarComerciantes() {
     try {
       await carregarDados();
     } catch (err) {
-      Alert.alert('Erro', 'Erro ao carregar informação');
+      Alert.alert(t('common.error'), t('camara.error_load_info'));
     } finally {
       setRefreshing(false);
     }
@@ -95,7 +97,7 @@ export default function AprovarComerciantes() {
   // Função adaptada para baixar da URL e exibir no Modal idêntico ao SerComerciante
   const handleVerPDF = async (url?: string, tituloLoja?: string) => {
     if (!url) {
-      Alert.alert('Aviso', 'Este pedido não possui um documento PDF anexado.');
+      Alert.alert(t('common.warning'), t('camara.no_pdf'));
       return;
     }
 
@@ -108,7 +110,7 @@ export default function AprovarComerciantes() {
 
     try {
       setLoadingPdf(true);
-      setNomePdfAtual(`Doc - ${tituloLoja || 'Comércio'}`);
+      setNomePdfAtual(t('camara.doc_title', { title: tituloLoja || t('camara.default_commerce', { defaultValue: 'Comércio' }), defaultValue: `Doc - ${tituloLoja || 'Comércio'}` }));
 
       const localFileUri = `${FileSystem.cacheDirectory}preview.pdf`;
 
@@ -127,7 +129,7 @@ export default function AprovarComerciantes() {
       setVisible(true);
     } catch (error) {
       console.error('Erro ao converter PDF:', error);
-      Alert.alert('Erro', 'Não foi possível carregar a pré-visualização.');
+      Alert.alert(t('common.error'), t('camara.error_pdf'));
     } finally {
       setLoadingPdf(false);
     }
@@ -138,10 +140,10 @@ export default function AprovarComerciantes() {
   };
 
   const handleDescartar = async (id: string) => {
-    Alert.alert('Confirmar', 'Tem a certeza que quer descartar este pedido?', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('common.confirm'), t('camara.reject_confirm'), [
+      { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
       {
-        text: 'Descartar',
+        text: t('common.discard', { defaultValue: 'Descartar' }),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -159,10 +161,10 @@ export default function AprovarComerciantes() {
             if (response.ok) {
               setPendentes(prev => prev.filter(item => item._id !== id));
             } else {
-              Alert.alert('Erro', 'O servidor rejeitou a eliminação.');
+              Alert.alert(t('common.error'), t('camara.server_reject'));
             }
           } catch (error) {
-            Alert.alert('Erro', 'Falha ao descartar.');
+            Alert.alert(t('common.error'), t('camara.fail_discard'));
           }
         },
       },
@@ -186,16 +188,16 @@ export default function AprovarComerciantes() {
 
       if (response.ok) {
         setPendentes(prev => prev.filter(item => item._id !== id));
-        Alert.alert('Sucesso', 'Pedido aprovado!');
+        Alert.alert(t('common.success'), t('camara.approved'));
       } else {
         console.log('Erro do servidor:', result);
         Alert.alert(
-          'Erro',
-          result.message || 'O servidor recusou a aprovação.',
+          t('common.error'),
+          result.message || t('camara.server_reject_approve'),
         );
       }
     } catch (error) {
-      Alert.alert('Erro', 'Falha de conexão com o servidor.');
+      Alert.alert(t('common.error'), t('camara.error_conn'));
     }
   };
 
@@ -224,15 +226,16 @@ export default function AprovarComerciantes() {
             marginBottom: 10,
           }}
         >
-          A preparar os dados...
+          {t('common.loading')}
         </Text>
 
         <CustomButton
           labelStyle={{ textAlign: 'center' }}
           onPress={() => setRandomPhrase(handleRandomPhrase())}
+          accessibilityLabel={t('accessibility.discover_curiosity')}
+          accessibilityHint={t('accessibility.see_curiosity')}
         >
-          Sabias que...{'\n '}
-          {randomPhrase}
+          {t('saved.did_you_know', { phrase: t(randomPhrase) })}
         </CustomButton>
       </Surface>
     );
@@ -255,7 +258,7 @@ export default function AprovarComerciantes() {
             marginBottom: 10,
           }}
         >
-          Pedidos de Novos Comerciantes Pendentes
+          {t('camara.merchants_title')}
         </Text>
 
         <Divider
@@ -271,7 +274,7 @@ export default function AprovarComerciantes() {
             style={{ color: theme.colors.onSurfaceVariant }}
             className="mt-10 text-center"
           >
-            Não há novos pedidos de Tomar.
+            {t('camara.no_new_merchants')}
           </Text>
         ) : (
           <FlatList
@@ -311,7 +314,7 @@ export default function AprovarComerciantes() {
                       {item.tituloComercio}
                     </Text>
                   )}
-                  description={`Dono: ${item.donoComercio}\nTel: ${item.telefoneDono}\nEmail: ${item.emailDono}`}
+                  description={t('camara.merchant_desc', { owner: item.donoComercio, phone: item.telefoneDono, email: item.emailDono, defaultValue: `Dono: ${item.donoComercio}\nTel: ${item.telefoneDono}\nEmail: ${item.emailDono}` })}
                   descriptionNumberOfLines={3}
                   left={props => (
                     <List.Icon
@@ -330,8 +333,10 @@ export default function AprovarComerciantes() {
                     onPress={() =>
                       handleVerPDF(item.documentoPdfUrl, item.tituloComercio)
                     }
+                    accessibilityLabel={t('accessibility.view_pdf_name', { name: item.tituloComercio, defaultValue: `Visualizar Documento PDF de ${item.tituloComercio}` })}
+                    accessibilityHint={t('accessibility.read_doc')}
                   >
-                    Visualizar Documento PDF
+                    {t('merchant.view_pdf', { defaultValue: 'Visualizar Documento PDF' })}
                   </CustomButton>
                 </View>
 
@@ -348,8 +353,10 @@ export default function AprovarComerciantes() {
                     onPress={() => handleAprovar(item._id)}
                     textColor={theme.colors.onPrimary}
                     buttonColor={theme.colors.primary}
+                    accessibilityLabel={t('accessibility.accept_request_name', { name: item.tituloComercio, defaultValue: `Aceitar pedido de ${item.tituloComercio}` })}
+                    accessibilityHint={t('accessibility.approve_merchant')}
                   >
-                    Aceitar
+                    {t('common.accept', { defaultValue: 'Aceitar' })}
                   </CustomButton>
 
                   <CustomButton
@@ -357,8 +364,10 @@ export default function AprovarComerciantes() {
                     onPress={() => handleDescartar(item._id)}
                     buttonColor={theme.colors.errorContainer}
                     textColor={theme.colors.onErrorContainer}
+                    accessibilityLabel={t('accessibility.discard_request_name', { name: item.tituloComercio, defaultValue: `Descartar pedido de ${item.tituloComercio}` })}
+                    accessibilityHint={t('accessibility.reject_merchant')}
                   >
-                    Descartar
+                    {t('common.discard', { defaultValue: 'Descartar' })}
                   </CustomButton>
                 </View>
               </Surface>
@@ -399,7 +408,13 @@ export default function AprovarComerciantes() {
               {nomePdfAtual}
             </Text>
 
-            <IconButton icon="close" size={24} onPress={hideModal} />
+            <IconButton 
+              icon="close" 
+              size={24} 
+              onPress={hideModal} 
+              accessible={true}
+              accessibilityLabel={t('accessibility.close_pdf')}
+            />
           </View>
 
           {pdfBase64 && (
