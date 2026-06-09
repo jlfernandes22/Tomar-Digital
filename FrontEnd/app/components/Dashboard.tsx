@@ -32,7 +32,7 @@ import CustomSnackBar from './CustomSnackBar';
 import WebView from 'react-native-webview';
 import { DashboardPdf } from '@/constants/html/DashboardPdf';
 import { exportDashboardToExcel } from '@/constants/excelUtils';
-import { curiosidades } from '@/constants/curiosidades';
+import { curiosidades } from '@/constants/curiosities';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -93,11 +93,19 @@ const Dashboard = () => {
           totalBusinesses: data.totalBusinesses || 0,
         });
       } else {
-        setSnackbarMessage(t('dashboard.error_server_data', { defaultValue: 'Erro: Servidor não devolveu os dados com sucesso.' }));
+        setSnackbarMessage(
+          t('dashboard.error_server_data', {
+            defaultValue: 'Erro: Servidor não devolveu os dados com sucesso.',
+          }),
+        );
         setSnackbarVisible(true);
       }
     } catch (error) {
-      setSnackbarMessage(t('dashboard.error_load_stats', { defaultValue: 'Erro: Não foi possível carregar as estatísticas.' }));
+      setSnackbarMessage(
+        t('dashboard.error_load_stats', {
+          defaultValue: 'Erro: Não foi possível carregar as estatísticas.',
+        }),
+      );
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -135,7 +143,10 @@ const Dashboard = () => {
           ? theme.colors.outline
           : CHART_COLORS[index % CHART_COLORS.length];
 
-      const translatedName = item._id === t('dashboard.others', { defaultValue: 'Outros' }) ? item._id : t(`categories.${item._id}` as any, { defaultValue: item._id });
+      const translatedName =
+        item._id === t('dashboard.others', { defaultValue: 'Outros' })
+          ? item._id
+          : t(`categories.${item._id}` as any, { defaultValue: item._id });
 
       return {
         name: translatedName,
@@ -192,13 +203,17 @@ const Dashboard = () => {
       id: '1',
       title: t('dashboard.cities_pt', { defaultValue: 'Cidades de Portugal' }),
       data: allInfo.cities,
-      emptyMessage: t('dashboard.no_cities_data', { defaultValue: 'Sem dados de cidades em Portugal.' }),
+      emptyMessage: t('dashboard.no_cities_data', {
+        defaultValue: 'Sem dados de cidades em Portugal.',
+      }),
     },
     {
       id: '2',
       title: t('dashboard.rest_of_world', { defaultValue: 'Resto do Mundo' }),
       data: paisesEstrangeiros,
-      emptyMessage: t('dashboard.no_users_abroad', { defaultValue: 'Sem utilizadores registados fora de Portugal.' }),
+      emptyMessage: t('dashboard.no_users_abroad', {
+        defaultValue: 'Sem utilizadores registados fora de Portugal.',
+      }),
     },
   ];
 
@@ -211,11 +226,14 @@ const Dashboard = () => {
       );
       const maxCity = Math.max(...allInfo.cities.map((c: any) => c.total), 1);
 
-      const dataAtual = new Date().toLocaleDateString(i18n.language === 'pt' ? 'pt-PT' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+      const dataAtual = new Date().toLocaleDateString(
+        i18n.language === 'pt' ? 'pt-PT' : 'en-US',
+        {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        },
+      );
 
       const htmlContent = DashboardPdf({
         theme,
@@ -230,7 +248,11 @@ const Dashboard = () => {
       setHtml(htmlContent);
       setPdfDialogVisible(true);
     } catch (error) {
-      setSnackbarMessage(t('dashboard.error_generate_pdf', { defaultValue: 'Erro ao gerar a pré-visualização do PDF.' }));
+      setSnackbarMessage(
+        t('dashboard.error_generate_pdf', {
+          defaultValue: 'Erro ao gerar a pré-visualização do PDF.',
+        }),
+      );
       setSnackbarVisible(true);
     }
   }
@@ -240,7 +262,11 @@ const Dashboard = () => {
     try {
       await Print.printAsync({ html });
     } catch (error) {
-      setSnackbarMessage(t('dashboard.error_print_action', { defaultValue: 'Ação de impressão cancelada ou falhou.' }));
+      setSnackbarMessage(
+        t('dashboard.error_print_action', {
+          defaultValue: 'Ação de impressão cancelada ou falhou.',
+        }),
+      );
       setSnackbarVisible(true);
     }
   };
@@ -262,11 +288,17 @@ const Dashboard = () => {
       // Pede ao utilizador para guardar
       await Sharing.shareAsync(finalFile.uri, {
         mimeType: 'application/pdf',
-        dialogTitle: t('dashboard.save_pdf_report', { defaultValue: 'Guardar Relatório PDF' }),
+        dialogTitle: t('dashboard.save_pdf_report', {
+          defaultValue: 'Guardar Relatório PDF',
+        }),
         UTI: 'com.adobe.pdf',
       });
     } catch (error) {
-      setSnackbarMessage(t('dashboard.error_save_pdf', { defaultValue: 'Erro ao tentar guardar o PDF.' }));
+      setSnackbarMessage(
+        t('dashboard.error_save_pdf', {
+          defaultValue: 'Erro ao tentar guardar o PDF.',
+        }),
+      );
       setSnackbarVisible(true);
     } finally {
       setPdfLoading(false);
@@ -286,7 +318,11 @@ const Dashboard = () => {
 
     setExcelLoading(false);
     if (!result.success) {
-      setSnackbarMessage(t('dashboard.error_generate_excel', { defaultValue: 'Erro ao gerar ficheiro Excel.' }));
+      setSnackbarMessage(
+        t('dashboard.error_generate_excel', {
+          defaultValue: 'Erro ao gerar ficheiro Excel.',
+        }),
+      );
       setSnackbarVisible(true);
     }
   };
@@ -299,8 +335,8 @@ const Dashboard = () => {
   if (loading) {
     return (
       <Surface
-        className="flex-1 items-center justify-center p-6"
-        style={{ backgroundColor: theme.colors.background }}
+        className="items-center justify-center p-6"
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
         <ActivityIndicator
           size="large"
@@ -316,16 +352,23 @@ const Dashboard = () => {
             marginBottom: 10,
           }}
         >
-          {t('dashboard.preparing_data', { defaultValue: 'A preparar os dados...' })}
+          {t('dashboard.preparing_data', {
+            defaultValue: 'A preparar os dados...',
+          })}
         </Text>
 
         <CustomButton
           labelStyle={{ textAlign: 'center' }}
           onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity', { defaultValue: 'Descobrir curiosidade' })}
-          accessibilityHint={t('accessibility.view_other_curiosity', { defaultValue: 'Clica para ver outra curiosidade' })}
+          accessibilityLabel={t('accessibility.discover_curiosity', {
+            defaultValue: 'Descobrir curiosidade',
+          })}
+          accessibilityHint={t('accessibility.view_other_curiosity', {
+            defaultValue: 'Clica para ver outra curiosidade',
+          })}
         >
-          {t('dashboard.did_you_know', { defaultValue: 'Sabias que...' })}{'\n '}
+          {t('dashboard.did_you_know', { defaultValue: 'Sabias que...' })}
+          {'\n '}
           {t(randomPhrase)}
         </CustomButton>
       </Surface>
@@ -334,15 +377,11 @@ const Dashboard = () => {
 
   return (
     <Surface style={{ flex: 1 }}>
-      <SafeAreaView
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-        edges={['top', 'left', 'right']}
-      >
-        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <Surface
             style={{
               paddingBottom: 80,
-              backgroundColor: theme.colors.background,
             }}
           >
             <Text
@@ -524,7 +563,9 @@ const Dashboard = () => {
                     paddingTop: 16,
                   }}
                 >
-                  {t('dashboard.business_typology', { defaultValue: 'Tipologia de Negócios' })}
+                  {t('dashboard.business_typology', {
+                    defaultValue: 'Tipologia de Negócios',
+                  })}
                 </Text>
                 <View style={{ alignSelf: 'left', bottom: 40 }}>
                   {allInfo.categories.length > 0 ? (
@@ -551,7 +592,9 @@ const Dashboard = () => {
                     />
                   ) : (
                     <Text style={{ color: theme.colors.onSurfaceVariant }}>
-                      {t('dashboard.no_data_available', { defaultValue: 'Sem dados disponíveis.' })}
+                      {t('dashboard.no_data_available', {
+                        defaultValue: 'Sem dados disponíveis.',
+                      })}
                     </Text>
                   )}
                 </View>
@@ -561,7 +604,9 @@ const Dashboard = () => {
             <Text
               style={{ marginLeft: 8, marginBottom: 10, fontWeight: 'bold' }}
             >
-              {t('dashboard.export_report', { defaultValue: 'Exportar Relatório' })}
+              {t('dashboard.export_report', {
+                defaultValue: 'Exportar Relatório',
+              })}
             </Text>
             <View
               style={{
@@ -576,10 +621,17 @@ const Dashboard = () => {
                   onPress={createPDF}
                   buttonColor={theme.colors.error}
                   icon="file-pdf-box"
-                  accessibilityLabel={t('accessibility.preview_pdf', { defaultValue: 'Pré-visualizar PDF' })}
-                  accessibilityHint={t('accessibility.preview_pdf_hint', { defaultValue: 'Clica para ver uma antevisão do relatório em formato PDF' })}
+                  accessibilityLabel={t('accessibility.preview_pdf', {
+                    defaultValue: 'Pré-visualizar PDF',
+                  })}
+                  accessibilityHint={t('accessibility.preview_pdf_hint', {
+                    defaultValue:
+                      'Clica para ver uma antevisão do relatório em formato PDF',
+                  })}
                 >
-                  {t('dashboard.preview_pdf_btn', { defaultValue: 'Pré-visualizar PDF' })}
+                  {t('dashboard.preview_pdf_btn', {
+                    defaultValue: 'Pré-visualizar PDF',
+                  })}
                 </CustomButton>
               </View>
               <View style={{ flex: 1 }}>
@@ -589,10 +641,17 @@ const Dashboard = () => {
                   loading={excelLoading}
                   buttonColor="#15cc15"
                   icon="file-excel-box"
-                  accessibilityLabel={t('accessibility.export_excel', { defaultValue: 'Exportar para Excel' })}
-                  accessibilityHint={t('accessibility.export_excel_hint', { defaultValue: 'Clica para fazer o download do relatório em formato Excel' })}
+                  accessibilityLabel={t('accessibility.export_excel', {
+                    defaultValue: 'Exportar para Excel',
+                  })}
+                  accessibilityHint={t('accessibility.export_excel_hint', {
+                    defaultValue:
+                      'Clica para fazer o download do relatório em formato Excel',
+                  })}
                 >
-                  {t('dashboard.export_excel_btn', { defaultValue: 'Exportar para Excel' })}
+                  {t('dashboard.export_excel_btn', {
+                    defaultValue: 'Exportar para Excel',
+                  })}
                 </CustomButton>
               </View>
             </View>
@@ -632,8 +691,12 @@ const Dashboard = () => {
                 icon="close"
                 size={24}
                 accessible={true}
-                accessibilityLabel={t('accessibility.close_preview', { defaultValue: 'Fechar pré-visualização' })}
-                accessibilityHint={t('accessibility.close_pdf_hint', { defaultValue: 'Clica para fechar o relatório PDF' })}
+                accessibilityLabel={t('accessibility.close_preview', {
+                  defaultValue: 'Fechar pré-visualização',
+                })}
+                accessibilityHint={t('accessibility.close_pdf_hint', {
+                  defaultValue: 'Clica para fechar o relatório PDF',
+                })}
                 onPress={() => setPdfDialogVisible(false)}
               />
             </View>
@@ -662,7 +725,9 @@ const Dashboard = () => {
                   onPress={handlePrintPDF}
                   buttonColor={theme.colors.primary}
                   icon="printer"
-                  accessibilityLabel={t('accessibility.print_report', { defaultValue: 'Imprimir relatório' })}
+                  accessibilityLabel={t('accessibility.print_report', {
+                    defaultValue: 'Imprimir relatório',
+                  })}
                 >
                   {t('dashboard.print_btn', { defaultValue: 'Imprimir' })}
                 </CustomButton>
@@ -674,7 +739,9 @@ const Dashboard = () => {
                   buttonColor={theme.colors.secondaryContainer}
                   textColor={theme.colors.onSecondaryContainer}
                   icon="content-save"
-                  accessibilityLabel={t('accessibility.save_report', { defaultValue: 'Guardar relatório' })}
+                  accessibilityLabel={t('accessibility.save_report', {
+                    defaultValue: 'Guardar relatório',
+                  })}
                 >
                   {t('dashboard.save_btn', { defaultValue: 'Guardar' })}
                 </CustomButton>

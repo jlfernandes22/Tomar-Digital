@@ -16,7 +16,7 @@ import {
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
 import { useAppTheme } from '@/context/ThemeContext';
-import { curiosidades } from '@/constants/curiosidades';
+import { curiosidades } from '@/constants/curiosities';
 import { useTranslation } from 'react-i18next';
 
 interface Favorito {
@@ -100,8 +100,8 @@ const Saved = () => {
   if (loading) {
     return (
       <Surface
-        className="flex-1 items-center justify-center p-6"
-        style={{ backgroundColor: theme.colors.background }}
+        className=" items-center justify-center p-6"
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
         <ActivityIndicator
           size="large"
@@ -178,13 +178,15 @@ const Saved = () => {
                 accessibilityRole="button"
                 accessibilityLabel={
                   item.businessId?.name
-                    ? t('accessibility.open_details_name', { name: item.businessId.name })
+                    ? t('accessibility.open_details_name', {
+                        name: item.businessId.name,
+                      })
                     : t('accessibility.open_details_generic')
                 }
                 accessibilityHint={t('accessibility.open_details')}
                 onPress={() => {
                   router.push({
-                    pathname: '/components/DetalhesBusiness',
+                    pathname: '/components/BusinessDetails',
                     params: { id: item.businessId?._id },
                   });
                 }}
@@ -192,8 +194,16 @@ const Saved = () => {
               >
                 <View className="p-1 ">
                   <BusinessList
-                    name={item.businessId?.name || t('saved.business_not_available')}
-                    category={item.businessId?.category ? t(`categories.${item.businessId.category}` as any, { defaultValue: item.businessId.category }) : 'N/A'}
+                    name={
+                      item.businessId?.name || t('saved.business_not_available')
+                    }
+                    category={
+                      item.businessId?.category
+                        ? t(`categories.${item.businessId.category}` as any, {
+                            defaultValue: item.businessId.category,
+                          })
+                        : 'N/A'
+                    }
                     location={item.businessId?.location || ''}
                   />
                 </View>
@@ -202,7 +212,11 @@ const Saved = () => {
                 <CustomButton
                   className="flex-1"
                   buttonColor={theme.colors.error}
-                  accessibilityLabel={item.businessId?.name ? `${t('saved.remove')} ${item.businessId.name}` : t('saved.remove')}
+                  accessibilityLabel={
+                    item.businessId?.name
+                      ? `${t('saved.remove')} ${item.businessId.name}`
+                      : t('saved.remove')
+                  }
                   accessibilityHint={t('accessibility.remove_favorite')}
                   onPress={() => {
                     if (item.businessId) retirarFavorito(item.businessId._id);

@@ -69,7 +69,7 @@ const Register = () => {
         setSnackbarVisible(true);
         await delay(500);
         router.replace({
-          pathname: '/Validar',
+          pathname: '/Validate',
           params: { email: email }, // Passamos o email para a próxima tela
         });
       } else {

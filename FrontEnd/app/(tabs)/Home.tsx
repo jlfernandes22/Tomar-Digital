@@ -37,6 +37,7 @@ import Negocio from '@/constants/Interfaces/Negocio';
 import { useAppTheme } from '@/context/ThemeContext';
 import { ExpandingDot } from 'react-native-animated-pagination-dots';
 import { useTranslation } from 'react-i18next';
+import delay from '@/utils/delay';
 
 export default function Index() {
   const { t } = useTranslation();
@@ -53,6 +54,7 @@ export default function Index() {
   const [showCloseBusiness, setShowCloseBusiness] = useState(false);
   //vair ser usado para fazer zoom em qual dos negócios estiver perto do utilizador
   const [itemVisivelId, setItemVisivelId] = useState<string | null>(null);
+  const [loadingBusiness, setLoadingBusiness] = useState(false);
 
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
@@ -278,6 +280,12 @@ export default function Index() {
     }
   }, [category]);
 
+  const handleBusinessDetails = async () => {
+    setLoadingBusiness(true);
+    await delay(300);
+    setLoadingBusiness(false);
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchNegocios();
@@ -341,7 +349,12 @@ export default function Index() {
                         setNegocioSelecionado(item); // Define o negócio ao clicar na lista
                       }}
                     >
-                      <BusinessList name={item.name} category={t(`categories.${item.category}` as any, { defaultValue: item.category })} />
+                      <BusinessList
+                        name={item.name}
+                        category={t(`categories.${item.category}` as any, {
+                          defaultValue: item.category,
+                        })}
+                      />
                     </TouchableRipple>
                   </Surface>
                 )}
@@ -390,6 +403,7 @@ export default function Index() {
             accessibilityRole="button"
             accessibilityLabel={negocioSelecionado.name}
             accessibilityHint={t('accessibility.open_details')}
+            disabled={loadingBusiness}
             style={{
               flex: 1,
               justifyContent: 'flex-end',
@@ -397,10 +411,11 @@ export default function Index() {
               paddingBottom: 10,
             }}
             onPress={() => {
-              router.push({
-                pathname: '/components/DetalhesBusiness',
-                params: { id: negocioSelecionado._id },
-              });
+              (handleBusinessDetails(),
+                router.push({
+                  pathname: '/components/BusinessDetails',
+                  params: { id: negocioSelecionado._id },
+                }));
             }}
           >
             <Surface
@@ -436,7 +451,9 @@ export default function Index() {
                       fontSize: 14,
                     }}
                   >
-                    {t(`categories.${negocioSelecionado.category}` as any, { defaultValue: negocioSelecionado.category })}
+                    {t(`categories.${negocioSelecionado.category}` as any, {
+                      defaultValue: negocioSelecionado.category,
+                    })}
                   </Text>
                 </View>
                 <IconButton
@@ -476,7 +493,11 @@ export default function Index() {
                 <TouchableRipple
                   accessible={true}
                   accessibilityRole="button"
-                  accessibilityLabel={isSelectedFavorite ? `Remover ${negocioSelecionado.name} dos favoritos` : `Adicionar ${negocioSelecionado.name} aos favoritos`}
+                  accessibilityLabel={
+                    isSelectedFavorite
+                      ? `Remover ${negocioSelecionado.name} dos favoritos`
+                      : `Adicionar ${negocioSelecionado.name} aos favoritos`
+                  }
                   disabled={loadingFav}
                   style={{
                     backgroundColor: isSelectedFavorite
@@ -501,8 +522,12 @@ export default function Index() {
                       accessible={true}
                       accessibilityLabel={
                         isSelectedFavorite
-                          ? t('accessibility.remove_favorite_name', { name: negocioSelecionado.name })
-                          : t('accessibility.add_favorite_name', { name: negocioSelecionado.name })
+                          ? t('accessibility.remove_favorite_name', {
+                              name: negocioSelecionado.name,
+                            })
+                          : t('accessibility.add_favorite_name', {
+                              name: negocioSelecionado.name,
+                            })
                       }
                       iconColor={theme.colors.error}
                       style={{ margin: 0 }}
@@ -611,11 +636,13 @@ export default function Index() {
                   accessibilityRole="button"
                   accessibilityLabel={item.name}
                   accessibilityHint={t('accessibility.open_details')}
+                  disabled={loadingBusiness}
                   onPress={() => {
-                    router.push({
-                      pathname: '/components/DetalhesBusiness',
-                      params: { id: itemVisivelId },
-                    });
+                    (handleBusinessDetails(),
+                      router.push({
+                        pathname: '/components/BusinessDetails',
+                        params: { id: itemVisivelId },
+                      }));
                   }}
                 >
                   <Surface
@@ -652,7 +679,9 @@ export default function Index() {
                             fontSize: 14,
                           }}
                         >
-                          {t(`categories.${item.category}` as any, { defaultValue: item.category })}
+                          {t(`categories.${item.category}` as any, {
+                            defaultValue: item.category,
+                          })}
                         </Text>
                       </View>
                       <IconButton
@@ -696,7 +725,11 @@ export default function Index() {
                       <TouchableRipple
                         accessible={true}
                         accessibilityRole="button"
-                        accessibilityLabel={isFavorite ? `Remover ${item.name} dos favoritos` : `Adicionar ${item.name} aos favoritos`}
+                        accessibilityLabel={
+                          isFavorite
+                            ? `Remover ${item.name} dos favoritos`
+                            : `Adicionar ${item.name} aos favoritos`
+                        }
                         disabled={loadingFav}
                         style={{
                           backgroundColor: isFavorite
@@ -724,8 +757,12 @@ export default function Index() {
                             accessible={true}
                             accessibilityLabel={
                               isFavorite
-                                ? t('accessibility.remove_favorite_name', { name: item.name })
-                                : t('accessibility.add_favorite_name', { name: item.name })
+                                ? t('accessibility.remove_favorite_name', {
+                                    name: item.name,
+                                  })
+                                : t('accessibility.add_favorite_name', {
+                                    name: item.name,
+                                  })
                             }
                             iconColor={theme.colors.error}
                             style={{ margin: 0 }}

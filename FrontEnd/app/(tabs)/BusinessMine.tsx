@@ -142,7 +142,7 @@ const MyBusinesses = () => {
                     accessibilityHint={t('accessibility.open_details')}
                     onPress={() => {
                       router.push({
-                        pathname: '/components/DetalhesBusiness',
+                        pathname: '/components/BusinessDetails',
                         params: { businessId: item._id },
                       });
                     }}
@@ -204,7 +204,7 @@ const MyBusinesses = () => {
               <CustomButton
                 buttonColor={theme.colors.primary}
                 textColor={theme.colors.onPrimary}
-                onPress={() => router.push('/(tabs)/AddBusiness')}
+                onPress={() => router.push('/(tabs)/BusinessAdd')}
                 className="h-14 w-full"
                 icon="plus"
                 accessibilityLabel={t('myBusinesses.register_new')}

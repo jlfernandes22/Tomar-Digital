@@ -10,9 +10,12 @@ import {
   Text,
   useTheme,
   ActivityIndicator,
+  Appbar,
 } from 'react-native-paper';
 import MapRefType from '@/constants/Interfaces/MapRefType';
 import { API_URL } from '@/constants/api';
+import CustomButton from './CustomButton';
+import { curiosidades } from '@/constants/curiosities';
 
 const DetalhesBusiness = () => {
   const { t, i18n } = useTranslation();
@@ -58,16 +61,6 @@ const DetalhesBusiness = () => {
     fetchBusiness();
   }, [id]);
 
-  if (loading) {
-    return (
-      <Surface
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-      >
-        <ActivityIndicator size="large" />
-      </Surface>
-    );
-  }
-
   const campanhasAtivas =
     business.campaigns?.filter((c: any) => {
       const inicio = new Date(c.campaign.DataInicio);
@@ -87,41 +80,90 @@ const DetalhesBusiness = () => {
         }}
       >
         <Stack.Screen options={{ headerShown: false }} />
-        <Text variant="bodyLarge">{t('merchant.error_load_business', { defaultValue: 'Não foi possível carregar o negócio.' })}</Text>
+        <Text variant="bodyLarge">
+          {t('merchant.error_load_business', {
+            defaultValue: 'Não foi possível carregar o negócio.',
+          })}
+        </Text>
         <IconButton
           icon="arrow-left"
           mode="contained"
           style={{ marginTop: 16 }}
           onPress={() => router.back()}
           accessible={true}
-          accessibilityLabel={t('accessibility.go_back', { defaultValue: 'Voltar atrás' })}
+          accessibilityLabel={t('accessibility.go_back', {
+            defaultValue: 'Voltar atrás',
+          })}
         />
       </Surface>
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-        <Stack.Screen options={{ headerShown: false }} />
+  const handleRandomPhrase = () => {
+    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+  };
+  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
 
-        <View className="flex-row items-center px-3 py-2">
-          <IconButton
-            icon="arrow-left"
-            size={24}
-            iconColor={theme.colors.onBackground}
-            onPress={() => router.back()}
-            accessible={true}
-            accessibilityLabel={t('accessibility.go_back', { defaultValue: 'Voltar atrás' })}
-          />
-          <Text
-            variant="titleMedium"
-            className="ml-1 flex-1 font-bold"
-            style={{ color: theme.colors.onBackground }}
-          >
-            {t('common.back_btn', { defaultValue: 'Voltar' })}
-          </Text>
-        </View>
+  if (loading) {
+    return (
+      <Surface
+        className="items-center justify-center p-6"
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
+      >
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary}
+          style={{ marginBottom: 20 }}
+        />
+
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          {t('dashboard.preparing_data', {
+            defaultValue: 'A preparar os dados...',
+          })}
+        </Text>
+
+        <CustomButton
+          labelStyle={{ textAlign: 'center' }}
+          onPress={() => setRandomPhrase(handleRandomPhrase())}
+          accessibilityLabel={t('accessibility.discover_curiosity', {
+            defaultValue: 'Descobrir curiosidade',
+          })}
+          accessibilityHint={t('accessibility.view_other_curiosity', {
+            defaultValue: 'Clica para ver outra curiosidade',
+          })}
+        >
+          {t('dashboard.did_you_know', { defaultValue: 'Sabias que...' })}
+          {'\n '}
+          {t(randomPhrase)}
+        </CustomButton>
+      </Surface>
+    );
+  }
+
+  return (
+    <>
+      <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
+        <Appbar.BackAction
+          onPress={() => router.back()}
+          color={theme.colors.onBackground}
+        />
+        <Appbar.Content
+          title={t('common.back_btn', { defaultValue: 'Voltar' })}
+          titleStyle={{ fontWeight: 'bold' }}
+        />
+      </Appbar.Header>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
+        edges={['left', 'right']}
+      >
+        <Stack.Screen options={{ headerShown: false }} />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -158,7 +200,9 @@ const DetalhesBusiness = () => {
                 textTransform: 'uppercase',
               }}
             >
-              {t(`categories.${business.category}`, { defaultValue: business.category })}
+              {t(`categories.${business.category}`, {
+                defaultValue: business.category,
+              })}
             </Text>
 
             <Text
@@ -175,7 +219,10 @@ const DetalhesBusiness = () => {
                 className="mt-1"
                 style={{ opacity: 0.7 }}
               >
-                {t('merchant.by_owner', { owner: business.owner.name, defaultValue: `Por ${business.owner.name}` })}
+                {t('merchant.by_owner', {
+                  owner: business.owner.name,
+                  defaultValue: `Por ${business.owner.name}`,
+                })}
               </Text>
             )}
 
@@ -185,7 +232,10 @@ const DetalhesBusiness = () => {
               variant="bodyLarge"
               style={{ color: theme.colors.onSurfaceVariant }}
             >
-              {business.description || t('common.no_description_available', { defaultValue: 'Sem descrição disponível.' })}
+              {business.description ||
+                t('common.no_description_available', {
+                  defaultValue: 'Sem descrição disponível.',
+                })}
             </Text>
 
             {/* Secção da Galeria */}
@@ -195,7 +245,9 @@ const DetalhesBusiness = () => {
                   variant="titleMedium"
                   style={{ fontWeight: 'bold', marginBottom: 12 }}
                 >
-                  {t('merchant.photo_gallery', { defaultValue: 'Galeria de Fotos' })}
+                  {t('merchant.photo_gallery', {
+                    defaultValue: 'Galeria de Fotos',
+                  })}
                 </Text>
                 <ScrollView
                   horizontal
@@ -233,7 +285,9 @@ const DetalhesBusiness = () => {
                 variant="titleMedium"
                 style={{ fontWeight: 'bold', marginBottom: 8 }}
               >
-                {t('merchant.active_campaigns', { defaultValue: 'Campanhas Ativas:' })}
+                {t('merchant.active_campaigns', {
+                  defaultValue: 'Campanhas Ativas:',
+                })}
               </Text>
 
               {campanhasAtivas.length > 0 ? (
@@ -249,14 +303,21 @@ const DetalhesBusiness = () => {
                     }}
                   >
                     <Text variant="titleSmall" style={{ fontWeight: 'bold' }}>
-                      {c.campaign?.titulo || t('common.no_title_campaign', { defaultValue: 'Campanha sem título' })}
+                      {c.campaign?.titulo ||
+                        t('common.no_title_campaign', {
+                          defaultValue: 'Campanha sem título',
+                        })}
                     </Text>
                     <Text
                       variant="bodySmall"
                       style={{ color: theme.colors.onSurfaceVariant }}
                     >
-                      {t('merchant.valid_until', { defaultValue: 'Válida até:' })}{' '}
-                      {new Date(c.campaign.DataExpiracao).toLocaleDateString(i18n.language === 'pt' ? 'pt-PT' : 'en-US')}
+                      {t('merchant.valid_until', {
+                        defaultValue: 'Válida até:',
+                      })}{' '}
+                      {new Date(c.campaign.DataExpiracao).toLocaleDateString(
+                        i18n.language === 'pt' ? 'pt-PT' : 'en-US',
+                      )}
                     </Text>
                   </Surface>
                 ))
@@ -265,7 +326,9 @@ const DetalhesBusiness = () => {
                   variant="bodyMedium"
                   style={{ fontStyle: 'italic', opacity: 0.7 }}
                 >
-                  {t('merchant.no_active_campaigns', { defaultValue: 'Não existem campanhas ativas neste momento.' })}
+                  {t('merchant.no_active_campaigns', {
+                    defaultValue: 'Não existem campanhas ativas neste momento.',
+                  })}
                 </Text>
               )}
             </View>
@@ -299,7 +362,7 @@ const DetalhesBusiness = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </>
   );
 };
 

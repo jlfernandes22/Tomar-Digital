@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import {
   ActivityIndicator,
   Surface,
@@ -19,14 +19,15 @@ import {
   Modal,
   Portal,
   IconButton,
+  Appbar,
 } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
-import CustomButton from '../components/CustomButton';
+import CustomButton from './CustomButton';
 import { useAppTheme } from '@/context/ThemeContext';
-import { curiosidades } from '@/constants/curiosidades';
+import { curiosidades } from '@/constants/curiosities';
 
 interface PedidoComerciante {
   _id: string;
@@ -110,7 +111,14 @@ export default function AprovarComerciantes() {
 
     try {
       setLoadingPdf(true);
-      setNomePdfAtual(t('camara.doc_title', { title: tituloLoja || t('camara.default_commerce', { defaultValue: 'Comércio' }), defaultValue: `Doc - ${tituloLoja || 'Comércio'}` }));
+      setNomePdfAtual(
+        t('camara.doc_title', {
+          title:
+            tituloLoja ||
+            t('camara.default_commerce', { defaultValue: 'Comércio' }),
+          defaultValue: `Doc - ${tituloLoja || 'Comércio'}`,
+        }),
+      );
 
       const localFileUri = `${FileSystem.cacheDirectory}preview.pdf`;
 
@@ -141,7 +149,10 @@ export default function AprovarComerciantes() {
 
   const handleDescartar = async (id: string) => {
     Alert.alert(t('common.confirm'), t('camara.reject_confirm'), [
-      { text: t('common.cancel', { defaultValue: 'Cancelar' }), style: 'cancel' },
+      {
+        text: t('common.cancel', { defaultValue: 'Cancelar' }),
+        style: 'cancel',
+      },
       {
         text: t('common.discard', { defaultValue: 'Descartar' }),
         style: 'destructive',
@@ -209,9 +220,10 @@ export default function AprovarComerciantes() {
   if (loading) {
     return (
       <Surface
-        className="flex-1 items-center justify-center p-6"
-        style={{ backgroundColor: theme.colors.background }}
+        className="items-center justify-center p-6"
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
+        <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator
           size="large"
           color={theme.colors.primary}
@@ -243,9 +255,19 @@ export default function AprovarComerciantes() {
 
   return (
     <>
+      <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
+        <Appbar.BackAction
+          onPress={() => router.back()}
+          color={theme.colors.onBackground}
+        />
+        <Appbar.Content
+          title={t('common.back_btn', { defaultValue: 'Voltar' })}
+          titleStyle={{ fontWeight: 'bold' }}
+        />
+      </Appbar.Header>
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
-        edges={['top', 'left', 'right']}
+        edges={['left', 'right']}
         className="p-4"
       >
         <Stack.Screen options={{ headerShown: false }} />
@@ -314,7 +336,12 @@ export default function AprovarComerciantes() {
                       {item.tituloComercio}
                     </Text>
                   )}
-                  description={t('camara.merchant_desc', { owner: item.donoComercio, phone: item.telefoneDono, email: item.emailDono, defaultValue: `Dono: ${item.donoComercio}\nTel: ${item.telefoneDono}\nEmail: ${item.emailDono}` })}
+                  description={t('camara.merchant_desc', {
+                    owner: item.donoComercio,
+                    phone: item.telefoneDono,
+                    email: item.emailDono,
+                    defaultValue: `Dono: ${item.donoComercio}\nTel: ${item.telefoneDono}\nEmail: ${item.emailDono}`,
+                  })}
                   descriptionNumberOfLines={3}
                   left={props => (
                     <List.Icon
@@ -333,10 +360,15 @@ export default function AprovarComerciantes() {
                     onPress={() =>
                       handleVerPDF(item.documentoPdfUrl, item.tituloComercio)
                     }
-                    accessibilityLabel={t('accessibility.view_pdf_name', { name: item.tituloComercio, defaultValue: `Visualizar Documento PDF de ${item.tituloComercio}` })}
+                    accessibilityLabel={t('accessibility.view_pdf_name', {
+                      name: item.tituloComercio,
+                      defaultValue: `Visualizar Documento PDF de ${item.tituloComercio}`,
+                    })}
                     accessibilityHint={t('accessibility.read_doc')}
                   >
-                    {t('merchant.view_pdf', { defaultValue: 'Visualizar Documento PDF' })}
+                    {t('merchant.view_pdf', {
+                      defaultValue: 'Visualizar Documento PDF',
+                    })}
                   </CustomButton>
                 </View>
 
@@ -353,7 +385,10 @@ export default function AprovarComerciantes() {
                     onPress={() => handleAprovar(item._id)}
                     textColor={theme.colors.onPrimary}
                     buttonColor={theme.colors.primary}
-                    accessibilityLabel={t('accessibility.accept_request_name', { name: item.tituloComercio, defaultValue: `Aceitar pedido de ${item.tituloComercio}` })}
+                    accessibilityLabel={t('accessibility.accept_request_name', {
+                      name: item.tituloComercio,
+                      defaultValue: `Aceitar pedido de ${item.tituloComercio}`,
+                    })}
                     accessibilityHint={t('accessibility.approve_merchant')}
                   >
                     {t('common.accept', { defaultValue: 'Aceitar' })}
@@ -364,7 +399,13 @@ export default function AprovarComerciantes() {
                     onPress={() => handleDescartar(item._id)}
                     buttonColor={theme.colors.errorContainer}
                     textColor={theme.colors.onErrorContainer}
-                    accessibilityLabel={t('accessibility.discard_request_name', { name: item.tituloComercio, defaultValue: `Descartar pedido de ${item.tituloComercio}` })}
+                    accessibilityLabel={t(
+                      'accessibility.discard_request_name',
+                      {
+                        name: item.tituloComercio,
+                        defaultValue: `Descartar pedido de ${item.tituloComercio}`,
+                      },
+                    )}
                     accessibilityHint={t('accessibility.reject_merchant')}
                   >
                     {t('common.discard', { defaultValue: 'Descartar' })}
@@ -408,10 +449,10 @@ export default function AprovarComerciantes() {
               {nomePdfAtual}
             </Text>
 
-            <IconButton 
-              icon="close" 
-              size={24} 
-              onPress={hideModal} 
+            <IconButton
+              icon="close"
+              size={24}
+              onPress={hideModal}
               accessible={true}
               accessibilityLabel={t('accessibility.close_pdf')}
             />
