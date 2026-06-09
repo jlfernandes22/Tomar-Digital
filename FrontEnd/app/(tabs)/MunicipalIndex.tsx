@@ -14,28 +14,38 @@ export default function CamaraIndex() {
   const menus = [
     {
       title: t('camara.new_businesses', { defaultValue: 'Novos Negócios' }),
-      description: t('camara.new_businesses_desc', { defaultValue: 'Aprovar registos de lojas e estabelecimentos' }),
+      description: t('camara.new_businesses_desc', {
+        defaultValue: 'Aprovar registos de lojas e estabelecimentos',
+      }),
       icon: 'store-search',
-      route: '/components/AprovarNegocios',
+      route: '/components/BusinessCandidates',
       count: t('camara.pending', { defaultValue: 'Pendentes' }),
       color: theme.colors.primary,
     },
     {
-      title: t('camara.merchant_applications', { defaultValue: 'Candidaturas a Comerciante' }),
-      description: t('camara.merchant_applications_desc', { defaultValue: 'Validar documentos PDF para novos comerciantes' }),
+      title: t('camara.merchant_applications', {
+        defaultValue: 'Candidaturas a Comerciante',
+      }),
+      description: t('camara.merchant_applications_desc', {
+        defaultValue: 'Validar documentos PDF para novos comerciantes',
+      }),
       icon: 'account-check',
-      route: '/components/AprovarComerciantes',
+      route: '/components/MerchantsCandidates',
       count: t('camara.pending', { defaultValue: 'Pendentes' }),
 
       color: theme.colors.secondary,
     },
 
-     {
-      title: t('camara.campaign_applications', { defaultValue: "Candidaturas a Campanhas" }),
-      description: t('camara.campaign_applications_desc', { defaultValue: "Aprovar negócios a participar em campanhas" }),
-      icon: "store-search",
-      route: "/components/CandidaturasCampanha", 
-            count: t('camara.pending', { defaultValue: "Pendentes" }),
+    {
+      title: t('camara.campaign_applications', {
+        defaultValue: 'Candidaturas a Campanhas',
+      }),
+      description: t('camara.campaign_applications_desc', {
+        defaultValue: 'Aprovar negócios a participar em campanhas',
+      }),
+      icon: 'store-search',
+      route: '/components/CampaignCandidates',
+      count: t('camara.pending', { defaultValue: 'Pendentes' }),
 
       color: theme.colors.secondary,
     },
@@ -54,7 +64,9 @@ export default function CamaraIndex() {
           variant="bodyMedium"
           style={{ color: theme.colors.onSurfaceVariant, marginBottom: 20 }}
         >
-          {t('camara.welcome_msg', { defaultValue: 'Olá, Câmara de Tomar. Escolha uma área para gerir.' })}
+          {t('camara.welcome_msg', {
+            defaultValue: 'Olá, Câmara de Tomar. Escolha uma área para gerir.',
+          })}
         </Text>
 
         <Divider style={{ marginBottom: 20 }} />

@@ -1,6 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-import * as SecureStore from "expo-secure-store";
-import { router } from "expo-router";
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
 export interface User {
   id: string;
@@ -12,8 +12,7 @@ export interface User {
   city?: string;
   NIF?: number | null;
   acceptedInvoiceTerms?: boolean;
-  Avatar?: string | null,
-
+  Avatar?: string | null;
 }
 
 interface AuthContextData {
@@ -39,14 +38,14 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 // Definimos a chave como uma constante para não haver erros de escrita
-const STORAGE_KEY = "user_data";
+const STORAGE_KEY = 'user_data';
 
 export const AuthProvider = ({ children }: any) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const updateUser = (updatedData: Partial<User>) => {
-    setUser((prev) => {
+    setUser(prev => {
       if (!prev) return null;
 
       // Criamos o novo objeto fundindo o antigo com o novo
@@ -61,7 +60,7 @@ export const AuthProvider = ({ children }: any) => {
       };
 
       // Usar a chave constante 'user_data'
-      SecureStore.setItemAsync("user_data", JSON.stringify(newUser));
+      SecureStore.setItemAsync('user_data', JSON.stringify(newUser));
       return newUser;
     });
   };
@@ -74,7 +73,7 @@ export const AuthProvider = ({ children }: any) => {
           setUser(userData);
         }
       } catch (e) {
-        console.error("Erro ao carregar dados", e);
+        console.error('Erro ao carregar dados', e);
       } finally {
         setLoading(false);
       }
@@ -106,14 +105,13 @@ export const AuthProvider = ({ children }: any) => {
         NIF,
         acceptedInvoiceTerms,
         Avatar,
-
       };
 
       await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
-      console.log("Login efetuado com sucesso:", userData);
+      console.log('Login efetuado com sucesso:', userData);
     } catch (e) {
-      console.error("Erro ao guardar login", e);
+      console.error('Erro ao guardar login', e);
     }
   };
 
@@ -121,9 +119,9 @@ export const AuthProvider = ({ children }: any) => {
     try {
       await SecureStore.deleteItemAsync(STORAGE_KEY);
       setUser(null);
-      router.replace({ pathname: "/(accountCreation)/Login" });
+      router.replace({ pathname: '/(accountCreation)/Login' });
     } catch (e) {
-      console.error("Erro no logout:", e);
+      console.error('Erro no logout:', e);
     }
   };
 
@@ -137,7 +135,7 @@ export const AuthProvider = ({ children }: any) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 };

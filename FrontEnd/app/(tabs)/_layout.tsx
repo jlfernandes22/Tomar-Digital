@@ -26,19 +26,19 @@ const _layout = () => {
           if (!options.tabBarIcon || options.href === null) return false;
 
           // Regras de acesso restrito baseadas no Role do utilizador
-          if (route.name === 'CamaraIndex' && user?.role !== 'camara')
+          if (route.name === 'MunicipalIndex' && user?.role !== 'camara')
             return false;
           if (route.name === 'DashboardTab' && user?.role !== 'camara')
             return false;
-          if (route.name === 'AddBusiness' && user?.role !== 'comerciante')
+          if (route.name === 'BusinessAdd' && user?.role !== 'comerciante')
             return false;
-          if (route.name === 'MeusNegocios' && user?.role !== 'comerciante')
+          if (route.name === 'BusinessMine' && user?.role !== 'comerciante')
             return false;
-          if (route.name === 'JoinCampaign' && user?.role !== 'comerciante')
+          if (route.name === 'CampaignJoin' && user?.role !== 'comerciante')
             return false;
           if (route.name === 'ScanScreen') return false;
-          if (route.name === 'EditProfile') return false;
-          if (route.name === 'CreateCampaign' && user?.role !== 'camara')
+          if (route.name === 'ProfileEdit') return false;
+          if (route.name === 'CampaignCreate' && user?.role !== 'camara')
             return false;
 
           return true;
@@ -136,7 +136,7 @@ const _layout = () => {
       />
 
       <Tabs.Screen
-        name="CamaraIndex"
+        name="MunicipalIndex"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.camaraImg} color={color} />
@@ -145,7 +145,7 @@ const _layout = () => {
       />
 
       <Tabs.Screen
-        name="MeusNegocios"
+        name="BusinessMine"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.bagImg} color={color} />
@@ -154,7 +154,7 @@ const _layout = () => {
       />
 
       <Tabs.Screen
-        name="AddBusiness"
+        name="BusinessAdd"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.addImg} color={color} />
@@ -163,7 +163,7 @@ const _layout = () => {
       />
 
       <Tabs.Screen
-        name="JoinCampaign"
+        name="CampaignJoin"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.campaignImg} color={color} />
@@ -179,7 +179,7 @@ const _layout = () => {
         }}
       />
       <Tabs.Screen
-        name="CreateCampaign"
+        name="CampaignCreate"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.campaignImg} color={color} />

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
-import DetalhesCampanha from '@/app/components/DetalhesCampanha';
+import DetalhesCampanha from '@/app/components/CampaignDetails';
 import { useAppTheme } from '@/context/ThemeContext';
 
 export default function JoinCampaign() {
@@ -29,43 +29,41 @@ export default function JoinCampaign() {
     setShowDetails(true);
   };
 
-  
-  
-
   const fetchCampaigns = async () => {
-  setLoading(true); 
-  
-  try {
-    const isComerciante = user?.role === "comerciante"; 
-    
-    const url = isComerciante 
-      ? `${API_URL}/campanhas/comerciante-disponiveis` 
-      : `${API_URL}/listaCampanhas`;
+    setLoading(true);
 
-    const config: RequestInit = isComerciante ? {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${user?.token}` 
-      }
-    } : {
-      method: "GET"
-    };
+    try {
+      const isComerciante = user?.role === 'comerciante';
 
-    console.log("A buscar campanhas em:", url);
-    const response = await fetch(url, config);
-        console.log("Resposta da API:", response);
+      const url = isComerciante
+        ? `${API_URL}/campanhas/comerciante-disponiveis`
+        : `${API_URL}/listaCampanhas`;
 
-    const dados = await response.json();
-    setListCampaign(dados);
+      const config: RequestInit = isComerciante
+        ? {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${user?.token}`,
+            },
+          }
+        : {
+            method: 'GET',
+          };
 
-  } catch (error) {
-    console.error("Erro fatal no fetchCampaigns:", error);
-    setListCampaign([]); 
-  } finally {
-    setLoading(false);
-  }
-};
+      console.log('A buscar campanhas em:', url);
+      const response = await fetch(url, config);
+      console.log('Resposta da API:', response);
+
+      const dados = await response.json();
+      setListCampaign(dados);
+    } catch (error) {
+      console.error('Erro fatal no fetchCampaigns:', error);
+      setListCampaign([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderItem = ({ item }: { item: any }) => (
     <Card
@@ -74,11 +72,16 @@ export default function JoinCampaign() {
     >
       <Card.Content>
         <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-          {String(item.titulo || t('common.no_title', { defaultValue: 'Sem título' }))}
+          {String(
+            item.titulo || t('common.no_title', { defaultValue: 'Sem título' }),
+          )}
         </Text>
 
         <Text variant="bodyMedium" style={{ marginTop: 8 }}>
-          {String(item.descricao || t('common.no_description', { defaultValue: 'Sem descrição' }))}
+          {String(
+            item.descricao ||
+              t('common.no_description', { defaultValue: 'Sem descrição' }),
+          )}
         </Text>
 
         <View
@@ -151,16 +154,16 @@ export default function JoinCampaign() {
         )}
 
         {/* 3.Modal */}
-       {showDetails && selectedCampaign && (
-        <DetalhesCampanha
-          visible={showDetails}
-          campaign={selectedCampaign}
-          onClose={() => {
+        {showDetails && selectedCampaign && (
+          <DetalhesCampanha
+            visible={showDetails}
+            campaign={selectedCampaign}
+            onClose={() => {
               setShowDetails(false);
               setSelectedCampaign(null); // Limpa a seleção ao fechar
-          }}
-        />
-      )}
+            }}
+          />
+        )}
       </SafeAreaView>
     </Surface>
   );

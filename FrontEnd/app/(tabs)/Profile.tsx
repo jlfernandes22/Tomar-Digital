@@ -1,5 +1,5 @@
-import React from "react";
-import MenuPerfil from "../components/MenuPerfil";
+import React from 'react';
+import MenuPerfil from '../components/ProfileMenu';
 
 const Profile = () => {
   return <MenuPerfil />;

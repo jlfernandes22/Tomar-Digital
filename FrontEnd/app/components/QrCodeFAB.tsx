@@ -19,9 +19,9 @@ const QrCodeFAB = () => {
 
   const isScanScreen = segments.includes('ScanScreen');
 
-  const isCreateCampaign = segments.includes('CreateCampaign');
+  const isCreateCampaign = segments.includes('CampaignCreate');
 
-  const isAddBusiness = segments.includes('AddBusiness');
+  const isAddBusiness = segments.includes('BusinessAdd');
 
   // If ANY of these are true, don't render the button
   if (
