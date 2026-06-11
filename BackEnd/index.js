@@ -1,29 +1,33 @@
+// 1. O dotenv tem de ser SEMPRE a primeira coisa a ser carregada!
+import "dotenv/config"; 
+
+// 2. Bibliotecas de terceiros
 import express from "express";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User from "./models/User.js";
-import Business from "./models/Business.js";
-import Favorite from "./models/Favorite.js";
-import { authorize } from "./middleware/auth.js";
-import Campaign from "./models/Campaign.js";
-import Cae from "./models/Cae.js";
-import "dotenv/config";
-import Invoice from "./models/Invoice.js";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import sharp from "sharp";
-import PedidosComerciante from "./models/PedidosComerciante.js";
-import Tesseract from 'tesseract.js';
-import CitiesAndCountries from "./models/CitiesAndCountries.js"
-import CitiesAncCountries from "./models/CitiesAndCountries.js";
+import Tesseract from "tesseract.js";
 import { DocumentAnalysisClient, AzureKeyCredential } from "@azure/ai-form-recognizer";
 import nodemailer from "nodemailer";
+
+// 3. Os teus modelos e middlewares locais
+import User from "./models/User.js";
+import Business from "./models/Business.js";
+import Favorite from "./models/Favorite.js";
+import Campaign from "./models/Campaign.js";
+import Cae from "./models/Cae.js";
+import Invoice from "./models/Invoice.js";
+import PedidosComerciante from "./models/PedidosComerciante.js";
+import CitiesAndCountries from "./models/CitiesAndCountries.js"; // Corrigido e limpo!
+import { authorize } from "./middleware/auth.js";
 // ============================================================================
 // 1. CONFIGURAÇÃO BASE DO SERVIDOR E MIDDLEWARES
 // ============================================================================
@@ -231,45 +235,60 @@ app.get('/mostrarImagem/:id', async (req, res) => {
 //Registar utilizador
 app.post("/registar", strictLimiter, async (req, res) => {
   try {
-    const { email, password, city ,name} = req.body;
-
-    
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Palavra-passe não coincide" });
+    console.log("pedido recebido")
+    const rawEmail = req.body.email;
+    const email = rawEmail.toLowerCase().trim();
+    const { password, city } = req.body;
+    const name =  req.body.email;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        return res.status(400).json({ message: "Este email já está registado." });
     }
-
-   
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
-
     
+    console.log("Dados recebidos:\nEmail: "+email+"\nPassword: "+password+"\ncidade: "+city)
+    
+    
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
+    console.log("Código de validação do utilizador: "+code)
+
+
+
+    console.log("Criando utilizador na base de dados...")
     const newUser = new User({ 
       name,  
       email, 
-        password: await bcrypt.hash(password, 10), 
-        city,
-        codigoValidar: code, 
-        isVerified: false 
+      password: await bcrypt.hash(password, 10), 
+      city,
+      codigoValidar: code, 
+      isVerified: false 
     });
     
-    await newUser.save();
 
+    await newUser.save();
+     console.log("Utilizador criado")
     
+     console.log("Enviando email...")
     await transporter.sendMail({
         from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
         to: email,
         subject: 'Confirme a sua conta',
         html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
     });
-  }catch(err){
-    return res.status(400).json({message: err})
-  }})
+    console.log("Email enviado")
+
+    return res.status(200).json({ message: "Registo concluído com sucesso" });
+  } catch (err) {
+    console.error("Erro ao registar:", err);
+    return res.status(400).json({ message: err.message || "Erro no registo" });
+  }
+});
     
 
 
 app.post("/verificar-codigo", strictLimiter, async (req, res) => {
- 
-
-  const { email, code } = req.body;
+ const rawEmail = req.body.email;
+  const email = rawEmail.toLowerCase().trim();
+  const code = req.body.code;
   const user = await User.findOne({ email: email });
 
   if (!user) {

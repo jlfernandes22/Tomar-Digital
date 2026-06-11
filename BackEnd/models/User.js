@@ -52,6 +52,8 @@ const UserSchema = new mongoose.Schema({
   },
 
   codigoValidar: {type: String},
+
+  isVerified: {type: Boolean, required:true}
 });
 
 export default mongoose.model("User", UserSchema);
