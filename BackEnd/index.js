@@ -231,9 +231,8 @@ app.get('/mostrarImagem/:id', async (req, res) => {
 //Registar utilizador
 app.post("/registar", strictLimiter, async (req, res) => {
   try {
-    const { email, password, city ,name} = req.body;
+    const { email, password, confirmPassword, city, name } = req.body;
 
-    
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Palavra-passe não coincide" });
     }
@@ -260,9 +259,11 @@ app.post("/registar", strictLimiter, async (req, res) => {
         subject: 'Confirme a sua conta',
         html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
     });
-  }catch(err){
-    return res.status(400).json({message: err})
-  }})
+  } catch (err) {
+    console.error("Erro ao registar:", err);
+    return res.status(400).json({ message: err.message || "Erro no registo" });
+  }
+});
     
 
 
