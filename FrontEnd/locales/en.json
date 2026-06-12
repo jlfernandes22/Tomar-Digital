@@ -6,7 +6,7 @@
     "login_button": "Log in",
     "success": "Success!",
     "error_login": "Error:\n",
-    "error_server": "Error: Unable to contact the server."
+    "error_server": "Unable to contact the server."
   },
   "register": {
     "title": "Create account",
@@ -15,12 +15,12 @@
     "password": "Password",
     "confirm_password": "Confirm Password",
     "register_button": "Create Account",
-    "warning_empty": "Warning:Please fill in at least email and password.",
-    "warning_mismatch": "Warning:Passwords do not match!",
+    "warning_empty": "Please fill in at least email and password.",
+    "warning_mismatch": "Passwords do not match!",
     "success": "Success:Redirecting...",
     "error": "Error:",
     "error_generic": "Could not create account.",
-    "error_server": "Error:Please check your internet connection."
+    "error_server": "Please check your internet connection."
   },
   "common": {
     "error_429": "Too many requests! Please wait a few minutes and try again.",
@@ -80,9 +80,9 @@
     "search_near": "Search businesses near me",
     "see_on_map": "SEE ON MAP",
     "error_apple_maps": "Could not open Apple Maps",
-    "warning_session": "Warning:\nYou must be logged in to save favorites",
-    "error_update_fav": "Error:\n Could not update favorites.",
-    "warning_no_nearby": "Warning:\nThere are no businesses nearby"
+    "warning_session": "You must be logged in to save favorites",
+    "error_update_fav": "Could not update favorites.",
+    "warning_no_nearby": "There are no businesses nearby"
   },
   "saved": {
     "title": "My Favorites",
@@ -139,8 +139,8 @@
     "submit": "Submit and register business",
     "error_load_image": "Error loading image: {{error}}",
     "error_load_gallery": "Error loading gallery: {{error}}",
-    "error_session_expired": "Error: Session expired.",
-    "error_mandatory_fields": "Error:\nPlease fill in all required fields.",
+    "error_session_expired": "Session expired.",
+    "error_mandatory_fields": "Please fill in all required fields.",
     "success_registered": "Success! Business registered.",
     "error_registration": "Registration error.",
     "error_server_conn": "Server connection error.",
@@ -235,7 +235,7 @@
     "select_business_step1": "1. Select the business:",
     "confirm_join_campaign": "Confirm joining the campaign \"{{title}}\"?",
     "expires_label": "Expires:",
-    "error_empty_pack": "Error: Fill in the description, cost, and stock of the pack.",
+    "error_empty_pack": "Fill in the description, cost, and stock of the pack.",
     "success_add_pack": "Pack added successfully!",
     "error_format_pack": "Error formatting pack data.",
     "need_photo_logo": "We need access to your photos to upload the campaign logo!",
@@ -246,7 +246,7 @@
     "upload_logo": "Upload Logo",
     "change_flyer": "Change Flyer",
     "upload_flyer": "Upload Flyer",
-    "error_no_packs": "Error: Add packs.",
+    "error_no_packs": "Add packs.",
     "success_created": "Campaign created!",
     "error_network": "Network or upload error.",
     "success_status": "Application {{status}} successfully!"
@@ -379,8 +379,8 @@
     "citizens": "Citizens",
     "print_report": "Print report",
     "save_report": "Save report",
-    "error_server_data": "Error: Server did not return data successfully.",
-    "error_load_stats": "Error: Could not load statistics.",
+    "error_server_data": "Server did not return data successfully.",
+    "error_load_stats": "Could not load statistics.",
     "others": "Others",
     "cities_pt": "Cities of Portugal",
     "no_cities_data": "No data for cities in Portugal.",

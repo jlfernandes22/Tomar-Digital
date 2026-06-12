@@ -15,6 +15,7 @@ import {
 } from 'react-native-paper';
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
 import { curiosidades } from '@/constants/curiosities';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,9 @@ const Saved = () => {
   const [loading, setLoading] = useState(true);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
   const { currentTheme: theme } = useAppTheme();
 
   const carregarFavoritos = async () => {
@@ -51,8 +55,9 @@ const Saved = () => {
 
       setFavoritos(listaFinal);
     } catch (error) {
-      setSnackbarMessage(t('common.error') + '\n' + error);
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('common.error') + '\n' + error);
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -84,8 +89,9 @@ const Saved = () => {
       } else {
         // Se falhar no servidor, recarregamos para repor o item na lista
         carregarFavoritos();
-        setSnackbarMessage(t('common.error'));
-        setSnackbarVisible(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('common.error'));
+        setDialogVisible(true);
       }
     } catch (error) {
       carregarFavoritos();
@@ -276,6 +282,13 @@ const Saved = () => {
         message={snackbarMessage}
         onDismiss={() => setSnackbarVisible(false)}
       />
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <Text>{dialogText}</Text>
+      </CustomDialog>
     </SafeAreaView>
   );
 };

@@ -235,48 +235,66 @@ app.get('/mostrarImagem/:id', async (req, res) => {
 //Registar utilizador
 app.post("/registar", strictLimiter, async (req, res) => {
   try {
-    console.log("pedido recebido")
+    console.log("Pedido recebido");
+    
+    // 1. Limpar e preparar os dados
     const rawEmail = req.body.email;
     const email = rawEmail.toLowerCase().trim();
     const { password, city } = req.body;
-    const name =  req.body.email;
+    const name = req.body.email;
+    
+    // Gerar o código uma única vez para usar em qualquer dos casos
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
+
+    // 2. Procurar utilizador existente
     const existingUser = await User.findOne({ email });
+    
     if (existingUser) {
-        return res.status(400).json({ message: "Este email já está registado." });
+      if (existingUser.isVerified) {
+        // Já existe e está verificado: Bloquear!
+        return res.status(400).json({ message: "Este email já está associado a outra conta." });
+      } else {
+        // Já existe mas NÃO está verificado: ATUALIZAR (Update)
+        console.log("Atualizando utilizador não verificado na base de dados...");
+        
+        existingUser.name = name;
+        existingUser.password = await bcrypt.hash(password, 10);
+        existingUser.city = city;
+        existingUser.codigoValidar = code;
+        
+        await existingUser.save(); // O Mongoose faz o update automático
+        console.log("Utilizador atualizado com novos dados e novo código.");
+      }
+    } else {
+      // Não existe: CRIAR NOVO (Insert)
+      console.log("Criando novo utilizador na base de dados...");
+      
+      const newUser = new User({ 
+        name,  
+        email, 
+        password: await bcrypt.hash(password, 10), 
+        city,
+        codigoValidar: code, 
+        isVerified: false 
+      });
+      
+      await newUser.save();
+      console.log("Novo utilizador criado.");
     }
     
-    console.log("Dados recebidos:\nEmail: "+email+"\nPassword: "+password+"\ncidade: "+city)
-    
-    
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
-    console.log("Código de validação do utilizador: "+code)
-
-
-
-    console.log("Criando utilizador na base de dados...")
-    const newUser = new User({ 
-      name,  
-      email, 
-      password: await bcrypt.hash(password, 10), 
-      city,
-      codigoValidar: code, 
-      isVerified: false 
-    });
-    
-
-    await newUser.save();
-     console.log("Utilizador criado")
-    
-     console.log("Enviando email...")
+    // 3. Enviar o Email (Este código agora corre para AMBOS os casos acima)
+    console.log("Enviando email...");
     await transporter.sendMail({
         from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
         to: email,
         subject: 'Confirme a sua conta',
         html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
     });
-    console.log("Email enviado")
+    console.log("Email enviado");
 
+    // 4. Responder ao Frontend
     return res.status(200).json({ message: "Registo concluído com sucesso" });
+
   } catch (err) {
     console.error("Erro ao registar:", err);
     return res.status(400).json({ message: err.message || "Erro no registo" });
@@ -332,10 +350,16 @@ app.post("/verificar-codigo", strictLimiter, async (req, res) => {
  */
 app.post("/iniciarSessao", strictLimiter, async (req, res) => {
   const { email, password } = req.body;
+  console.log(req.body)
   try {
     const user = await User.findOne({ email: email });
+    console.log(user)
     if (!user) {
       return res.status(400).json({ message: "Conta não existe" });
+    }
+
+    if(!user.isVerified){
+      return res.status(400).json({message: "Por favor valide a sua conta"})
     }
 
     // Comparação do Hash guardado com a password em plain-text inserida

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, FlatList, Alert, RefreshControl } from 'react-native';
+import { View, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,8 @@ import {
   Appbar,
 } from 'react-native-paper';
 import CustomButton from './CustomButton';
+import CustomDialog from './CustomDialog';
+import CustomSnackBar from './CustomSnackBar';
 import { curiosidades } from '@/constants/curiosities';
 
 interface Candidatura {
@@ -34,6 +36,13 @@ export default function CandidaturasCampanha() {
   const { user } = useAuth();
   const theme = useTheme();
 
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
+
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
   const carregarCandidaturas = async () => {
     try {
       const response = await fetch(`${API_URL}/candidaturasCampanha`, {
@@ -46,7 +55,9 @@ export default function CandidaturasCampanha() {
       setCandidaturas(data);
     } catch (err) {
       console.error('Erro ao carregar:', err);
-      Alert.alert(t('common.error'), t('campaign.error_load'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('campaign.error_load'));
+      setDialogVisible(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -81,19 +92,20 @@ export default function CandidaturasCampanha() {
             c => !(c.businessId === businessId && c.campaignId === campaignId),
           ),
         );
-        Alert.alert(
-          t('common.success'),
+        setSnackbarMessage(
           t('campaign.success_status', {
             status: t(`common.${novoStatus}`, { defaultValue: novoStatus }),
             defaultValue: `Candidatura ${novoStatus} com sucesso!`,
           }),
         );
+        setSnackbarVisible(true);
       } else {
-        Alert.alert(
-          t('common.error'),
+        setDialogTitle(t('common.error'));
+        setDialogText(
           data.message ||
             t('common.error_process', { defaultValue: 'Erro ao processar' }),
         );
+        setDialogVisible(true);
       }
     } catch (err) {
       console.error('Erro na decisão:', err);
@@ -291,6 +303,18 @@ export default function CandidaturasCampanha() {
           }
         />
       </SafeAreaView>
+      <CustomSnackBar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <Text>{dialogText}</Text>
+      </CustomDialog>
     </>
   );
 }

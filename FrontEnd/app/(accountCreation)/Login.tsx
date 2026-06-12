@@ -18,8 +18,9 @@ import CustomButton from '../components/CustomButton';
 import CustomTextField from '../components/CustomTextInput';
 import { delay } from '../../utils/delay';
 import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Surface } from 'react-native-paper';
+import { Surface, Text as PaperText } from 'react-native-paper';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +30,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -46,8 +50,9 @@ const Login = () => {
       console.log(`${API_URL}/iniciarSessao`);
 
       if (response.status === 429) {
-        setSnackbarMessage(t('common.error_429'));
-        setSnackbarVisible(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('common.error_429'));
+        setDialogVisible(true);
         setLoading(false);
         return;
       }
@@ -88,13 +93,15 @@ const Login = () => {
         }
       } else {
         setLoading(false);
-        setSnackbarMessage(t('login.error_login') + dados.message);
-        setSnackbarVisible(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('login.error_login') + dados.message);
+        setDialogVisible(true);
       }
     } catch (error) {
       setLoading(false);
-      setSnackbarMessage(t('login.error_server'));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('login.error_server'));
+      setDialogVisible(true);
     }
   };
 
@@ -190,6 +197,13 @@ const Login = () => {
             message={snackbarMessage}
             onDismiss={() => setSnackbarVisible(false)}
           />
+          <CustomDialog
+            title={dialogTitle}
+            visible={dialogVisible}
+            onDismiss={() => setDialogVisible(false)}
+          >
+            <PaperText>{dialogText}</PaperText>
+          </CustomDialog>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

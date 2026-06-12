@@ -2,7 +2,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   ActivityIndicator,
-  Alert,
   Linking,
   Platform,
   LayoutAnimation,
@@ -26,6 +25,7 @@ import { API_URL } from '@/constants/api';
 import Map from '../components/Map';
 import BusinessList from '../components/BusinessList';
 import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import { useAuth } from '@/context/AuthContext';
 import CustomChip from '../components/CustomChip';
 import { calcularDistancia } from '../../utils/locationUtils';
@@ -51,6 +51,9 @@ export default function Index() {
   const { currentTheme: theme } = useAppTheme();
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
   const [showCloseBusiness, setShowCloseBusiness] = useState(false);
   //vair ser usado para fazer zoom em qual dos negócios estiver perto do utilizador
   const [itemVisivelId, setItemVisivelId] = useState<string | null>(null);
@@ -129,8 +132,9 @@ export default function Index() {
   // 3. Alternar Favorito (Guardar/Retirar)
   const toggleFavorite = async (businessId: string) => {
     if (!user?.id) {
-      //trocar para snackbar
-      setSnackbarMessage(t('home.warning_session'));
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('home.warning_session'));
+      setDialogVisible(true);
       return;
     }
 
@@ -168,8 +172,9 @@ export default function Index() {
         setIdsFavorite(prev => prev.filter(id => id !== businessId));
       }
 
-      setSnackbarMessage(t('home.error_update_fav'));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('home.error_update_fav'));
+      setDialogVisible(true);
     } finally {
       setLoadingFav(false);
     }
@@ -220,8 +225,9 @@ export default function Index() {
     });
 
     if (closeBiz.length === 0 && isManualClick) {
-      setSnackbarMessage(t('home.warning_no_nearby'));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('home.warning_no_nearby'));
+      setDialogVisible(true);
       setLoading(false);
     }
 
@@ -555,12 +561,11 @@ export default function Index() {
 
                     if (Platform.OS === 'ios') {
                       const url = `maps://?q=${negocioSelecionado.name}&ll=${lat},${long}`;
-                      Linking.openURL(url).catch(() =>
-                        Alert.alert(
-                          t('common.error'),
-                          t('home.error_apple_maps'),
-                        ),
-                      );
+                      Linking.openURL(url).catch(() => {
+                        setDialogTitle(t('common.error'));
+                        setDialogText(t('home.error_apple_maps'));
+                        setDialogVisible(true);
+                      });
                     } else {
                       const url = `geo:${lat},${long}?q=${lat},${long}(${negocioSelecionado.name})`;
                       Linking.canOpenURL(url).then(supported => {
@@ -790,12 +795,11 @@ export default function Index() {
                           if (Platform.OS === 'ios') {
                             // Protocolo URL Scheme nativo para o Apple Maps
                             const url = `maps://?q=${item.name}&ll=${lat},${long}`;
-                            Linking.openURL(url).catch(() =>
-                              Alert.alert(
-                                t('common.error'),
-                                t('home.error_apple_maps'),
-                              ),
-                            );
+                            Linking.openURL(url).catch(() => {
+                              setDialogTitle(t('common.error'));
+                              setDialogText(t('home.error_apple_maps'));
+                              setDialogVisible(true);
+                            });
                           } else {
                             // Protocolo Geo URI para integração com Google Maps no Android
                             const url = `geo:${lat},${long}?q=${lat},${long}(${item.name})`;
@@ -878,6 +882,13 @@ export default function Index() {
         onDismiss={() => setSnackbarVisible(false)}
         message={snackbarMessage}
       />
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <Text>{dialogText}</Text>
+      </CustomDialog>
     </View>
   );
 }

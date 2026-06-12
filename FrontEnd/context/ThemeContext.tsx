@@ -13,12 +13,18 @@ import { appThemes } from "../constants/themes";
 export type ModeType = "system" | "light" | "dark";
 export type PaletteType = "convento" | "mata" | "tabuleiros";
 
+export interface AppTheme extends MD3Theme {
+  colors: MD3Theme['colors'] & {
+    surfaceContainer: string;
+  };
+}
+
 interface ThemeContextType {
   userMode: ModeType;
   setUserMode: (mode: ModeType) => Promise<void>;
   userPalette: PaletteType;
   setUserPalette: (palette: PaletteType) => Promise<void>;
-  currentTheme: MD3Theme;
+  currentTheme: AppTheme;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   View,
   FlatList,
-  Alert,
   RefreshControl,
   Dimensions,
 } from 'react-native';
@@ -20,12 +19,15 @@ import {
   Portal,
   IconButton,
   Appbar,
+  Dialog,
 } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import CustomButton from './CustomButton';
+import CustomDialog from './CustomDialog';
+import CustomSnackBar from './CustomSnackBar';
 import { useAppTheme } from '@/context/ThemeContext';
 import { curiosidades } from '@/constants/curiosities';
 
@@ -52,6 +54,16 @@ export default function AprovarComerciantes() {
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [nomePdfAtual, setNomePdfAtual] = useState('');
 
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
+
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const [discardDialogVisible, setDiscardDialogVisible] = useState(false);
+  const [discardId, setDiscardId] = useState<string | null>(null);
+
   const carregarDados = useCallback(async () => {
     if (!user?.token) {
       setLoading(false);
@@ -71,10 +83,14 @@ export default function AprovarComerciantes() {
         const data = await response.json();
         setPendentes(data);
       } else {
-        Alert.alert(t('common.error'), t('camara.error_list'));
+        setDialogTitle(t('common.error'));
+        setDialogText(t('camara.error_list'));
+        setDialogVisible(true);
       }
     } catch (error) {
-      Alert.alert(t('common.error'), t('camara.error_load'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_load'));
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -89,7 +105,9 @@ export default function AprovarComerciantes() {
     try {
       await carregarDados();
     } catch (err) {
-      Alert.alert(t('common.error'), t('camara.error_load_info'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_load_info'));
+      setDialogVisible(true);
     } finally {
       setRefreshing(false);
     }
@@ -98,7 +116,9 @@ export default function AprovarComerciantes() {
   // Função adaptada para baixar da URL e exibir no Modal idêntico ao SerComerciante
   const handleVerPDF = async (url?: string, tituloLoja?: string) => {
     if (!url) {
-      Alert.alert(t('common.warning'), t('camara.no_pdf'));
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('camara.no_pdf'));
+      setDialogVisible(true);
       return;
     }
 
@@ -137,7 +157,9 @@ export default function AprovarComerciantes() {
       setVisible(true);
     } catch (error) {
       console.error('Erro ao converter PDF:', error);
-      Alert.alert(t('common.error'), t('camara.error_pdf'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_pdf'));
+      setDialogVisible(true);
     } finally {
       setLoadingPdf(false);
     }
@@ -147,39 +169,36 @@ export default function AprovarComerciantes() {
     setPdf64(null);
   };
 
-  const handleDescartar = async (id: string) => {
-    Alert.alert(t('common.confirm'), t('camara.reject_confirm'), [
-      {
-        text: t('common.cancel', { defaultValue: 'Cancelar' }),
-        style: 'cancel',
-      },
-      {
-        text: t('common.discard', { defaultValue: 'Descartar' }),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const response = await fetch(
-              `${API_URL}/apagarPedidoComerciante/${id}`,
-              {
-                method: 'DELETE',
-                headers: {
-                  Authorization: `Bearer ${user?.token}`,
-                  'Content-Type': 'application/json',
-                },
-              },
-            );
+  const handleDescartar = (id: string) => {
+    setDiscardId(id);
+    setDiscardDialogVisible(true);
+  };
 
-            if (response.ok) {
-              setPendentes(prev => prev.filter(item => item._id !== id));
-            } else {
-              Alert.alert(t('common.error'), t('camara.server_reject'));
-            }
-          } catch (error) {
-            Alert.alert(t('common.error'), t('camara.fail_discard'));
-          }
+  const executeDescartar = async (id: string) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/apagarPedidoComerciante/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    ]);
+      );
+
+      if (response.ok) {
+        setPendentes(prev => prev.filter(item => item._id !== id));
+      } else {
+        setDialogTitle(t('common.error'));
+        setDialogText(t('camara.server_reject'));
+        setDialogVisible(true);
+      }
+    } catch (error) {
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.fail_discard'));
+      setDialogVisible(true);
+    }
   };
 
   const handleAprovar = async (id: string) => {
@@ -199,16 +218,18 @@ export default function AprovarComerciantes() {
 
       if (response.ok) {
         setPendentes(prev => prev.filter(item => item._id !== id));
-        Alert.alert(t('common.success'), t('camara.approved'));
+        setSnackbarMessage(t('camara.approved'));
+        setSnackbarVisible(true);
       } else {
         console.log('Erro do servidor:', result);
-        Alert.alert(
-          t('common.error'),
-          result.message || t('camara.server_reject_approve'),
-        );
+        setDialogTitle(t('common.error'));
+        setDialogText(result.message || t('camara.server_reject_approve'));
+        setDialogVisible(true);
       }
     } catch (error) {
-      Alert.alert(t('common.error'), t('camara.error_conn'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_conn'));
+      setDialogVisible(true);
     }
   };
 
@@ -483,7 +504,57 @@ export default function AprovarComerciantes() {
             />
           )}
         </Modal>
+
+        {/* Custom discard confirmation dialog */}
+        <Dialog
+          visible={discardDialogVisible}
+          onDismiss={() => setDiscardDialogVisible(false)}
+          style={{ backgroundColor: theme.colors.surface }}
+        >
+          <Dialog.Title>{t('common.confirm')}</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: theme.colors.onSurface }}>
+              {t('camara.reject_confirm', { defaultValue: 'Tens a certeza que queres descartar este pedido?' })}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <CustomButton
+              onPress={() => setDiscardDialogVisible(false)}
+              buttonColor={theme.colors.surfaceVariant}
+              textColor={theme.colors.onSurface}
+            >
+              {t('common.cancel', { defaultValue: 'Cancelar' })}
+            </CustomButton>
+            <CustomButton
+              onPress={async () => {
+                setDiscardDialogVisible(false);
+                if (discardId) {
+                  await executeDescartar(discardId);
+                  setDiscardId(null);
+                }
+              }}
+              buttonColor={theme.colors.error}
+              textColor={theme.colors.onError}
+            >
+              {t('common.discard', { defaultValue: 'Descartar' })}
+            </CustomButton>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
+
+      <CustomSnackBar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
+
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <Text>{dialogText}</Text>
+      </CustomDialog>
     </>
   );
 }

@@ -16,6 +16,7 @@ import { delay } from '../../utils/delay';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import CustomChip from '../components/CustomChip';
 import { pickImage } from '@/utils/imagePicker';
 import { router } from 'expo-router';
@@ -54,6 +55,11 @@ export default function AddBusiness() {
 
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
+
   const { currentTheme: theme } = useAppTheme();
 
   const categories = [
@@ -93,8 +99,9 @@ export default function AddBusiness() {
         setFormData({ ...formData, logotipoNegocio: resultado });
       }
     } catch (error: any) {
-      setSnackbarMessage(t('addBusiness.error_load_image', { error: error.message, defaultValue: `Erro ao carregar imagem: ${error.message}` }));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('addBusiness.error_load_image', { error: error.message, defaultValue: `Erro ao carregar imagem: ${error.message}` }));
+      setDialogVisible(true);
     }
   };
 
@@ -138,15 +145,17 @@ export default function AddBusiness() {
         });
       }
     } catch (error: any) {
-      setSnackbarMessage(t('addBusiness.error_load_gallery', { error: error.message, defaultValue: `Erro ao carregar galeria: ${error.message}` }));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('addBusiness.error_load_gallery', { error: error.message, defaultValue: `Erro ao carregar galeria: ${error.message}` }));
+      setDialogVisible(true);
     }
   };
 
   const handleNewBusiness = async () => {
     if (!user?.token) {
-      setSnackbarMessage(t('addBusiness.error_session_expired', { defaultValue: 'Erro: Sessão expirada.' }));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('addBusiness.error_session_expired', { defaultValue: 'Erro: Sessão expirada.' }));
+      setDialogVisible(true);
       return;
     }
 
@@ -156,8 +165,9 @@ export default function AddBusiness() {
       !formData.telefoneDono ||
       !formData.emailDono
     ) {
-      setSnackbarMessage(t('addBusiness.error_mandatory_fields', { defaultValue: 'Erro:\nPor favor, preencha todos os campos obrigatórios.' }));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('addBusiness.error_mandatory_fields', { defaultValue: 'Erro:\nPor favor, preencha todos os campos obrigatórios.' }));
+      setDialogVisible(true);
       return;
     }
 
@@ -244,12 +254,14 @@ export default function AddBusiness() {
         router.back();
         setStep(1);
       } else {
-        setSnackbarMessage(data.message || t('addBusiness.error_registration', { defaultValue: 'Erro no registo.' }));
-        setSnackbarVisible(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(data.message || t('addBusiness.error_registration', { defaultValue: 'Erro no registo.' }));
+        setDialogVisible(true);
       }
     } catch (error) {
-      setSnackbarMessage(t('addBusiness.error_server_conn', { defaultValue: 'Erro de ligação ao servidor.' }));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('addBusiness.error_server_conn', { defaultValue: 'Erro de ligação ao servidor.' }));
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -735,6 +747,13 @@ export default function AddBusiness() {
         message={snackbarMessage}
         onDismiss={() => setSnackbarVisible(false)}
       />
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <Text>{dialogText}</Text>
+      </CustomDialog>
     </Surface>
   );
 }
