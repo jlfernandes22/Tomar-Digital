@@ -1,5 +1,4 @@
 import {
-  Alert,
   ScrollView,
   View,
   useWindowDimensions,
@@ -28,7 +27,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import CustomButton from './CustomButton';
-import CustomSnackBar from './CustomSnackBar';
+import CustomDialog from './CustomDialog';
 import WebView from 'react-native-webview';
 import { DashboardPdf } from '@/constants/html/DashboardPdf';
 import { exportDashboardToExcel } from '@/constants/excelUtils';
@@ -40,7 +39,11 @@ const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
 
-  const [allInfo, setAllInfo] = useState({
+  const [allInfo, setAllInfo] = useState<{
+    categories: any[];
+    cities: any[];
+    countries: any[];
+  }>({
     categories: [],
     cities: [],
     countries: [],
@@ -54,8 +57,9 @@ const Dashboard = () => {
   const [pdfDialogVisible, setPdfDialogVisible] = useState(false);
   const [html, setHtml] = useState('');
 
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
 
   const chartWidth = screenWidth - 64;
   const chartHeight = 220;
@@ -93,20 +97,22 @@ const Dashboard = () => {
           totalBusinesses: data.totalBusinesses || 0,
         });
       } else {
-        setSnackbarMessage(
+        setDialogTitle(t('common.error'));
+        setDialogText(
           t('dashboard.error_server_data', {
             defaultValue: 'Erro: Servidor não devolveu os dados com sucesso.',
           }),
         );
-        setSnackbarVisible(true);
+        setDialogVisible(true);
       }
     } catch (error) {
-      setSnackbarMessage(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('dashboard.error_load_stats', {
           defaultValue: 'Erro: Não foi possível carregar as estatísticas.',
         }),
       );
-      setSnackbarVisible(true);
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -248,12 +254,13 @@ const Dashboard = () => {
       setHtml(htmlContent);
       setPdfDialogVisible(true);
     } catch (error) {
-      setSnackbarMessage(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('dashboard.error_generate_pdf', {
           defaultValue: 'Erro ao gerar a pré-visualização do PDF.',
         }),
       );
-      setSnackbarVisible(true);
+      setDialogVisible(true);
     }
   }
 
@@ -262,12 +269,13 @@ const Dashboard = () => {
     try {
       await Print.printAsync({ html });
     } catch (error) {
-      setSnackbarMessage(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('dashboard.error_print_action', {
           defaultValue: 'Ação de impressão cancelada ou falhou.',
         }),
       );
-      setSnackbarVisible(true);
+      setDialogVisible(true);
     }
   };
 
@@ -294,12 +302,13 @@ const Dashboard = () => {
         UTI: 'com.adobe.pdf',
       });
     } catch (error) {
-      setSnackbarMessage(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('dashboard.error_save_pdf', {
           defaultValue: 'Erro ao tentar guardar o PDF.',
         }),
       );
-      setSnackbarVisible(true);
+      setDialogVisible(true);
     } finally {
       setPdfLoading(false);
       setPdfDialogVisible(false); // Fecha o dialog de qualquer forma
@@ -318,12 +327,13 @@ const Dashboard = () => {
 
     setExcelLoading(false);
     if (!result.success) {
-      setSnackbarMessage(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('dashboard.error_generate_excel', {
           defaultValue: 'Erro ao gerar ficheiro Excel.',
         }),
       );
-      setSnackbarVisible(true);
+      setDialogVisible(true);
     }
   };
 
@@ -567,7 +577,7 @@ const Dashboard = () => {
                     defaultValue: 'Tipologia de Negócios',
                   })}
                 </Text>
-                <View style={{ alignSelf: 'left', bottom: 40 }}>
+                <View style={{ alignSelf: 'flex-start', bottom: 40 }}>
                   {allInfo.categories.length > 0 ? (
                     <BarChart
                       data={formatBarData(allInfo.categories)}
@@ -749,11 +759,13 @@ const Dashboard = () => {
             </View>
           </Modal>
 
-          <CustomSnackBar
-            visible={snackbarVisible}
-            onDismiss={() => setSnackbarVisible(false)}
-            message={snackbarMessage}
-          />
+          <CustomDialog
+            title={dialogTitle}
+            visible={dialogVisible}
+            onDismiss={() => setDialogVisible(false)}
+          >
+            <Text>{dialogText}</Text>
+          </CustomDialog>
         </Portal>
       </SafeAreaView>
     </Surface>

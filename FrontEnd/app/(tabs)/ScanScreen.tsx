@@ -12,7 +12,8 @@ import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
 import { delay } from '../../utils/delay';
 import CustomSnackBar from '../components/CustomSnackBar';
-import { Checkbox, Dialog, Portal, Button } from 'react-native-paper';
+import CustomDialog from '../components/CustomDialog';
+import { Checkbox, Dialog, Portal, Button, Text as PaperText } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
@@ -33,8 +34,12 @@ export default function ScanScreen() {
   const isProcessing = useRef(false);
   const cameraRef = useRef<any>(null);
   const qrTimeoutRef = useRef<any>(null);
-  const [message, setMessage] = useState('');
-  const [visibility, setVisibility] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
 
   // Sincroniza o estado local com o AuthContext caso mude externamente
   useEffect(() => {
@@ -117,26 +122,28 @@ export default function ScanScreen() {
 
         if (response.ok) {
           updateUser({ acceptedInvoiceTerms: acceptedTerms });
-          setMessage(
+          setSnackbarMessage(
             acceptedTerms
               ? t('scan.terms_accepted_msg')
               : t('scan.terms_revoked_msg'),
           );
-          setVisibility(true);
+          setSnackbarVisible(true);
         } else {
           // Reverte o estado visual para sincronizar com o do contexto em caso de falha
           setAcceptedTerms(user?.acceptedInvoiceTerms || false);
-          setMessage(
+          setDialogTitle(t('common.error'));
+          setDialogText(
             `${t('scan.error_terms_update')}${result.message || t('common.error')}`,
           );
-          setVisibility(true);
+          setDialogVisible(true);
         }
       } catch (error) {
         console.error('Erro ao atualizar termos no servidor:', error);
         // Reverte o estado visual em caso de falha de ligação
         setAcceptedTerms(user?.acceptedInvoiceTerms || false);
-        setMessage(t('scan.error_comm_server'));
-        setVisibility(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('scan.error_comm_server'));
+        setDialogVisible(true);
       }
     }
   };
@@ -182,8 +189,9 @@ export default function ScanScreen() {
       });
 
       if (response.status === 429) {
-        setMessage(t('common.error_429'));
-        setVisibility(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('common.error_429'));
+        setDialogVisible(true);
         setLoading(false);
         return;
       }
@@ -193,32 +201,34 @@ export default function ScanScreen() {
       if (response.ok) {
         updateUser({ Points: result.saldoAtual ?? result.novoSaldoTotal });
 
-        setMessage(
+        setSnackbarMessage(
           t('scan.success_earned', {
             pontos: result.pontosGanhos,
             saldo: result.saldoAtual,
           }),
         );
-        setVisibility(true);
+        setSnackbarVisible(true);
         await delay(1500);
         router.replace('/(tabs)/Home');
       } else {
-        setMessage(
+        setDialogTitle(t('common.error'));
+        setDialogText(
           t('scan.error_validation', {
             msg: result.message || result.erro || t('common.error'),
           }),
         );
-        setVisibility(true);
+        setDialogVisible(true);
         isProcessing.current = false;
       }
     } catch (error: any) {
       console.error(error);
-      setMessage(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('scan.error_validation', {
           msg: error.message || t('scan.error_connection'),
         }),
       );
-      setVisibility(true);
+      setDialogVisible(true);
       isProcessing.current = false;
     } finally {
       setLoading(false);
@@ -389,10 +399,17 @@ export default function ScanScreen() {
       )}
 
       <CustomSnackBar
-        visible={visibility}
-        onDismiss={() => setVisibility(false)}
-        message={message}
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        message={snackbarMessage}
       />
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <PaperText>{dialogText}</PaperText>
+      </CustomDialog>
     </View>
   );
 }

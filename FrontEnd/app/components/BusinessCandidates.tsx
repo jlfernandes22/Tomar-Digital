@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   View,
   FlatList,
-  Alert,
   RefreshControl,
   ScrollView,
 } from 'react-native';
@@ -19,8 +18,11 @@ import {
   Text,
   Divider,
   Appbar,
+  Dialog,
+  Portal,
 } from 'react-native-paper';
 import CustomButton from './CustomButton';
+import CustomDialog from './CustomDialog';
 import BusinessList from './BusinessList';
 import { useAppTheme } from '@/context/ThemeContext';
 import { curiosidades } from '@/constants/curiosities';
@@ -47,13 +49,23 @@ export default function AprovarNegocios() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
+
+  const [discardDialogVisible, setDiscardDialogVisible] = useState(false);
+  const [discardId, setDiscardId] = useState<string | null>(null);
+
   const onRefresh = async () => {
     setRefreshing(true);
 
     try {
       await carregarDados();
     } catch (err) {
-      Alert.alert(t('common.error'), t('camara.error_load_info'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_load_info'));
+      setDialogVisible(true);
     } finally {
       setRefreshing(false);
     }
@@ -89,7 +101,9 @@ export default function AprovarNegocios() {
       if (resPendentes.ok) setPendentes(await resPendentes.json());
       if (resOwners.ok) setPendOwners(await resOwners.json());
     } catch (error) {
-      Alert.alert(t('common.error'), t('camara.error_load'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_load'));
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -112,50 +126,43 @@ export default function AprovarNegocios() {
       if (response.ok) {
         setPendentes(prev => prev.filter(item => item._id !== id));
       } else {
-        Alert.alert(t('common.error'), t('camara.server_reject_approve'));
+        setDialogTitle(t('common.error'));
+        setDialogText(t('camara.server_reject_approve'));
+        setDialogVisible(true);
       }
     } catch (error) {
-      Alert.alert(t('common.error'), t('camara.fail_approve'));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.fail_approve'));
+      setDialogVisible(true);
     }
   };
 
-  const handleDescartar = async (id: string) => {
-    Alert.alert(
-      t('common.confirm'),
-      t('camara.reject_confirm_biz', {
-        defaultValue: 'Tens a certeza que queres descartar este pedido?',
-      }),
-      [
-        {
-          text: t('common.cancel', { defaultValue: 'Cancelar' }),
-          style: 'cancel',
-        },
-        {
-          text: t('common.discard', { defaultValue: 'Descartar' }),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const response = await fetch(
-                `${API_URL}/business/rejeitar/${id}`,
-                {
-                  method: 'DELETE',
-                  headers: {
-                    Authorization: `Bearer ${user?.token}`,
-                    'Content-Type': 'application/json',
-                  },
-                },
-              );
+  const handleDescartar = (id: string) => {
+    setDiscardId(id);
+    setDiscardDialogVisible(true);
+  };
 
-              if (response.ok) {
-                setPendentes(prev => prev.filter(item => item._id !== id));
-              }
-            } catch (error) {
-              Alert.alert(t('common.error'), t('camara.fail_discard'));
-            }
+  const executeDescartar = async (id: string) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/business/rejeitar/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+            'Content-Type': 'application/json',
           },
         },
-      ],
-    );
+      );
+
+      if (response.ok) {
+        setPendentes(prev => prev.filter(item => item._id !== id));
+      }
+    } catch (error) {
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.fail_discard'));
+      setDialogVisible(true);
+    }
   };
 
   const handleRandomPhrase = () => {
@@ -346,6 +353,53 @@ export default function AprovarNegocios() {
           />
         )}
       </SafeAreaView>
+
+      <Portal>
+        <Dialog
+          visible={discardDialogVisible}
+          onDismiss={() => setDiscardDialogVisible(false)}
+          style={{ backgroundColor: theme.colors.surface }}
+        >
+          <Dialog.Title>{t('common.confirm')}</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: theme.colors.onSurface }}>
+              {t('camara.reject_confirm_biz', {
+                defaultValue: 'Tens a certeza que queres descartar este pedido?',
+              })}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <CustomButton
+              onPress={() => setDiscardDialogVisible(false)}
+              buttonColor={theme.colors.surfaceVariant}
+              textColor={theme.colors.onSurface}
+            >
+              {t('common.cancel', { defaultValue: 'Cancelar' })}
+            </CustomButton>
+            <CustomButton
+              onPress={async () => {
+                setDiscardDialogVisible(false);
+                if (discardId) {
+                  await executeDescartar(discardId);
+                  setDiscardId(null);
+                }
+              }}
+              buttonColor={theme.colors.error}
+              textColor={theme.colors.onError}
+            >
+              {t('common.discard', { defaultValue: 'Descartar' })}
+            </CustomButton>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <CustomDialog
+        title={dialogTitle}
+        visible={dialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+      >
+        <Text>{dialogText}</Text>
+      </CustomDialog>
     </>
   );
 }

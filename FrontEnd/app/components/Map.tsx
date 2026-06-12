@@ -7,10 +7,10 @@ import React, {
   useEffect,
 } from 'react';
 import MapView, { Marker, Circle } from 'react-native-maps';
-import { FAB, Portal } from 'react-native-paper';
+import { FAB, Portal, Text } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 import * as Location from 'expo-location';
-import CustomSnackBar from './CustomSnackBar';
+import CustomDialog from './CustomDialog';
 import { useTranslation } from 'react-i18next';
 //interfaces
 import MapProps from '@/constants/Interfaces/MapProps';
@@ -47,8 +47,9 @@ const Map = forwardRef<MapRefType, MapProps>(
       latitude: number;
       longitude: number;
     } | null>(null);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState('');
+    const [dialogText, setDialogText] = useState('');
     const [loading, setLoading] = useState(false);
 
     const tomar = { latitude: 39.6035, longitude: -8.4154 };
@@ -111,8 +112,13 @@ const Map = forwardRef<MapRefType, MapProps>(
           );
         } catch (err) {
           console.log(err);
-          setSnackbarMessage(t('map.error_location', { defaultValue: 'Erro\nNão foi possível obter a sua localização' }));
-          setSnackbarVisible(true);
+          setDialogTitle(t('common.error'));
+          setDialogText(
+            t('map.error_location', {
+              defaultValue: 'Erro\nNão foi possível obter a sua localização',
+            }),
+          );
+          setDialogVisible(true);
         } finally {
           setLoading(false);
         }
@@ -224,8 +230,12 @@ const Map = forwardRef<MapRefType, MapProps>(
           icon="crosshairs-gps"
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={t('accessibility.find_gps', { defaultValue: 'Encontrar a minha localização atual' })}
-          accessibilityHint={t('accessibility.focus_gps', { defaultValue: 'Clica para focar o mapa na tua localização GPS' })}
+          accessibilityLabel={t('accessibility.find_gps', {
+            defaultValue: 'Encontrar a minha localização atual',
+          })}
+          accessibilityHint={t('accessibility.focus_gps', {
+            defaultValue: 'Clica para focar o mapa na tua localização GPS',
+          })}
           onPress={async () => {
             console.log('get localization');
             try {
@@ -233,8 +243,13 @@ const Map = forwardRef<MapRefType, MapProps>(
               const gpsSignal = await Location.hasServicesEnabledAsync();
 
               if (!gpsSignal) {
-                setSnackbarMessage(t('map.warning_gps_disabled', { defaultValue: 'Aviso\nTem o GPS desativado' }));
-                setSnackbarVisible(true);
+                setDialogTitle(t('common.warning'));
+                setDialogText(
+                  t('map.warning_gps_disabled', {
+                    defaultValue: 'Aviso\nTem o GPS desativado',
+                  }),
+                );
+                setDialogVisible(true);
                 setLoading(false);
                 return;
               }
@@ -265,33 +280,26 @@ const Map = forwardRef<MapRefType, MapProps>(
               }, 1500);
             } catch (error) {
               console.log('get localization error', error);
-              setSnackbarMessage(t('map.warning_activate_gps', { defaultValue: 'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades' }));
-              setSnackbarVisible(true);
+              setDialogTitle(t('common.warning'));
+              setDialogText(
+                t('map.warning_activate_gps', {
+                  defaultValue:
+                    'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades',
+                }),
+              );
+              setDialogVisible(true);
               setLoading(false); // Desliga se der erro
             }
           }}
         />
 
-        <Portal>
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 90, // Passa por cima do FAB (Temas)
-              left: 0, // Fixa à esquerda
-              right: 0, // Fixa à direita (dá a largura de 100%)
-              zIndex: 10000,
-            }}
-            // CRÍTICO: "box-none" diz à View invisível para deixar passar os cliques
-            // para o mapa e para os botões que estão por trás dela!
-            pointerEvents="box-none"
-          >
-            <CustomSnackBar
-              visible={snackbarVisible}
-              message={snackbarMessage}
-              onDismiss={() => setSnackbarVisible(false)}
-            />
-          </View>
-        </Portal>
+        <CustomDialog
+          title={dialogTitle}
+          visible={dialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+        >
+          <Text>{dialogText}</Text>
+        </CustomDialog>
       </View>
     );
   },

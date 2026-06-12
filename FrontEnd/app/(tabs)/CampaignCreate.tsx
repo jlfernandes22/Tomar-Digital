@@ -6,7 +6,6 @@ import {
   View,
   Image,
   Pressable,
-  Alert
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +25,7 @@ import CustomTextInput from '../components/CustomTextInput';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import CustomChip from '../components/CustomChip';
 import * as ImagePicker from 'expo-image-picker';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -84,8 +84,11 @@ const CreateCampaign = () => {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showSnackBar, setShowSnackBar] = useState(false);
-  const [snackBarText, setSnackBarText] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
   const [logoLoading, setLogoLoading] = useState(false);
   const [panfletoLoading, setPanfletoLoading] = useState(false);
 
@@ -104,10 +107,11 @@ const CreateCampaign = () => {
     const { descricaoRecompensa, custoEmPontos, stockInicial } = pacote;
 
     if (!descricaoRecompensa || !custoEmPontos || !stockInicial) {
-      setSnackBarText(
+      setDialogTitle(t('common.error'));
+      setDialogText(
         t('campaign.error_empty_pack', { defaultValue: 'Erro: Preencha a descrição, o custo e o stock do pacote.' }),
       );
-      setShowSnackBar(true);
+      setDialogVisible(true);
       setLoading(false);
       return;
     }
@@ -133,12 +137,13 @@ const CreateCampaign = () => {
         maximoPorUser: '1',
       });
 
-      setSnackBarText(t('campaign.success_add_pack', { defaultValue: 'Pacote adicionado com sucesso!' }));
-      setShowSnackBar(true);
+      setSnackbarMessage(t('campaign.success_add_pack', { defaultValue: 'Pacote adicionado com sucesso!' }));
+      setSnackbarVisible(true);
     } catch (err) {
       console.error('Erro na adição do pacote: ', err);
-      setSnackBarText(t('campaign.error_format_pack', { defaultValue: 'Erro ao formatar os dados do pacote.' }));
-      setShowSnackBar(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('campaign.error_format_pack', { defaultValue: 'Erro ao formatar os dados do pacote.' }));
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -148,7 +153,10 @@ const CreateCampaign = () => {
     setLogoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('common.warning'), t('campaign.need_photo_logo', { defaultValue: 'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!' }));
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('campaign.need_photo_logo', { defaultValue: 'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!' }));
+      setDialogVisible(true);
+      setLogoLoading(false);
       return;
     }
     const resultado = await ImagePicker.launchImageLibraryAsync({
@@ -169,7 +177,10 @@ const CreateCampaign = () => {
     setPanfletoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('common.warning'), t('campaign.need_photo_flyer', { defaultValue: 'Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!' }));
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('campaign.need_photo_flyer', { defaultValue: 'Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!' }));
+      setDialogVisible(true);
+      setPanfletoLoading(false);
       return;
     }
     const resultado = await ImagePicker.launchImageLibraryAsync({
@@ -487,7 +498,9 @@ const CreateCampaign = () => {
     setLoading(true);
 
     if (formData.pacotes.length === 0) {
-      setSnackBarText(t('campaign.error_no_packs', { defaultValue: 'Erro: Adicione pacotes.' }));
+      setDialogTitle(t('common.error'));
+      setDialogText(t('campaign.error_no_packs', { defaultValue: 'Erro: Adicione pacotes.' }));
+      setDialogVisible(true);
       setLoading(false);
       return;
     }
@@ -539,14 +552,14 @@ const CreateCampaign = () => {
       const response = await fetch(`${API_URL}/criarCampanha`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${user?.token}`,
         },
         body: data,
       });
 
       if (response.ok) {
-        setSnackBarText(t('campaign.success_created', { defaultValue: 'Campanha criada!' }));
-        setShowSnackBar(true);
+        setSnackbarMessage(t('campaign.success_created', { defaultValue: 'Campanha criada!' }));
+        setSnackbarVisible(true);
 
         setFormData({
           tituloCampanha: '',
@@ -573,14 +586,16 @@ const CreateCampaign = () => {
         setStep(1);
       } else {
         const errorData = await response.json();
-        setSnackBarText(t('common.error') + ': ' + errorData.message);
-        setShowSnackBar(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(errorData.message);
+        setDialogVisible(true);
       }
       console.log(response);
     } catch (err) {
       console.error('Erro ao submeter campanha:', err);
-      setSnackBarText(t('campaign.error_network', { defaultValue: 'Erro na rede ou no upload.' }));
-      setShowSnackBar(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('campaign.error_network', { defaultValue: 'Erro na rede ou no upload.' }));
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -662,7 +677,7 @@ const CreateCampaign = () => {
 
                 {formData.pacotes.length > 0 && (
                   <View style={{ marginTop: 10 }}>
-                    <Text variant="titleMedium">{t('campaign.packs_list')}</Text>
+                     <Text variant="titleMedium">{t('campaign.packs_list')}</Text>
                     {formData.pacotes.map((p, i) => (
                       <Surface
                         key={i}
@@ -721,10 +736,17 @@ const CreateCampaign = () => {
         </KeyboardAvoidingView>
 
         <CustomSnackBar
-          visible={showSnackBar}
-          onDismiss={() => setShowSnackBar(false)}
-          message={snackBarText}
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          message={snackbarMessage}
         />
+        <CustomDialog
+          title={dialogTitle}
+          visible={dialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+        >
+          <Text>{dialogText}</Text>
+        </CustomDialog>
       </SafeAreaView>
     </Surface>
   );

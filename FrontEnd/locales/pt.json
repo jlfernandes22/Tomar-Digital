@@ -6,7 +6,7 @@
     "login_button": "Iniciar Sessão",
     "success": "Sucesso!",
     "error_login": "Erro no Login, ",
-    "error_server": "Erro: Não foi possível contactar o servidor."
+    "error_server": "Não foi possível contactar o servidor."
   },
   "register": {
     "title": "Criar conta",
@@ -15,12 +15,12 @@
     "password": "Palavra-passe",
     "confirm_password": "Confirmar Palavra-passe",
     "register_button": "Criar Conta",
-    "warning_empty": "Aviso:Por favor, preencha pelo menos email e password.",
-    "warning_mismatch": "Aviso:As palavras-passe não coincidem!",
+    "warning_empty": "Por favor, preencha pelo menos email e password.",
+    "warning_mismatch": "As palavras-passe não coincidem!",
     "success": "Sucesso:A redirecionar...",
     "error": "Erro:",
     "error_generic": "Não foi possível criar a conta.",
-    "error_server": "Erro:Verifique a sua ligação à internet."
+    "error_server": "Verifique a sua ligação à internet."
   },
   "common": {
     "error_429": "Muitos pedidos realizados! Por favor, aguarde uns minutos e tente novamente.",
@@ -80,9 +80,9 @@
     "search_near": "Procurar negócios perto de mim",
     "see_on_map": "VER NO MAPA",
     "error_apple_maps": "Não foi possível abrir o Apple Maps",
-    "warning_session": "Aviso:\nTens de ter sessão iniciada para guardar favoritos",
-    "error_update_fav": "Erro:\n Não foi possível atualizar os favoritos.",
-    "warning_no_nearby": "Aviso:\nNão existem negócios por perto"
+    "warning_session": "Tens de ter sessão iniciada para guardar favoritos",
+    "error_update_fav": "Não foi possível atualizar os favoritos.",
+    "warning_no_nearby": "Não existem negócios por perto"
   },
   "saved": {
     "title": "Os Meus Favoritos",
@@ -139,8 +139,8 @@
     "submit": "Submeter",
     "error_load_image": "Erro ao carregar imagem: {{error}}",
     "error_load_gallery": "Erro ao carregar galeria: {{error}}",
-    "error_session_expired": "Erro: Sessão expirada.",
-    "error_mandatory_fields": "Erro:\nPor favor, preencha todos os campos obrigatórios.",
+    "error_session_expired": "Sessão expirada.",
+    "error_mandatory_fields": "Por favor, preencha todos os campos obrigatórios.",
     "success_registered": "Sucesso! Negócio registado.",
     "error_registration": "Erro no registo.",
     "error_server_conn": "Erro de ligação ao servidor.",
@@ -235,7 +235,7 @@
     "select_business_step1": "1. Selecione o negócio:",
     "confirm_join_campaign": "Confirma a adesão à campanha \"{{title}}\"?",
     "expires_label": "Expira:",
-    "error_empty_pack": "Erro: Preencha a descrição, o custo e o stock do pacote.",
+    "error_empty_pack": "Preencha a descrição, o custo e o stock do pacote.",
     "success_add_pack": "Pacote adicionado com sucesso!",
     "error_format_pack": "Erro ao formatar os dados do pacote.",
     "need_photo_logo": "Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!",
@@ -246,7 +246,7 @@
     "upload_logo": "Upload Logótipo",
     "change_flyer": "Alterar Panfleto",
     "upload_flyer": "Upload Panfleto",
-    "error_no_packs": "Erro: Adicione pacotes.",
+    "error_no_packs": "Adicione pacotes.",
     "success_created": "Campanha criada!",
     "error_network": "Erro na rede ou no upload.",
     "success_status": "Candidatura {{status}} com sucesso!"
@@ -265,9 +265,9 @@
   },
   "map": {
     "find_location": "Encontrar a minha localização atual",
-    "error_location": "Erro\nNão foi possível obter a sua localização",
-    "warning_gps_disabled": "Aviso\nTem o GPS desativado",
-    "warning_activate_gps": "Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades"
+    "error_location": "Não foi possível obter a sua localização",
+    "warning_gps_disabled": "Tem o GPS desativado",
+    "warning_activate_gps": "Tem de ativar o GPS para aceder a todas as funcionalidades"
   },
   "merchant": {
     "title": "Tornar-se um Comerciante",
@@ -379,8 +379,8 @@
     "citizens": "Cidadãos",
     "print_report": "Imprimir relatório",
     "save_report": "Guardar relatório",
-    "error_server_data": "Erro: Servidor não devolveu os dados com sucesso.",
-    "error_load_stats": "Erro: Não foi possível carregar as estatísticas.",
+    "error_server_data": "Servidor não devolveu os dados com sucesso.",
+    "error_load_stats": "Não foi possível carregar as estatísticas.",
     "others": "Outros",
     "cities_pt": "Cidades de Portugal",
     "no_cities_data": "Sem dados de cidades em Portugal.",

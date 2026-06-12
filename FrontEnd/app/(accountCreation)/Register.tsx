@@ -17,8 +17,9 @@ import { delay } from '../../utils/delay';
 import CustomButton from '../components/CustomButton';
 import CustomTextField from '../components/CustomTextInput';
 import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Surface } from 'react-native-paper';
+import { Surface, Text as PaperText } from 'react-native-paper';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -28,6 +29,9 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [city, setCity] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogText, setDialogText] = useState('');
+  const [dialogTitle, setDialogTitle] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const { currentTheme: theme } = useAppTheme();
@@ -36,15 +40,19 @@ const Register = () => {
   const handleRegister = async () => {
     setLoading(true);
     if (!email || !password) {
-      setSnackbarMessage(t('register.warning_empty'));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('register.warning_empty'));
+      setDialogVisible(true);
+      setLoading(false);
       return;
     }
     console.log('password e email existem');
 
     if (password !== confirmPassword) {
-      setSnackbarMessage(t('register.warning_mismatch'));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('register.warning_mismatch'));
+      setDialogVisible(true);
+      setLoading(false);
       return;
     }
 
@@ -58,8 +66,9 @@ const Register = () => {
       console.log('enviou');
 
       if (response.status === 429) {
-        setSnackbarMessage(t('common.error_429'));
-        setSnackbarVisible(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('common.error_429'));
+        setDialogVisible(true);
         setLoading(false);
         return;
       }
@@ -76,15 +85,15 @@ const Register = () => {
           params: { email: email }, // Passamos o email para a próxima tela
         });
       } else {
-        setSnackbarMessage(
-          t('register.error') + (dados.message || t('register.error_generic')),
-        );
-        setSnackbarVisible(true);
+        setDialogTitle(t('common.error'));
+        setDialogText(dados.message || t('register.error_generic'));
+        setDialogVisible(true);
         setLoading(false);
       }
     } catch (err) {
-      setSnackbarMessage(t('register.error_server'));
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.error'));
+      setDialogText(t('register.error_server'));
+      setDialogVisible(true);
       setLoading(false);
     }
   };
@@ -195,6 +204,13 @@ const Register = () => {
             message={snackbarMessage}
             onDismiss={() => setSnackbarVisible(false)}
           />
+          <CustomDialog
+            title={dialogTitle}
+            visible={dialogVisible}
+            onDismiss={() => setDialogVisible(false)}
+          >
+            <PaperText>{dialogText}</PaperText>
+          </CustomDialog>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
