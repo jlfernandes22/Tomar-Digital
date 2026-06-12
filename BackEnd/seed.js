@@ -17,29 +17,45 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 console.log("A ligar a:", MONGO_URI);
 
 /**
- * ========================================================
- * FUNÇÃO: Gerar NIFs matematicamente válidos (Fallback)
- * ========================================================
- * Usado apenas se o NIF real não for encontrado.
+ * Gera NIFs matematicamente válidos (fallback).
  * @param {boolean} isCompany - Se true, começa por 5. Se false, 1, 2 ou 3.
  */
 const generateValidNIF = (isCompany = false) => {
-  const prefix = isCompany ? '5' : ['1', '2', '3'][Math.floor(Math.random() * 3)];
+  const prefix = isCompany ? "5" : ["1", "2", "3"][Math.floor(Math.random() * 3)];
   let nif = prefix;
-  
+
   for (let i = 0; i < 7; i++) {
     nif += Math.floor(Math.random() * 10).toString();
   }
-  
+
   let sum = 0;
   for (let i = 0; i < 8; i++) {
     sum += parseInt(nif[i]) * (9 - i);
   }
   const remainder = sum % 11;
   const checkDigit = remainder === 0 || remainder === 1 ? 0 : 11 - remainder;
-  
+
   return parseInt(nif + checkDigit);
 };
+
+/**
+ * Helper para criar um utilizador completo e coerente com o UserSchema.
+ * Garante que isVerified está sempre definido (required: true no schema).
+ */
+const buildUser = (overrides = {}) => ({
+  name: "Sem Nome",
+  email: "",
+  password: "",
+  city: "Tomar",
+  role: "cidadao",
+  Points: 0,
+  NIF: null,
+  Avatar: "",
+  acceptedInvoiceTerms: true,
+  codigoValidar: "",
+  isVerified: true,
+  ...overrides,
+});
 
 const seedDatabase = async () => {
   try {
@@ -72,11 +88,9 @@ const seedDatabase = async () => {
       { cae: "47730", descricao: "Comércio a retalho de produtos farmacêuticos", seccao: "G" },
     ];
 
-    // --- PROCESSAR CAEs ---
     const processCaeCSV = async () => {
       const filePath = path.join(process.cwd(), "csvFiles", "caes.csv");
-      
-      // Verifica se o ficheiro não existe ou se está totalmente vazio (0 bytes)
+
       if (!fs.existsSync(filePath) || fs.statSync(filePath).size === 0) {
         console.warn(`⚠️ caes.csv não encontrado ou vazio. A usar fallback...`);
         await Cae.insertMany(fallbackCaes);
@@ -89,7 +103,6 @@ const seedDatabase = async () => {
         fs.createReadStream(filePath)
           .pipe(csv())
           .on("data", (data) => {
-            // Mapeamento exato baseado nos teus cabeçalhos: "Secção", "CAE", "Descrição"
             const seccao = data["Secção"] || data["seccao"] || data["Secao"];
             const cae = data["CAE"] || data["cae"] || data["Codigo"];
             const descricao = data["Descrição"] || data["descricao"] || data["Designacao"];
@@ -106,30 +119,28 @@ const seedDatabase = async () => {
         await Cae.insertMany(results);
         console.log(`✅ ${results.length} CAEs inseridos a partir do CSV.`);
       } else {
-        console.warn(`⚠️ Nenhum CAE mapeado no ficheiro. A usar fallback...`);
+        console.warn(`⚠️ Nenhum CAE mapeado. A usar fallback...`);
         await Cae.insertMany(fallbackCaes);
         console.log(`✅ ${fallbackCaes.length} CAEs de fallback inseridos.`);
       }
     };
 
-    // --- PROCESSAR CIDADES (Extraindo APENAS name, state_name, country_name) ---
     const processCitiesCSV = async () => {
       const filePath = path.join(process.cwd(), "csvFiles", "cities.csv");
       if (!fs.existsSync(filePath)) return console.warn(`⚠️ cities.csv não encontrado.`);
 
       const results = [];
-      console.log(`⏳ A ler e filtrar cities.csv (isto pode demorar uns segundos)...`);
-      
+      console.log(`⏳ A ler e filtrar cities.csv...`);
+
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
-          .pipe(csv()) // O csv-parser lê a primeira linha e usa como chaves do objeto
+          .pipe(csv())
           .on("data", (data) => {
-            // Extrai APENAS os 3 campos que pediste
             if (data.name && data.state_name && data.country_name) {
               results.push({
                 name: data.name,
                 state_name: data.state_name,
-                country_name: data.country_name
+                country_name: data.country_name,
               });
             }
           })
@@ -138,22 +149,19 @@ const seedDatabase = async () => {
       });
 
       if (results.length > 0) {
-        // Inserir em lotes de 5000 para evitar estourar o limite de memória do MongoDB (BSON Limit)
         const batchSize = 5000;
         let insertedCount = 0;
-        
+
         for (let i = 0; i < results.length; i += batchSize) {
           const batch = results.slice(i, i + batchSize);
           try {
-            // ordered: false faz com que o MongoDB ignore erros de duplicados e continue a inserir o resto
-            await CitiesAndCountries.insertMany(batch, { ordered: false }); 
+            await CitiesAndCountries.insertMany(batch, { ordered: false });
             insertedCount += batch.length;
           } catch (err) {
-            // Captura inserções parciais caso haja algumas duplicadas no meio do lote
             if (err.insertedCount) insertedCount += err.insertedCount;
           }
         }
-        console.log(`✅ ${insertedCount} Cidades (name, state, country) inseridas na base de dados.`);
+        console.log(`✅ ${insertedCount} Cidades inseridas.`);
       } else {
         console.warn(`⚠️ Nenhuma cidade válida encontrada no CSV.`);
       }
@@ -163,30 +171,72 @@ const seedDatabase = async () => {
     await processCitiesCSV();
 
     // ==========================================
-    // 2. CRIAR UTILIZADORES (Portugal + Mundo 🌍)
+    // 2. CRIAR UTILIZADORES
     // ==========================================
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash("123456", saltRounds);
 
-    // Utilizadores base de Tomar (mantidos)
-    const baseUsers = [
-      { name: "Câmara Municipal de Tomar", email: "geral@cm-tomar.pt", password: hashedPassword, city: "Tomar", role: "camara", Points: 0, NIF: 506415082 },
-      { name: "Hoang Wright", email: "hoang.wright9675@iol.pt", password: hashedPassword, city: "Tomar", role: "cidadao", Points: 781, NIF: generateValidNIF(false) },
+    // ------------------------------------------
+    // 🔑 CONTAS DEMO — fáceis de escrever
+    // Password universal: 123456
+    // ------------------------------------------
+    const demoUsers = [
+      buildUser({
+        name: "Câmara Municipal de Tomar",
+        email: "camara@tomar.pt",
+        password: hashedPassword,
+        city: "Tomar",
+        role: "camara",
+        NIF: 506415082,
+      }),
+      buildUser({
+        name: "Admin Demo",
+        email: "admin@tomar.pt",
+        password: hashedPassword,
+        city: "Tomar",
+        role: "camara",
+        NIF: generateValidNIF(true),
+      }),
+      buildUser({
+        name: "Cidadão Demo",
+        email: "cidadao@tomar.pt",
+        password: hashedPassword,
+        city: "Tomar",
+        role: "cidadao",
+        Points: 850,
+        NIF: generateValidNIF(false),
+      }),
+      buildUser({
+        name: "Comerciante Demo",
+        email: "comerciante@tomar.pt",
+        password: hashedPassword,
+        city: "Tomar",
+        role: "comerciante",
+        NIF: generateValidNIF(false),
+      }),
+      buildUser({
+        name: "Turista Demo",
+        email: "turista@tomar.pt",
+        password: hashedPassword,
+        city: "Madrid",
+        role: "cidadao",
+        Points: 120,
+        NIF: generateValidNIF(false),
+      }),
     ];
 
-    // Cidades Portuguesas reais (para distribuir utilizadores pelo país)
+    // Cidades portuguesas
     const portugueseCities = [
-      "Lisboa", "Porto", "Coimbra", "Braga", "Aveiro", "Faro", "Viseu", "Leiria", 
-      "Setúbal", "Évora", "Guarda", "Castelo Branco", "Portalegre", "Santarém", 
+      "Lisboa", "Porto", "Coimbra", "Braga", "Aveiro", "Faro", "Viseu", "Leiria",
+      "Setúbal", "Évora", "Guarda", "Castelo Branco", "Portalegre", "Santarém",
       "Vila Real", "Bragança", "Viana do Castelo", "Ponta Delgada", "Funchal",
-      "Almada", "Amadora", "Queluz", "Agualva-Cacém", "Rio de Mouro", "Odivelas",
-      "Loures", "Oeiras", "Cascais", "Sintra", "Albufeira", "Portimão", "Lagos",
-      "Olhão", "Tavira", "Silves", "Loulé", "Vila do Conde", "Póvoa de Varzim",
-      "Guimarães", "Vizela", "Fafe", "Barcelos", "Esposende", "Paredes", "Penafiel",
-      "Lamego", "Peso da Régua", "Mirandela", "Chaves", "Valença", "Monção"
+      "Almada", "Amadora", "Queluz", "Odivelas", "Loures", "Oeiras", "Cascais",
+      "Sintra", "Albufeira", "Portimão", "Lagos", "Olhão", "Tavira", "Silves",
+      "Loulé", "Vila do Conde", "Póvoa de Varzim", "Guimarães", "Vizela", "Fafe",
+      "Barcelos", "Esposende", "Paredes", "Penafiel", "Lamego", "Mirandela",
+      "Chaves", "Valença", "Monção",
     ];
 
-    // Cidades Internacionais (para simular turistas e utilizadores globais)
     const internationalCities = [
       { city: "Madrid", country: "Espanha" },
       { city: "Barcelona", country: "Espanha" },
@@ -209,15 +259,12 @@ const seedDatabase = async () => {
       { city: "Oslo", country: "Noruega" },
       { city: "Helsinki", country: "Finlândia" },
       { city: "Dublin", country: "Irlanda" },
-      { city: "Lisbon", country: "Portugal" }, // Para utilizadores estrangeiros que escrevem em inglês
-      { city: "Porto", country: "Portugal" },
       { city: "São Paulo", country: "Brasil" },
       { city: "Rio de Janeiro", country: "Brasil" },
       { city: "Salvador", country: "Brasil" },
       { city: "Brasília", country: "Brasil" },
       { city: "Belo Horizonte", country: "Brasil" },
       { city: "Curitiba", country: "Brasil" },
-      { city: "Florianópolis", country: "Brasil" },
       { city: "New York", country: "EUA" },
       { city: "Los Angeles", country: "EUA" },
       { city: "Miami", country: "EUA" },
@@ -230,154 +277,157 @@ const seedDatabase = async () => {
       { city: "Cape Town", country: "África do Sul" },
     ];
 
-    // Nomes portugueses para cidadãos
     const portugueseFirstNames = [
       "João", "Maria", "António", "Ana", "Carlos", "Sofia", "Miguel", "Mariana",
       "Pedro", "Rita", "Rui", "Inês", "Tiago", "Catarina", "Bruno", "Francisco",
       "Beatriz", "Duarte", "Margarida", "Gonçalo", "Leonor", "Martim", "Matilde",
       "Afonso", "Carolina", "Tomás", "Francisca", "Rodrigo", "Sara", "Diogo",
-      "Laura", "Gabriel", "Alice", "Vicente", "Benedita", "Salvador", "Camila",
-      "Bernardo", "Clara", "Lourenço", "Marta", "Simão", "Iara", "Nuno", "Júlia",
-      "Rafael", "Beatriz", "David", "Lara", "André", "Cristiana", "Luís", "Patrícia"
+      "Laura", "Gabriel", "Alice", "Vicente", "Salvador", "Camila", "Bernardo",
+      "Clara", "Lourenço", "Marta", "Simão", "Nuno", "Júlia", "Rafael", "David",
+      "Lara", "André", "Cristiana", "Luís", "Patrícia",
     ];
 
     const portugueseLastNames = [
       "Silva", "Santos", "Ferreira", "Pereira", "Oliveira", "Costa", "Rodrigues",
-      "Martins", "Jesus", "Sousa", "Fernandes", "Gonçalves", "Gomes", "Lopes",
-      "Marques", "Alves", "Pinto", "Carvalho", "Ribeiro", "Moreira", "Mendes",
-      "Soares", "Nunes", "Dias", "Correia", "Machado", "Antunes", "Coelho",
-      "Vieira", "Teixeira", "Monteiro", "Ramos", "Henriques", "Cardoso", "Campos",
-      "Vaz", "Freitas", "Araújo", "Neves", "Pires", "Cunha", "Moura", "Fonseca",
-      "Tavares", "Baptista", "Barbosa", "Miranda", "Azevedo", "Lourenço", "Mota"
+      "Martins", "Sousa", "Fernandes", "Gonçalves", "Gomes", "Lopes", "Marques",
+      "Alves", "Pinto", "Carvalho", "Ribeiro", "Moreira", "Mendes", "Soares",
+      "Nunes", "Dias", "Correia", "Machado", "Antunes", "Coelho", "Vieira",
+      "Teixeira", "Monteiro", "Ramos", "Henriques", "Cardoso", "Campos", "Vaz",
+      "Freitas", "Araújo", "Neves", "Pires", "Cunha", "Moura", "Fonseca",
+      "Tavares", "Baptista", "Barbosa", "Miranda", "Azevedo", "Mota",
     ];
 
-    // Nomes internacionais
     const internationalNames = [
-      { first: "James", last: "Smith", country: "EUA" },
-      { first: "Emma", last: "Johnson", country: "Reino Unido" },
-      { first: "Lucas", last: "Garcia", country: "Espanha" },
-      { first: "Sophie", last: "Martin", country: "França" },
-      { first: "Luca", last: "Rossi", country: "Itália" },
-      { first: "Anna", last: "Müller", country: "Alemanha" },
-      { first: "Pedro", last: "Silva", country: "Brasil" },
-      { first: "Ana", last: "Santos", country: "Brasil" },
-      { first: "Yuki", last: "Tanaka", country: "Japão" },
-      { first: "Min-jun", last: "Kim", country: "Coreia do Sul" },
-      { first: "Liam", last: "O'Brien", country: "Irlanda" },
-      { first: "Olivia", last: "Brown", country: "Austrália" },
-      { first: "Noah", last: "Wilson", country: "Canadá" },
-      { first: "Amelia", last: "Taylor", country: "Nova Zelândia" },
-      { first: "Hugo", last: "Dubois", country: "Bélgica" },
-      { first: "Eva", last: "van Dijk", country: "Países Baixos" },
-      { first: "Erik", last: "Andersson", country: "Suécia" },
-      { first: "Sofia", last: "Nielsen", country: "Dinamarca" },
-      { first: "Mateo", last: "Lopez", country: "México" },
-      { first: "Valentina", last: "Rodriguez", country: "Argentina" },
+      { first: "James", last: "Smith" }, { first: "Emma", last: "Johnson" },
+      { first: "Lucas", last: "Garcia" }, { first: "Sophie", last: "Martin" },
+      { first: "Luca", last: "Rossi" }, { first: "Anna", last: "Muller" },
+      { first: "Pedro", last: "Silva" }, { first: "Yuki", last: "Tanaka" },
+      { first: "Minjun", last: "Kim" }, { first: "Liam", last: "OBrien" },
+      { first: "Olivia", last: "Brown" }, { first: "Noah", last: "Wilson" },
+      { first: "Amelia", last: "Taylor" }, { first: "Hugo", last: "Dubois" },
+      { first: "Eva", last: "vanDijk" }, { first: "Erik", last: "Andersson" },
+      { first: "Sofia", last: "Nielsen" }, { first: "Mateo", last: "Lopez" },
+      { first: "Valentina", last: "Rodriguez" },
     ];
 
-    // Gerar cidadãos portugueses (150)
-    let portugueseCitizens = [];
+    // Cidadãos portugueses (150)
+    const portugueseCitizens = [];
     for (let i = 0; i < 150; i++) {
       const firstName = portugueseFirstNames[Math.floor(Math.random() * portugueseFirstNames.length)];
       const lastName = portugueseLastNames[Math.floor(Math.random() * portugueseLastNames.length)];
       const city = portugueseCities[Math.floor(Math.random() * portugueseCities.length)];
-      
-      portugueseCitizens.push({
-        name: `${firstName} ${lastName}`,
-        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@mail.pt`,
-        password: hashedPassword,
-        city: city,
-        role: "cidadao",
-        Points: Math.floor(Math.random() * 1200),
-        NIF: generateValidNIF(false),
-      });
+
+      const cleanFirst = firstName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const cleanLast = lastName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      portugueseCitizens.push(
+        buildUser({
+          name: `${firstName} ${lastName}`,
+          email: `${cleanFirst}.${cleanLast}${i}@mail.pt`,
+          password: hashedPassword,
+          city,
+          role: "cidadao",
+          Points: Math.floor(Math.random() * 1200),
+          NIF: generateValidNIF(false),
+        })
+      );
     }
 
-    // Gerar cidadãos internacionais (100)
-    let internationalCitizens = [];
+    // Cidadãos internacionais (100)
+    const internationalCitizens = [];
     for (let i = 0; i < 100; i++) {
       const nameData = internationalNames[Math.floor(Math.random() * internationalNames.length)];
       const location = internationalCities[Math.floor(Math.random() * internationalCities.length)];
-      
-      internationalCitizens.push({
-        name: `${nameData.first} ${nameData.last}`,
-        email: `${nameData.first.toLowerCase()}.${nameData.last.toLowerCase()}${i}@globalmail.com`,
-        password: hashedPassword,
-        city: location.city,
-        role: "cidadao",
-        Points: Math.floor(Math.random() * 1200),
-        NIF: generateValidNIF(false), // NIF válido para testes, mesmo para estrangeiros
-      });
+
+      internationalCitizens.push(
+        buildUser({
+          name: `${nameData.first} ${nameData.last}`,
+          email: `${nameData.first.toLowerCase()}.${nameData.last.toLowerCase()}${i}@globalmail.com`,
+          password: hashedPassword,
+          city: location.city,
+          role: "cidadao",
+          Points: Math.floor(Math.random() * 1200),
+          NIF: generateValidNIF(false),
+        })
+      );
     }
 
-    // Gerar comerciantes de outras cidades portuguesas (20) - para simular expansão
-    let merchantsOtherCities = [];
+    // Comerciantes de outras cidades (20)
+    const merchantsOtherCities = [];
     const merchantCities = ["Lisboa", "Porto", "Coimbra", "Braga", "Aveiro", "Faro", "Leiria", "Viseu"];
     for (let i = 0; i < 20; i++) {
       const firstName = portugueseFirstNames[Math.floor(Math.random() * portugueseFirstNames.length)];
       const lastName = portugueseLastNames[Math.floor(Math.random() * portugueseLastNames.length)];
       const city = merchantCities[Math.floor(Math.random() * merchantCities.length)];
-      
-      merchantsOtherCities.push({
-        name: `${firstName} ${lastName}`,
-        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@comercio-${city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}.pt`,
-        password: hashedPassword,
-        city: city,
-        role: "comerciante",
-        Points: 0,
-        NIF: generateValidNIF(false),
-      });
+
+      const cleanCity = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const cleanFirst = firstName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const cleanLast = lastName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      merchantsOtherCities.push(
+        buildUser({
+          name: `${firstName} ${lastName}`,
+          email: `${cleanFirst}.${cleanLast}${i}@comercio-${cleanCity}.pt`,
+          password: hashedPassword,
+          city,
+          role: "comerciante",
+          NIF: generateValidNIF(false),
+        })
+      );
     }
 
-    // Comerciantes de Tomar (mantidos)
+    // Comerciantes de Tomar
     const merchantNamesTomar = [
       "João Silva", "Maria Fernandes", "António Costa", "Ana Pereira", "Carlos Santos",
       "Sofia Rodrigues", "Miguel Oliveira", "Mariana Gomes", "Pedro Martins", "Rita Ferreira",
       "Rui Almeida", "Inês Carvalho", "Tiago Mendes", "Catarina Lopes", "Bruno Pinto",
-      "Francisco Nunes", "Beatriz Leal", "Duarte Marques", "Margarida Pinto", "Gonçalo Silva"
+      "Francisco Nunes", "Beatriz Leal", "Duarte Marques", "Margarida Pinto", "Gonçalo Silva",
     ];
 
-    let merchantsTomar = merchantNamesTomar.map((name, i) => ({
-      name,
-      email: name.toLowerCase().replace(/ /g, ".") + "@comercio-tomar.pt",
-      password: hashedPassword,
-      city: "Tomar",
-      role: "comerciante",
-      Points: 0,
-      NIF: generateValidNIF(false),
-    }));
+    const merchantsTomar = merchantNamesTomar.map((name, i) => {
+      const cleanEmail = name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ /g, ".");
 
-    // Inserir TODOS os utilizadores
+      return buildUser({
+        name,
+        email: `${cleanEmail}${i}@comercio-tomar.pt`,
+        password: hashedPassword,
+        city: "Tomar",
+        role: "comerciante",
+        NIF: generateValidNIF(false),
+      });
+    });
+
     const allUsers = [
-      ...baseUsers,
+      ...demoUsers,
       ...merchantsTomar,
       ...merchantsOtherCities,
       ...portugueseCitizens,
-      ...internationalCitizens
+      ...internationalCitizens,
     ];
 
     const users = await User.insertMany(allUsers);
-    console.log(`✅ Foram criados ${users.length} utilizadores de Portugal e do Mundo!`);
-    console.log(`   🇵🇹 ${portugueseCitizens.length} cidadãos portugueses`);
-    console.log(`   🌍 ${internationalCitizens.length} cidadãos internacionais`);
-    console.log(`   🏪 ${merchantsTomar.length + merchantsOtherCities.length} comerciantes`);
+    console.log(`✅ Criados ${users.length} utilizadores.`);
+    console.log(`   🔑 ${demoUsers.length} contas demo (admin@tomar.pt, cidadao@tomar.pt, comerciante@tomar.pt, turista@tomar.pt, camara@tomar.pt — password: 123456)`);
+    console.log(`   🇵🇹 ${portugueseCitizens.length} cidadãos PT | 🌍 ${internationalCitizens.length} internacionais | 🏪 ${merchantsTomar.length + merchantsOtherCities.length} comerciantes`);
 
-    // Helpers para aceder aos utilizadores
     const getU = (email) => users.find((u) => u.email === email);
-    const getCitizens = () => users.filter(u => u.role === "cidadao" || u.role === "camara");
-    const getMerchants = () => users.filter(u => u.role === "comerciante");
-    const getRandomCitizen = () => getCitizens()[Math.floor(Math.random() * getCitizens().length)];
+    const getCitizens = () => users.filter((u) => u.role === "cidadao" || u.role === "camara");
+    const getMerchants = () => users.filter((u) => u.role === "comerciante");
 
     // ==========================================
     // 3. CRIAR CAMPANHAS
     // ==========================================
     const campaignsData = [
       {
-        createdBy: getU("geral@cm-tomar.pt")._id,
+        createdBy: getU("camara@tomar.pt")._id,
         titulo: "Comércio Local Vivo",
         slogan: "Apoie os pequenos negócios do centro histórico.",
         descricao: "Compre nas lojas locais de Tomar e ganhe pontos.",
-        listaCAES: ["56101", "56102", "56301", "56302", "47111", "47730", "10712"], // Adicionado para cumprir o Schema
+        listaCAES: ["56101", "56102", "56301", "56302", "47111", "47730", "10712"],
         estado: "ativa",
         DataInicio: new Date("2026-03-01"),
         DataExpiracao: new Date("2026-09-30"),
@@ -386,15 +436,15 @@ const seedDatabase = async () => {
         normas: "Válido para compras superiores a 1€.",
         packs: [
           { pointsCost: 100, rewardDescription: "Voucher 10€ no Comércio", stock: 50, currentStock: 50, maxPerUser: 2 },
-          { pointsCost: 250, rewardDescription: "Jantar para 2 pessoas", stock: 20, currentStock: 20, maxPerUser: 1 }
+          { pointsCost: 250, rewardDescription: "Jantar para 2 pessoas", stock: 20, currentStock: 20, maxPerUser: 1 },
         ],
       },
       {
-        createdBy: getU("geral@cm-tomar.pt")._id,
+        createdBy: getU("camara@tomar.pt")._id,
         titulo: "Tomar Sustentável",
         slogan: "Reduza a pegada ecológica e seja recompensado.",
-        descricao: "Campanha de incentivo à utilização de transportes suaves e compras em mercados locais.",
-        listaCAES: ["47111", "10711", "10712"], // Adicionado para cumprir o Schema
+        descricao: "Incentivo à utilização de transportes suaves e compras em mercados locais.",
+        listaCAES: ["47111", "10711", "10712"],
         estado: "ativa",
         DataInicio: new Date("2026-05-01"),
         DataExpiracao: new Date("2026-12-31"),
@@ -403,131 +453,234 @@ const seedDatabase = async () => {
         normas: "Acumulação de pontos em mercados municipais.",
         packs: [
           { pointsCost: 50, rewardDescription: "Saco reutilizável Tomar", stock: 100, currentStock: 100, maxPerUser: 3 },
-          { pointsCost: 500, rewardDescription: "Bicicleta partilhada (1 mês)", stock: 10, currentStock: 10, maxPerUser: 1 }
+          { pointsCost: 500, rewardDescription: "Bicicleta elétrica por 1 dia", stock: 10, currentStock: 10, maxPerUser: 1 },
         ],
+      },
+    ];
+
+    const insertedCampaigns = await Campaign.insertMany(campaignsData);
+    console.log(`✅ ${insertedCampaigns.length} Campanhas criadas.`);
+
+    // ==========================================
+    // 4. CRIAR NEGÓCIOS REAIS EM TOMAR
+    // ==========================================
+    
+    // ==========================================
+    // 4. CRIAR NEGÓCIOS REAIS EM TOMAR
+    // ==========================================
+    
+    const realTomarBusinesses = [
+      {
+        name: "Café Paraíso",
+        description: "Um dos cafés mais emblemáticos e históricos de Tomar, fundado em 1911. (Corredoura)",
+        category: "Cafés & Pastelarias",
+        listaCAES: ["56302"],
+        location: { long: -8.413900, lat: 39.604000 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Taverna Antiqua",
+        description: "Restaurante temático medieval localizado na Praça da República.",
+        category: "Restauração",
+        listaCAES: ["56101"],
+        location: { long: -8.415400, lat: 39.603800 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Pastelaria Templária",
+        description: "Famosa pelos doces conventuais, especialmente as Fatias de Tomar e os Beija-me Depressa.",
+        category: "Cafés & Pastelarias",
+        listaCAES: ["10712"],
+        location: { long: -8.413200, lat: 39.605100 }, // Rua 10 de Agosto
+        status: "aprovado",
+      },
+      {
+        name: "Hotel dos Templários",
+        description: "O maior e mais prestigiado hotel da cidade, localizado junto à margem do rio e ao Parque do Mouchão.",
+        category: "Alojamento",
+        listaCAES: ["55101"],
+        location: { long: -8.413600, lat: 39.607000 }, // Corrigido (Largo Cândido dos Reis)
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante Chico Elias",
+        description: "Gastronomia tradicional portuguesa e ribatejana de excelência. (Localizado em Algarvias)",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.423985, lat: 39.610996 }, // Correto para Algarvias
+        status: "aprovado",
+      },
+      {
+        name: "Tasca O Perdigoto", // Nome Corrigido
+        description: "Tasca típica famosa pelos petiscos, choco frito e ambiente tradicional. Fica na Rua Sacadura Cabral.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.413800, lat: 39.603800 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante O Tabuleiro",
+        description: "Restaurante clássico na Rua Serpa Pinto (Corredoura).",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.414400, lat: 39.603400 },
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante A Brasinha",
+        description: "Especialistas em carnes grelhadas e pratos tradicionais.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.415200, lat: 39.601800 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Tasquinha da Mitas",
+        description: "Ambiente acolhedor e familiar no centro de Tomar.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.414800, lat: 39.603800 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante Jardim",
+        description: "Comida deliciosa e esplanada agradável na Rua Silva Magalhães.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.414900, lat: 39.603900 },
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante Nabão",
+        description: "Pratos tradicionais portugueses num espaço acolhedor, junto à Ponte Velha.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.410500, lat: 39.604800 },
+        status: "aprovado",
+      },
+      {
+        name: "Moinho dos Nabões", // Substituiu Restaurante Bela Vista
+        description: "Instalado num antigo moinho de água sobre o rio Nabão, oferece uma das melhores vistas de Tomar.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.413500, lat: 39.607800 }, 
+        status: "aprovado",
+      },
+      {
+        name: "Casa das Ratas",
+        description: "Adega e restaurante rústico centenário, famoso pelas especialidades no forno.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.414800, lat: 39.602500 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante Lombo", // Substituiu a Cervejaria Ermida
+        description: "Restaurante com grande tradição e pratos muito bem servidos, excelente para famílias.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.412100, lat: 39.603100 }, 
+        status: "aprovado",
+      },
+      {
+        name: "Farmácia Silva Magalhães",
+        description: "Farmácia histórica com fachada e interior preservados do séc. XIX.",
+        category: "Serviços",
+        listaCAES: ["47730"],
+        location: { long: -8.415000, lat: 39.603200 },
+        status: "aprovado",
+      },
+      {
+        name: "Pingo Doce Tomar - Coimbra", // Corrigido o nome
+        description: "Supermercado localizado na Rua de Coimbra, a norte do centro histórico.", // Descrição Corrigida
+        category: "Comércio Local",
+        listaCAES: ["47111"],
+        location: { long: -8.407000, lat: 39.611200 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Continente Modelo Tomar",
+        description: "Grande superfície comercial localizada na Avenida Dr. Aurélio Ribeiro.",
+        category: "Comércio Local",
+        listaCAES: ["47111"],
+        location: { long: -8.403200, lat: 39.610900 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "McDonald's Tomar",
+        description: "Restaurante de fast-food na zona de Santa Iria.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.405500, lat: 39.608100 },
+        status: "aprovado",
+      },
+      {
+        name: "Burger King Tomar",
+        description: "Restaurante de fast-food com Drive-Thru junto à zona comercial (Av. Dr. Aurélio Ribeiro).", // Descrição Corrigida
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.403200, lat: 39.610900 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Thomar Boutique Hotel",
+        description: "Alojamento com decoração inspirada na história da cidade, localizado na Rua de Santa Iria.",
+        category: "Alojamento",
+        listaCAES: ["55102"],
+        location: { long: -8.411500, lat: 39.604100 }, // Corrigido
+        status: "aprovado",
+      },
+      {
+        name: "Restaurante Marisqueira de Tomar",
+        description: "A melhor seleção de mariscos frescos e peixe na região.",
+        category: "Restauração",
+        listaCAES: ["56102"],
+        location: { long: -8.413100, lat: 39.606100 },
+        status: "aprovado",
+      },
+      {
+        name: "Livraria Nova",
+        description: "Comércio independente de livros e materiais de papelaria localizado na Corredoura.",
+        category: "Comércio Local", 
+        listaCAES: ["47111"],
+        location: { long: -8.414300, lat: 39.603600 },
+        status: "aprovado",
       }
     ];
-    const campaigns = await Campaign.insertMany(campaignsData);
-    const getC = (titulo) => campaigns.find((c) => c.titulo === titulo);
-    console.log(`✅ Foram criadas ${campaigns.length} campanhas locais!`);
 
-    // ==========================================
-    // 4. CRIAR NEGÓCIOS REAIS EM TOMAR (Com location CORRETO para o Schema)
-    // ==========================================
-    const realBusinesses = [
-      // Alojamento
-      { name: "Hotel dos Templários", category: "Alojamento", NIF: 500282315, address: "Largo Cândido dos Reis, nº1, Tomar", lat: 39.6065, long: -8.4120 },
-      { name: "Thomar Boutique Hotel", category: "Alojamento", NIF: 503695769, address: "Rua da República, Tomar", lat: 39.6040, long: -8.4130 },
-      { name: "Hotel República", category: "Alojamento", NIF: 514586354, address: "Praça da República, Tomar", lat: 39.6037, long: -8.4128 },
-      { name: "Vila Galé Collection Tomar", category: "Alojamento", NIF: 505127628, address: "Av. D. Nuno Álvares Pereira, Tomar", lat: 39.6045, long: -8.4090 },
-      { name: "Casa dos Ofícios Hotel", category: "Alojamento", NIF: null, address: "Rua Silva Magalhães, 71, Tomar", lat: 39.6035, long: -8.4110 },
-      { name: "Estalagem Santa Iria", category: "Alojamento", NIF: null, address: "Rua do Parque, Tomar", lat: 39.6058, long: -8.4115 },
-      
-      // Restauração
-      { name: "Restaurante Praça by Hotel República", category: "Restauração", NIF: 514586354, address: "Praça da República 41, Tomar", lat: 39.6037, long: -8.4128 },
-      { name: "Taverna Antiqua", category: "Restauração", NIF: 504523473, address: "Praça da República 23-25, Tomar", lat: 39.6036, long: -8.4125 },
-      { name: "Restaurante Sellium (Cervejaria Claustro)", category: "Restauração", NIF: 503968757, address: "Rua Serpa Pinto 48, Tomar", lat: 39.6039, long: -8.4140 },
-      { name: "Casa das Ratas", category: "Restauração", NIF: 508909651, address: "Rua Dr. Joaquim Jacinto 7, Tomar", lat: 39.6037, long: -8.4120 },
-      { name: "Restaurante Sabores ao Rubro", category: "Restauração", NIF: 501226010, address: "Rua de São João, Tomar", lat: 39.6035, long: -8.4135 },
-      { name: "Restaurante A Lúria", category: "Restauração", NIF: 510770940, address: "Rua dos Voluntários Tomarenses, Tomar", lat: 39.6030, long: -8.4140 },
-      { name: "Restaurante Beira Rio", category: "Restauração", NIF: 504349970, address: "Rua Alexandre Herculano 1-B, Tomar", lat: 39.6033, long: -8.4125 },
-      { name: "Restaurante Mouchão", category: "Restauração", NIF: 505223970, address: "Parque do Mouchão, Tomar", lat: 39.6058, long: -8.4100 },
-      { name: "A Tasquinha", category: "Restauração", NIF: 506314910, address: "Tomar", lat: 39.6045, long: -8.4135 },
-      { name: "Cantinho dos Sabores", category: "Restauração", NIF: 506014614, address: "Tomar", lat: 39.6020, long: -8.4150 },
-      
-      // Cafés & Pastelarias
-      { name: "Café Claustro", category: "Cafés & Pastelarias", NIF: 516413988, address: "Rua Lopo Dias de Sousa 7, Tomar", lat: 39.6042, long: -8.4122 },
-      { name: "Pastelaria Templária", category: "Cafés & Pastelarias", NIF: 502916958, address: "Rua 10 de Agosto de 1385, 30, Tomar", lat: 39.6040, long: -8.4125 },
-      { name: "Pastelaria Tropical", category: "Cafés & Pastelarias", NIF: 504975439, address: "Rua Professor Andrade, 2A/2B, Tomar", lat: 39.6032, long: -8.4130 },
-      { name: "Pastelaria Pic Nic 3", category: "Cafés & Pastelarias", NIF: null, address: "Alameda 1 de Março nº 14, Tomar", lat: 39.6045, long: -8.4130 },
-      { name: "Café Central", category: "Cafés & Pastelarias", NIF: 503629715, address: "Tomar", lat: 39.6038, long: -8.4126 },
-      { name: "Santa Iria - Café Bistrot", category: "Cafés & Pastelarias", NIF: null, address: "Rua Marquês de Pombal 57, Tomar", lat: 39.6028, long: -8.4145 },
-
-      // Comércio Local & Serviços
-      { name: "Centro Comercial Templários", category: "Comércio Local", NIF: 507857410, address: "Alameda 1 de Março, Tomar", lat: 39.6045, long: -8.4130 },
-      { name: "Talho Alto (Mercado Municipal)", category: "Comércio Local", NIF: null, address: "Mercado Municipal de Tomar", lat: 39.6025, long: -8.4120 },
-      { name: "Farmácia Central", category: "Serviços", NIF: null, address: "Rua Serpa Pinto, Tomar", lat: 39.6038, long: -8.4125 },
-      { name: "Livraria Estúdio 70", category: "Comércio Local", NIF: null, address: "Rua Serpa Pinto, Tomar", lat: 39.6037, long: -8.4126 },
-      { name: "Pingo Doce Tomar", category: "Comércio Local", NIF: 500104511, address: "Av. D. Nuno Álvares Pereira, Tomar", lat: 39.6070, long: -8.4100 },
-      
-      // Património & Museus / Lazer & Natureza
-      { name: "Convento de Cristo", category: "Património & Museus", NIF: null, address: "Colina do Castelo, Tomar", lat: 39.6045, long: -8.4165 },
-      { name: "Sinagoga de Tomar", category: "Património & Museus", NIF: null, address: "Rua Joaquim Jacinto 73, Tomar", lat: 39.6030, long: -8.4115 },
-      { name: "Parque do Mouchão", category: "Lazer & Natureza", NIF: null, address: "Parque do Mouchão, Tomar", lat: 39.6055, long: -8.4095 },
-      { name: "Mata Nacional dos Sete Montes", category: "Lazer & Natureza", NIF: null, address: "Tomar", lat: 39.6015, long: -8.4170 },
-    ];
-
-    const merchantsList = getMerchants();
-
-    const businessesData = realBusinesses.map((b, index) => {
-      // Extrair lat/long para criar o objeto location correto
-      const { lat, long, ...rest } = b;
+    // Mapear os comerciantes gerados acima aos negócios de Tomar
+    const merchantsInTomar = getMerchants().filter(u => u.email.includes("comercio-tomar"));
+    
+    const finalBusinesses = realTomarBusinesses.map((biz, index) => {
+      // Atribui os negócios aos primeiros comerciantes criados. 
+      // Se houver mais negócios que comerciantes, recomeça (modulo).
+      const owner = merchantsInTomar[index % merchantsInTomar.length];
       
       return {
-        ...rest,
-        owner: merchantsList[index % merchantsList.length]._id,
-        NIF: b.NIF || generateValidNIF(true), 
-        status: "aprovado",
-        logo: `https://exemplo.com/logos/${b.name.replace(/ /g, '_').toLowerCase()}.jpg`,
-        gallery: [`https://exemplo.com/gallery/${b.name.replace(/ /g, '_').toLowerCase()}_1.jpg`],
-        description: `${b.name} - Estabelecimento de excelência no centro de Tomar, oferecendo os melhores produtos e serviços da região.`,
-        campaigns: [{ campaign: getC("Comércio Local Vivo")._id, status: "aprovado" }],
-        // ✅ CRIAR O OBJETO LOCATION CORRETAMENTE
-        location: {
-          lat: lat,
-          long: long
-        }
+        ...biz,
+        owner: owner._id,
+        campaigns: [
+          {
+            campaign: insertedCampaigns[0]._id, // Adere automaticamente à primeira campanha
+            status: "aprovado",
+            joinedAt: new Date()
+          }
+        ],
+        NIF: owner.NIF || generateValidNIF(true),
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
     });
 
-    const businesses = await Business.insertMany(businessesData);
-    console.log(`✅ Foram criados ${businesses.length} negócios reais em Tomar com NIFs autênticos, categorias válidas e LOCATION CORRETO!`);
+    await Business.insertMany(finalBusinesses);
+    console.log(`✅ ${finalBusinesses.length} Negócios reais criados no mapa de Tomar.`);
 
     // ==========================================
-    // 5. CRIAR FATURAS
+    // FIM DO SEED
     // ==========================================
-    const citizensList = getCitizens();
-    let generatedInvoices = [];
-    for (let i = 0; i < 400; i++) {
-      const randomCitizen = citizensList[Math.floor(Math.random() * citizensList.length)];
-      const randomBusiness = businesses[Math.floor(Math.random() * businesses.length)];
-
-      generatedInvoices.push({
-        user: randomCitizen._id,
-        business: randomBusiness._id,
-        ATCUD: `F-${Math.floor(100000 + Math.random() * 900000)}-${i}`,
-        hash: `HASH${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-        amount: parseFloat((Math.random() * 150 + 1).toFixed(2)),
-        purchaseDate: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(), // Convertido para String ISO
-      });
-    }
-
-    await Invoice.insertMany(generatedInvoices);
-    console.log(`✅ Foram criadas ${generatedInvoices.length} faturas de forma limpa e dinâmica!`);
-
-    // ==========================================
-    // 6. CRIAR FAVORITOS
-    // ==========================================
-    let generatedFavorites = [];
-    const seen = new Set();
-    for (let i = 0; i < 200; i++) {
-      const randomCitizen = citizensList[Math.floor(Math.random() * citizensList.length)];
-      const randomBusiness = businesses[Math.floor(Math.random() * businesses.length)];
-      
-      const key = `${randomCitizen._id}-${randomBusiness._id}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        generatedFavorites.push({
-          userId: randomCitizen._id,       // Corrigido de 'user' para 'userId'
-          businessId: randomBusiness._id,  // Corrigido de 'business' para 'businessId'
-        });
-      }
-    }
-    await Favorite.insertMany(generatedFavorites);
-    console.log(`✅ Foram criados ${generatedFavorites.length} favoritos de utilizadores a negócios!`);
-
-    console.log("🎉 Seeding concluído sem erros!");
+    console.log("🌳 Base de dados semeada com sucesso! Podes iniciar a API.");
     process.exit(0);
+    
   } catch (error) {
     console.error("❌ Erro fatal no seeding:", error);
     process.exit(1);
