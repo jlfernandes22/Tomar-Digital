@@ -834,14 +834,18 @@ app.put("/editarNegocio", authorize(["camara"]), async (req, res) => {
  */
 app.get("/meusNegocios", authorize(["comerciante"]), async (req, res) => {
   try {
-    const negocios = await Business.find({ owner: req.user.id }).populate("owner", "name");
-    console.log("Lojas encontradas:", negocios.length);
+    const filtro = {
+      owner: req.user.id,
+      status: "aprovado"
+    };
 
-    if (!negocios || negocios.length === 0) {
-      return res.status(200).json([]); 
-    }
+    const negocios = await Business.find(filtro).populate("owner", "name");
+    
+    console.log("Lojas aprovadas encontradas:", negocios.length);
 
-    res.status(200).json(negocios);
+    // Retorna array vazio se não encontrar nada, o que já está correto
+    res.status(200).json(negocios || []);
+    
   } catch (error) {
     console.error("Erro na rota /meusNegocios:", error);
     res.status(500).json({ message: "Erro ao procurar lojas." });
