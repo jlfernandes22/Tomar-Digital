@@ -40,6 +40,7 @@ const Register = () => {
       setSnackbarVisible(true);
       return;
     }
+    console.log('password e email existem');
 
     if (password !== confirmPassword) {
       setSnackbarMessage(t('register.warning_mismatch'));
@@ -47,12 +48,14 @@ const Register = () => {
       return;
     }
 
+    console.log('password correta ');
     try {
       const response = await fetch(`${API_URL}/registar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, confirmPassword, city }),
+        body: JSON.stringify({ email, password, city }),
       });
+      console.log('enviou');
 
       if (response.status === 429) {
         setSnackbarMessage(t('common.error_429'));
@@ -60,7 +63,7 @@ const Register = () => {
         setLoading(false);
         return;
       }
-
+      console.log('passado primeiro check');
       const dados = await response.json();
 
       if (response.ok) {
@@ -77,10 +80,12 @@ const Register = () => {
           t('register.error') + (dados.message || t('register.error_generic')),
         );
         setSnackbarVisible(true);
+        setLoading(false);
       }
     } catch (err) {
       setSnackbarMessage(t('register.error_server'));
       setSnackbarVisible(true);
+      setLoading(false);
     }
   };
 
