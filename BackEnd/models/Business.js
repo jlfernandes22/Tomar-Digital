@@ -12,7 +12,7 @@ const BusinessSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  
+
   listaCAES: {type: [String], required: true},
 
 

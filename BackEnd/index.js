@@ -237,43 +237,62 @@ app.post("/registar", strictLimiter, async (req, res) => {
   try {
     console.log("Pedido recebido");
     
-    // 1. Limpar e preparar os dados
-    const rawEmail = req.body.email;
-    const email = rawEmail.toLowerCase().trim();
     const { password, city } = req.body;
-    const name = req.body.email;
+    const rawEmail = req.body.email;
+
+    // 1. Validação Básica de Presença
+    if (!rawEmail || !password || !city) {
+      return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
+    }
+
+    const email = rawEmail.toLowerCase().trim();
+    const name = req.body.name || email;
     
-    // Gerar o código uma única vez para usar em qualquer dos casos
+    // 2. Validação do Formato do Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Por favor, insira um endereço de email válido." });
+    }
+
+    // 3. Validação da Cidade pelo NOME (Ignorando maiúsculas/minúsculas)
+    // O 'i' na regex significa case-insensitive (Tomar == tomar == TOMAR)
+    const cidadeExiste = await CitiesAndCountries.findOne({ 
+      name: { $regex: new RegExp(`^${city}$`, 'i') } 
+    }); 
+    
+    if (!cidadeExiste) {
+      return res.status(400).json({ message: "A cidade selecionada não é válida ou não existe no sistema." });
+    }
+
+    // 4. Lógica de Registo
     const code = Math.floor(100000 + Math.random() * 900000).toString(); 
 
-    // 2. Procurar utilizador existente
     const existingUser = await User.findOne({ email });
+    
+    const cidadeParaGuardar = cidadeExiste.name; 
     
     if (existingUser) {
       if (existingUser.isVerified) {
-        // Já existe e está verificado: Bloquear!
         return res.status(400).json({ message: "Este email já está associado a outra conta." });
       } else {
-        // Já existe mas NÃO está verificado: ATUALIZAR (Update)
         console.log("Atualizando utilizador não verificado na base de dados...");
         
         existingUser.name = name;
         existingUser.password = await bcrypt.hash(password, 10);
-        existingUser.city = city;
+        existingUser.city = cidadeParaGuardar; 
         existingUser.codigoValidar = code;
         
-        await existingUser.save(); // O Mongoose faz o update automático
+        await existingUser.save();
         console.log("Utilizador atualizado com novos dados e novo código.");
       }
     } else {
-      // Não existe: CRIAR NOVO (Insert)
       console.log("Criando novo utilizador na base de dados...");
       
       const newUser = new User({ 
         name,  
         email, 
         password: await bcrypt.hash(password, 10), 
-        city,
+        city: cidadeParaGuardar, 
         codigoValidar: code, 
         isVerified: false 
       });
@@ -282,7 +301,7 @@ app.post("/registar", strictLimiter, async (req, res) => {
       console.log("Novo utilizador criado.");
     }
     
-    // 3. Enviar o Email (Este código agora corre para AMBOS os casos acima)
+    // 5. Enviar o Email
     console.log("Enviando email...");
     await transporter.sendMail({
         from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
@@ -292,12 +311,12 @@ app.post("/registar", strictLimiter, async (req, res) => {
     });
     console.log("Email enviado");
 
-    // 4. Responder ao Frontend
+    // 6. Responder ao Frontend
     return res.status(200).json({ message: "Registo concluído com sucesso" });
 
   } catch (err) {
     console.error("Erro ao registar:", err);
-    return res.status(400).json({ message: err.message || "Erro no registo" });
+    return res.status(500).json({ message: "Erro interno no servidor ao processar o registo." });
   }
 });
     
@@ -545,10 +564,48 @@ app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio
     if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
       return res.status(400).json({ message: "Dados essenciais incompletos." });
     }
+    // Remove todos os espaços vazios do número antes de validar
+    const telefoneLimpo = telefoneDono ? telefoneDono.replace(/\s+/g, '') : '';
+      
+    // Regex para números de Portugal:
+    // Aceita opcionalmente +351 ou 00351
+    // Obriga a começar por 9 (telemóvel) ou 2 (fixo) seguido de 8 dígitos numéricos
+    const telefoneRegex = /^(?:(?:\+|00)351)?[29]\d{8}$/;
+      
+    if (!telefoneLimpo || !telefoneRegex.test(telefoneLimpo)) {
+      return res.status(400).json({ 
+        erro: "Número de telefone inválido. Deve ser um número português válido (ex: 912345678 ou +351912345678)." 
+      });
+    }
+
 
     // Conversão de estruturas de dados enviadas como texto via FormData
     let parsedLocalizacao = localizacao ? (typeof localizacao === 'string' ? JSON.parse(localizacao) : localizacao) : null;
     let parsedCAES = listaCAES ? (typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES) : [];
+    // 1. Remove duplicados (caso o utilizador envie ['56102', '56102'])
+    const uniqueCAES = [...new Set(parsedCAES)];
+
+    if (uniqueCAES.length > 0) {
+      // 2. Procura na base de dados todos os CAEs que correspondam à lista fornecida
+      const caesEncontrados = await Cae.find({ cae: { $in: uniqueCAES } });
+    
+      // 3. Se a quantidade de CAEs encontrados não for igual à quantidade enviada, algo está errado
+      if (caesEncontrados.length !== uniqueCAES.length) {
+
+        // (Opcional) Descobrir exatamente quais são os inválidos para dar uma resposta mais útil
+        const codigosEncontrados = caesEncontrados.map(c => c.cae);
+        const caesInvalidos = uniqueCAES.filter(c => !codigosEncontrados.includes(c));
+      
+        return res.status(400).json({
+          erro: "Um ou mais códigos CAE fornecidos não existem no sistema.",
+          caesInvalidos: caesInvalidos
+        });
+      }
+    } else {
+      return res.status(400).json({
+        erro: "A lista de CAEs não pode estar vazia."
+      });
+    }
 
     // Inicialização das variáveis de URL para persistência
     let logoUrl = "";
@@ -677,7 +734,7 @@ app.post("/pedidoComerciante", authorize(["cidadao"]), upload.single('documentoP
 /**
  * Elimina fisicamente o PDF do disco e rejeita o pedido na Base de Dados.
  */
-app.delete("/apagar/PedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
+app.delete("/apagarPedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
   try {
     const { id } = req.params;
     const pedido = await PedidosComerciante.findById(id);
@@ -693,8 +750,14 @@ app.delete("/apagar/PedidoComerciante/:id", authorize(["camara"]), async (req, r
       const filePath = path.join(process.cwd(), relativePath);
 
       if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log(`Ficheiro PDF eliminado do disco: ${filePath}`);
+        try {
+          fs.unlinkSync(filePath);
+          console.log(`Ficheiro PDF eliminado do disco: ${filePath}`);
+        } catch (fsErr) {
+          // Este try/catch interno garante que se o ficheiro falhar a apagar (ex: permissões), 
+          // o MongoDB continua a limpar o registo da base de dados!
+          console.error(`Aviso: Falha ao apagar o ficheiro físico, mas o registo DB será eliminado. Erro: ${fsErr.message}`);
+        }
       }
     }
 
@@ -952,7 +1015,7 @@ app.post("/guardarFavorito", async (req, res) => {
     await novoFavorito.save();
     res.status(200).json({ message: "Guardado com sucesso!" });
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({message: err});
   }
 });
 

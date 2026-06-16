@@ -63,7 +63,8 @@
     "error_comm_server": "Ocorreu um erro ao comunicar com o servidor.",
     "error_alert": "Erro",
     "aprovado": "Aprovado",
-    "rejeitado": "Rejeitado"
+    "rejeitado": "Rejeitado",
+    "obrigatorio": "Este campo é obrigatório"
   },
   "validar": {
     "title": "Validação",
@@ -73,7 +74,9 @@
     "blocked": "Bloqueado",
     "exceeded_attempts": "Excedeu o número de tentativas.",
     "error_connection": "Erro ao conectar ao servidor",
-    "invalid_code_attempt": "Código inválido. Tentativa {{attempt}}/3"
+    "invalid_code_attempt": "Código inválido. Tentativa {{attempt}}/3",
+    "emailInfo": "O código de validação foi enviado para o seu email.\nNão se esqueça de verificar a diretoria de spam",
+    "verifyEmail": "Verifique o seu email"
   },
   "home": {
     "search_placeholder": "Procurar negócio...",
@@ -159,7 +162,8 @@
     "photo_gallery": "Galeria de Fotos ({{count}}/5)",
     "add_images": "Adicionar Imagens",
     "submit_register": "Submeter",
-    "send_business": "Enviar Negócio"
+    "send_business": "Enviar Negócio",
+    "imagesSelection": "Já selecionou 5 fotos"
   },
   "camara": {
     "welcome": "Olá, Câmara de Tomar. Escolha uma área para gerir.",

@@ -10,24 +10,28 @@ import { API_URL } from '@/constants/api';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
 import { useTranslation } from 'react-i18next';
-import { Dialog, Text, Portal } from 'react-native-paper';
+import { Dialog, Text, Portal, useTheme } from 'react-native-paper';
 import delay from '@/utils/delay';
 import CustomDialog from '../components/CustomDialog';
 import CustomSnackBar from '../components/CustomSnackBar';
+import { useAppTheme } from '@/context/ThemeContext';
 
 const Validate = () => {
   const { t } = useTranslation();
   const params = useLocalSearchParams();
   const email = params.email as string;
+  const { currentTheme: theme } = useAppTheme();
 
   const [code, setCode] = useState('');
   const [tentativas, setTentativas] = useState(0);
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [dialogText, setDialogText] = useState('');
-  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(true);
+  const [dialogText, setDialogText] = useState(t('validar.emailInfo'));
+  const [dialogTitle, setDialogTitle] = useState(t('validar.verifyEmail'));
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [actionAfterDialog, setActionAfterDialog] = useState<'toRegister' | 'toLogin' | null>(null);
+  const [actionAfterDialog, setActionAfterDialog] = useState<
+    'toRegister' | 'toLogin' | null
+  >(null);
 
   const handleDialogClose = () => {
     setDialogVisible(false);
@@ -102,7 +106,14 @@ const Validate = () => {
 
   return (
     <>
-      <View style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: 24,
+          justifyContent: 'center',
+          backgroundColor: theme.colors.background,
+        }}
+      >
         <Stack.Screen
           options={{
             headerBackVisible: false,
@@ -110,27 +121,42 @@ const Validate = () => {
             title: t('validar.title'),
           }}
         />
-        <Text style={{ fontSize: 20, textAlign: 'center', marginBottom: 20 }}>
+
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: 'bold',
+
+            textAlign: 'center',
+            marginBottom: 32,
+            letterSpacing: 0.5,
+          }}
+        >
           {t('validar.title')}
         </Text>
 
-        <CustomTextInput
-          placeholder={t('validar.placeholder')}
-          onChangeText={setCode}
-          keyboardType="numeric"
-          label={t('validar.code')}
-          value={code}
-        />
+        <View style={{ gap: 16 }}>
+          <CustomTextInput
+            placeholder={t('validar.placeholder')}
+            onChangeText={setCode}
+            isNumber
+            label={t('validar.code')}
+            value={code}
+            lenght={6}
+          />
 
-        <CustomButton onPress={handleVerify}>
-          {t('common.confirm')}
-        </CustomButton>
+          <CustomButton onPress={handleVerify}>
+            {t('common.confirm')}
+          </CustomButton>
+        </View>
+
         <CustomSnackBar
           visible={snackbarVisible}
           message={snackbarMessage}
           onDismiss={() => setSnackbarVisible(false)}
         />
       </View>
+
       <CustomDialog
         title={dialogTitle}
         visible={dialogVisible}
@@ -142,5 +168,4 @@ const Validate = () => {
     </>
   );
 };
-
 export default Validate;

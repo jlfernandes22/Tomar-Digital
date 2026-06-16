@@ -63,7 +63,8 @@
     "error_comm_server": "An error occurred while communicating with the server.",
     "error_alert": "Error",
     "aprovado": "Approved",
-    "rejeitado": "Rejected"
+    "rejeitado": "Rejected",
+    "obrigatorio": "This field is required"
   },
   "validar": {
     "title": "Validation",
@@ -73,7 +74,9 @@
     "blocked": "Blocked",
     "exceeded_attempts": "Exceeded the number of attempts.",
     "error_connection": "Error connecting to server",
-    "invalid_code_attempt": "Invalid code. Attempt {{attempt}}/3"
+    "invalid_code_attempt": "Invalid code. Attempt {{attempt}}/3",
+    "emailInfo": "The validation code was sent to your email.\nDon't forget to chek the spam folder",
+    "verifyEmail": "Check your email"
   },
   "home": {
     "search_placeholder": "Search business...",
@@ -159,7 +162,8 @@
     "photo_gallery": "Photo Gallery ({{count}}/5)",
     "add_images": "Add Images",
     "submit_register": "Submit and register business",
-    "send_business": "Send Business"
+    "send_business": "Send Business",
+    "imagesSelection": "You already selected 5 photos"
   },
   "camara": {
     "welcome": "Hello, Câmara de Tomar. Choose an area to manage.",

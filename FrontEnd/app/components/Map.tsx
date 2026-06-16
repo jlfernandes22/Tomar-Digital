@@ -1,25 +1,91 @@
-import { View } from 'react-native';
+import { View, Image, Dimensions } from 'react-native';
 import React, {
   useState,
   forwardRef,
   useImperativeHandle,
   useRef,
   useEffect,
+  useMemo,
 } from 'react';
 import MapView, { Marker, Circle } from 'react-native-maps';
-import { FAB, Portal, Text } from 'react-native-paper';
+import { FAB, Text } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 import * as Location from 'expo-location';
 import CustomDialog from './CustomDialog';
 import { useTranslation } from 'react-i18next';
-//interfaces
 import MapProps from '@/constants/Interfaces/MapProps';
 import MapRefType from '@/constants/Interfaces/MapRefType';
-
-//Estilo escuro do mapa fornecido pela IA
 import darkMapStyle from '@/constants/DarkMapStyle';
+import { images } from '@/constants/images';
+import NegocioInterface from '@/constants/Interfaces/Negocio';
+import { useClusterer, isClusterFeature } from 'react-native-clusterer';
 
-// Adicionamos <MapRefType, MapProps>
+// 1. Get screen dimensions for the cluster algorithm
+const { width, height } = Dimensions.get('window');
+const MAP_DIMENSIONS = { width, height };
+
+// --- INLINE COMPONENT FOR CUSTOM MARKERS ---
+// Wrapped in React.memo to prevent flickering as clusters form/break
+const InlineBusinessMarker = React.memo(
+  ({
+    biz,
+    mapRef,
+    onMarkerPress,
+    theme,
+  }: {
+    biz: NegocioInterface;
+    mapRef: React.RefObject<MapView | null>;
+    onMarkerPress?: (biz: NegocioInterface) => void;
+    theme: any;
+  }) => {
+    const [loaded, setLoaded] = useState(false);
+
+    let iconSource = images.storeFront;
+    if (biz.category === 'Restauração') iconSource = images.silverware;
+    else if (biz.category === 'Alojamento') iconSource = images.bed;
+    else if (biz.category === 'Cafés & Pastelarias') iconSource = images.coffee;
+    else if (biz.category === 'Comércio Local') iconSource = images.shopping;
+    else if (biz.category === 'Património & Museus') iconSource = images.bank;
+    else if (biz.category === 'Lazer & Natureza') iconSource = images.tree;
+    else if (biz.category === 'Serviços') iconSource = images.briefcase;
+
+    return (
+      <Marker
+        coordinate={{
+          latitude: biz.location.lat,
+          longitude: biz.location.long,
+        }}
+        tracksViewChanges={!loaded}
+        anchor={{ x: 0.5, y: 0.5 }}
+        onPress={() => {
+          mapRef.current?.animateToRegion(
+            {
+              latitude: biz.location.lat,
+              longitude: biz.location.long,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            },
+            1500,
+          );
+          if (onMarkerPress) onMarkerPress(biz);
+        }}
+      >
+        <Image
+          source={iconSource}
+          resizeMode="contain"
+          style={{ width: 44, height: 44 }}
+          fadeDuration={0}
+          onLoad={() => setLoaded(true)}
+          tintColor={theme.colors.primary}
+        />
+      </Marker>
+    );
+  },
+);
+
+InlineBusinessMarker.displayName = 'InlineBusinessMarker';
+
+// --- MAIN MAP COMPONENT ---
 const Map = forwardRef<MapRefType, MapProps>(
   (
     {
@@ -36,13 +102,18 @@ const Map = forwardRef<MapRefType, MapProps>(
     const { currentTheme: theme } = useAppTheme();
     const { t } = useTranslation();
     const mapRef = useRef<MapView>(null);
-    //localização do utilizador
+
+    const tomar = {
+      latitude: 39.6035,
+      longitude: -8.4154,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
+    };
+
     const [userLocation, setUserLocation] = useState<{
       latitude: number;
       longitude: number;
     } | null>(null);
-    console.log(location);
-
     const [selectedLocation, setSelectedLocation] = useState<{
       latitude: number;
       longitude: number;
@@ -52,11 +123,32 @@ const Map = forwardRef<MapRefType, MapProps>(
     const [dialogText, setDialogText] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const tomar = { latitude: 39.6035, longitude: -8.4154 };
+    // 2. Track the map's current region so the clusterer knows what to calculate
+    const [currentRegion, setCurrentRegion] = useState(tomar);
 
-    /*useEffect para fazer a animação quando 
-     o utilizador entra na página de detalhes de negócio
-    */
+    // 3. Convert your 'businesses' array into the GeoJSON format the library requires
+    const geoJsonPoints = useMemo(() => {
+      return businesses.map((biz: NegocioInterface) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          // Note: GeoJSON requires [longitude, latitude] array order!
+          coordinates: [Number(biz.location.long), Number(biz.location.lat)],
+        },
+        properties: {
+          // Pass the whole business object so we can read it later when rendering
+          businessData: biz,
+        },
+      }));
+    }, [businesses]);
+
+    // 4. Use the Hook It takes the points, screen size, and map region,
+    // and returns the filtered list of points/clusters to draw.
+    const [points] = useClusterer<{ businessData: NegocioInterface }>(
+      geoJsonPoints,
+      MAP_DIMENSIONS,
+      currentRegion,
+    );
 
     useEffect(() => {
       if (location?.lat && location?.long) {
@@ -149,20 +241,16 @@ const Map = forwardRef<MapRefType, MapProps>(
     }));
 
     return (
-      <View style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
+      <View style={{ flex: 1 }}>
         <MapView
           provider="google"
           ref={mapRef}
           style={{ flex: 1 }}
-          initialRegion={{
-            latitude: tomar.latitude,
-            longitude: tomar.longitude,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          }}
+          initialRegion={tomar}
           showsUserLocation={true}
           showsMyLocationButton={false}
           scrollEnabled={true}
+          onRegionChangeComplete={region => setCurrentRegion(region)}
           onPress={e => {
             if (readOnly) return;
             const novasCoordenadas = e.nativeEvent.coordinate;
@@ -172,48 +260,75 @@ const Map = forwardRef<MapRefType, MapProps>(
           customMapStyle={theme.dark ? darkMapStyle : []}
         >
           {userLocation && (
-            <>
-              <Circle
-                center={userLocation}
-                radius={250}
-                strokeWidth={2}
-                strokeColor={theme.colors.primary}
-                fillColor={theme.colors.primaryContainer + '80'}
-              ></Circle>
-            </>
+            <Circle
+              center={userLocation}
+              radius={250}
+              strokeWidth={2}
+              strokeColor={theme.colors.primary}
+              fillColor={theme.colors.primaryContainer + '80'}
+            />
           )}
 
           {showPin && selectedLocation && (
             <Marker coordinate={selectedLocation} />
           )}
 
-          {businesses.map(biz => (
-            <Marker
-              tappable={true}
-              key={biz._id || Math.random().toString()}
-              coordinate={{
-                latitude: biz.location.lat,
-                longitude: biz.location.long,
-              }}
-              onPress={() => {
-                //Faz o zoom no mapa
-                mapRef.current?.animateToRegion(
-                  {
-                    latitude: biz.location.lat,
-                    longitude: biz.location.long,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
-                  },
-                  1500,
-                );
+          {/* 6. Render the points returned by the useClusterer hook */}
+          {points.map(point => {
+            // Is it a Cluster (a group)?
+            if (isClusterFeature(point)) {
+              return (
+                <Marker
+                  key={`cluster-${point.properties.cluster_id}`}
+                  coordinate={{
+                    latitude: point.geometry.coordinates[1],
+                    longitude: point.geometry.coordinates[0],
+                  }}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  onPress={() => {
+                    // Zoom into the cluster when clicked
+                    const toRegion = point.properties.getExpansionRegion();
+                    mapRef.current?.animateToRegion(toRegion, 500);
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.primary,
+                      borderRadius: theme.roundness,
+                      borderColor: theme.colors.outline,
+                      borderWidth: 2,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: theme.colors.onPrimary,
+                        fontWeight: 'bold',
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        fontSize: 12,
+                      }}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.6}
+                    >
+                      {point.properties.point_count}
+                    </Text>
+                  </View>
+                </Marker>
+              );
+            }
 
-                // Avisa o ecrã Index qual foi o negócio clicado
-                if (onMarkerPress) {
-                  onMarkerPress(biz);
-                }
-              }}
-            ></Marker>
-          ))}
+            // Otherwise, it is a single Business Marker!
+            return (
+              <InlineBusinessMarker
+                key={point.properties.businessData._id}
+                biz={point.properties.businessData}
+                mapRef={mapRef}
+                onMarkerPress={onMarkerPress}
+                theme={theme}
+              />
+            );
+          })}
         </MapView>
 
         <FAB

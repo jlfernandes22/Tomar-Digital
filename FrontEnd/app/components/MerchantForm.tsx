@@ -62,7 +62,7 @@ export default function SerComerciante() {
         type: 'application/pdf',
         copyToCacheDirectory: true,
       });
-
+      console.log(result);
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         setFormData(prev => ({
@@ -70,6 +70,7 @@ export default function SerComerciante() {
           documentoPDF: { uri: file.uri, name: file.name },
         }));
       }
+      console.log('selecionado');
     } catch (err) {
       console.log('Erro ao selecionar o documento:', err);
     }
@@ -96,7 +97,7 @@ export default function SerComerciante() {
       setPdf64(`data:application/pdf;base64,${base64}`);
       setVisible(true);
     } catch (error) {
-      console.log('❌ Erro ao processar o PDF para o Modal:', error);
+      console.log('Erro ao processar o PDF para o Modal:', error);
       alert(
         t('serComerciante.alert_preview_error', {
           defaultValue: 'Não foi possível gerar a pré-visualização.',
@@ -270,6 +271,7 @@ export default function SerComerciante() {
             onChangeText={text =>
               setFormData({ ...formData, donoComercio: text })
             }
+            required
           />
 
           <CustomTextInput
@@ -280,6 +282,8 @@ export default function SerComerciante() {
             onChangeText={text =>
               setFormData({ ...formData, telefoneDono: text })
             }
+            required
+            isNumber
           />
 
           <CustomTextInput
@@ -288,6 +292,8 @@ export default function SerComerciante() {
             })}
             value={user?.email || ''}
             onChangeText={text => setFormData({ ...formData, emailDono: text })}
+            required
+            isEmail
           />
 
           <CustomTextInput
@@ -298,6 +304,7 @@ export default function SerComerciante() {
             onChangeText={text =>
               setFormData({ ...formData, tituloComercio: text })
             }
+            required
           />
 
           <Surface
@@ -377,65 +384,101 @@ export default function SerComerciante() {
             visible={visible}
             onDismiss={hideModal}
             contentContainerStyle={{
-              backgroundColor: 'white',
+              backgroundColor: theme.colors.background,
               margin: 20,
               borderRadius: 12,
               height: Dimensions.get('window').height * 0.75,
               overflow: 'hidden',
             }}
           >
-            <View
+            <Appbar.Header
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingHorizontal: 12,
-                borderBottomWidth: 1,
-                borderColor: '#eee',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: theme.colors.elevation.level2,
+                height: 48,
               }}
             >
-              <Text
-                variant="titleMedium"
-                style={{ flex: 1, fontWeight: 'bold' }}
-                numberOfLines={1}
-              >
-                {formData.documentoPDF?.name}
-              </Text>
-              <IconButton
-                icon="close"
-                size={24}
-                onPress={hideModal}
-                accessible={true}
-                accessibilityLabel={t('accessibility.close_pdf', {
-                  defaultValue: 'Fechar visualização do PDF',
-                })}
+              <Appbar.Content
+                title={formData.documentoPDF?.name || 'Documento'}
+                titleStyle={{ fontSize: 16 }}
               />
-            </View>
+              <Appbar.Action icon="close" onPress={hideModal} />
+            </Appbar.Header>
 
             {pdfBase64 && (
               <WebView
                 originWhitelist={['*']}
+                style={{ flex: 1, backgroundColor: '#525659' }}
                 source={{
                   html: `
-                  <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                      <style>
-                        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
-                        object { width: 100%; height: 100%; }
-                      </style>
-                    </head>
-                    <body>
-                      <object data="${pdfBase64}" type="application/pdf">
-                        <embed src="${pdfBase64}" type="application/pdf" />
-                      </object>
-                    </body>
-                  </html>
-                `,
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+                        <style>
+                          body { 
+                            margin: 0; 
+                            padding: 10px; 
+                            background-color: #525659; 
+                            display: flex; 
+                            flex-direction: column; 
+                            align-items: center; 
+                          }
+                          canvas { 
+                            margin-bottom: 10px; 
+                            max-width: 100%; 
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+                          }
+                          #loading { 
+                            color: white; 
+                            font-family: sans-serif; 
+                            margin-top: 20px; 
+                          }
+                        </style>
+                      </head>
+                      <body>
+                        <div id="loading">A processar documento...</div>
+                        <div id="pdf-container"></div>
+
+                        <script>
+                          // Set the worker path
+                          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                          
+                          // Load the Base64 string directly into PDF.js
+                          const loadingTask = pdfjsLib.getDocument('${pdfBase64}');
+                          
+                          loadingTask.promise.then(function(pdf) {
+                            document.getElementById('loading').style.display = 'none';
+                            const container = document.getElementById('pdf-container');
+                            
+                            // Loop through every page and render it to a canvas
+                            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                              pdf.getPage(pageNum).then(function(page) {
+                                // Adjust scale based on screen size
+                                const scale = window.innerWidth > 600 ? 1.5 : 1.0;
+                                const viewport = page.getViewport({ scale: scale });
+                                
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                
+                                container.appendChild(canvas);
+                                
+                                page.render({
+                                  canvasContext: context,
+                                  viewport: viewport
+                                });
+                              });
+                            }
+                          }).catch(function(error) {
+                            document.getElementById('loading').innerText = 'Erro ao carregar o PDF: ' + error.message;
+                          });
+                        </script>
+                      </body>
+                    </html>
+                  `,
                 }}
-                style={{ flex: 1 }}
-                scalesPageToFit={true}
               />
             )}
           </Modal>

@@ -109,7 +109,10 @@ const CreateCampaign = () => {
     if (!descricaoRecompensa || !custoEmPontos || !stockInicial) {
       setDialogTitle(t('common.error'));
       setDialogText(
-        t('campaign.error_empty_pack', { defaultValue: 'Erro: Preencha a descrição, o custo e o stock do pacote.' }),
+        t('campaign.error_empty_pack', {
+          defaultValue:
+            'Erro: Preencha a descrição, o custo e o stock do pacote.',
+        }),
       );
       setDialogVisible(true);
       setLoading(false);
@@ -137,12 +140,20 @@ const CreateCampaign = () => {
         maximoPorUser: '1',
       });
 
-      setSnackbarMessage(t('campaign.success_add_pack', { defaultValue: 'Pacote adicionado com sucesso!' }));
+      setSnackbarMessage(
+        t('campaign.success_add_pack', {
+          defaultValue: 'Pacote adicionado com sucesso!',
+        }),
+      );
       setSnackbarVisible(true);
     } catch (err) {
       console.error('Erro na adição do pacote: ', err);
       setDialogTitle(t('common.error'));
-      setDialogText(t('campaign.error_format_pack', { defaultValue: 'Erro ao formatar os dados do pacote.' }));
+      setDialogText(
+        t('campaign.error_format_pack', {
+          defaultValue: 'Erro ao formatar os dados do pacote.',
+        }),
+      );
       setDialogVisible(true);
     } finally {
       setLoading(false);
@@ -154,7 +165,12 @@ const CreateCampaign = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       setDialogTitle(t('common.warning'));
-      setDialogText(t('campaign.need_photo_logo', { defaultValue: 'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!' }));
+      setDialogText(
+        t('campaign.need_photo_logo', {
+          defaultValue:
+            'Precisamos de acesso às tuas fotos para carregares o logótipo da campanha!',
+        }),
+      );
       setDialogVisible(true);
       setLogoLoading(false);
       return;
@@ -178,7 +194,12 @@ const CreateCampaign = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       setDialogTitle(t('common.warning'));
-      setDialogText(t('campaign.need_photo_flyer', { defaultValue: 'Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!' }));
+      setDialogText(
+        t('campaign.need_photo_flyer', {
+          defaultValue:
+            'Precisamos de ter acesso às tuas fotos para carregares o panfleto da campanha!',
+        }),
+      );
       setDialogVisible(true);
       setPanfletoLoading(false);
       return;
@@ -199,11 +220,19 @@ const CreateCampaign = () => {
 
   const handleAdicionarCae = () => {
     if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
-      setErro(t('campaign.cae_length_error', { defaultValue: 'O CAE deve ter 5 numeros.' }));
+      setErro(
+        t('campaign.cae_length_error', {
+          defaultValue: 'O CAE deve ter 5 numeros.',
+        }),
+      );
       return;
     }
     if (formData.listaCAES.includes(caeInput)) {
-      setErro(t('campaign.cae_duplicate_error', { defaultValue: 'Este CAE já foi adicionado.' }));
+      setErro(
+        t('campaign.cae_duplicate_error', {
+          defaultValue: 'Este CAE já foi adicionado.',
+        }),
+      );
       return;
     }
     setErro('');
@@ -238,11 +267,13 @@ const CreateCampaign = () => {
         label={t('campaign.create_title')}
         value={formData.tituloCampanha}
         onChangeText={val => setFormData({ ...formData, tituloCampanha: val })}
+        required
       />
       <CustomTextInput
         label={t('campaign.slogan')}
         value={formData.slogan}
         onChangeText={val => setFormData({ ...formData, slogan: val })}
+        required
       />
       <CustomTextInput
         label={t('campaign.description')}
@@ -250,6 +281,7 @@ const CreateCampaign = () => {
         onChangeText={val =>
           setFormData({ ...formData, descricaoCampanha: val })
         }
+        required
       />
 
       <Text
@@ -273,20 +305,20 @@ const CreateCampaign = () => {
           marginBottom: 4,
         }}
       >
-        <TextInput
-          mode="outlined"
+        <CustomTextInput
           label={t('addBusiness.add_cae')}
           placeholder={t('addBusiness.cae_placeholder')}
-          maxLength={5}
-          keyboardType="numeric"
+          lenght={5}
+          isNumber
           value={caeInput}
           onChangeText={text => {
             setErro('');
             setCaeInput(text.replace(/[^0-9]/g, ''));
           }}
-          style={{ flex: 1, height: 48 }}
+          className="flex-1"
+          required={formData.listaCAES.length != 0 ? false : true}
         />
-        <CustomButton 
+        <CustomButton
           onPress={handleAdicionarCae}
           accessibilityLabel={t('addBusiness.add_cae')}
           accessibilityHint={t('accessibility.add_cae_campaign')}
@@ -335,12 +367,15 @@ const CreateCampaign = () => {
                 elevation: 2,
               }}
             >
-              <Pressable 
+              <Pressable
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel={t('accessibility.remove_cae_name', { name: cae, defaultValue: `Remover CAE ${cae}` })}
+                accessibilityLabel={t('accessibility.remove_cae_name', {
+                  name: cae,
+                  defaultValue: `Remover CAE ${cae}`,
+                })}
                 accessibilityHint={t('accessibility.remove_cae')}
-                onPress={() => handleRemoverCae(cae)} 
+                onPress={() => handleRemoverCae(cae)}
                 hitSlop={10}
               >
                 <Text
@@ -383,10 +418,18 @@ const CreateCampaign = () => {
             icon="image"
             onPress={selecionarLogo}
             loading={logoLoading}
-            accessibilityLabel={formData.logo ? t('campaign.change_logo', { defaultValue: 'Alterar Logótipo' }) : t('campaign.upload_logo', { defaultValue: 'Upload Logótipo' })}
+            accessibilityLabel={
+              formData.logo
+                ? t('campaign.change_logo', {
+                    defaultValue: 'Alterar Logótipo',
+                  })
+                : t('campaign.upload_logo', { defaultValue: 'Upload Logótipo' })
+            }
             accessibilityHint={t('accessibility.choose_image')}
           >
-            {formData.logo ? t('common.change', { defaultValue: 'Alterar' }) : t('common.upload', { defaultValue: 'Upload' })}
+            {formData.logo
+              ? t('common.change', { defaultValue: 'Alterar' })
+              : t('common.upload', { defaultValue: 'Upload' })}
           </CustomButton>
           {formData.logo && (
             <Image
@@ -418,10 +461,20 @@ const CreateCampaign = () => {
             icon="file-image"
             onPress={selecionarPanfleto}
             loading={panfletoLoading}
-            accessibilityLabel={formData.panfleto ? t('campaign.change_flyer', { defaultValue: 'Alterar Panfleto' }) : t('campaign.upload_flyer', { defaultValue: 'Upload Panfleto' })}
+            accessibilityLabel={
+              formData.panfleto
+                ? t('campaign.change_flyer', {
+                    defaultValue: 'Alterar Panfleto',
+                  })
+                : t('campaign.upload_flyer', {
+                    defaultValue: 'Upload Panfleto',
+                  })
+            }
             accessibilityHint={t('accessibility.choose_flyer')}
           >
-            {formData.panfleto ? t('common.change', { defaultValue: 'Alterar' }) : t('common.upload', { defaultValue: 'Upload' })}
+            {formData.panfleto
+              ? t('common.change', { defaultValue: 'Alterar' })
+              : t('common.upload', { defaultValue: 'Upload' })}
           </CustomButton>
           {formData.panfleto && (
             <Image
@@ -461,13 +514,15 @@ const CreateCampaign = () => {
         {t('campaign.expire_date')}
       </Text>
 
-      <CustomButton 
-        icon="calendar" 
+      <CustomButton
+        icon="calendar"
         onPress={() => setShowDatePicker(true)}
         accessibilityLabel={t('campaign.select_date')}
         accessibilityHint={t('accessibility.open_calendar')}
       >
-        {formData.dataExpiracao.toLocaleDateString(i18n.language === 'pt' ? 'pt-PT' : 'en-US')}
+        {formData.dataExpiracao.toLocaleDateString(
+          i18n.language === 'pt' ? 'pt-PT' : 'en-US',
+        )}
       </CustomButton>
 
       {showDatePicker && (
@@ -490,6 +545,7 @@ const CreateCampaign = () => {
         label={t('campaign.terms')}
         value={formData.normas}
         onChangeText={val => setFormData({ ...formData, normas: val })}
+        required
       />
     </View>
   );
@@ -499,7 +555,11 @@ const CreateCampaign = () => {
 
     if (formData.pacotes.length === 0) {
       setDialogTitle(t('common.error'));
-      setDialogText(t('campaign.error_no_packs', { defaultValue: 'Erro: Adicione pacotes.' }));
+      setDialogText(
+        t('campaign.error_no_packs', {
+          defaultValue: 'Erro: Adicione pacotes.',
+        }),
+      );
       setDialogVisible(true);
       setLoading(false);
       return;
@@ -558,7 +618,9 @@ const CreateCampaign = () => {
       });
 
       if (response.ok) {
-        setSnackbarMessage(t('campaign.success_created', { defaultValue: 'Campanha criada!' }));
+        setSnackbarMessage(
+          t('campaign.success_created', { defaultValue: 'Campanha criada!' }),
+        );
         setSnackbarVisible(true);
 
         setFormData({
@@ -594,7 +656,11 @@ const CreateCampaign = () => {
     } catch (err) {
       console.error('Erro ao submeter campanha:', err);
       setDialogTitle(t('common.error'));
-      setDialogText(t('campaign.error_network', { defaultValue: 'Erro na rede ou no upload.' }));
+      setDialogText(
+        t('campaign.error_network', {
+          defaultValue: 'Erro na rede ou no upload.',
+        }),
+      );
       setDialogVisible(true);
     } finally {
       setLoading(false);
@@ -654,20 +720,28 @@ const CreateCampaign = () => {
                   onChangeText={t =>
                     setPacote({ ...pacote, descricaoRecompensa: t })
                   }
+                  required={formData.pacotes.length != 0 ? false : true}
+                  lenght={100}
                 />
                 <CustomTextInput
                   label={t('campaign.cost_points')}
                   value={pacote.custoEmPontos}
                   onChangeText={t => setPacote({ ...pacote, custoEmPontos: t })}
+                  required={formData.pacotes.length != 0 ? false : true}
+                  isNumber
+                  lenght={5}
                 />
                 <CustomTextInput
                   label={t('campaign.initial_stock')}
                   value={pacote.stockInicial}
                   onChangeText={t => setPacote({ ...pacote, stockInicial: t })}
+                  required={formData.pacotes.length != 0 ? false : true}
+                  isNumber
+                  lenght={6}
                 />
 
-                <CustomButton 
-                  onPress={addPack} 
+                <CustomButton
+                  onPress={addPack}
                   className="m-5"
                   accessibilityLabel={t('campaign.add_package')}
                   accessibilityHint={t('accessibility.add_package_list')}
@@ -677,7 +751,9 @@ const CreateCampaign = () => {
 
                 {formData.pacotes.length > 0 && (
                   <View style={{ marginTop: 10 }}>
-                     <Text variant="titleMedium">{t('campaign.packs_list')}</Text>
+                    <Text variant="titleMedium">
+                      {t('campaign.packs_list')}
+                    </Text>
                     {formData.pacotes.map((p, i) => (
                       <Surface
                         key={i}
@@ -689,7 +765,10 @@ const CreateCampaign = () => {
                         }}
                       >
                         <Text>
-                          {t('campaign.package_item', { desc: p.descricaoRecompensa, points: p.custoEmPontos })}
+                          {t('campaign.package_item', {
+                            desc: p.descricaoRecompensa,
+                            points: p.custoEmPontos,
+                          })}
                         </Text>
                       </Surface>
                     ))}
@@ -707,7 +786,7 @@ const CreateCampaign = () => {
             }}
           >
             {step > 1 && (
-              <CustomButton 
+              <CustomButton
                 onPress={() => setStep(step - 1)}
                 accessibilityLabel={t('addBusiness.prev_step')}
               >
@@ -716,20 +795,22 @@ const CreateCampaign = () => {
             )}
 
             {step < totalSteps ? (
-              <CustomButton 
+              <CustomButton
                 onPress={() => setStep(step + 1)}
                 accessibilityLabel={t('addBusiness.next_step')}
               >
                 {t('common.next', { defaultValue: 'Próximo' })}
               </CustomButton>
             ) : (
-              <CustomButton 
-                onPress={handleFinalSubmit} 
+              <CustomButton
+                onPress={handleFinalSubmit}
                 loading={loading}
                 accessibilityLabel={t('campaign.submit_create')}
                 accessibilityHint={t('accessibility.submit_campaign')}
               >
-                {t('campaign.submit_create', { defaultValue: 'Criar Campanha' })}
+                {t('campaign.submit_create', {
+                  defaultValue: 'Criar Campanha',
+                })}
               </CustomButton>
             )}
           </View>
