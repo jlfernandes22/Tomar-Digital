@@ -62,8 +62,8 @@ const InlineBusinessMarker = React.memo(
             {
               latitude: biz.location.lat,
               longitude: biz.location.long,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
+              latitudeDelta: 0.00005,
+              longitudeDelta: 0.00005,
             },
             1500,
           );
@@ -245,7 +245,7 @@ const Map = forwardRef<MapRefType, MapProps>(
         <MapView
           provider="google"
           ref={mapRef}
-          style={{ flex: 1 }}
+          style={{ flex: 1, padding: 16 }}
           initialRegion={tomar}
           showsUserLocation={true}
           showsMyLocationButton={false}
@@ -286,9 +286,16 @@ const Map = forwardRef<MapRefType, MapProps>(
                   }}
                   anchor={{ x: 0.5, y: 0.5 }}
                   onPress={() => {
-                    // Zoom into the cluster when clicked
-                    const toRegion = point.properties.getExpansionRegion();
-                    mapRef.current?.animateToRegion(toRegion, 500);
+                    // Faz o zoom exato para o centro do cluster com a mesma aproximação do negócio
+                    mapRef.current?.animateToRegion(
+                      {
+                        latitude: point.geometry.coordinates[1],
+                        longitude: point.geometry.coordinates[0],
+                        latitudeDelta: 0.00005,
+                        longitudeDelta: 0.00005,
+                      },
+                      1500,
+                    );
                   }}
                 >
                   <View
@@ -308,7 +315,6 @@ const Map = forwardRef<MapRefType, MapProps>(
                         fontSize: 12,
                       }}
                       numberOfLines={1}
-                      adjustsFontSizeToFit
                       minimumFontScale={0.6}
                     >
                       {point.properties.point_count}
