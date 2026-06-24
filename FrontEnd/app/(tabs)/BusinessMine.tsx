@@ -125,7 +125,6 @@ const MyBusinesses = () => {
                   marginBottom: 16,
                   borderWidth: 1,
                   borderColor: theme.colors.outlineVariant,
-                  // Remova o overflow: "hidden" daqui
                 }}
               >
                 {/* Adicione uma View interna para gerir o corte */}
@@ -143,7 +142,7 @@ const MyBusinesses = () => {
                     onPress={() => {
                       router.push({
                         pathname: '/components/BusinessDetails',
-                        params: { businessId: item._id },
+                        params: { id: item._id },
                       });
                     }}
                     rippleColor="rgba(150, 150, 150, 0.2)"

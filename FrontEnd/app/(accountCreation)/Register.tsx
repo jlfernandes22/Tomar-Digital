@@ -55,6 +55,18 @@ const Register = () => {
       setLoading(false);
       return;
     }
+    const isSecure = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password);
+
+    if (!isSecure) {
+      setDialogTitle(t('common.warning'));
+      // Recomendo que adiciones esta chave ao teu ficheiro de traduções (i18n)
+      setDialogText(t('register.warning_weak_password', { 
+        defaultValue: 'A password deve ter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial.' 
+    }));
+      setDialogVisible(true);
+      setLoading(false);
+      return;
+    }
 
     console.log('password correta ');
     try {

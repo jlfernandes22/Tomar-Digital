@@ -1,4 +1,9 @@
 {
+  "getAddress": {
+    "error_no_coords": "No coordinates were received to convert into an address.",
+    "error_reverse_geocode": "Could not get an address from the provided coordinates.",
+    "error_no_result": "The geolocation service returned no address for these coordinates."
+  },
   "login": {
     "title": "Log in",
     "email": "Email",
@@ -17,6 +22,7 @@
     "register_button": "Create Account",
     "warning_empty": "Please fill in at least email and password.",
     "warning_mismatch": "Passwords do not match!",
+    "warning_weak_password": "Password needs at least 8 characters, an uppercase, one number and a special character ",
     "success": "Success:Redirecting...",
     "error": "Error:",
     "error_generic": "Could not create account.",
@@ -163,7 +169,8 @@
     "add_images": "Add Images",
     "submit_register": "Submit and register business",
     "send_business": "Send Business",
-    "imagesSelection": "You already selected 5 photos"
+    "imagesSelection": "You already selected 5 photos",
+    "error_geocode": "Error getting address: {{error}}"
   },
   "camara": {
     "welcome": "Hello, Câmara de Tomar. Choose an area to manage.",

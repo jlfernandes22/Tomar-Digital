@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from './CustomButton'; // Mantendo o teu botão costumizado
 
-const TermosCondicoes = () => {
+const Terms = () => {
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
 
@@ -249,4 +249,4 @@ const TermosCondicoes = () => {
   );
 };
 
-export default TermosCondicoes;
+export default Terms;

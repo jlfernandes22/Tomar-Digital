@@ -23,6 +23,8 @@ const QrCodeFAB = () => {
 
   const isAddBusiness = segments.includes('BusinessAdd');
 
+  const isProfile = segments.includes('Profile')
+
   // If ANY of these are true, don't render the button
   if (
     isInitializing ||
@@ -30,7 +32,8 @@ const QrCodeFAB = () => {
     isAuthFlow ||
     isScanScreen ||
     isCreateCampaign ||
-    isAddBusiness
+    isAddBusiness ||
+    isProfile
   ) {
     return null;
   }

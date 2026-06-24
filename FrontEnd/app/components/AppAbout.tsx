@@ -239,7 +239,7 @@ const SobreAPP = () => {
                 <CustomButton
                   onPress={() =>
                     router.push({
-                      pathname: '/components/Termos',
+                      pathname: '/components/Terms',
                     })
                   }
                   buttonColor="transparent"

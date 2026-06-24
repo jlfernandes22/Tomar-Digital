@@ -558,10 +558,12 @@ app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio
     } = req.body;
 
     console.log(req.body)
+    
 
     // Validação da integridade dos dados obrigatórios
     // Nota: O envio da galeria é processado separadamente através do req.files (Multer)
     if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
+      
       return res.status(400).json({ message: "Dados essenciais incompletos." });
     }
     // Remove todos os espaços vazios do número antes de validar
@@ -571,7 +573,7 @@ app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio
     // Aceita opcionalmente +351 ou 00351
     // Obriga a começar por 9 (telemóvel) ou 2 (fixo) seguido de 8 dígitos numéricos
     const telefoneRegex = /^(?:(?:\+|00)351)?[29]\d{8}$/;
-      
+    
     if (!telefoneLimpo || !telefoneRegex.test(telefoneLimpo)) {
       return res.status(400).json({ 
         erro: "Número de telefone inválido. Deve ser um número português válido (ex: 912345678 ou +351912345678)." 
@@ -587,19 +589,28 @@ app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio
 
     if (uniqueCAES.length > 0) {
       // 2. Procura na base de dados todos os CAEs que correspondam à lista fornecida
-      const caesEncontrados = await Cae.find({ cae: { $in: uniqueCAES } });
-    
+      const caesComoNumeros = uniqueCAES.map(c => Number(c));
+      
+      // Procura por Strings OU por Números (para garantir que encontra)
+      const caesEncontrados = await Cae.find({ 
+        $or: [
+          { cae: { $in: uniqueCAES } }, 
+          { cae: { $in: caesComoNumeros } }
+        ]
+      });
+      console.log(caesEncontrados)
       // 3. Se a quantidade de CAEs encontrados não for igual à quantidade enviada, algo está errado
       if (caesEncontrados.length !== uniqueCAES.length) {
 
         // (Opcional) Descobrir exatamente quais são os inválidos para dar uma resposta mais útil
         const codigosEncontrados = caesEncontrados.map(c => c.cae);
         const caesInvalidos = uniqueCAES.filter(c => !codigosEncontrados.includes(c));
-      
         return res.status(400).json({
           erro: "Um ou mais códigos CAE fornecidos não existem no sistema.",
           caesInvalidos: caesInvalidos
+           
         });
+       
       }
     } else {
       return res.status(400).json({
@@ -610,7 +621,7 @@ app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio
     // Inicialização das variáveis de URL para persistência
     let logoUrl = "";
     let galeriaUrls = [];
-
+    
     // --- Processamento do Logótipo ---
     if (req.files && req.files['logo'] && req.files['logo'][0]) {
       const logoFile = req.files['logo'][0];
@@ -684,7 +695,7 @@ app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio
       location: parsedLocalizacao ? { lat: Number(parsedLocalizacao.latitude), long: Number(parsedLocalizacao.longitude) } : undefined,
       phone: telefoneDono, 
       email: emailDono, 
-      listaCAES: parsedCAES, 
+      listaCAES: uniqueCAES, 
       description: descricaoNegocio, 
       gallery: galeriaUrls, 
       owner: ownerId,
@@ -868,6 +879,8 @@ app.get("/negocios/:id", async (req, res) => {
     if (!negocio) {
       return res.status(404).json({ message: "Negócio não encontrado." });
     }
+
+    console.log(negocio)
 
     res.json(negocio);
   } catch (error) {

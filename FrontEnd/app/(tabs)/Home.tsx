@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from 'react';
 import {
   View,
   ActivityIndicator,
@@ -204,13 +210,20 @@ export default function Index() {
   //Função para verificar se o negócio está na área do utilizador
   const inRange = (isManualClick = false) => {
     console.log('inRange');
-    setLoading(true);
     if (listaNegocios.length === 0) {
       console.log('não há negócios registados');
       return;
     }
     //console.log(userLocation);
-    if (!userLocation) return;
+    if (!userLocation) {
+      if (isManualClick) {
+        setDialogTitle(t('common.warning'));
+        setDialogText(t('home.warning_no_nearby'));
+        setDialogVisible(true);
+      }
+      return;
+    }
+    setLoading(true);
 
     const closeBiz = filteredPins.filter(negocio => {
       const distancia = calcularDistancia(
@@ -220,7 +233,6 @@ export default function Index() {
         userLocation?.longitude,
       );
 
-      setLoading(false);
       return (!category || negocio.category === category) && distancia <= 250;
     });
 
@@ -228,8 +240,8 @@ export default function Index() {
       setDialogTitle(t('common.warning'));
       setDialogText(t('home.warning_no_nearby'));
       setDialogVisible(true);
-      setLoading(false);
     }
+    setLoading(false);
 
     //console.log(closeBiz)
     //console.log(negocioSelecionado)
@@ -265,10 +277,12 @@ export default function Index() {
     },
   ).current;
 
-  const filteredPins = listaNegocios.filter(pin => {
-    if (category === '') return true;
-    return pin.category === category;
-  });
+  const filteredPins = useMemo(() => {
+    return listaNegocios.filter(pin => {
+      if (category === '') return true;
+      return pin.category === category;
+    });
+  }, [listaNegocios, category]);
 
   const isSelectedFavorite = negocioSelecionado
     ? idsFavorite.includes(negocioSelecionado._id)
@@ -300,6 +314,12 @@ export default function Index() {
     }, [user?.id]), // ou id nos Detalhes
   );
 
+  const handleUserLocationUpdate = useCallback(
+    (coord: { latitude: number; longitude: number } | null) => {
+      setUserLocation(coord);
+    },
+    [],
+  );
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View
@@ -316,7 +336,7 @@ export default function Index() {
             setShowCloseBusiness(false);
             setListaFiltrada([]);
           }}
-          onUserLocationUpdate={coord => setUserLocation(coord)}
+          onUserLocationUpdate={handleUserLocationUpdate}
         />
       </View>
 

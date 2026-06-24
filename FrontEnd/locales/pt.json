@@ -1,4 +1,9 @@
 {
+  "getAddress": {
+    "error_no_coords": "Não foram recebidas nenhumas coordenadas para converter em morada.",
+    "error_reverse_geocode": "Não foi possível obter a morada a partir das coordenadas fornecidas.",
+    "error_no_result": "O serviço de geolocalização não devolveu nenhuma morada para estas coordenadas."
+  },
   "login": {
     "title": "Iniciar Sessão",
     "email": "Email",
@@ -17,6 +22,7 @@
     "register_button": "Criar Conta",
     "warning_empty": "Por favor, preencha pelo menos email e password.",
     "warning_mismatch": "As palavras-passe não coincidem!",
+    "warning_weak_password":"A password deve ter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial",
     "success": "Sucesso:A redirecionar...",
     "error": "Erro:",
     "error_generic": "Não foi possível criar a conta.",
@@ -163,7 +169,8 @@
     "add_images": "Adicionar Imagens",
     "submit_register": "Submeter",
     "send_business": "Enviar Negócio",
-    "imagesSelection": "Já selecionou 5 fotos"
+    "imagesSelection": "Já selecionou 5 fotos",
+    "error_geocode": "Erro ao obter a morada: {{error}}"
   },
   "camara": {
     "welcome": "Olá, Câmara de Tomar. Escolha uma área para gerir.",

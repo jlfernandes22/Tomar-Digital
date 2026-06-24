@@ -187,7 +187,7 @@ const DetalhesBusiness = () => {
                 }}
               />
             ) : (
-              <Text>{t('merchant.no_logo', { defaultValue: 'SEM logo' })}</Text>
+              <></>
             )}
           </View>
 

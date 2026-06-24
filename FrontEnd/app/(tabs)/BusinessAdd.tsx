@@ -43,7 +43,7 @@ export default function AddBusiness() {
       longitude: 0,
     },
     telefoneDono: '',
-    emailDono: user?.email,
+    emailDono: user?.email ?? '',
     descricaoNegocio: '',
     galeriaFotos: [] as string[],
   };
@@ -207,6 +207,7 @@ export default function AddBusiness() {
       dataToSend.append('telefoneDono', formData.telefoneDono);
       dataToSend.append('emailDono', formData.emailDono);
       dataToSend.append('descricaoNegocio', formData.descricaoNegocio);
+      dataToSend.append('telefoneDono', formData.telefoneDono);
 
       if (user?.id) {
         dataToSend.append('owner', user.id);
@@ -282,23 +283,25 @@ export default function AddBusiness() {
         setFormData(INITIAL_FORM_DATA);
         router.back();
         setStep(1);
+        console.log(response);
       } else {
         setDialogTitle(t('common.error'));
-        setDialogText(
-          data.message ||
-            t('addBusiness.error_registration', {
-              defaultValue: 'Erro no registo.',
-            }),
-        );
+
+        // Mostra a mensagem de erro, seja 'message', 'erro', ou o JSON completo
+        const errorMessage = data.message || data.erro || JSON.stringify(data);
+
+        setDialogText(errorMessage);
         setDialogVisible(true);
       }
     } catch (error) {
       setDialogTitle(t('common.error'));
+
       setDialogText(
         t('addBusiness.error_server_conn', {
           defaultValue: 'Erro de ligação ao servidor.',
         }),
       );
+
       setDialogVisible(true);
     } finally {
       setLoading(false);
@@ -695,8 +698,16 @@ export default function AddBusiness() {
                           moradaNegocio: address,
                         }));
                       }
-                    } catch (err) {
+                    } catch (err: any) {
                       console.error('Erro ao converter coordenadas:', err);
+                      setDialogTitle(t('common.error'));
+                      setDialogText(
+                        t('addBusiness.error_geocode', {
+                          error: err?.message,
+                          defaultValue: `Erro ao obter a morada: ${err?.message}`,
+                        }),
+                      );
+                      setDialogVisible(true);
                     }
                   }}
                 />
