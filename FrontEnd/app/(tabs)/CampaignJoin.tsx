@@ -14,13 +14,16 @@ import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import DetalhesCampanha from '@/app/components/CampaignDetails';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function JoinCampaign() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [ListCampaign, setListCampaign] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const { currentTheme: theme } = useAppTheme();
   const [showDetails, setShowDetails] = useState(false);
 
@@ -109,6 +112,14 @@ export default function JoinCampaign() {
   useEffect(() => {
     fetchCampaigns();
   }, []);
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>

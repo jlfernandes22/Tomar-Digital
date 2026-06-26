@@ -12,16 +12,14 @@ import { useAppTheme } from '@/context/ThemeContext';
 import CustomButton from './CustomButton';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
-
-interface DetalhesProps {
-  visible: boolean;
-  campaign: any;
-  onClose: () => void;
-}
+import { useLoadingState } from '@/context/LoadingContext';
+import DetalhesProps from '@/constants/Interfaces/PropsDetails';
+import LoadingScreen from './LoadingScreen';
 
 const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
   const { t } = useTranslation();
   const [passo, setPasso] = useState(1);
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
   const [meusNegocios, setMeusNegocios] = useState<any[]>([]);
   const [negocioSelecionado, setNegocioSelecionado] = useState<string | null>(
@@ -92,6 +90,13 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
     carregarNegocios();
   }, [visible, user?.token, campaign.listaCAES]);
 
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
   return (
     <Modal
       visible={visible}
@@ -125,7 +130,15 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
               {t('campaign.details', { defaultValue: 'Detalhes' })}
             </Text>
-            <IconButton icon="close" size={24} onPress={onClose} accessible={true} accessibilityLabel={t('accessibility.close_window', { defaultValue: 'Fechar janela' })} />
+            <IconButton
+              icon="close"
+              size={24}
+              onPress={onClose}
+              accessible={true}
+              accessibilityLabel={t('accessibility.close_window', {
+                defaultValue: 'Fechar janela',
+              })}
+            />
           </View>
 
           <Divider style={{ marginVertical: 10 }} />
@@ -134,7 +147,9 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             {passo === 1 ? (
               <View>
                 <Text variant="titleMedium" style={{ marginBottom: 10 }}>
-                  {t('campaign.select_business_step1', { defaultValue: '1. Selecione o negócio:' })}
+                  {t('campaign.select_business_step1', {
+                    defaultValue: '1. Selecione o negócio:',
+                  })}
                 </Text>
                 {meusNegocios.map(negocio => (
                   <View key={negocio._id} style={{ marginBottom: 12 }}>
@@ -145,8 +160,17 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                           ? '#FFF'
                           : theme.colors.onSurface
                       }
-                      accessibilityLabel={t('accessibility.select_name', { name: negocio.name, defaultValue: `Selecionar ${negocio.name}` })}
-                      accessibilityHint={t('accessibility.select_business_campaign', { defaultValue: 'Clica para selecionar este negócio para a campanha' })}
+                      accessibilityLabel={t('accessibility.select_name', {
+                        name: negocio.name,
+                        defaultValue: `Selecionar ${negocio.name}`,
+                      })}
+                      accessibilityHint={t(
+                        'accessibility.select_business_campaign',
+                        {
+                          defaultValue:
+                            'Clica para selecionar este negócio para a campanha',
+                        },
+                      )}
                     >
                       {negocio.name}
                     </CustomButton>
@@ -160,9 +184,15 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                   onPress={() =>
                     negocioSelecionado
                       ? setPasso(2)
-                      : alert(t('campaign.select_business_alert', { defaultValue: 'Selecione um negócio!' }))
+                      : alert(
+                          t('campaign.select_business_alert', {
+                            defaultValue: 'Selecione um negócio!',
+                          }),
+                        )
                   }
-                  accessibilityLabel={t('accessibility.continue_confirmation', { defaultValue: 'Continuar para a confirmação' })}
+                  accessibilityLabel={t('accessibility.continue_confirmation', {
+                    defaultValue: 'Continuar para a confirmação',
+                  })}
                 >
                   {t('common.continue', { defaultValue: 'Continuar' })}
                 </CustomButton>
@@ -170,10 +200,18 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             ) : (
               <View style={{ alignItems: 'center', padding: 20 }}>
                 <Text style={{ textAlign: 'center', marginBottom: 20 }}>
-                  {t('campaign.confirm_join_campaign', { title: campaign.titulo, defaultValue: `Confirma a adesão à campanha "${campaign.titulo}"?` })}
+                  {t('campaign.confirm_join_campaign', {
+                    title: campaign.titulo,
+                    defaultValue: `Confirma a adesão à campanha "${campaign.titulo}"?`,
+                  })}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <CustomButton onPress={() => setPasso(1)} accessibilityLabel={t('addBusiness.prev_step', { defaultValue: 'Voltar ao passo anterior' })}>
+                  <CustomButton
+                    onPress={() => setPasso(1)}
+                    accessibilityLabel={t('addBusiness.prev_step', {
+                      defaultValue: 'Voltar ao passo anterior',
+                    })}
+                  >
                     {t('common.back', { defaultValue: 'Voltar' })}
                   </CustomButton>
                   <CustomButton
@@ -181,9 +219,13 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                     onPress={handleAderir}
                     loading={loading}
                     disabled={loading}
-                    accessibilityLabel={t('accessibility.confirm_join', { defaultValue: 'Confirmar adesão à campanha' })}
+                    accessibilityLabel={t('accessibility.confirm_join', {
+                      defaultValue: 'Confirmar adesão à campanha',
+                    })}
                   >
-                    {loading ? t('common.sending', { defaultValue: 'A enviar...' }) : t('common.confirm_btn', { defaultValue: 'Confirmar' })}
+                    {loading
+                      ? t('common.sending', { defaultValue: 'A enviar...' })
+                      : t('common.confirm_btn', { defaultValue: 'Confirmar' })}
                   </CustomButton>
                 </View>
               </View>

@@ -1,11 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  View,
-  FlatList,
-  RefreshControl,
-  ScrollView,
-} from 'react-native';
+import { View, FlatList, RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
@@ -25,7 +20,8 @@ import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
 import BusinessList from './BusinessList';
 import { useAppTheme } from '@/context/ThemeContext';
-import { curiosidades } from '@/constants/curiosities';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 
 // 1. Interfaces MOVIDAS PARA FORA do componente
 interface Business {
@@ -46,10 +42,11 @@ export default function AprovarNegocios() {
   const { t } = useTranslation();
   const [pendentes, setPendentes] = useState<Business[]>([]);
   const [pendOwners, setPendOwners] = useState<Owner[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
@@ -144,16 +141,13 @@ export default function AprovarNegocios() {
 
   const executeDescartar = async (id: string) => {
     try {
-      const response = await fetch(
-        `${API_URL}/business/rejeitar/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${API_URL}/business/rejeitar/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       if (response.ok) {
         setPendentes(prev => prev.filter(item => item._id !== id));
@@ -165,48 +159,17 @@ export default function AprovarNegocios() {
     }
   };
 
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
 
   if (loading) {
-    return (
-      <Surface
-        className=" items-center justify-center p-6"
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          {t('common.loading')}
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity')}
-          accessibilityHint={t('accessibility.see_curiosity')}
-        >
-          {t('saved.did_you_know', { phrase: t(randomPhrase) })}
-        </CustomButton>
-      </Surface>
-    );
+    return <LoadingScreen />;
   }
+
   return (
     <>
+      <Stack.Screen options={{ headerShown: false }} />
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
         <Appbar.BackAction
           onPress={() => router.back()}
@@ -364,7 +327,8 @@ export default function AprovarNegocios() {
           <Dialog.Content>
             <Text style={{ color: theme.colors.onSurface }}>
               {t('camara.reject_confirm_biz', {
-                defaultValue: 'Tens a certeza que queres descartar este pedido?',
+                defaultValue:
+                  'Tens a certeza que queres descartar este pedido?',
               })}
             </Text>
           </Dialog.Content>

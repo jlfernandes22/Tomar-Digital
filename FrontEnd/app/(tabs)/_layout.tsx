@@ -36,7 +36,7 @@ const _layout = () => {
             return false;
           if (route.name === 'CampaignJoin' && user?.role !== 'comerciante')
             return false;
-          if (route.name === 'ScanScreen') return false;
+
           if (route.name === 'ProfileEdit') return false;
           if (route.name === 'CampaignCreate' && user?.role !== 'camara')
             return false;
@@ -170,14 +170,7 @@ const _layout = () => {
           ),
         }}
       />
-      <Tabs.Screen
-        name="ScanScreen"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <TabIcon icon={images.qrCodeImg} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="CampaignCreate"
         options={{

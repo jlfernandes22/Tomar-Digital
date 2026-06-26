@@ -2,7 +2,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   View,
   Image,
   Pressable,
@@ -16,8 +15,6 @@ import {
   Surface,
   Text,
   ProgressBar,
-  TextInput,
-  Button,
   HelperText,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,14 +26,9 @@ import CustomDialog from '../components/CustomDialog';
 import CustomChip from '../components/CustomChip';
 import * as ImagePicker from 'expo-image-picker';
 import { useAppTheme } from '@/context/ThemeContext';
-
-interface IPacote {
-  descricaoRecompensa: string;
-  custoEmPontos: number;
-  stockInicial: number;
-  stockAtual: number;
-  maximoPorUser: number;
-}
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from '../components/LoadingScreen';
+import PacketInterface from '@/constants/Interfaces/PacketInterface';
 
 interface ICampanhaForm {
   tituloCampanha: string;
@@ -48,7 +40,7 @@ interface ICampanhaForm {
   normas: string;
   logo: string;
   panfleto: string;
-  pacotes: IPacote[];
+  pacotes: PacketInterface[];
 }
 
 const CreateCampaign = () => {
@@ -83,6 +75,7 @@ const CreateCampaign = () => {
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -677,6 +670,14 @@ const CreateCampaign = () => {
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
+  }
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
   }
 
   return (

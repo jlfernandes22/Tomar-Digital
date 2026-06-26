@@ -95,7 +95,7 @@ const SingleMap = forwardRef<MapRefType, MapProps>(
         </MapView>
       </View>
     );
-  }
+  },
 );
 
 // =======================================================
@@ -162,7 +162,11 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
           );
         } catch (err) {
           setDialogTitle(t('common.error'));
-          setDialogText(t('map.error_location', { defaultValue: 'Erro\nNão foi possível obter a sua localização' }));
+          setDialogText(
+            t('map.error_location', {
+              defaultValue: 'Erro\nNão foi possível obter a sua localização',
+            }),
+          );
           setDialogVisible(true);
         } finally {
           setLoading(false);
@@ -170,13 +174,20 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
       };
 
       tracking();
-      return () => { if (subscription) subscription.remove(); };
+      return () => {
+        if (subscription) subscription.remove();
+      };
     }, []);
 
     useImperativeHandle(ref, () => ({
       focusOnLocation: (lat: number, lng: number) => {
         mapRef.current?.animateToRegion(
-          { latitude: lat, longitude: lng, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+          {
+            latitude: lat,
+            longitude: lng,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
           1000,
         );
       },
@@ -192,7 +203,7 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
             initialRegion={tomar}
             showsUserLocation={true}
             scrollEnabled={true}
-            onRegionChangeComplete={(region) => setMapRegion(region)}
+            onRegionChangeComplete={region => setMapRegion(region)}
             customMapStyle={theme.dark ? darkMapStyle : []}
             showsMyLocationButton={false}
             toolbarEnabled={false}
@@ -212,23 +223,42 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
                 return (
                   <Marker
                     key={`cluster-${point.properties.cluster_id}`}
-                    coordinate={{ latitude: point.geometry.coordinates[1], longitude: point.geometry.coordinates[0] }}
+                    coordinate={{
+                      latitude: point.geometry.coordinates[1],
+                      longitude: point.geometry.coordinates[0],
+                    }}
                     anchor={{ x: 0.5, y: 0.5 }}
-                    
                     onPress={() => {
                       mapRef.current?.animateToRegion(
                         {
                           latitude: point.geometry.coordinates[1],
                           longitude: point.geometry.coordinates[0],
-                          latitudeDelta: mapRegion.latitudeDelta/3,
-                          longitudeDelta: mapRegion.longitudeDelta/3
+                          latitudeDelta: mapRegion.latitudeDelta / 3,
+                          longitudeDelta: mapRegion.longitudeDelta / 3,
                         },
                         1500,
                       );
                     }}
                   >
-                    <View style={{ backgroundColor: theme.colors.primary, borderRadius: theme.roundness, borderColor: theme.colors.outline, borderWidth: 2 }}>
-                      <Text style={{ color: theme.colors.onPrimary, fontWeight: 'bold', paddingHorizontal: 6, paddingVertical: 2, fontSize: 12 }} numberOfLines={1} minimumFontScale={0.6}>
+                    <View
+                      style={{
+                        backgroundColor: theme.colors.primary,
+                        borderRadius: theme.roundness,
+                        borderColor: theme.colors.outline,
+                        borderWidth: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: theme.colors.onPrimary,
+                          fontWeight: 'bold',
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          fontSize: 12,
+                        }}
+                        numberOfLines={1}
+                        minimumFontScale={0.6}
+                      >
                         {point.properties.point_count}
                       </Text>
                     </View>
@@ -248,7 +278,13 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
           </MapView>
 
           <FAB
-            style={{ position: 'absolute', margin: 16, right: 0, bottom: 80, backgroundColor: theme.colors.primary }}
+            style={{
+              position: 'absolute',
+              margin: 16,
+              right: 0,
+              bottom: 80,
+              backgroundColor: theme.colors.primary,
+            }}
             color={theme.colors.onPrimary}
             loading={loading}
             disabled={loading}
@@ -259,13 +295,22 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
                 const gpsSignal = await Location.hasServicesEnabledAsync();
                 if (!gpsSignal) {
                   setDialogTitle(t('common.warning'));
-                  setDialogText(t('map.warning_gps_disabled', { defaultValue: 'Aviso\nTem o GPS desativado' }));
+                  setDialogText(
+                    t('map.warning_gps_disabled', {
+                      defaultValue: 'Aviso\nTem o GPS desativado',
+                    }),
+                  );
                   setDialogVisible(true);
                   setLoading(false);
                   return;
                 }
-                const currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
-                setUserLocation({ latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude });
+                const currentLocation = await Location.getCurrentPositionAsync({
+                  accuracy: Location.Accuracy.Low,
+                });
+                setUserLocation({
+                  latitude: currentLocation.coords.latitude,
+                  longitude: currentLocation.coords.longitude,
+                });
                 mapRef.current?.animateToRegion(
                   {
                     latitude: currentLocation.coords.latitude,
@@ -278,19 +323,28 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
                 setTimeout(() => setLoading(false), 1500);
               } catch (error) {
                 setDialogTitle(t('common.warning'));
-                setDialogText(t('map.warning_activate_gps', { defaultValue: 'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades' }));
+                setDialogText(
+                  t('map.warning_activate_gps', {
+                    defaultValue:
+                      'Aviso\nTem de ativar o GPS para aceder a todas as funcionalidades',
+                  }),
+                );
                 setDialogVisible(true);
                 setLoading(false);
               }
             }}
           />
         </View>
-        <CustomDialog title={dialogTitle} visible={dialogVisible} onDismiss={() => setDialogVisible(false)}>
+        <CustomDialog
+          title={dialogTitle}
+          visible={dialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+        >
           <Text>{dialogText}</Text>
         </CustomDialog>
       </>
     );
-  }
+  },
 );
 
 // =======================================================
@@ -301,7 +355,7 @@ const Map = forwardRef<MapRefType, MapProps>((props, ref) => {
   if (props.businesses && props.businesses.length > 0) {
     return <ClusterMap ref={ref} {...props} />;
   }
-  
+
   // Se não tiver (BusinessDetails.tsx), usa o SingleMap
   return <SingleMap ref={ref} {...props} />;
 });

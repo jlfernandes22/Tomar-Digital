@@ -22,11 +22,8 @@ Thumbs.db
 # ----------------------
 # SEGURANÇA (CRÍTICO)
 # ----------------------
-# Ignorar todos os ficheiros de variáveis de ambiente
-# Isto protege a tua SECRET_KEY do BackEnd e chaves de API
-*.env
 
-# Mas permite ficheiros de exemplo (seguros)
+*.env
 !*.example
 !*.template
 
@@ -38,6 +35,7 @@ Thumbs.db
 dist/
 web-build/
 expo-env.d.ts
+*.apk
 
 # Ficheiros Nativos Gerados (Prebuild)
 # Nota: Sem a barra inicial '/' para apanhar dentro da pasta FrontEnd

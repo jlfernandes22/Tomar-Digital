@@ -19,19 +19,15 @@ import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
 import CustomSnackBar from './CustomSnackBar';
 import { curiosidades } from '@/constants/curiosities';
-
-interface Candidatura {
-  businessId: string;
-  businessName: string;
-  campaignId: string;
-  campaignTitle: string;
-  requestDate: string;
-}
+import Candidatura from '@/constants/Interfaces/Candidate';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 
 export default function CandidaturasCampanha() {
   const { t } = useTranslation();
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
   const theme = useTheme();
@@ -116,53 +112,12 @@ export default function CandidaturasCampanha() {
     carregarCandidaturas();
   }, []);
 
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
 
   if (loading) {
-    return (
-      <Surface
-        className="items-center justify-center p-6"
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          {t('dashboard.preparing_data', {
-            defaultValue: 'A preparar os dados...',
-          })}
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity', {
-            defaultValue: 'Descobrir curiosidade',
-          })}
-          accessibilityHint={t('accessibility.view_other_curiosity', {
-            defaultValue: 'Clica para ver outra curiosidade',
-          })}
-        >
-          {t('dashboard.did_you_know', { defaultValue: 'Sabias que...' })}
-          {'\n '}
-          {t(randomPhrase)}
-        </CustomButton>
-      </Surface>
-    );
+    return <LoadingScreen />;
   }
 
   return (

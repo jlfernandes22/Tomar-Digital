@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Pressable } from 'react-native';
 import {
@@ -23,6 +23,8 @@ import { router } from 'expo-router';
 import getAddress from '../../utils/getAddress';
 import { IconButton } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
+import LoadingScreen from '../components/LoadingScreen';
+import { useLoadingState } from '@/context/LoadingContext';
 
 export default function AddBusiness() {
   const { t } = useTranslation();
@@ -49,6 +51,7 @@ export default function AddBusiness() {
   };
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
   const [caeInput, setCaeInput] = useState('');
   const [erro, setErro] = useState('');
@@ -342,6 +345,14 @@ export default function AddBusiness() {
       listaCAES: formData.listaCAES.filter(c => c !== caeParaRemover),
     });
   };
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>

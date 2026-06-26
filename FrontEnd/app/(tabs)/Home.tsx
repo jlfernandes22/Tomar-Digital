@@ -44,13 +44,16 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { ExpandingDot } from 'react-native-animated-pagination-dots';
 import { useTranslation } from 'react-i18next';
 import delay from '@/utils/delay';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function Index() {
   const { t } = useTranslation();
-  // INICIALIZAR ESTADOS COM TIPAGEM (Essencial para o item.name funcionar)
+
   const [listaNegocios, setListaNegocios] = useState<Negocio[]>([]);
   const [listaFiltrada, setListaFiltrada] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState(false);
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [refreshing, setRefreshing] = useState(false);
   const [category, setCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -223,7 +226,7 @@ export default function Index() {
       }
       return;
     }
-    setLoading(true);
+    setLoadingBusiness(true);
 
     const closeBiz = filteredPins.filter(negocio => {
       const distancia = calcularDistancia(
@@ -241,7 +244,7 @@ export default function Index() {
       setDialogText(t('home.warning_no_nearby'));
       setDialogVisible(true);
     }
-    setLoading(false);
+    setLoadingBusiness(false);
 
     //console.log(closeBiz)
     //console.log(negocioSelecionado)
@@ -320,6 +323,15 @@ export default function Index() {
     },
     [],
   );
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View
@@ -888,13 +900,13 @@ export default function Index() {
           backgroundColor: theme.colors.primary,
         }}
         color={theme.colors.onPrimary}
-        loading={loading}
+        loading={loadingBusiness}
         onPress={() => {
           setShowCloseBusiness(true);
           console.log('negociosFABpressed');
           inRange(true);
         }}
-        disabled={loading}
+        disabled={loadingBusiness}
       ></FAB>
 
       <CustomSnackBar

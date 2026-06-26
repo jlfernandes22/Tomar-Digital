@@ -4,7 +4,6 @@ import { View, FlatList, RefreshControl, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
 import {
-  ActivityIndicator,
   Surface,
   Text,
   Divider,
@@ -12,7 +11,6 @@ import {
   Button,
   Modal,
   Portal,
-  IconButton,
   Appbar,
   Dialog,
 } from 'react-native-paper';
@@ -24,22 +22,16 @@ import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
 import CustomSnackBar from './CustomSnackBar';
 import { useAppTheme } from '@/context/ThemeContext';
-import { curiosidades } from '@/constants/curiosities';
-
-interface PedidoComerciante {
-  _id: string;
-  tituloComercio: string;
-  donoComercio: string;
-  emailDono: string;
-  telefoneDono: string;
-  documentoPdfUrl?: string;
-}
+import { useLoadingState } from '@/context/LoadingContext';
+import PedidoComerciante from '@/constants/Interfaces/MerchantRequest';
+import LoadingScreen from './LoadingScreen';
 
 export default function AprovarComerciantes() {
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pedidosPendentes, setPendentes] = useState<PedidoComerciante[]>([]);
 
@@ -242,45 +234,12 @@ export default function AprovarComerciantes() {
     }
   };
 
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
 
   if (loading) {
-    return (
-      <Surface
-        className="items-center justify-center p-6"
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          {t('common.loading')}
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity')}
-          accessibilityHint={t('accessibility.see_curiosity')}
-        >
-          {t('saved.did_you_know', { phrase: t(randomPhrase) })}
-        </CustomButton>
-      </Surface>
-    );
+    return <LoadingScreen />;
   }
 
   return (

@@ -23,9 +23,10 @@ import {
 } from 'react-native-paper';
 import CustomTextInput from './CustomTextInput';
 import CustomButton from './CustomButton';
-
 import { pickImage } from '@/utils/imagePicker';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 
 const EditProfile = () => {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ const EditProfile = () => {
   const [name, setName] = useState(user?.name || '');
   const [city, setCity] = useState(user?.city || '');
   const [NIF, setNIF] = useState(user?.NIF ? String(user.NIF) : '');
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
   const { currentTheme: theme } = useAppTheme();
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -155,6 +157,14 @@ const EditProfile = () => {
     );
   }
 
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
@@ -167,6 +177,7 @@ const EditProfile = () => {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <Stack.Screen options={{ headerShown: false }} />
         <SafeAreaView

@@ -1,8 +1,20 @@
 import { useAppTheme } from '@/context/ThemeContext';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { HelperText, Text, TextInput } from 'react-native-paper';
+import {
+  Button,
+  Dialog,
+  HelperText,
+  Portal,
+  Text,
+  TextInput,
+} from 'react-native-paper';
+import {
+  hasInvisibleChars,
+  isValidText,
+  stripInvisibleChars,
+} from '@/utils/textValidation';
 
 // Definimos o que o botão pode receber
 interface CustomTextInputProps {
@@ -44,6 +56,12 @@ const CustomTextInput = ({
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
 
+  // Estado para o dialog de caracteres invisíveis
+  const [dialogVisible, setDialogVisible] = useState(false);
+
+  // Estado para controlar a visibilidade da palavra-passe
+  const [isSecureEntry, setIsSecureEntry] = useState(isPassword || false);
+
   const keyboardType = isEmail
     ? 'email-address'
     : isNumber || isNIF
@@ -56,7 +74,16 @@ const CustomTextInput = ({
       {required && <Text style={{ color: theme.colors.error }}> *</Text>}
     </Text>
   );
-  const hasError = required && value.length === 0;
+
+  const hasError = required ? !isValidText(value) : false;
+
+  const handleChangeText = (text: string) => {
+    if (hasInvisibleChars(text)) {
+      setDialogVisible(true);
+    }
+    const cleanedText = stripInvisibleChars(text);
+    onChangeText(cleanedText);
+  };
 
   return (
     <View
@@ -74,18 +101,69 @@ const CustomTextInput = ({
         placeholder={placeholder}
         textAlignVertical={multiline ? 'top' : 'center'}
         style={multiline ? { minHeight: 300, height: 'auto' } : {}}
-        onChangeText={onChangeText}
-        secureTextEntry={isPassword}
+        onChangeText={handleChangeText}
+        // Usa o estado dinâmico em vez do prop fixo
+        secureTextEntry={isSecureEntry}
         autoCapitalize={isEmail || isPassword ? 'none' : 'sentences'}
         keyboardType={keyboardType}
         maxLength={currentMaxLength}
-        error={hasError ? true : false}
+        error={hasError}
+        // Adiciona o ícone do olho à direita se for um campo de palavra-passe
+        right={
+          isPassword ? (
+            <TextInput.Icon
+              icon={isSecureEntry ? 'eye-closed' : 'eye'}
+              onPress={() => setIsSecureEntry(!isSecureEntry)}
+              accessibilityLabel={
+                isSecureEntry
+                  ? t('accessibility.show_password', {
+                      defaultValue: 'Mostrar palavra-passe',
+                    })
+                  : t('accessibility.hide_password', {
+                      defaultValue: 'Ocultar palavra-passe',
+                    })
+              }
+            />
+          ) : null
+        }
       />
       {hasError && (
         <HelperText type="error" visible={hasError}>
           {t('common.obrigatorio')}
         </HelperText>
       )}
+
+      {/* Dialog de aviso de caracteres invisíveis */}
+      <Portal>
+        <Dialog
+          visible={dialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+          style={{ backgroundColor: theme.colors.surface }}
+        >
+          <Dialog.Title style={{ color: theme.colors.error }}>
+            {t('common.error_alert', { defaultValue: 'Erro' })}
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text
+              variant="bodyMedium"
+              style={{ color: theme.colors.onSurface }}
+            >
+              {t('validation.invisible_chars_removed', {
+                defaultValue:
+                  'Foram detetados e removidos caracteres invisíveis do texto.',
+              })}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => setDialogVisible(false)}
+              textColor={theme.colors.primary}
+            >
+              {t('common.ok', { defaultValue: 'OK' })}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };

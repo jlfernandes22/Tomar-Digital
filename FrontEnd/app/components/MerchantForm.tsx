@@ -20,14 +20,9 @@ import { API_URL } from '@/constants/api';
 import { router, Stack } from 'expo-router';
 import CustomButton from './CustomButton';
 import { useAppTheme } from '@/context/ThemeContext';
-
-interface IComercianteForm {
-  tituloComercio: string;
-  donoComercio: string;
-  emailDono: string;
-  telefoneDono: string;
-  documentoPDF: { uri: string; name: string } | null;
-}
+import IComercianteForm from '@/constants/Interfaces/MerchantForm';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 
 export default function SerComerciante() {
   const { t } = useTranslation();
@@ -37,6 +32,7 @@ export default function SerComerciante() {
   const [visible, setVisible] = useState(false);
   const [pdfBase64, setPdf64] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
 
   const [showSnackBar, setShowSnackBar] = useState(false);
@@ -224,6 +220,15 @@ export default function SerComerciante() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>

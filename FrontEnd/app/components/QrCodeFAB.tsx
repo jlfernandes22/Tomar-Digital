@@ -4,6 +4,7 @@ import { FAB, Portal, Modal } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useSegments } from 'expo-router';
+import { useLoadingState } from '@/context/LoadingContext';
 
 const QrCodeFAB = () => {
   const insets = useSafeAreaInsets();
@@ -23,7 +24,9 @@ const QrCodeFAB = () => {
 
   const isAddBusiness = segments.includes('BusinessAdd');
 
-  const isProfile = segments.includes('Profile')
+  const isProfile = segments.includes('Profile');
+
+  const { loadingQR } = useLoadingState();
 
   // If ANY of these are true, don't render the button
   if (
@@ -33,7 +36,8 @@ const QrCodeFAB = () => {
     isScanScreen ||
     isCreateCampaign ||
     isAddBusiness ||
-    isProfile
+    isProfile ||
+    loadingQR
   ) {
     return null;
   }
@@ -51,7 +55,7 @@ const QrCodeFAB = () => {
             bottom: Platform.OS == 'ios' ? 90 : 80 + insets.bottom,
             backgroundColor: theme.colors.primary,
           }}
-          onPress={() => router.push('/(tabs)/ScanScreen')}
+          onPress={() => router.push('/components/ScanScreen')}
           color={theme.colors.onPrimary}
           accessible={true}
           accessibilityRole="button"

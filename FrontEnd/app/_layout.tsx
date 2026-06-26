@@ -12,6 +12,7 @@ import {
 import './globals.css';
 import { initI18n } from '../i18n';
 import * as SplashScreen from 'expo-splash-screen';
+import { LoadingProvider } from '@/context/LoadingContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -69,18 +70,20 @@ export default function RootLayout() {
     <AuthProvider>
       <ThemeProvider>
         <ThemeSelector>
-          <SafeAreaProvider>
-            {/* O Stack gere a navegação base da aplicação */}
-            <Stack>
-              <Stack.Screen
-                name="(accountCreation)"
-                options={{ headerShown: false, gestureEnabled: true }}
-              />
+          <LoadingProvider>
+            <SafeAreaProvider>
+              {/* O Stack gere a navegação base da aplicação */}
+              <Stack>
+                <Stack.Screen
+                  name="(accountCreation)"
+                  options={{ headerShown: false, gestureEnabled: true }}
+                />
 
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            </Stack>
-            <QrCodeFAB />
-          </SafeAreaProvider>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              </Stack>
+              <QrCodeFAB />
+            </SafeAreaProvider>
+          </LoadingProvider>
         </ThemeSelector>
       </ThemeProvider>
     </AuthProvider>

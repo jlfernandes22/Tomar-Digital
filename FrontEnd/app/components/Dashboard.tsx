@@ -4,8 +4,9 @@ import {
   useWindowDimensions,
   FlatList,
   Animated,
+  RefreshControl,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -31,14 +32,15 @@ import CustomDialog from './CustomDialog';
 import WebView from 'react-native-webview';
 import { DashboardPdf } from '@/constants/html/DashboardPdf';
 import { exportDashboardToExcel } from '@/constants/excelUtils';
-import { curiosidades } from '@/constants/curiosities';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
   const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
-
+  const [refreshing, setRefreshing] = useState(false);
   const [allInfo, setAllInfo] = useState<{
     categories: any[];
     cities: any[];
@@ -50,7 +52,8 @@ const Dashboard = () => {
   });
   const [summary, setSummary] = useState({ totalUsers: 0, totalBusinesses: 0 });
 
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
 
@@ -75,6 +78,7 @@ const Dashboard = () => {
 
   const fetchAllInfo = async () => {
     try {
+      console.log('fetch allinfo');
       setLoading(true);
       const response = await fetch(`${API_URL}/dashboard`, {
         method: 'GET',
@@ -337,58 +341,32 @@ const Dashboard = () => {
     }
   };
 
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    console.log('fetch');
+
+    await fetchAllInfo();
+
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
 
   if (loading) {
-    return (
-      <Surface
-        className="items-center justify-center p-6"
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          {t('dashboard.preparing_data', {
-            defaultValue: 'A preparar os dados...',
-          })}
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity', {
-            defaultValue: 'Descobrir curiosidade',
-          })}
-          accessibilityHint={t('accessibility.view_other_curiosity', {
-            defaultValue: 'Clica para ver outra curiosidade',
-          })}
-        >
-          {t('dashboard.did_you_know', { defaultValue: 'Sabias que...' })}
-          {'\n '}
-          {t(randomPhrase)}
-        </CustomButton>
-      </Surface>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <Surface style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <Surface
             style={{
               paddingBottom: 80,

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Image, FlatList, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -17,6 +17,8 @@ import {
 import CustomSnackBar from '../components/CustomSnackBar';
 import { useTranslation } from 'react-i18next';
 import CustomButton from '../components/CustomButton';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from '../components/LoadingScreen';
 
 interface Business {
   _id: string;
@@ -38,7 +40,8 @@ const MyBusinesses = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [negocios, setNegocios] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const theme = useTheme();
@@ -77,6 +80,14 @@ const MyBusinesses = () => {
       carregarNegocios();
     }, [user?.token]),
   );
+
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <SafeAreaView

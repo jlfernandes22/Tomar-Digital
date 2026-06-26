@@ -16,12 +16,15 @@ import MapRefType from '@/constants/Interfaces/MapRefType';
 import { API_URL } from '@/constants/api';
 import CustomButton from './CustomButton';
 import { curiosidades } from '@/constants/curiosities';
+import { useLoadingState } from '@/context/LoadingContext';
+import LoadingScreen from './LoadingScreen';
 
 const DetalhesBusiness = () => {
   const { t, i18n } = useTranslation();
   const { dadosNegocio } = useLocalSearchParams<{ dadosNegocio: string }>();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [business, setBusiness] = useState(JSON.parse(dadosNegocio || '{}'));
+  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
   const hoje = new Date();
 
@@ -99,52 +102,12 @@ const DetalhesBusiness = () => {
     );
   }
 
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
 
   if (loading) {
-    return (
-      <Surface
-        className="items-center justify-center p-6"
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          {t('dashboard.preparing_data', {
-            defaultValue: 'A preparar os dados...',
-          })}
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity', {
-            defaultValue: 'Descobrir curiosidade',
-          })}
-          accessibilityHint={t('accessibility.view_other_curiosity', {
-            defaultValue: 'Clica para ver outra curiosidade',
-          })}
-        >
-          {t('dashboard.did_you_know', { defaultValue: 'Sabias que...' })}
-          {'\n '}
-          {t(randomPhrase)}
-        </CustomButton>
-      </Surface>
-    );
+    return <LoadingScreen />;
   }
 
   return (

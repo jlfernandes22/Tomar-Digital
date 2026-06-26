@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Image, FlatList, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -19,23 +19,16 @@ import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
 import { curiosidades } from '@/constants/curiosities';
 import { useTranslation } from 'react-i18next';
-
-interface Favorito {
-  _id: string;
-  userId: string;
-  businessId: {
-    _id: string;
-    name: string;
-    category: string;
-    location: any;
-  } | null;
-}
+import { useLoadingState } from '@/context/LoadingContext';
+import Favorito from '@/constants/Interfaces/Favorites';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Saved = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loadingQR, setLoadingQR } = useLoadingState();
+  const [loading, setLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -98,44 +91,12 @@ const Saved = () => {
     }
   };
 
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
 
   if (loading) {
-    return (
-      <Surface
-        className=" items-center justify-center p-6"
-        style={{ flex: 1, backgroundColor: theme.colors.background }}
-      >
-        <ActivityIndicator
-          size="large"
-          color={theme.colors.primary}
-          style={{ marginBottom: 20 }}
-        />
-
-        <Text
-          variant="titleLarge"
-          style={{
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: 10,
-          }}
-        >
-          {t('common.loading')}
-        </Text>
-
-        <CustomButton
-          labelStyle={{ textAlign: 'center' }}
-          onPress={() => setRandomPhrase(handleRandomPhrase())}
-          accessibilityLabel={t('accessibility.discover_curiosity')}
-          accessibilityHint={t('accessibility.see_curiosity')}
-        >
-          {t('saved.did_you_know', { phrase: t(randomPhrase) })}
-        </CustomButton>
-      </Surface>
-    );
+    return <LoadingScreen />;
   }
 
   return (
