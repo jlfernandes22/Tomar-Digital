@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📍 Tomar Digital
+# 📍 Tomar+Digital
 
 ![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
@@ -50,7 +50,7 @@
 
 ## 🧭 Sobre o Projeto
 
-O **Tomar Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Comerciantes** e a **Câmara Municipal** de Tomar num ciclo económico local digital. A plataforma fomenta o comércio local através de um sistema de gamificação baseado na leitura de faturas fiscais portuguesas (QR Code AT), onde os cidadãos acumulam pontos por cada compra que realizam nos negócios aderentes. Paralelamente, a Câmara Municipal pode criar campanhas temáticas com prémios (Packs) resgatáveis por pontos, incentivando a participação cívica e o turismo local.
+O **Tomar+Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Comerciantes** e a **Câmara Municipal** de Tomar num ciclo económico local digital. A plataforma fomenta o comércio local através de um sistema de gamificação baseado na leitura de faturas fiscais portuguesas (QR Code AT), onde os cidadãos acumulam pontos por cada compra que realizam nos negócios aderentes. Paralelamente, a Câmara Municipal pode criar campanhas temáticas com prémios (Packs) resgatáveis por pontos, incentivando a participação cívica e o turismo local.
 
 ### Como funciona
 
@@ -97,6 +97,8 @@ O **Tomar Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Co
 - 🎨 Sistema de temas com 3 paletas locais × 3 modos (Claro/Escuro/Automático)
 - ♿ Acessibilidade com labels e hints em todos os elementos interativos
 - 🖼️ Pipeline de imagens: Multer (upload) → Sharp (WebP + resize) → Filesystem
+- 🛡️ Sanitização de inputs em tempo real para prevenir ataques de spoofing (caracteres invisíveis)
+- 📱 Tratamento inteligente de permissões de câmara com redirecionamento para definições do OS
 
 ---
 
@@ -388,7 +390,7 @@ FrontEnd/
  │   │   ├─ CustomButton.tsx       # Botão temático com loading e acessibilidade
  │   │   ├─ CustomChip.tsx         # Chip temático
  │   │   ├─ CustomDialog.tsx       # Dialog temático (alertas/confirmar)
- │   │   ├─ CustomMarker.tsx       # Marcador de mapa por categoria
+ │   │   ├─ CustomMarker.tsx       # Marcador de mapa por categoria (com zoom dinâmico)
  │   │   ├─ CustomSnackBar.tsx     # Snackbar semântico (sucesso/erro/aviso)
  │   │   ├─ CustomTextInput.tsx    # Input com validação, toggle password e strip de invisíveis
  │   │   ├─ Dashboard.tsx          # Gráficos + exportação PDF/Excel
@@ -612,19 +614,19 @@ A Câmara Municipal cria campanhas temáticas com packs de prémios para incenti
   1. Cria campanha     ──►  │                      │
  (logo, CAES, packs)        │                      │
        │                    │                      │
-       │              2. Vê campanhas disponíveis  │
-       │                 (filtradas por CAE)       │
+       │           2. Vê campanhas disponíveis     │
+       │               (filtradas por CAE)         │
        │                     │                     │
-       │              3. Seleciona negócio         │
-       │                 e candidata-se            │
+       │     ◄───── 3. Seleciona negócio           │
+       │                e candidata-se             │
        │                    │                      │
        │                    │                      │
   4. Aprova/rejeita         │                      │
      a adesão               │                      │
-       │              ◄─────│                      │
        │                    │                      │
-       │             5. Negócio aparece            │
-       │                na campanha ativa          │
+       │                    │                      │
+       │           5. Negócio aparece              │
+       │              na campanha ativa            │
        │                    │                      │
        │                    │   6. Vê campanhas    │
        │                    │      e prémios       │
@@ -655,7 +657,7 @@ Os cidadãos que pretendam tornar-se comerciantes na plataforma podem candidatar
 
 ## 🎨 Sistema de Temas
 
-O Tomar Digital apresenta um sistema de temas inspirado na identidade cultural de Tomar, com **3 paletas** × **3 modos** = 9 combinações:
+O Tomar+Digital apresenta um sistema de temas inspirado na identidade cultural de Tomar, com **3 paletas** × **3 modos** = 9 combinações:
 
 | Paleta | Inspiração | Cor Primária (Claro) | Cor Primária (Escuro) |
 |:-------|:-----------|:--------------------:|:---------------------:|
