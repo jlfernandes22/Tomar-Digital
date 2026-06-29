@@ -1,6 +1,15 @@
-import { ScrollView, View, Image, Dimensions } from 'react-native';
+/**
+ * BusinessDetails Screen
+ *
+ * Displays comprehensive details about a specific business, including logo,
+ * description, photo gallery, active campaigns, and a location map.
+ * It can receive initial data via route params to avoid a loading flash,
+ * but always fetches fresh data from the backend on mount.
+ */
+
+import { ScrollView, View, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Map from './Map';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,47 +18,59 @@ import {
   Surface,
   Text,
   useTheme,
-  ActivityIndicator,
   Appbar,
+  TouchableRipple,
 } from 'react-native-paper';
+
+// Contexts & Constants
 import MapRefType from '@/constants/Interfaces/MapRefType';
 import { API_URL } from '@/constants/api';
-import CustomButton from './CustomButton';
-import { curiosidades } from '@/constants/curiosities';
 import { useLoadingState } from '@/context/LoadingContext';
+
+// Components
 import LoadingScreen from './LoadingScreen';
 
 const DetalhesBusiness = () => {
+  // --- Hooks (Context & Router) ---
   const { t, i18n } = useTranslation();
-  const { dadosNegocio } = useLocalSearchParams<{ dadosNegocio: string }>();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const [business, setBusiness] = useState(JSON.parse(dadosNegocio || '{}'));
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
-  const hoje = new Date();
-
+  // Extracts params passed via router.push. 'id' is used for fetching,
+  // 'dadosNegocio' is used to pre-populate state for instant UI rendering.
+  const { dadosNegocio, id } = useLocalSearchParams<{
+    dadosNegocio: string;
+    id: string;
+  }>();
   const router = useRouter();
   const theme = useTheme();
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+
+  // --- Local State & Refs ---
+  const [business, setBusiness] = useState(() =>
+    JSON.parse(dadosNegocio || '{}'),
+  );
+  // Start in loading state immediately IF we don't have preloaded data.
+  // This prevents the error screen from flashing before the fetch begins.
+  const [loading, setLoading] = useState(!dadosNegocio);
   const mapRef = useRef<MapRefType>(null);
 
+  // --- Effects ---
+
+  /**
+   * Fetches the latest business data from the backend.
+   * Runs on mount or if the 'id' param changes.
+   */
   useEffect(() => {
     if (!id) {
-      console.warn('Nenhum businessId fornecido');
-      setLoading(false);
+      setLoading(false); // Stop loading if there's no ID to fetch
       return;
     }
 
     const fetchBusiness = async () => {
-      console.log('fetch business data');
       try {
         setLoading(true);
-
         const response = await fetch(`${API_URL}/negocios/${id}`);
         if (!response.ok) throw new Error('Erro ao carregar');
         const data = await response.json();
-        console.log('DADOS DO NEGOCIO:', JSON.stringify(data, null, 2));
-        await setBusiness(data);
-        //console.log(business.location)
+        setBusiness(data);
       } catch (e) {
         console.error('Erro ao buscar negócio:', e);
       } finally {
@@ -57,22 +78,55 @@ const DetalhesBusiness = () => {
       }
     };
 
-    if (business) {
-      console.log('Conteúdo de campanhas:', JSON.stringify(business.campaigns));
-    }
-
     fetchBusiness();
   }, [id]);
 
-  const campanhasAtivas =
-    business.campaigns?.filter((c: any) => {
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while the data is fetching.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading, setLoadingQR]);
+
+  // --- Derived State ---
+  const hasBusinessData = business && Object.keys(business).length > 0;
+
+  // Filters campaigns to only show those that are approved and currently active (date range).
+  // Memoized to prevent recalculating the filter on every component render.
+  const campanhasAtivas = useMemo(() => {
+    if (!business.campaigns) return [];
+    const hoje = new Date();
+    return business.campaigns.filter((c: any) => {
       const inicio = new Date(c.campaign.DataInicio);
       const fim = new Date(c.campaign.DataExpiracao);
-
       return c.status === 'aprovado' && hoje >= inicio && hoje <= fim;
-    }) || [];
+    });
+  }, [business.campaigns]);
 
-  if (!business) {
+  // --- Helpers ---
+  /**
+   * Determines the correct URI for images.
+   * Handles local file paths (from camera/picker) vs remote server paths.
+   */
+  const getImageUri = (uri: string) => {
+    if (!uri) return '';
+    if (
+      uri.startsWith('file://') ||
+      uri.startsWith('content://') ||
+      uri.startsWith('http')
+    ) {
+      return uri;
+    }
+    return `${API_URL}${uri}`;
+  };
+
+  // --- Early Returns ---
+  // Must occur AFTER all hooks (useState, useEffect, useMemo) have been declared.
+
+  // 1. Error State: Show this ONLY if fetching is complete (loading=false) AND we have no data.
+  if (!loading && !hasBusinessData) {
     return (
       <Surface
         style={{
@@ -80,36 +134,65 @@ const DetalhesBusiness = () => {
           justifyContent: 'center',
           alignItems: 'center',
           backgroundColor: theme.colors.background,
+          padding: 20,
         }}
       >
         <Stack.Screen options={{ headerShown: false }} />
-        <Text variant="bodyLarge">
+        <Text
+          variant="bodyLarge"
+          style={{ marginBottom: 24, textAlign: 'center' }}
+        >
           {t('merchant.error_load_business', {
-            defaultValue: 'Não foi possível carregar o negócio.',
+            defaultValue: 'Não foi possível obter a informação deste negócio.',
           })}
         </Text>
-        <IconButton
-          icon="arrow-left"
-          mode="contained"
-          style={{ marginTop: 16 }}
+
+        <TouchableRipple
           onPress={() => router.back()}
+          style={{
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 8,
+            backgroundColor: theme.colors.primaryContainer,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
           accessible={true}
+          accessibilityRole="button"
           accessibilityLabel={t('accessibility.go_back', {
             defaultValue: 'Voltar atrás',
           })}
-        />
+        >
+          <>
+            <IconButton
+              icon="arrow-left"
+              size={20}
+              color={theme.colors.onPrimaryContainer}
+              style={{ margin: 0 }}
+            />
+            <Text
+              style={{
+                color: theme.colors.onPrimaryContainer,
+                fontWeight: 'bold',
+              }}
+            >
+              {t('common.back_btn', { defaultValue: 'Voltar' })}
+            </Text>
+          </>
+        </TouchableRipple>
       </Surface>
     );
   }
 
-  useEffect(() => {
-    setLoadingQR(loading);
-  }, [loading]);
-
-  if (loading) {
+  // 2. Loading State: Show this WHILE fetching (only if we don't have preloaded data to show yet).
+  if (loading && !hasBusinessData) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
+  // If we reach here, we either have preloaded data or successfully fetched data.
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
@@ -122,6 +205,7 @@ const DetalhesBusiness = () => {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
         edges={['left', 'right']}
@@ -132,28 +216,21 @@ const DetalhesBusiness = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
         >
+          {/* Logo Section */}
           <View className="px-4">
-            {business.logo ? (
+            {business.logo && (
               <Image
-                source={{
-                  uri:
-                    business.logo.startsWith('file://') ||
-                    business.logo.startsWith('content://') ||
-                    business.logo.startsWith('http')
-                      ? business.logo
-                      : `${API_URL}${business.logo}`,
-                }}
+                source={{ uri: getImageUri(business.logo) }}
                 className="h-32 w-32 items-center justify-center rounded-full border-2"
                 style={{
                   backgroundColor: theme.colors.background,
                   borderColor: theme.colors.outline,
                 }}
               />
-            ) : (
-              <></>
             )}
           </View>
 
+          {/* Main Info Section */}
           <View className="mt-5 px-5">
             <Text
               variant="labelLarge"
@@ -201,7 +278,7 @@ const DetalhesBusiness = () => {
                 })}
             </Text>
 
-            {/* Secção da Galeria */}
+            {/* Photo Gallery Section */}
             {business.gallery && business.gallery.length > 0 && (
               <View style={{ marginTop: 24 }}>
                 <Text
@@ -220,14 +297,7 @@ const DetalhesBusiness = () => {
                   {business.gallery.map((fotoUrl: string, index: number) => (
                     <Image
                       key={index}
-                      source={{
-                        uri:
-                          fotoUrl.startsWith('file://') ||
-                          fotoUrl.startsWith('content://') ||
-                          fotoUrl.startsWith('http')
-                            ? fotoUrl
-                            : `${API_URL}${fotoUrl}`,
-                      }}
+                      source={{ uri: getImageUri(fotoUrl) }}
                       style={{
                         width: 200,
                         height: 150,
@@ -242,7 +312,7 @@ const DetalhesBusiness = () => {
               </View>
             )}
 
-            {/* Secção de Campanhas - Hierarquia Corrigida */}
+            {/* Active Campaigns Section */}
             <View style={{ marginTop: 24 }}>
               <Text
                 variant="titleMedium"
@@ -296,7 +366,7 @@ const DetalhesBusiness = () => {
               )}
             </View>
 
-            {/* Mapa */}
+            {/* Location Map Section */}
             <Surface
               style={{
                 marginTop: 32,

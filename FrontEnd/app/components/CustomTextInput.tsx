@@ -1,7 +1,6 @@
-import { useAppTheme } from '@/context/ThemeContext';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { View, KeyboardTypeOptions } from 'react-native';
 import {
   Button,
   Dialog,
@@ -10,30 +9,46 @@ import {
   Text,
   TextInput,
 } from 'react-native-paper';
+
+// Contexts & Utils
+import { useAppTheme } from '@/context/ThemeContext';
 import {
   hasInvisibleChars,
   isValidText,
   stripInvisibleChars,
 } from '@/utils/textValidation';
 
-// Definimos o que o botão pode receber
+/**
+ * Defines the props for the CustomTextInput component.
+ * Provides configuration for standard inputs, validation, and security.
+ */
 interface CustomTextInputProps {
-  label: string; // O texto
+  label: string;
   value: string;
   multiline?: boolean;
   numberOfLines?: number;
-  className?: string; // Para adicionar margens extra
+  className?: string;
   onChangeText: (text: string) => void;
   isPassword?: boolean;
   isEmail?: boolean;
   isNumber?: boolean;
   isNIF?: boolean;
   placeholder?: string;
-  keyboardType?: string;
-  lenght?: number;
+  keyboardType?: KeyboardTypeOptions;
+  lenght?: number; // Note: Kept original spelling to maintain compatibility with callers
   required?: boolean;
 }
 
+/**
+ * CustomTextInput Component
+ *
+ * A robust, theme-aware text input wrapper for React Native Paper.
+ * It automatically handles:
+ * - Password visibility toggling.
+ * - Required field validation (including invisible character spoofing checks).
+ * - Dynamic keyboard types based on input type (email, number, NIF).
+ * - Character limits (overriding to 9 for Portuguese NIFs).
+ */
 const CustomTextInput = ({
   label,
   value,
@@ -49,25 +64,28 @@ const CustomTextInput = ({
   lenght,
   required,
 }: CustomTextInputProps) => {
-  let currentMaxLength = lenght;
-  if (isNIF) {
-    currentMaxLength = 9;
-  }
+  // --- Hooks ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
 
-  // Estado para o dialog de caracteres invisíveis
+  // State to control the warning dialog when invisible characters are detected
   const [dialogVisible, setDialogVisible] = useState(false);
 
-  // Estado para controlar a visibilidade da palavra-passe
+  // State to toggle password visibility. Initialized based on the `isPassword` prop.
   const [isSecureEntry, setIsSecureEntry] = useState(isPassword || false);
 
-  const keyboardType = isEmail
+  // --- Derived Values ---
+  // Portuguese NIFs are always exactly 9 digits, so we enforce it regardless of the `lenght` prop
+  const currentMaxLength = isNIF ? 9 : lenght;
+
+  // Determine the appropriate keyboard type for the device
+  const keyboardType: KeyboardTypeOptions = isEmail
     ? 'email-address'
     : isNumber || isNIF
       ? 'numeric'
       : 'default';
 
+  // If the field is required, append a red asterisk to the label
   const LabelElement = (
     <Text>
       {label}
@@ -75,8 +93,16 @@ const CustomTextInput = ({
     </Text>
   );
 
+  // A required field is considered to have an error if it's empty or contains only invisible chars
   const hasError = required ? !isValidText(value) : false;
 
+  // --- Handlers ---
+
+  /**
+   * Intercepts text changes to sanitize input.
+   * If invisible characters (often used in copy/paste spoofing) are detected,
+   * it triggers a warning dialog and strips them before updating the parent state.
+   */
   const handleChangeText = (text: string) => {
     if (hasInvisibleChars(text)) {
       setDialogVisible(true);
@@ -85,12 +111,11 @@ const CustomTextInput = ({
     onChangeText(cleanedText);
   };
 
+  // --- Render ---
   return (
     <View
       className={`${className || ''}`}
-      style={{
-        borderRadius: theme.roundness,
-      }}
+      style={{ borderRadius: theme.roundness }}
     >
       <TextInput
         multiline={multiline}
@@ -102,13 +127,12 @@ const CustomTextInput = ({
         textAlignVertical={multiline ? 'top' : 'center'}
         style={multiline ? { minHeight: 300, height: 'auto' } : {}}
         onChangeText={handleChangeText}
-        // Usa o estado dinâmico em vez do prop fixo
         secureTextEntry={isSecureEntry}
         autoCapitalize={isEmail || isPassword ? 'none' : 'sentences'}
         keyboardType={keyboardType}
         maxLength={currentMaxLength}
         error={hasError}
-        // Adiciona o ícone do olho à direita se for um campo de palavra-passe
+        // Conditionally render the "eye" icon to toggle password visibility
         right={
           isPassword ? (
             <TextInput.Icon
@@ -127,13 +151,15 @@ const CustomTextInput = ({
           ) : null
         }
       />
+
+      {/* Validation Error Text */}
       {hasError && (
         <HelperText type="error" visible={hasError}>
           {t('common.obrigatorio')}
         </HelperText>
       )}
 
-      {/* Dialog de aviso de caracteres invisíveis */}
+      {/* Invisible Character Warning Dialog */}
       <Portal>
         <Dialog
           visible={dialogVisible}

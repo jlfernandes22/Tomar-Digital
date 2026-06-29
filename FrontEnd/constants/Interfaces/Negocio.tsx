@@ -1,4 +1,4 @@
-export default interface NegocioInterface {
+export default interface Business {
   _id: string;
   owner: string;
   name: string;
@@ -10,7 +10,7 @@ export default interface NegocioInterface {
     lat: number;
     long: number;
   };
-  address: string;
+  address?: string;
   status: string;
   NIF?: number | null;
   email?: string;

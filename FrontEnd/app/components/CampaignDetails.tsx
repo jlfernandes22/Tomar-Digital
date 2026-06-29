@@ -1,37 +1,48 @@
-import React, { useEffect, useState } from 'react';
+/**
+ * CampaignDetails Modal Component
+ *
+ * A multi-step modal wizard for merchants to join a specific campaign.
+ * Step 1: Fetches and displays the user's businesses that match the campaign's CAE codes.
+ * Step 2: Confirmation step to submit the join request to the backend.
+ */
+
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Modal, ScrollView } from 'react-native';
-import {
-  Surface,
-  Text,
-  IconButton,
-  Divider,
-  useTheme,
-} from 'react-native-paper';
+import { Surface, Text, IconButton, Divider } from 'react-native-paper';
+
+// Contexts & Hooks
 import { useAppTheme } from '@/context/ThemeContext';
-import CustomButton from './CustomButton';
-import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import DetalhesProps from '@/constants/Interfaces/PropsDetails';
+import { API_URL } from '@/constants/api';
+
+// Components & Types
+import CustomButton from './CustomButton';
 import LoadingScreen from './LoadingScreen';
+import DetalhesProps from '@/constants/Interfaces/PropsDetails';
 
 const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
+  const { currentTheme: theme } = useAppTheme();
+  const { user } = useAuth();
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+
+  // --- Local State ---
   const [passo, setPasso] = useState(1);
-  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
   const [meusNegocios, setMeusNegocios] = useState<any[]>([]);
   const [negocioSelecionado, setNegocioSelecionado] = useState<string | null>(
     null,
   );
-  const { user } = useAuth();
-  const theme = useTheme();
 
-  if (!campaign) return null;
+  // --- Handlers ---
 
+  /** Submits the request to join the selected campaign with the chosen business. */
   const handleAderir = async () => {
-    if (!negocioSelecionado) return;
+    if (!negocioSelecionado || !campaign) return;
+
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/campanhas/aderir`, {
@@ -46,7 +57,8 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
         }),
       });
 
-      const textoResposta = await response.text(); // Lê como texto primeiro
+      // Read as text first to safely handle potential non-JSON error responses from the server
+      const textoResposta = await response.text();
 
       if (response.ok) {
         alert(t('common.success_alert', { defaultValue: 'Sucesso!' }));
@@ -55,18 +67,25 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
         alert(textoResposta);
       }
     } catch (error) {
-      console.log('Erro capturado no Catch:', error); // ISTO DIZ-NOS O PROBLEMA REAL
+      console.log('Erro capturado no Catch:', error);
       alert(t('common.error_connection', { defaultValue: 'Erro de conexão!' }));
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Effects ---
+
+  /**
+   * Fetches the user's businesses that match the campaign's CAE codes.
+   * Runs whenever the modal becomes visible or the campaign changes.
+   */
   useEffect(() => {
     const carregarNegocios = async () => {
+      // Guard clause: ensure we have a campaign and it has CAE codes
       if (!visible || !campaign?.listaCAES) return;
 
-      // Se listaCAES for um array, pega no primeiro elemento. Se for string, usa o valor.
+      // Handle CAE being either an array or a single string
       const caeParaBuscar = Array.isArray(campaign.listaCAES)
         ? campaign.listaCAES[0]
         : campaign.listaCAES;
@@ -87,16 +106,28 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
         console.error('Erro:', error);
       }
     };
-    carregarNegocios();
-  }, [visible, user?.token, campaign.listaCAES]);
 
+    carregarNegocios();
+  }, [visible, user?.token, campaign]);
+
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while the submission is processing.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
   useEffect(() => {
     setLoadingQR(loading);
-  }, [loading]);
+  }, [loading, setLoadingQR]);
+
+  // --- Early Returns ---
+  // Placed AFTER all hooks (useState, useEffect) to respect React's Rules of Hooks.
+  if (!campaign) return null;
 
   if (loading) {
     return <LoadingScreen />;
   }
+
+  // --- Render ---
   return (
     <Modal
       visible={visible}
@@ -120,6 +151,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
             padding: 20,
           }}
         >
+          {/* Modal Header */}
           <View
             style={{
               flexDirection: 'row',
@@ -144,6 +176,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
           <Divider style={{ marginVertical: 10 }} />
 
           <ScrollView style={{ flexGrow: 0 }}>
+            {/* Step 1: Select Business */}
             {passo === 1 ? (
               <View>
                 <Text variant="titleMedium" style={{ marginBottom: 10 }}>
@@ -151,6 +184,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                     defaultValue: '1. Selecione o negócio:',
                   })}
                 </Text>
+
                 {meusNegocios.map(negocio => (
                   <View key={negocio._id} style={{ marginBottom: 12 }}>
                     <CustomButton
@@ -176,6 +210,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                     </CustomButton>
                   </View>
                 ))}
+
                 <CustomButton
                   style={{
                     backgroundColor: theme.colors.onBackground,
@@ -198,6 +233,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                 </CustomButton>
               </View>
             ) : (
+              /* Step 2: Confirm Joining */
               <View style={{ alignItems: 'center', padding: 20 }}>
                 <Text style={{ textAlign: 'center', marginBottom: 20 }}>
                   {t('campaign.confirm_join_campaign', {
@@ -205,6 +241,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                     defaultValue: `Confirma a adesão à campanha "${campaign.titulo}"?`,
                   })}
                 </Text>
+
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <CustomButton
                     onPress={() => setPasso(1)}
@@ -214,6 +251,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose }: DetalhesProps) => {
                   >
                     {t('common.back', { defaultValue: 'Voltar' })}
                   </CustomButton>
+
                   <CustomButton
                     style={{ backgroundColor: theme.colors.onBackground }}
                     onPress={handleAderir}

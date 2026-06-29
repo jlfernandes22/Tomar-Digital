@@ -5,13 +5,38 @@ import { ActivityIndicator, Surface, Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import CustomButton from './CustomButton';
 
+/**
+ * Helper function to pick a random curiosity string.
+ * Moved outside the component to avoid being redefined on every render.
+ */
+const getRandomPhrase = () => {
+  return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+};
+
+/**
+ * LoadingScreen Component
+ *
+ * Displays a full-screen loading indicator. To improve user experience during
+ * potentially long data fetches, it includes an interactive "Did you know?"
+ * button that displays random facts about the city of Tomar.
+ */
 const LoadingScreen = () => {
-  const handleRandomPhrase = () => {
-    return curiosidades[Math.floor(Math.random() * curiosidades.length)];
-  };
-  const [randomPhrase, setRandomPhrase] = useState(handleRandomPhrase());
+  // --- Hooks ---
   const { currentTheme: theme } = useAppTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+
+  // --- State ---
+  // We use lazy initialization (passing the function directly, not calling it)
+  // so getRandomPhrase only runs on the initial render, not on every update.
+  const [randomPhrase, setRandomPhrase] = useState(getRandomPhrase);
+
+  // --- Handlers ---
+  /** Generates a new random phrase and updates the state. */
+  const handleNewPhrase = () => {
+    setRandomPhrase(getRandomPhrase());
+  };
+
+  // --- Render ---
   return (
     <Surface
       className="items-center justify-center p-6"
@@ -38,7 +63,7 @@ const LoadingScreen = () => {
 
       <CustomButton
         labelStyle={{ textAlign: 'center' }}
-        onPress={() => setRandomPhrase(handleRandomPhrase())}
+        onPress={handleNewPhrase}
         accessibilityLabel={t('accessibility.discover_curiosity', {
           defaultValue: 'Descobrir curiosidade',
         })}

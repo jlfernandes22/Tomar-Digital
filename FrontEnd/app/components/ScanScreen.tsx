@@ -1,3 +1,11 @@
+/**
+ * ScanScreen Component
+ *
+ * This screen handles the camera workflow for scanning invoice QR codes.
+ * It manages camera permissions, terms of service acceptance, photo capture,
+ * and communication with the backend to process the invoice and award points.
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -30,21 +38,33 @@ export default function ScanScreen() {
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user, updateUser } = useAuth();
+
+  // Hook provided by expo-camera to manage OS-level camera permissions.
+  // `permission` holds the status, `requestPermission` triggers the OS dialog.
   const [permission, requestPermission] = useCameraPermissions();
+
+  // Syncs local loading state with global context to hide the global FAB during processing.
   const { loadingQR, setLoadingQR } = useLoadingState();
+
+  // `loading` controls the full-screen processing indicator after taking a photo.
+  // `photoLoading` specifically disables the capture button to prevent double-taps.
   const [loading, setLoading] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [scannedQr, setScannedQr] = useState<string | null>(null);
 
-  // Estados para gerir os Termos e Condições
+  // Manages the user's consent to the invoice processing terms.
+  // Initialized from AuthContext in case the user has already accepted them previously.
   const [acceptedTerms, setAcceptedTerms] = useState(
     user?.acceptedInvoiceTerms || false,
   );
   const [termsDialogVisible, setTermsDialogVisible] = useState(false);
 
+  // Ref used as a mutation flag to prevent multiple concurrent API calls
+  // if the user rapidly taps the capture button. Refs don't trigger re-renders.
   const isProcessing = useRef(false);
   const cameraRef = useRef<any>(null);
   const qrTimeoutRef = useRef<any>(null);
+
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
 
@@ -52,16 +72,22 @@ export default function ScanScreen() {
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
 
-  // Sincroniza o estado local com o AuthContext caso mude externamente
+  // =========================================================
+  // USE EFFECTS
+  // =========================================================
+
+  // Keeps local terms state synchronized if the AuthContext updates externally.
   useEffect(() => {
     setAcceptedTerms(user?.acceptedInvoiceTerms || false);
   }, [user?.acceptedInvoiceTerms]);
 
+  // Triggers the OS permission prompt as soon as the component mounts.
   useEffect(() => {
     requestPermission();
   }, []);
 
-  // Limpa o temporizador ao desmontar o componente
+  // Cleanup function: Clears the QR code debounce timer when the component unmounts
+  // to prevent memory leaks or state updates on an unmounted component.
   useEffect(() => {
     return () => {
       if (qrTimeoutRef.current) {
@@ -70,17 +96,29 @@ export default function ScanScreen() {
     };
   }, []);
 
+  // Propagates the local loading state to the global LoadingContext.
+  // This ensures the global QrCodeFAB knows when to hide/show itself.
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading]);
+
+  // =========================================================
+  // EARLY RETURNS (Permission Handling)
+  // =========================================================
+
+  // 1. Permission status is still being determined by the OS.
   if (!permission) {
-    // Camera permissions are still loading.
     return <View />;
   }
 
+  // 2. Permission has been denied. Provide UI to request again or open settings.
   if (!permission.granted) {
     const handlePermissionPress = () => {
       if (permission.canAskAgain) {
+        // We can still show the standard OS prompt.
         requestPermission();
       } else {
-        // The user denied permission permanently, send them to settings
+        // The user selected "Don't ask again". We must send them to the app settings.
         Linking.openSettings();
       }
     };
@@ -100,7 +138,7 @@ export default function ScanScreen() {
             accessibilityRole="button"
             accessibilityLabel={t('scan.give_permission_title')}
             accessibilityHint={t('accessibility.allow_camera')}
-            onPress={handlePermissionPress} // <-- Use the new function
+            onPress={handlePermissionPress}
             className="rounded-xl p-4"
             style={{ backgroundColor: theme.colors.primary }}
           >
@@ -108,7 +146,6 @@ export default function ScanScreen() {
               className="font-bold"
               style={{ color: theme.colors.onPrimary }}
             >
-              {/* Change button text if they need to go to settings */}
               {permission.canAskAgain
                 ? t('scan.give_permission_btn')
                 : t('scan.open_settings_btn', {
@@ -121,11 +158,19 @@ export default function ScanScreen() {
     );
   }
 
+  // =========================================================
+  // CORE LOGIC & HANDLERS
+  // =========================================================
+
+  /**
+   * Handles the barcode scanning event.
+   * Implements a debounce mechanism (1.5s) to prevent the scanner from
+   * firing multiple times for the same QR code while the camera view is active.
+   */
   const handleBarcodeScanned = ({ type, data }: any) => {
     if (isProcessing.current) return;
     setScannedQr(data);
 
-    // Reinicia o temporizador de expiração do QR Code (sugestão temporária)
     if (qrTimeoutRef.current) {
       clearTimeout(qrTimeoutRef.current);
     }
@@ -135,10 +180,14 @@ export default function ScanScreen() {
     }, 1500);
   };
 
+  /**
+   * Handles the acceptance/revocation of terms.
+   * Sends the update to the backend. On failure, reverts the local UI state
+   * to match the server state to keep data consistent.
+   */
   const handleConfirmTerms = async () => {
     setTermsDialogVisible(false);
 
-    // Se houve alteração no consentimento em relação ao que está guardado
     if (acceptedTerms !== user?.acceptedInvoiceTerms) {
       try {
         const response = await fetch(`${API_URL}/aceitarTermosFatura`, {
@@ -153,6 +202,7 @@ export default function ScanScreen() {
         const result = await response.json();
 
         if (response.ok) {
+          // Update global auth state so other screens know terms were accepted.
           updateUser({ acceptedInvoiceTerms: acceptedTerms });
           setSnackbarMessage(
             acceptedTerms
@@ -161,7 +211,7 @@ export default function ScanScreen() {
           );
           setSnackbarVisible(true);
         } else {
-          // Reverte o estado visual para sincronizar com o do contexto em caso de falha
+          // Revert local checkbox state on failure
           setAcceptedTerms(user?.acceptedInvoiceTerms || false);
           setDialogTitle(t('common.error'));
           setDialogText(
@@ -171,7 +221,6 @@ export default function ScanScreen() {
         }
       } catch (error) {
         console.error('Erro ao atualizar termos no servidor:', error);
-        // Reverte o estado visual em caso de falha de ligação
         setAcceptedTerms(user?.acceptedInvoiceTerms || false);
         setDialogTitle(t('common.error'));
         setDialogText(t('scan.error_comm_server'));
@@ -180,8 +229,15 @@ export default function ScanScreen() {
     }
   };
 
+  /**
+   * Main handler for capturing the photo and sending data to the backend.
+   * Uses FormData to send the image file alongside the scanned QR string.
+   */
   const handleTakeAndSend = async () => {
+    // Guard against double-processing
     if (isProcessing.current) return;
+
+    // Enforce terms acceptance before allowing a scan
     if (!acceptedTerms) {
       setTermsDialogVisible(true);
       return;
@@ -195,6 +251,7 @@ export default function ScanScreen() {
         throw new Error('Câmara não inicializada.');
       }
 
+      // Capture the photo. `skipProcessing: false` ensures EXIF data is handled.
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
         skipProcessing: false,
@@ -204,10 +261,11 @@ export default function ScanScreen() {
         throw new Error('Falha ao capturar a imagem da fatura.');
       }
 
+      // Construct multipart/form-data for file upload
       const formData = new FormData();
       formData.append('ReceiptImage', {
         uri: photo.uri,
-        type: 'image/jpeg',
+        type: 'image/jpeg', // Standardize mime type
         name: 'fatura.jpg',
       } as any);
       formData.append('QRCodeData', scannedQr || '');
@@ -215,22 +273,27 @@ export default function ScanScreen() {
       const response = await fetch(`${API_URL}/lerFatura`, {
         method: 'POST',
         headers: {
+          // Note: Do not set 'Content-Type' manually here.
+          // React Native fetch sets it automatically including the boundary token.
           Authorization: `Bearer ${user?.token}`,
         },
         body: formData,
       });
 
+      // Handle Rate Limiting
       if (response.status === 429) {
         setDialogTitle(t('common.error'));
         setDialogText(t('common.error_429'));
         setDialogVisible(true);
         setPhotoLoading(false);
+        isProcessing.current = false; // Allow retrying later
         return;
       }
 
       const result = await response.json();
 
       if (response.ok) {
+        // Update user's point balance in global state
         updateUser({ Points: result.saldoAtual ?? result.novoSaldoTotal });
 
         setSnackbarMessage(
@@ -240,6 +303,8 @@ export default function ScanScreen() {
           }),
         );
         setSnackbarVisible(true);
+
+        // Brief delay so user can see the success snackbar before navigating
         await delay(1500);
         router.replace('/(tabs)/Home');
       } else {
@@ -267,13 +332,15 @@ export default function ScanScreen() {
     }
   };
 
-  useEffect(() => {
-    setLoadingQR(loading);
-  }, [loading]);
+  // =========================================================
+  // RENDER
+  // =========================================================
 
+  // Show full-screen loading overlay while the API request is in flight.
   if (loading) {
     return <LoadingScreen />;
   }
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -287,10 +354,12 @@ export default function ScanScreen() {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <View
         className="flex-1"
         style={{ backgroundColor: theme.colors.background }}
       >
+        {/* The camera view fills the entire background */}
         <CameraView
           ref={cameraRef}
           style={StyleSheet.absoluteFillObject}
@@ -298,9 +367,9 @@ export default function ScanScreen() {
           barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         />
 
-        {/* Container Principal sobre a câmara */}
+        {/* Overlay UI Container */}
         <View className="flex-1 justify-between">
-          {/* Topo: Instruções Únicas */}
+          {/* Top: Instructions Banner */}
           <View
             className="mx-4 mt-14 rounded-2xl p-4"
             style={{ backgroundColor: theme.colors.background }}
@@ -310,7 +379,7 @@ export default function ScanScreen() {
             </Text>
           </View>
 
-          {/* Centro: Retângulo de Enquadramento Dinâmico */}
+          {/* Center: Scanning Frame Indicator */}
           <View className="flex-1 p-8">
             <View
               className={`flex-1 rounded-3xl border-4 ${
@@ -324,12 +393,12 @@ export default function ScanScreen() {
             />
           </View>
 
-          {/* Base: Painel de Controlo */}
+          {/* Bottom: Control Panel */}
           <View
             className="items-center rounded-t-3xl px-6 py-8"
             style={{ backgroundColor: theme.colors.background }}
           >
-            {/* Gestão dos Termos e Condições (Link Discreto) */}
+            {/* Terms & Conditions Toggle Link */}
             <TouchableOpacity
               accessible={true}
               accessibilityRole="button"
@@ -349,7 +418,7 @@ export default function ScanScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Botão de Captura (Shutter) */}
+            {/* Camera Shutter Button */}
             <View className="items-center justify-center">
               <TouchableOpacity
                 accessible={true}
@@ -383,7 +452,6 @@ export default function ScanScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* Texto auxiliar inferior */}
               <Text
                 className="mt-4 text-[10px] font-bold uppercase tracking-widest"
                 style={{
@@ -396,7 +464,7 @@ export default function ScanScreen() {
           </View>
         </View>
 
-        {/* DIALOG: Termos e Condições */}
+        {/* Terms & Conditions Dialog */}
         <Portal>
           <Dialog
             visible={termsDialogVisible}
@@ -444,7 +512,7 @@ export default function ScanScreen() {
           </Dialog>
         </Portal>
 
-        {/* Indicador de carregamento em ecrã inteiro */}
+        {/* Processing Overlay (shown while waiting for API response) */}
         {loading && (
           <View
             className="absolute inset-0 items-center justify-center"
@@ -457,6 +525,7 @@ export default function ScanScreen() {
           </View>
         )}
 
+        {/* Global UI Feedback Components */}
         <CustomSnackBar
           visible={snackbarVisible}
           onDismiss={() => setSnackbarVisible(false)}

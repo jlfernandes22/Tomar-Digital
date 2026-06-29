@@ -1,3 +1,11 @@
+/**
+ * MerchantsCandidates Screen
+ *
+ * Displays a list of pending merchant applications for City Council ('camara') approval.
+ * It allows viewing the submitted PDF proof, approving the application (upgrading the user's role),
+ * or discarding it (deleting the request and PDF from the server).
+ */
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, FlatList, RefreshControl, Dimensions } from 'react-native';
@@ -16,41 +24,53 @@ import {
 } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
-import { API_URL } from '@/constants/api';
+
+// Contexts & Hooks
 import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useLoadingState } from '@/context/LoadingContext';
+import { API_URL } from '@/constants/api';
+
+// Components & Types
 import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
 import CustomSnackBar from './CustomSnackBar';
-import { useAppTheme } from '@/context/ThemeContext';
-import { useLoadingState } from '@/context/LoadingContext';
-import PedidoComerciante from '@/constants/Interfaces/MerchantRequest';
 import LoadingScreen from './LoadingScreen';
+import PedidoComerciante from '@/constants/Interfaces/MerchantRequest';
 
 export default function AprovarComerciantes() {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+
+  // --- Local State ---
+  // Data state
   const [pedidosPendentes, setPendentes] = useState<PedidoComerciante[]>([]);
 
-  // Estados adicionados para controlar o Modal de Visualização idêntico ao SerComerciante
+  // UI loading states
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+
+  // PDF Preview Modal state
   const [visible, setVisible] = useState(false);
   const [pdfBase64, setPdf64] = useState<string | null>(null);
-  const [loadingPdf, setLoadingPdf] = useState(false);
   const [nomePdfAtual, setNomePdfAtual] = useState('');
 
+  // Feedback Dialogs state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
-
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
   const [discardDialogVisible, setDiscardDialogVisible] = useState(false);
   const [discardId, setDiscardId] = useState<string | null>(null);
 
+  // --- Handlers ---
+
+  /** Fetches pending merchant applications from the backend. */
   const carregarDados = useCallback(async () => {
     if (!user?.token) {
       setLoading(false);
@@ -81,13 +101,10 @@ export default function AprovarComerciantes() {
     } finally {
       setLoading(false);
     }
-  }, [user?.token]);
+  }, [user?.token, t]);
 
-  useEffect(() => {
-    carregarDados();
-  }, [carregarDados]);
-
-  const onRefresh = async () => {
+  /** Pull-to-refresh handler. */
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await carregarDados();
@@ -98,71 +115,83 @@ export default function AprovarComerciantes() {
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [carregarDados, t]);
 
-  // Função adaptada para baixar da URL e exibir no Modal idêntico ao SerComerciante
-  const handleVerPDF = async (url?: string, tituloLoja?: string) => {
-    if (!url) {
-      setDialogTitle(t('common.warning'));
-      setDialogText(t('camara.no_pdf'));
-      setDialogVisible(true);
-      return;
-    }
+  /**
+   * Downloads a PDF from the backend URL, converts it to Base64, and opens the preview modal.
+   * React Native doesn't have a native PDF viewer, so we convert it to Base64 and render
+   * it via a WebView using the pdf.js library.
+   */
+  const handleVerPDF = useCallback(
+    async (url?: string, tituloLoja?: string) => {
+      if (!url) {
+        setDialogTitle(t('common.warning'));
+        setDialogText(t('camara.no_pdf'));
+        setDialogVisible(true);
+        return;
+      }
 
-    // Corrige a URL para ser absoluta
-    let urlFormatada = url;
-    if (!url.startsWith('http')) {
-      const baseUrl = (API_URL ?? '').replace(/\/$/, '');
-      urlFormatada = `${baseUrl}/${url.replace(/^\//, '')}`;
-    }
+      // Ensure the URL is absolute (prepend API_URL if it's a relative path)
+      let urlFormatada = url;
+      if (!url.startsWith('http')) {
+        const baseUrl = (API_URL ?? '').replace(/\/$/, '');
+        urlFormatada = `${baseUrl}/${url.replace(/^\//, '')}`;
+      }
 
-    try {
-      setLoadingPdf(true);
-      setNomePdfAtual(
-        t('camara.doc_title', {
-          title:
-            tituloLoja ||
-            t('camara.default_commerce', { defaultValue: 'Comércio' }),
-          defaultValue: `Doc - ${tituloLoja || 'Comércio'}`,
-        }),
-      );
+      try {
+        setLoadingPdf(true);
+        setNomePdfAtual(
+          t('camara.doc_title', {
+            title:
+              tituloLoja ||
+              t('camara.default_commerce', { defaultValue: 'Comércio' }),
+            defaultValue: `Doc - ${tituloLoja || 'Comércio'}`,
+          }),
+        );
 
-      const localFileUri = `${FileSystem.cacheDirectory}preview.pdf`;
+        // Define a temporary path in the cache directory
+        const localFileUri = `${FileSystem.cacheDirectory}preview.pdf`;
 
-      // Baixa o PDF
-      const downloadResult = await FileSystem.downloadAsync(
-        urlFormatada,
-        localFileUri,
-      );
+        // Download the PDF file
+        const downloadResult = await FileSystem.downloadAsync(
+          urlFormatada,
+          localFileUri,
+        );
 
-      // Converte para Base64 (a chave para o WebView mostrar o PDF)
-      const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, {
-        encoding: 'base64',
-      });
+        // Read the downloaded file as Base64 to inject into the WebView
+        const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, {
+          encoding: 'base64',
+        });
 
-      setPdf64(`data:application/pdf;base64,${base64}`);
-      setVisible(true);
-    } catch (error) {
-      console.error('Erro ao converter PDF:', error);
-      setDialogTitle(t('common.error'));
-      setDialogText(t('camara.error_pdf'));
-      setDialogVisible(true);
-    } finally {
-      setLoadingPdf(false);
-    }
-  };
-  const hideModal = () => {
+        setPdf64(`data:application/pdf;base64,${base64}`);
+        setVisible(true);
+      } catch (error) {
+        console.error('Erro ao converter PDF:', error);
+        setDialogTitle(t('common.error'));
+        setDialogText(t('camara.error_pdf'));
+        setDialogVisible(true);
+      } finally {
+        setLoadingPdf(false);
+      }
+    },
+    [t],
+  );
+
+  /** Closes the PDF preview modal and clears the Base64 data from memory. */
+  const hideModal = useCallback(() => {
     setVisible(false);
     setPdf64(null);
-  };
+  }, []);
 
-  const handleDescartar = (id: string) => {
+  /** Opens the confirmation dialog before discarding an application. */
+  const handleDescartar = useCallback((id: string) => {
     setDiscardId(id);
     setDiscardDialogVisible(true);
-  };
+  }, []);
 
-  const executeDescartar = async () => {
-    if (!discardId) return; // Segurança caso o ID seja nulo
+  /** Executes the discard API call after confirmation. Removes the item from local state on success. */
+  const executeDescartar = useCallback(async () => {
+    if (!discardId) return; // Safety check in case ID is null
 
     try {
       const response = await fetch(
@@ -177,9 +206,8 @@ export default function AprovarComerciantes() {
       );
 
       if (response.ok) {
-        // Remove da lista
+        // Optimistic UI: Remove the item from the local list immediately
         setPendentes(prev => prev.filter(item => item._id !== discardId));
-        // Mostra mensagem de sucesso
         setSnackbarMessage(
           t('camara.discard_success', {
             defaultValue: 'Pedido descartado com sucesso.',
@@ -196,52 +224,72 @@ export default function AprovarComerciantes() {
       setDialogText(t('camara.fail_discard'));
       setDialogVisible(true);
     } finally {
-      // Fecha o dialog e limpa o ID em qualquer cenário
+      // Close dialog and clear ID regardless of outcome
       setDiscardDialogVisible(false);
       setDiscardId(null);
     }
-  };
+  }, [discardId, user?.token, t]);
 
-  const handleAprovar = async (id: string) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/aprovar/PedidoComerciante/${id}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-            'Content-Type': 'application/json',
+  /** Approves a merchant application and removes it from the local pending list. */
+  const handleAprovar = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(
+          `${API_URL}/aprovar/PedidoComerciante/${id}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${user?.token}`,
+              'Content-Type': 'application/json',
+            },
           },
-        },
-      );
+        );
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok) {
-        setPendentes(prev => prev.filter(item => item._id !== id));
-        setSnackbarMessage(t('camara.approved'));
-        setSnackbarVisible(true);
-      } else {
-        console.log('Erro do servidor:', result);
+        if (response.ok) {
+          // Optimistic UI: Remove the approved item from the list
+          setPendentes(prev => prev.filter(item => item._id !== id));
+          setSnackbarMessage(t('camara.approved'));
+          setSnackbarVisible(true);
+        } else {
+          console.log('Erro do servidor:', result);
+          setDialogTitle(t('common.error'));
+          setDialogText(result.message || t('camara.server_reject_approve'));
+          setDialogVisible(true);
+        }
+      } catch (error) {
         setDialogTitle(t('common.error'));
-        setDialogText(result.message || t('camara.server_reject_approve'));
+        setDialogText(t('camara.error_conn'));
         setDialogVisible(true);
       }
-    } catch (error) {
-      setDialogTitle(t('common.error'));
-      setDialogText(t('camara.error_conn'));
-      setDialogVisible(true);
-    }
-  };
+    },
+    [user?.token, t],
+  );
 
+  // --- Effects ---
+
+  // Initial data fetch
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
+
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while data is fetching.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
   useEffect(() => {
     setLoadingQR(loading);
-  }, [loading]);
+  }, [loading, setLoadingQR]);
 
+  // --- Early Return (Loading State) ---
+  // Placed after all hooks have been declared.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
@@ -254,6 +302,7 @@ export default function AprovarComerciantes() {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
         edges={['left', 'right']}
@@ -294,8 +343,8 @@ export default function AprovarComerciantes() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                colors={[theme.colors.primary]}
-                tintColor={theme.colors.primary}
+                colors={[theme.colors.primary]} // Android
+                tintColor={theme.colors.primary} // iOS
               />
             }
             data={pedidosPendentes}
@@ -308,7 +357,7 @@ export default function AprovarComerciantes() {
                   marginBottom: 16,
                   borderWidth: 1,
                   borderColor: theme.colors.outlineVariant,
-                  overflow: 'hidden',
+                  overflow: 'hidden', // Clips the TouchableRipple to the border radius
                   backgroundColor: theme.colors.surfaceVariant,
                 }}
                 elevation={1}
@@ -341,6 +390,7 @@ export default function AprovarComerciantes() {
                   )}
                 />
 
+                {/* View PDF Button */}
                 <View className="px-4 pb-2">
                   <CustomButton
                     icon="eye"
@@ -368,6 +418,7 @@ export default function AprovarComerciantes() {
                   }}
                 />
 
+                {/* Approve / Discard Actions */}
                 <View className="flex-row gap-x-3 px-4 pb-4">
                   <CustomButton
                     className="flex-1"
@@ -406,6 +457,7 @@ export default function AprovarComerciantes() {
         )}
       </SafeAreaView>
 
+      {/* PDF Preview Modal */}
       <Portal>
         <Modal
           visible={visible}
@@ -436,81 +488,84 @@ export default function AprovarComerciantes() {
               originWhitelist={['*']}
               style={{ flex: 1, backgroundColor: '#525659' }}
               source={{
+                // React Native doesn't have a native PDF viewer. We use a WebView with pdf.js
+                // loaded via CDN to render the Base64 PDF data cross-platform.
                 html: `
-                          <!DOCTYPE html>
-                          <html>
-                            <head>
-                              <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                              <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-                              <style>
-                                body { 
-                                  margin: 0; 
-                                  padding: 10px; 
-                                  background-color: #525659; 
-                                  display: flex; 
-                                  flex-direction: column; 
-                                  align-items: center; 
-                                }
-                                canvas { 
-                                  margin-bottom: 10px; 
-                                  max-width: 100%; 
-                                  box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
-                                }
-                                #loading { 
-                                  color: white; 
-                                  font-family: sans-serif; 
-                                  margin-top: 20px; 
-                                }
-                              </style>
-                            </head>
-                            <body>
-                              <div id="loading">A processar documento...</div>
-                              <div id="pdf-container"></div>
-      
-                              <script>
-                                // Set the worker path
-                                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                                
-                                // Load the Base64 string directly into PDF.js
-                                const loadingTask = pdfjsLib.getDocument('${pdfBase64}');
-                                
-                                loadingTask.promise.then(function(pdf) {
-                                  document.getElementById('loading').style.display = 'none';
-                                  const container = document.getElementById('pdf-container');
-                                  
-                                  // Loop through every page and render it to a canvas
-                                  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                                    pdf.getPage(pageNum).then(function(page) {
-                                      // Adjust scale based on screen size
-                                      const scale = window.innerWidth > 600 ? 1.5 : 1.0;
-                                      const viewport = page.getViewport({ scale: scale });
-                                      
-                                      const canvas = document.createElement('canvas');
-                                      const context = canvas.getContext('2d');
-                                      canvas.height = viewport.height;
-                                      canvas.width = viewport.width;
-                                      
-                                      container.appendChild(canvas);
-                                      
-                                      page.render({
-                                        canvasContext: context,
-                                        viewport: viewport
-                                      });
-                                    });
-                                  }
-                                }).catch(function(error) {
-                                  document.getElementById('loading').innerText = 'Erro ao carregar o PDF: ' + error.message;
-                                });
-                              </script>
-                            </body>
-                          </html>
-                        `,
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+                      <style>
+                        body { 
+                          margin: 0; 
+                          padding: 10px; 
+                          background-color: #525659; 
+                          display: flex; 
+                          flex-direction: column; 
+                          align-items: center; 
+                        }
+                        canvas { 
+                          margin-bottom: 10px; 
+                          max-width: 100%; 
+                          box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+                        }
+                        #loading { 
+                          color: white; 
+                          font-family: sans-serif; 
+                          margin-top: 20px; 
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div id="loading">A processar documento...</div>
+                      <div id="pdf-container"></div>
+              
+                      <script>
+                        // Set the worker path for pdf.js
+                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                        
+                        // Load the Base64 string directly into PDF.js
+                        const loadingTask = pdfjsLib.getDocument('${pdfBase64}');
+                        
+                        loadingTask.promise.then(function(pdf) {
+                          document.getElementById('loading').style.display = 'none';
+                          const container = document.getElementById('pdf-container');
+                          
+                          // Loop through every page and render it to a canvas element
+                          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                            pdf.getPage(pageNum).then(function(page) {
+                              // Adjust scale based on screen size for better readability
+                              const scale = window.innerWidth > 600 ? 1.5 : 1.0;
+                              const viewport = page.getViewport({ scale: scale });
+                              
+                              const canvas = document.createElement('canvas');
+                              const context = canvas.getContext('2d');
+                              canvas.height = viewport.height;
+                              canvas.width = viewport.width;
+                              
+                              container.appendChild(canvas);
+                              
+                              page.render({
+                                canvasContext: context,
+                                viewport: viewport
+                              });
+                            });
+                          }
+                        }).catch(function(error) {
+                          document.getElementById('loading').innerText = 'Erro ao carregar o PDF: ' + error.message;
+                        });
+                      </script>
+                    </body>
+                  </html>
+                `,
               }}
             />
           )}
         </Modal>
       </Portal>
 
+      {/* Global UI Feedback Components */}
       <CustomSnackBar
         visible={snackbarVisible}
         message={snackbarMessage}
@@ -524,6 +579,8 @@ export default function AprovarComerciantes() {
       >
         <Text>{dialogText}</Text>
       </CustomDialog>
+
+      {/* Discard Confirmation Dialog */}
       <Portal>
         <Dialog
           visible={discardDialogVisible}

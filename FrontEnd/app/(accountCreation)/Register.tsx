@@ -1,3 +1,12 @@
+/**
+ * Register Screen
+ *
+ * Handles new user registration. Collects email, city, and password,
+ * performs client-side validation (including password strength), and
+ * communicates with the backend to create the account.
+ * On success, it navigates the user to the email validation screen.
+ */
+
 import {
   Image,
   Text,
@@ -25,20 +34,32 @@ import { useTranslation } from 'react-i18next';
 
 const Register = () => {
   const { t } = useTranslation();
+
+  // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [city, setCity] = useState('');
+
+  // UI feedback state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogText, setDialogText] = useState('');
   const [dialogTitle, setDialogTitle] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const { currentTheme: theme } = useAppTheme();
   const [loading, setLoading] = useState(false);
 
+  const { currentTheme: theme } = useAppTheme();
+
+  /**
+   * Handles the registration process.
+   * Runs sequential client-side validations before making the API call.
+   * If successful, navigates the user to the Validate screen.
+   */
   const handleRegister = async () => {
     setLoading(true);
+
+    // 1. Check for empty required fields
     if (!email || !password) {
       setDialogTitle(t('common.warning'));
       setDialogText(t('register.warning_empty'));
@@ -46,8 +67,8 @@ const Register = () => {
       setLoading(false);
       return;
     }
-    console.log('password e email existem');
 
+    // 2. Ensure passwords match
     if (password !== confirmPassword) {
       setDialogTitle(t('common.warning'));
       setDialogText(t('register.warning_mismatch'));
@@ -55,6 +76,9 @@ const Register = () => {
       setLoading(false);
       return;
     }
+
+    // 3. Enforce password strength using a regex pattern.
+    // Requires: 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
     const isSecure =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(
         password,
@@ -62,7 +86,6 @@ const Register = () => {
 
     if (!isSecure) {
       setDialogTitle(t('common.warning'));
-      // Recomendo que adiciones esta chave ao teu ficheiro de traduções (i18n)
       setDialogText(
         t('register.warning_weak_password', {
           defaultValue:
@@ -74,15 +97,14 @@ const Register = () => {
       return;
     }
 
-    console.log('password correta ');
     try {
       const response = await fetch(`${API_URL}/registar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, city }),
       });
-      console.log('enviou');
 
+      // Handle rate limiting (HTTP 429) early without attempting to parse JSON
       if (response.status === 429) {
         setDialogTitle(t('common.error'));
         setDialogText(t('common.error_429'));
@@ -90,25 +112,32 @@ const Register = () => {
         setLoading(false);
         return;
       }
-      console.log('passado primeiro check');
+
       const dados = await response.json();
 
       if (response.ok) {
         setLoading(false);
         setSnackbarMessage(t('register.success'));
         setSnackbarVisible(true);
+
+        // Brief pause to allow the user to read the success snackbar before transitioning
         await delay(500);
+
+        // Navigate to the Validate screen, passing the email as a param
+        // so the user doesn't have to type it again.
         router.replace({
           pathname: '/Validate',
-          params: { email: email }, // Passamos o email para a próxima tela
+          params: { email: email },
         });
       } else {
+        // Handle expected API errors (e.g., email already in use)
         setDialogTitle(t('common.error'));
         setDialogText(dados.message || t('register.error_generic'));
         setDialogVisible(true);
         setLoading(false);
       }
     } catch (err) {
+      // Handle unexpected network errors
       setDialogTitle(t('common.error'));
       setDialogText(t('register.error_server'));
       setDialogVisible(true);
@@ -118,29 +147,38 @@ const Register = () => {
 
   return (
     <View className="flex-1">
+      {/* Background Image and Overlay */}
+      {/* The overlay adds a semi-transparent layer to ensure text readability over the image */}
       <Image
         source={images.backgroundRegister}
         className="absolute h-full w-full"
         resizeMode="cover"
       />
-
       <View
         className="absolute h-full w-full"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
       />
 
       <SafeAreaView className="flex-1 bg-transparent">
+        {/* Language Switcher positioned at the top right */}
         <View
           style={{
             width: '100%',
             alignItems: 'flex-end',
             paddingRight: 10,
             paddingTop: 10,
-            zIndex: 10,
+            zIndex: 10, // Ensures the button is tappable above other elements
           }}
         >
           <LanguageSwitcher />
         </View>
+
+        {/*
+          KeyboardAvoidingView shifts the content up when the keyboard appears.
+          - 'padding' is generally preferred on iOS to avoid layout jump issues.
+          - 'height' works better on Android to prevent resizing artifacts.
+          - keyboardVerticalOffset adds a small gap on Android so inputs aren't flush against the keyboard.
+        */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
@@ -152,9 +190,12 @@ const Register = () => {
               justifyContent: 'center',
               paddingBottom: 40,
             }}
+            // Prevents the keyboard from dismissing when tapping inside a text field,
+            // but allows it to dismiss when tapping outside.
             keyboardShouldPersistTaps="handled"
-            bounces={false}
+            bounces={false} // Disables iOS scroll bounce for a more form-like feel
           >
+            {/* Wraps the form to allow tapping outside inputs to dismiss the keyboard */}
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View className="w-[90%] self-center py-10">
                 <Surface
@@ -176,7 +217,7 @@ const Register = () => {
                     label={t('register.email')}
                     value={email}
                     onChangeText={setEmail}
-                    isEmail
+                    isEmail // Triggers email-specific keyboard and validation in CustomTextInput
                     className="mb-5"
                   />
 
@@ -191,7 +232,7 @@ const Register = () => {
                     label={t('register.password')}
                     value={password}
                     onChangeText={setPassword}
-                    isPassword
+                    isPassword // CustomTextInput handles the secure entry and eye icon internally
                     className="mb-5"
                   />
 
@@ -217,6 +258,8 @@ const Register = () => {
               </View>
             </TouchableWithoutFeedback>
           </ScrollView>
+
+          {/* Global UI feedback components */}
           <CustomSnackBar
             visible={snackbarVisible}
             message={snackbarMessage}

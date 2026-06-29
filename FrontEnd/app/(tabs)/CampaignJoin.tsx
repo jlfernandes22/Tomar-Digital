@@ -1,14 +1,14 @@
+/**
+ * JoinCampaign Screen
+ *
+ * Displays a list of available campaigns for the user to view and join.
+ * It fetches campaigns dynamically based on the user's role (e.g., 'comerciante'
+ * sees campaigns relevant to their business CAEs, while others see general campaigns).
+ */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, ScrollView, FlatList } from 'react-native';
-import {
-  ActivityIndicator,
-  Card,
-  Chip,
-  Divider,
-  Surface,
-  Text,
-} from 'react-native-paper';
+import { View, FlatList } from 'react-native';
+import { Card, Divider, Surface, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
@@ -18,23 +18,27 @@ import { useLoadingState } from '@/context/LoadingContext';
 import LoadingScreen from '../components/LoadingScreen';
 
 export default function JoinCampaign() {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [ListCampaign, setListCampaign] = useState([]);
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
   const { currentTheme: theme } = useAppTheme();
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+
+  // --- Local State ---
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const handleOpenDetails = (campaign: any) => {
-    setSelectedCampaign(campaign);
-    setShowDetails(true);
-  };
+  // --- Handlers ---
 
+  /**
+   * Fetches campaigns from the backend.
+   * Uses a different API endpoint and authentication headers based on the user's role.
+   * Merchants see campaigns relevant to their CAEs, while citizens see all active campaigns.
+   */
   const fetchCampaigns = async () => {
     setLoading(true);
-
     try {
       const isComerciante = user?.role === 'comerciante';
 
@@ -50,24 +54,26 @@ export default function JoinCampaign() {
               Authorization: `Bearer ${user?.token}`,
             },
           }
-        : {
-            method: 'GET',
-          };
+        : { method: 'GET' };
 
-      console.log('A buscar campanhas em:', url);
       const response = await fetch(url, config);
-      console.log('Resposta da API:', response);
-
       const dados = await response.json();
-      setListCampaign(dados);
+      setCampaigns(dados);
     } catch (error) {
       console.error('Erro fatal no fetchCampaigns:', error);
-      setListCampaign([]);
+      setCampaigns([]); // Fallback to empty array on failure to prevent crashes
     } finally {
       setLoading(false);
     }
   };
 
+  /** Opens the campaign details modal for a specific campaign. */
+  const handleOpenDetails = (campaign: any) => {
+    setSelectedCampaign(campaign);
+    setShowDetails(true);
+  };
+
+  /** Render function for individual campaign cards in the FlatList. */
   const renderItem = ({ item }: { item: any }) => (
     <Card
       style={{ marginBottom: 16, marginHorizontal: 4, marginTop: 16 }}
@@ -109,22 +115,35 @@ export default function JoinCampaign() {
     </Card>
   );
 
+  // --- Effects ---
+
+  // Fetch campaigns on component mount
   useEffect(() => {
     fetchCampaigns();
   }, []);
 
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while the list is fetching,
+   * preventing navigation overlaps.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
   useEffect(() => {
     setLoadingQR(loading);
-  }, [loading]);
+  }, [loading, setLoadingQR]);
 
+  // --- Early Return (Loading State) ---
+  // Because we manage 'loading' state here, we don't need a conditional
+  // inside the main return block for the FlatList.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaView style={{ flex: 1, paddingHorizontal: 16 }}>
-        {/* 1. Título  */}
+        {/* 1. Title */}
         <Text
           variant="headlineMedium"
           style={{
@@ -143,35 +162,27 @@ export default function JoinCampaign() {
           }}
         />
 
-        {/* 2.  Lista */}
-        {loading ? (
-          <ActivityIndicator
-            animating={true}
-            size="large"
-            style={{ marginTop: 50 }}
-          />
-        ) : (
-          <FlatList
-            data={ListCampaign}
-            renderItem={renderItem}
-            keyExtractor={item => item._id?.toString()}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            ListEmptyComponent={
-              <Text style={{ textAlign: 'center', marginTop: 20 }}>
-                {t('campaign.no_campaigns')}
-              </Text>
-            }
-          />
-        )}
+        {/* 2. List */}
+        <FlatList
+          data={campaigns}
+          renderItem={renderItem}
+          keyExtractor={item => item._id?.toString()}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>
+              {t('campaign.no_campaigns')}
+            </Text>
+          }
+        />
 
-        {/* 3.Modal */}
+        {/* 3. Modal */}
         {showDetails && selectedCampaign && (
           <DetalhesCampanha
             visible={showDetails}
             campaign={selectedCampaign}
             onClose={() => {
               setShowDetails(false);
-              setSelectedCampaign(null); // Limpa a seleção ao fechar
+              setSelectedCampaign(null); // Clear selection on close
             }}
           />
         )}

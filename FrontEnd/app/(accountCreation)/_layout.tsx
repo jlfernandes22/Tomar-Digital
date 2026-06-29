@@ -1,3 +1,10 @@
+/**
+ * Account Creation Layout
+ *
+ * Defines the tab-based navigation for the authentication flow (Login, Register, Validate).
+ * It utilizes a custom bottom navigation bar from React Native Paper to maintain
+ * visual consistency with the rest of the application's theme.
+ */
 import { images } from '@/constants/images';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -14,12 +21,19 @@ const _layout = () => {
 
   return (
     <Tabs
+      // We override the default tab bar to use React Native Paper's BottomNavigation.
+      // This gives us full control over styling, safe area insets, and route visibility.
       tabBar={({ navigation, state, descriptors, insets }) => {
         const currentRoute = state.routes[state.index];
+
+        // Hide the bottom tab bar entirely when the user is on the email validation screen.
+        // This prevents them from navigating away until validation is complete.
         if (currentRoute.name === 'Validate') {
           return null;
         }
 
+        // Filter out routes that should not appear in the bottom bar.
+        // A route is hidden if it explicitly sets `href: null` or if it lacks a tab icon.
         const visibleRoutes = state.routes.filter(route => {
           if (route.name === 'Validate') return false;
           const options = descriptors[route.key].options as any;
@@ -29,6 +43,9 @@ const _layout = () => {
         });
 
         const activeRoute = state.routes[state.index];
+
+        // Map the actual active route index to the filtered array.
+        // This ensures the correct tab is highlighted in the BottomNavigation.Bar.
         const activeIndex = visibleRoutes.findIndex(
           r => r.key === activeRoute.key,
         );
@@ -42,6 +59,9 @@ const _layout = () => {
             safeAreaInsets={insets}
             style={{
               backgroundColor: theme.colors.surfaceContainer,
+              // Platform-specific adjustment: On iOS, we manually adjust the height
+              // to account for the bottom safe area inset (home indicator).
+              // On Android, we let the default behavior handle it.
               ...Platform.select({
                 ios: {
                   height: 60 + insets.bottom,
@@ -58,8 +78,11 @@ const _layout = () => {
               height: 44,
               borderRadius: theme.roundness,
             }}
-            labeled={false}
+            labeled={false} // Hides text labels, showing only icons
             onTabPress={({ route, preventDefault }) => {
+              // Standard React Navigation logic to emit the tab press event.
+              // This allows other navigation interceptors to prevent the default
+              // navigation action if needed (e.g., if a form is dirty).
               const event = navigation.emit({
                 type: 'tabPress',
                 target: route.key,
@@ -69,6 +92,7 @@ const _layout = () => {
               if (event.defaultPrevented) {
                 preventDefault();
               } else {
+                // Dispatch the navigation action to switch tabs
                 navigation.dispatch({
                   ...CommonActions.navigate(route.name, route.params),
                   target: state.key,
@@ -85,7 +109,7 @@ const _layout = () => {
         );
       }}
       screenOptions={{
-        headerShown: false,
+        headerShown: false, // Hide the top header for a cleaner full-screen auth experience
       }}
     >
       <Tabs.Screen
@@ -108,6 +132,8 @@ const _layout = () => {
       <Tabs.Screen
         name="Validate"
         options={{
+          // `href: null` removes this route from the tab bar entirely,
+          // making it only accessible via programmatic navigation (e.g., after registering).
           href: null,
           tabBarStyle: { display: 'none' },
         }}

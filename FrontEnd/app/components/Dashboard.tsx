@@ -1,3 +1,12 @@
+/**
+ * Dashboard Component
+ *
+ * An analytics dashboard for City Council ('camara') users.
+ * It displays key performance indicators (KPIs), geographic distribution (Pie Charts),
+ * business typology (Bar Chart), and provides utilities to export the data
+ * to PDF (via HTML generation) or Excel.
+ */
+
 import {
   ScrollView,
   View,
@@ -6,41 +15,53 @@ import {
   Animated,
   RefreshControl,
 } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useAppTheme } from '@/context/ThemeContext';
-import { useTranslation } from 'react-i18next';
-import { API_URL } from '@/constants/api';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PieChart } from 'react-native-chart-kit';
-import { BarChart } from 'react-native-gifted-charts';
-import { ExpandingDot } from 'react-native-animated-pagination-dots';
 import {
   Surface,
   Text,
-  ActivityIndicator,
   Divider,
   Modal,
   Portal,
   IconButton,
 } from 'react-native-paper';
+import { PieChart } from 'react-native-chart-kit';
+import { BarChart } from 'react-native-gifted-charts';
+import { ExpandingDot } from 'react-native-animated-pagination-dots';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
+import WebView from 'react-native-webview';
+
+// Contexts & Hooks
+import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import { useLoadingState } from '@/context/LoadingContext';
+import { API_URL } from '@/constants/api';
+
+// Components & Utils
 import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
-import WebView from 'react-native-webview';
+import LoadingScreen from './LoadingScreen';
 import { DashboardPdf } from '@/constants/html/DashboardPdf';
 import { exportDashboardToExcel } from '@/constants/excelUtils';
-import { useLoadingState } from '@/context/LoadingContext';
-import LoadingScreen from './LoadingScreen';
 
 const Dashboard = () => {
+  // --- Hooks (Context & Global State) ---
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
   const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
+  const { setLoadingQR } = useLoadingState(); // Syncs with global FAB visibility
+
+  // --- Local State ---
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
+
+  // Data state
   const [allInfo, setAllInfo] = useState<{
     categories: any[];
     cities: any[];
@@ -52,20 +73,22 @@ const Dashboard = () => {
   });
   const [summary, setSummary] = useState({ totalUsers: 0, totalBusinesses: 0 });
 
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [excelLoading, setExcelLoading] = useState(false);
-
+  // UI/Modal state
   const [pdfDialogVisible, setPdfDialogVisible] = useState(false);
   const [html, setHtml] = useState('');
-
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
 
+  // --- Refs ---
+  // Animated value tracking horizontal scroll position for the pagination dots
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  // --- Derived Values & Config ---
   const chartWidth = screenWidth - 64;
   const chartHeight = 220;
+
+  // Color palette for charts, derived from the active theme
   const CHART_COLORS = [
     theme.colors.primary,
     theme.colors.tertiary,
@@ -76,9 +99,50 @@ const Dashboard = () => {
     theme.colors.outline,
   ];
 
+  // Configuration object passed to react-native-chart-kit
+  const chartConfig = {
+    backgroundGradientFrom: theme.colors.surfaceContainer,
+    backgroundGradientTo: theme.colors.surfaceContainer,
+    color: (opacity = 1) => theme.colors.onSurface,
+    labelColor: (opacity = 1) => theme.colors.onSurfaceVariant,
+    barPercentage: 0.7,
+    fillShadowGradientFrom: theme.colors.primary,
+    fillShadowGradientFromOpacity: 0.8,
+    fillShadowGradientTo: theme.colors.primaryContainer,
+    fillShadowGradientToOpacity: 0.8,
+    decimalPlaces: 0,
+  };
+
+  // Filter out Portugal from the countries list to show only foreign users
+  const paisesEstrangeiros = allInfo.countries.filter(
+    country => country._id && country._id.toLowerCase() !== 'portugal',
+  );
+
+  // Configuration for the horizontal FlatList of geographic charts
+  const geographicCharts = [
+    {
+      id: '1',
+      title: t('dashboard.cities_pt', { defaultValue: 'Cidades de Portugal' }),
+      data: allInfo.cities,
+      emptyMessage: t('dashboard.no_cities_data', {
+        defaultValue: 'Sem dados de cidades em Portugal.',
+      }),
+    },
+    {
+      id: '2',
+      title: t('dashboard.rest_of_world', { defaultValue: 'Resto do Mundo' }),
+      data: paisesEstrangeiros,
+      emptyMessage: t('dashboard.no_users_abroad', {
+        defaultValue: 'Sem utilizadores registados fora de Portugal.',
+      }),
+    },
+  ];
+
+  // --- Handlers ---
+
+  /** Fetches aggregated dashboard statistics from the backend. */
   const fetchAllInfo = async () => {
     try {
-      console.log('fetch allinfo');
       setLoading(true);
       const response = await fetch(`${API_URL}/dashboard`, {
         method: 'GET',
@@ -87,10 +151,12 @@ const Dashboard = () => {
           'Content-Type': 'application/json',
         },
       });
+
       if (response.ok) {
         const data = await response.json();
         setAllInfo(data);
 
+        // Calculate total users by summing up counts from all countries
         const utilizadoresReais = data.countries.reduce(
           (soma: number, pais: any) => soma + pais.total,
           0,
@@ -122,10 +188,10 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (user?.token) fetchAllInfo();
-  }, [user?.token]);
-
+  /**
+   * Formats raw category data for the PieChart.
+   * Aggregates categories beyond the top 5 into an "Outros" (Others) slice to prevent clutter.
+   */
   const formatPieData = (dataArray: any[]) => {
     const sortedData = [...dataArray].sort((a, b) => b.total - a.total);
     let processedData = sortedData;
@@ -148,31 +214,25 @@ const Dashboard = () => {
     }
 
     return processedData.map((item, index) => {
-      const sliceColor =
-        item._id === t('dashboard.others', { defaultValue: 'Outros' })
-          ? theme.colors.outline
-          : CHART_COLORS[index % CHART_COLORS.length];
-
-      const translatedName =
-        item._id === t('dashboard.others', { defaultValue: 'Outros' })
-          ? item._id
-          : t(`categories.${item._id}` as any, { defaultValue: item._id });
-
+      const isOthers =
+        item._id === t('dashboard.others', { defaultValue: 'Outros' });
       return {
-        name: translatedName,
+        name: isOthers
+          ? item._id
+          : t(`categories.${item._id}` as any, { defaultValue: item._id }),
         population: item.total,
-        color: sliceColor,
+        color: isOthers
+          ? theme.colors.outline
+          : CHART_COLORS[index % CHART_COLORS.length],
         legendFontColor: theme.colors.onSurface,
         legendFontSize: 13,
       };
     });
   };
 
-  const scrollX = React.useRef(new Animated.Value(0)).current;
-
+  /** Formats raw category data for the horizontal BarChart. */
   const formatBarData = (dataArray: any[]) => {
     const sortedData = [...dataArray].sort((a, b) => b.total - a.total);
-
     return sortedData.map(item => ({
       value: item.total,
       label: t(`categories.${item._id}` as any, { defaultValue: item._id }),
@@ -191,51 +251,14 @@ const Dashboard = () => {
     }));
   };
 
-  const chartConfig = {
-    backgroundGradientFrom: theme.colors.surfaceContainer,
-    backgroundGradientTo: theme.colors.surfaceContainer,
-    color: (opacity = 1) => theme.colors.onSurface,
-    labelColor: (opacity = 1) => theme.colors.onSurfaceVariant,
-    barPercentage: 0.7,
-    fillShadowGradientFrom: theme.colors.primary,
-    fillShadowGradientFromOpacity: 0.8,
-    fillShadowGradientTo: theme.colors.primaryContainer,
-    fillShadowGradientToOpacity: 0.8,
-    decimalPlaces: 0,
-  };
-
-  const paisesEstrangeiros = allInfo.countries.filter(
-    country => country._id && country._id.toLowerCase() !== 'portugal',
-  );
-
-  const geographicCharts = [
-    {
-      id: '1',
-      title: t('dashboard.cities_pt', { defaultValue: 'Cidades de Portugal' }),
-      data: allInfo.cities,
-      emptyMessage: t('dashboard.no_cities_data', {
-        defaultValue: 'Sem dados de cidades em Portugal.',
-      }),
-    },
-    {
-      id: '2',
-      title: t('dashboard.rest_of_world', { defaultValue: 'Resto do Mundo' }),
-      data: paisesEstrangeiros,
-      emptyMessage: t('dashboard.no_users_abroad', {
-        defaultValue: 'Sem utilizadores registados fora de Portugal.',
-      }),
-    },
-  ];
-
-  // 1. Apenas constrói o HTML e abre o Modal do WebView
-  function createPDF() {
+  /** Generates the HTML string for the PDF report and opens the preview modal. */
+  const createPDF = () => {
     try {
       const maxCat = Math.max(
         ...allInfo.categories.map((c: any) => c.total),
         1,
       );
       const maxCity = Math.max(...allInfo.cities.map((c: any) => c.total), 1);
-
       const dataAtual = new Date().toLocaleDateString(
         i18n.language === 'pt' ? 'pt-PT' : 'en-US',
         {
@@ -266,9 +289,9 @@ const Dashboard = () => {
       );
       setDialogVisible(true);
     }
-  }
+  };
 
-  // 2. Ação de Imprimir a partir do Modal
+  /** Triggers the native OS print dialog using the generated HTML. */
   const handlePrintPDF = async () => {
     try {
       await Print.printAsync({ html });
@@ -283,21 +306,23 @@ const Dashboard = () => {
     }
   };
 
-  // 3. Ação de Guardar a partir do Modal
+  /**
+   * Saves the PDF to the device.
+   * Uses expo-print to generate a temporary file, moves it to the permanent Documents directory,
+   * and then triggers the native Sharing sheet so the user can save or share it.
+   */
   const handleSavePDF = async () => {
     try {
       setPdfLoading(true);
-      // Gera o ficheiro PDF temporário pelo expo-print
+      // 1. Generate temporary PDF file in cache
       const { uri } = await Print.printToFileAsync({ html, base64: false });
 
-      // NOVA API: Cria instâncias de objetos File em vez de strings
+      // 2. Move file to permanent storage using the new expo-file-system File API
       const tempFile = new File(uri);
       const finalFile = new File(Paths.document, 'Relatorio_TomarDigital.pdf');
-
-      // Move o ficheiro do diretório temporário (cache) para a pasta de documentos permanente
       tempFile.move(finalFile);
 
-      // Pede ao utilizador para guardar
+      // 3. Open native share dialog
       await Sharing.shareAsync(finalFile.uri, {
         mimeType: 'application/pdf',
         dialogTitle: t('dashboard.save_pdf_report', {
@@ -315,11 +340,11 @@ const Dashboard = () => {
       setDialogVisible(true);
     } finally {
       setPdfLoading(false);
-      setPdfDialogVisible(false); // Fecha o dialog de qualquer forma
+      setPdfDialogVisible(false);
     }
   };
 
-  // 4. Ação do Excel (Independente)
+  /** Exports the raw dashboard data to an Excel file. */
   const handleExportExcel = async () => {
     setExcelLoading(true);
     const result = await exportDashboardToExcel({
@@ -341,23 +366,32 @@ const Dashboard = () => {
     }
   };
 
+  /** Pull-to-refresh handler. */
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    console.log('fetch');
-
     await fetchAllInfo();
-
     setRefreshing(false);
   }, []);
 
+  // --- Effects ---
+
+  // Initial data fetch
+  useEffect(() => {
+    if (user?.token) fetchAllInfo();
+  }, [user?.token]);
+
+  // Sync local loading state with global LoadingContext to hide global FAB during fetches
   useEffect(() => {
     setLoadingQR(loading);
-  }, [loading]);
+  }, [loading, setLoadingQR]);
 
+  // --- Early Return (Loading State) ---
+  // Must occur AFTER all hooks have been declared.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <Surface style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
@@ -367,11 +401,7 @@ const Dashboard = () => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          <Surface
-            style={{
-              paddingBottom: 80,
-            }}
-          >
+          <Surface style={{ paddingBottom: 80 }}>
             <Text
               variant="headlineMedium"
               style={{
@@ -383,7 +413,7 @@ const Dashboard = () => {
               {t('dashboard.overview', { defaultValue: 'Visão Geral' })}
             </Text>
 
-            {/* Secção de KPIs */}
+            {/* KPIs Section */}
             <View className="mb-6 flex-row p-4">
               <Surface
                 className="p-4"
@@ -448,6 +478,8 @@ const Dashboard = () => {
                 </Text>
               </Surface>
             </View>
+
+            {/* Geographic Charts Section (Carousel) */}
             <View>
               <FlatList
                 data={geographicCharts}
@@ -458,62 +490,58 @@ const Dashboard = () => {
                 bounces={false}
                 onScroll={Animated.event(
                   [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-                  {
-                    useNativeDriver: false,
-                  },
+                  { useNativeDriver: false },
                 )}
-                renderItem={({ item }) => {
-                  return (
-                    <View style={{ width: screenWidth }}>
-                      <Surface
-                        className="p-4"
+                renderItem={({ item }) => (
+                  <View style={{ width: screenWidth }}>
+                    <Surface
+                      className="p-4"
+                      style={{
+                        backgroundColor: theme.colors.surfaceContainer,
+                        borderRadius: 24,
+                        paddingBottom: 5,
+                        marginBottom: 10,
+                        marginHorizontal: 10,
+                      }}
+                      elevation={0}
+                    >
+                      <Text
+                        variant="titleLarge"
                         style={{
-                          backgroundColor: theme.colors.surfaceContainer,
-                          borderRadius: 24,
-                          paddingBottom: 5,
-                          marginBottom: 10,
-                          marginHorizontal: 10,
+                          color: theme.colors.onSurface,
+                          paddingTop: 16,
+                          paddingLeft: 16,
                         }}
-                        elevation={0}
                       >
+                        {item.title}
+                      </Text>
+                      {item.data && item.data.length > 0 ? (
+                        <View pointerEvents="none">
+                          <PieChart
+                            data={formatPieData(item.data)}
+                            width={chartWidth}
+                            height={chartHeight}
+                            chartConfig={chartConfig}
+                            accessor={'population'}
+                            backgroundColor={'transparent'}
+                            paddingLeft="15"
+                            center={[3, 0]}
+                          />
+                        </View>
+                      ) : (
                         <Text
-                          variant="titleLarge"
                           style={{
-                            color: theme.colors.onSurface,
-                            paddingTop: 16,
-                            paddingLeft: 16,
+                            color: theme.colors.onSurfaceVariant,
+                            marginLeft: 8,
                           }}
                         >
-                          {item.title}
+                          {item.emptyMessage}
                         </Text>
-                        {item.data && item.data.length > 0 ? (
-                          <View pointerEvents="none">
-                            <PieChart
-                              data={formatPieData(item.data)}
-                              width={chartWidth}
-                              height={chartHeight}
-                              chartConfig={chartConfig}
-                              accessor={'population'}
-                              backgroundColor={'transparent'}
-                              paddingLeft="15"
-                              center={[3, 0]}
-                            />
-                          </View>
-                        ) : (
-                          <Text
-                            style={{
-                              color: theme.colors.onSurfaceVariant,
-                              marginLeft: 8,
-                            }}
-                          >
-                            {item.emptyMessage}
-                          </Text>
-                        )}
-                      </Surface>
-                    </View>
-                  );
-                }}
-              ></FlatList>
+                      )}
+                    </Surface>
+                  </View>
+                )}
+              />
               <ExpandingDot
                 data={geographicCharts}
                 expandingDotWidth={30}
@@ -521,18 +549,12 @@ const Dashboard = () => {
                 inActiveDotOpacity={0.6}
                 activeDotColor={theme.colors.primary}
                 inActiveDotColor={theme.colors.primary}
-                dotStyle={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                }}
-                containerStyle={{
-                  bottom: 20,
-                }}
+                dotStyle={{ width: 10, height: 10, borderRadius: 5 }}
+                containerStyle={{ bottom: 20 }}
               />
             </View>
 
-            {/* Secção Gráfica 2 - {t('dashboard.business_typology', { defaultValue: 'Tipologia de Negócios' })} (BarChart) */}
+            {/* Business Typology Section (Bar Chart) */}
             <View style={{ padding: 8 }}>
               <Surface
                 style={{
@@ -588,7 +610,10 @@ const Dashboard = () => {
                 </View>
               </Surface>
             </View>
+
             <Divider style={{ marginVertical: 20 }} />
+
+            {/* Export Section */}
             <Text
               style={{ marginLeft: 8, marginBottom: 10, fontWeight: 'bold' }}
             >
@@ -596,13 +621,7 @@ const Dashboard = () => {
                 defaultValue: 'Exportar Relatório',
               })}
             </Text>
-            <View
-              style={{
-                padding: 8,
-                flexDirection: 'row',
-                gap: 10,
-              }}
-            >
+            <View style={{ padding: 8, flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <CustomButton
                   numberOfLines={2}
@@ -646,7 +665,7 @@ const Dashboard = () => {
           </Surface>
         </ScrollView>
 
-        {/* PORTAL PARA O MODAL DO PDF E SNACKBAR */}
+        {/* PDF Preview Modal & Global Dialogs */}
         <Portal>
           <Modal
             visible={pdfDialogVisible}
@@ -659,7 +678,7 @@ const Dashboard = () => {
               flex: 1,
             }}
           >
-            {/* Cabeçalho do Modal */}
+            {/* Modal Header */}
             <View
               style={{
                 flexDirection: 'row',
@@ -689,7 +708,7 @@ const Dashboard = () => {
               />
             </View>
 
-            {/* O WebView mostra o HTML exatamente como no teu código anterior */}
+            {/* WebView renders the generated HTML string as a PDF preview */}
             {pdfDialogVisible && (
               <WebView
                 originWhitelist={['*']}
@@ -699,7 +718,7 @@ const Dashboard = () => {
               />
             )}
 
-            {/* Rodapé com as Acões de Imprimir / Guardar */}
+            {/* Modal Footer Actions */}
             <View
               style={{
                 flexDirection: 'row',

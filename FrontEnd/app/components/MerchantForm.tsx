@@ -1,43 +1,41 @@
+/**
+ * MerchantForm Screen
+ *
+ * Allows a standard citizen to apply to become a merchant.
+ * The user fills out business details and uploads a PDF document as proof.
+ * It includes a custom PDF preview modal using a WebView and pdf.js,
+ * and handles secure multipart form-data uploads to the backend.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Dimensions } from 'react-native';
-import {
-  Button,
-  Text,
-  Card,
-  Modal,
-  Portal,
-  IconButton,
-  Surface,
-  Appbar,
-} from 'react-native-paper';
+import { Text, Modal, Portal, Surface, Appbar } from 'react-native-paper';
 import * as DocumentPicker from 'expo-document-picker';
 import { WebView } from 'react-native-webview';
-import { useAuth } from '@/context/AuthContext';
-import CustomTextInput from './CustomTextInput';
-import * as FileSystem from 'expo-file-system/legacy';
-import { API_URL } from '@/constants/api';
 import { router, Stack } from 'expo-router';
-import CustomButton from './CustomButton';
-import { useAppTheme } from '@/context/ThemeContext';
-import IComercianteForm from '@/constants/Interfaces/MerchantForm';
-import { useLoadingState } from '@/context/LoadingContext';
-import LoadingScreen from './LoadingScreen';
 
-export default function SerComerciante() {
+// Contexts & Hooks
+import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useLoadingState } from '@/context/LoadingContext';
+import { API_URL } from '@/constants/api';
+import * as FileSystem from 'expo-file-system/legacy';
+
+// Components & Types
+import CustomTextInput from './CustomTextInput';
+import CustomButton from './CustomButton';
+import LoadingScreen from './LoadingScreen';
+import IComercianteForm from '@/constants/Interfaces/MerchantForm';
+
+export default function MerchantForm() {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
 
-  const [visible, setVisible] = useState(false);
-  const [pdfBase64, setPdf64] = useState<string | null>(null);
-  const [loadingPdf, setLoadingPdf] = useState(false);
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
-
-  const [showSnackBar, setShowSnackBar] = useState(false);
-  const [snackBarText, setSnackBarText] = useState('');
-
+  // --- Local State ---
   const [formData, setFormData] = useState<IComercianteForm>({
     tituloComercio: '',
     donoComercio: user?.name || '',
@@ -46,19 +44,47 @@ export default function SerComerciante() {
     documentoPDF: null,
   });
 
+  // UI State
+  const [visible, setVisible] = useState(false); // Controls the PDF preview modal
+  const [pdfBase64, setPdf64] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Feedback State
+  const [showSnackBar, setShowSnackBar] = useState(false);
+  const [snackBarText, setSnackBarText] = useState('');
+
+  // --- Effects ---
+
+  /**
+   * Syncs the user's name from AuthContext into the form state.
+   * Ensures the "Owner Name" field is pre-filled but editable if the user updates their profile.
+   */
   useEffect(() => {
     if (user?.name) {
       setFormData(prev => ({ ...prev, donoComercio: user.name }));
     }
   }, [user]);
 
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while the form is submitting.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading, setLoadingQR]);
+
+  // --- Handlers ---
+
+  /** Opens the native document picker to select a PDF file. */
   const handlePickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/pdf',
-        copyToCacheDirectory: true,
+        copyToCacheDirectory: true, // Copies to cache to ensure a stable file:// URI
       });
-      console.log(result);
+
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         setFormData(prev => ({
@@ -66,12 +92,12 @@ export default function SerComerciante() {
           documentoPDF: { uri: file.uri, name: file.name },
         }));
       }
-      console.log('selecionado');
     } catch (err) {
       console.log('Erro ao selecionar o documento:', err);
     }
   };
 
+  /** Reads the selected PDF as a Base64 string and opens the preview modal. */
   const showModal = async () => {
     if (!formData.documentoPDF?.uri) {
       alert(
@@ -86,6 +112,7 @@ export default function SerComerciante() {
       setLoadingPdf(true);
       const cleanUri = decodeURIComponent(formData.documentoPDF.uri);
 
+      // Read file as base64 to inject directly into the WebView's HTML
       const base64 = await FileSystem.readAsStringAsync(cleanUri, {
         encoding: 'base64',
       });
@@ -104,11 +131,13 @@ export default function SerComerciante() {
     }
   };
 
+  /** Closes the PDF preview modal and clears the base64 data from memory. */
   const hideModal = () => {
     setVisible(false);
     setPdf64(null);
   };
 
+  /** Validates the form and submits the merchant application with the PDF attachment. */
   const handleFinalSubmit = async () => {
     if (!user || !user.token) {
       setSnackBarText(
@@ -135,12 +164,13 @@ export default function SerComerciante() {
     try {
       const decodedUri = decodeURIComponent(formData.documentoPDF.uri);
 
-      // Certificamo-nos de que começa com 'file://' apenas uma vez
+      // Platform-specific fix: iOS requires the 'file://' prefix for local file uploads.
+      // We ensure it's present exactly once to prevent network request failures.
       const cleanUri = decodedUri.startsWith('file://')
         ? decodedUri
         : `file://${decodedUri}`;
 
-      // Validar se o ficheiro está mesmo acessível antes de travar o fetch
+      // Verify the file actually exists on disk before attempting the upload
       const fileInfo = await FileSystem.getInfoAsync(cleanUri);
       if (!fileInfo.exists) {
         console.log('Ficheiro não encontrado no caminho:', cleanUri);
@@ -154,19 +184,19 @@ export default function SerComerciante() {
         return;
       }
 
+      // Construct multipart/form-data
       const data = new FormData();
       data.append('tituloComercio', formData.tituloComercio);
       data.append('donoComercio', formData.donoComercio);
       data.append('emailDono', formData.emailDono || '');
       data.append('telefoneDono', formData.telefoneDono || '');
 
-      // Montamos o anexo com a URI perfeitamente limpa para o iOS
+      // Append the file. Using a static name 'documento.pdf' avoids HTTP header encoding issues.
       const fileToUpload = {
         uri: cleanUri,
         type: 'application/pdf',
-        name: 'documento.pdf', // Nome estático e curto evita quebras de cabeçalho HTTP
+        name: 'documento.pdf',
       };
-
       data.append('documentoPDF', fileToUpload as any);
 
       const response = await fetch(`${API_URL}/pedidoComerciante`, {
@@ -174,17 +204,13 @@ export default function SerComerciante() {
         headers: {
           Authorization: `Bearer ${user.token}`,
           Accept: 'application/json',
-          // NOTA: Nunca colocar Content-Type aqui para FormData
+          // Note: 'Content-Type' is intentionally omitted. React Native sets it automatically
+          // with the correct boundary parameter for FormData.
         },
         body: data,
       });
 
-      console.log('[FETCH] Status da Resposta:', response.status);
-
       if (response.ok) {
-        const responseData = await response.json();
-        console.log('Sucesso no Backend:', responseData);
-
         setSnackBarText(
           t('serComerciante.success_sent', {
             defaultValue: 'Pedido enviado com sucesso!',
@@ -192,6 +218,7 @@ export default function SerComerciante() {
         );
         setShowSnackBar(true);
 
+        // Reset form on success
         setFormData({
           tituloComercio: '',
           donoComercio: user.name || '',
@@ -221,14 +248,13 @@ export default function SerComerciante() {
     }
   };
 
-  useEffect(() => {
-    setLoadingQR(loading);
-  }, [loading]);
-
+  // --- Early Return (Loading State) ---
+  // Placed after all hooks have been declared.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
@@ -241,6 +267,7 @@ export default function SerComerciante() {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <Surface
         style={{
           flex: 1,
@@ -312,12 +339,8 @@ export default function SerComerciante() {
             required
           />
 
-          <Surface
-            style={{
-              marginTop: 10,
-              marginBottom: 20,
-            }}
-          >
+          {/* PDF Upload Section */}
+          <Surface style={{ marginTop: 10, marginBottom: 20 }}>
             <CustomButton
               icon="file-upload"
               onPress={handlePickDocument}
@@ -384,6 +407,7 @@ export default function SerComerciante() {
           </CustomButton>
         </ScrollView>
 
+        {/* PDF Preview Modal */}
         <Portal>
           <Modal
             visible={visible}
@@ -414,6 +438,8 @@ export default function SerComerciante() {
                 originWhitelist={['*']}
                 style={{ flex: 1, backgroundColor: '#525659' }}
                 source={{
+                  // React Native doesn't have a native PDF viewer. We use a WebView with pdf.js
+                  // loaded via CDN to render the Base64 PDF data cross-platform.
                   html: `
                     <!DOCTYPE html>
                     <html>
@@ -446,7 +472,7 @@ export default function SerComerciante() {
                         <div id="pdf-container"></div>
 
                         <script>
-                          // Set the worker path
+                          // Set the worker path for pdf.js
                           pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                           
                           // Load the Base64 string directly into PDF.js
@@ -456,10 +482,10 @@ export default function SerComerciante() {
                             document.getElementById('loading').style.display = 'none';
                             const container = document.getElementById('pdf-container');
                             
-                            // Loop through every page and render it to a canvas
+                            // Loop through every page and render it to a canvas element
                             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                               pdf.getPage(pageNum).then(function(page) {
-                                // Adjust scale based on screen size
+                                // Adjust scale based on screen size for better readability
                                 const scale = window.innerWidth > 600 ? 1.5 : 1.0;
                                 const viewport = page.getViewport({ scale: scale });
                                 

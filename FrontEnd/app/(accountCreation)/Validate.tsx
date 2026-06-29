@@ -1,3 +1,10 @@
+/**
+ * Validate Screen
+ *
+ * Prompts the user to enter the 6-digit verification code sent to their email.
+ * It enforces a strict flow by disabling navigation gestures and the hardware back button,
+ * and limits the user to 3 verification attempts before redirecting them back to registration.
+ */
 import React, { useCallback, useState } from 'react';
 import { View, BackHandler } from 'react-native';
 import {
@@ -18,21 +25,32 @@ import { useAppTheme } from '@/context/ThemeContext';
 
 const Validate = () => {
   const { t } = useTranslation();
+
+  // Extracts the 'email' parameter passed from the Register screen via the router.
   const params = useLocalSearchParams();
   const email = params.email as string;
   const { currentTheme: theme } = useAppTheme();
 
   const [code, setCode] = useState('');
-  const [tentativas, setTentativas] = useState(0);
-  const [dialogVisible, setDialogVisible] = useState(true);
+  const [tentativas, setTentativas] = useState(0); // Tracks failed verification attempts
+
+  // UI feedback state
+  const [dialogVisible, setDialogVisible] = useState(true); // Open by default to show initial instructions
   const [dialogText, setDialogText] = useState(t('validar.emailInfo'));
   const [dialogTitle, setDialogTitle] = useState(t('validar.verifyEmail'));
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  // Tracks where the user should go after they dismiss the current dialog.
+  // This is useful for deferred navigation (e.g., waiting for them to click "OK" before routing).
   const [actionAfterDialog, setActionAfterDialog] = useState<
     'toRegister' | 'toLogin' | null
   >(null);
 
+  /**
+   * Handles closing the dialog and performing any deferred navigation
+   * that was queued up while the dialog was visible.
+   */
   const handleDialogClose = () => {
     setDialogVisible(false);
     if (actionAfterDialog === 'toRegister') {
@@ -44,6 +62,10 @@ const Validate = () => {
     }
   };
 
+  /**
+   * Submits the verification code to the backend.
+   * Handles rate limiting, successful validation, and attempt tracking.
+   */
   const handleVerify = async () => {
     try {
       const response = await fetch(`${API_URL}/verificar-codigo`, {
@@ -52,6 +74,7 @@ const Validate = () => {
         body: JSON.stringify({ email: email, code: code }),
       });
 
+      // Handle rate limiting (HTTP 429) early without attempting to parse JSON.
       if (response.status === 429) {
         setDialogTitle(t('common.error') + ':');
         setDialogText(t('common.error_429'));
@@ -64,18 +87,23 @@ const Validate = () => {
       if (response.ok) {
         setSnackbarMessage(t('common.success') + ':\n' + t('validar.success'));
         setSnackbarVisible(true);
+
+        // Brief pause to let the user read the success message before transitioning screens.
         await delay(500);
         router.replace('/Login');
       } else {
+        // Increment failed attempt counter
         const novasTentativas = tentativas + 1;
         setTentativas(novasTentativas);
 
+        // If the user exceeds the allowed attempts, force them back to registration.
         if (novasTentativas >= 3) {
           setDialogTitle(t('validar.blocked'));
           setDialogText(t('validar.exceeded_attempts'));
-          setActionAfterDialog('toRegister');
+          setActionAfterDialog('toRegister'); // Queue navigation for when dialog closes
           setDialogVisible(true);
         } else {
+          // Show generic invalid code error with remaining attempt context
           setDialogTitle(t('common.error'));
           setDialogText(
             t('validar.invalid_code_attempt', { attempt: novasTentativas }),
@@ -84,22 +112,29 @@ const Validate = () => {
         }
       }
     } catch (error) {
+      // Handle unexpected network errors
       setDialogTitle(t('common.error'));
       setDialogText(t('validar.error_connection'));
       setDialogVisible(true);
     }
   };
 
+  /**
+   * useFocusEffect runs when the screen comes into focus.
+   * Here, we intercept the Android hardware back button to prevent the user
+   * from navigating away before completing the verification flow.
+   * Returning `true` from the handler prevents the default back navigation.
+   */
   useFocusEffect(
     useCallback(() => {
-      // Bloqueia o botão físico de voltar do Android
-      const onBackPress = () => true;
+      const onBackPress = () => true; // Blocks the back button
 
       const subscription = BackHandler.addEventListener(
         'hardwareBackPress',
         onBackPress,
       );
 
+      // Cleanup function removes the listener when the screen loses focus.
       return () => subscription.remove();
     }, []),
   );
@@ -114,6 +149,12 @@ const Validate = () => {
           backgroundColor: theme.colors.background,
         }}
       >
+        {/* 
+          Stack.Screen options allow us to configure the header dynamically.
+          - headerBackVisible: false hides the default back arrow.
+          - gestureEnabled: false disables the iOS swipe-back gesture.
+          Together, these enforce the strict verification flow.
+        */}
         <Stack.Screen
           options={{
             headerBackVisible: false,
@@ -126,7 +167,6 @@ const Validate = () => {
           style={{
             fontSize: 28,
             fontWeight: 'bold',
-
             textAlign: 'center',
             marginBottom: 32,
             letterSpacing: 0.5,
@@ -139,10 +179,10 @@ const Validate = () => {
           <CustomTextInput
             placeholder={t('validar.placeholder')}
             onChangeText={setCode}
-            isNumber
+            isNumber // Ensures a numeric keyboard is shown on mobile devices
             label={t('validar.code')}
             value={code}
-            lenght={6}
+            lenght={6} // Limits input to exactly 6 characters
           />
 
           <CustomButton onPress={handleVerify}>
@@ -168,4 +208,5 @@ const Validate = () => {
     </>
   );
 };
+
 export default Validate;

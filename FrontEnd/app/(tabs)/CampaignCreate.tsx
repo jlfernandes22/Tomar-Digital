@@ -1,3 +1,10 @@
+/**
+ * CampaignCreate Screen
+ *
+ * A multi-step form (wizard) for the City Council ('camara') to create
+ * new marketing campaigns. It handles text fields, CAE code tags, image uploads,
+ * date picking, and dynamic reward pack creation. Submits data as multipart/form-data.
+ */
 import {
   KeyboardAvoidingView,
   Platform,
@@ -30,6 +37,9 @@ import { useLoadingState } from '@/context/LoadingContext';
 import LoadingScreen from '../components/LoadingScreen';
 import PacketInterface from '@/constants/Interfaces/PacketInterface';
 
+// --- Constants & Interfaces ---
+const TOTAL_STEPS = 3;
+
 interface ICampanhaForm {
   tituloCampanha: string;
   slogan: string;
@@ -44,16 +54,14 @@ interface ICampanhaForm {
 }
 
 const CreateCampaign = () => {
+  // --- Hooks (Context & Global State) ---
   const { t, i18n } = useTranslation();
-  const [step, setStep] = useState(1);
-  const totalSteps = 3;
-
-  const [caeInput, setCaeInput] = useState('');
-  const [erro, setErro] = useState('');
-
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
+  const { setLoadingQR } = useLoadingState();
 
+  // --- Local State ---
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<ICampanhaForm>({
     tituloCampanha: '',
     slogan: '',
@@ -67,6 +75,7 @@ const CreateCampaign = () => {
     pacotes: [],
   });
 
+  // State for the dynamic "Reward Pack" creator
   const [pacote, setPacote] = useState({
     descricaoRecompensa: '',
     custoEmPontos: '',
@@ -74,27 +83,42 @@ const CreateCampaign = () => {
     maximoPorUser: '1',
   });
 
+  // CAE input specific state
+  const [caeInput, setCaeInput] = useState('');
+  const [erro, setErro] = useState('');
+
+  // UI Feedback & Loading state
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
+  const [logoLoading, setLogoLoading] = useState(false);
+  const [panfletoLoading, setPanfletoLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
-  const [logoLoading, setLogoLoading] = useState(false);
-  const [panfletoLoading, setPanfletoLoading] = useState(false);
 
+  // --- Effects ---
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while the form is submitting.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading, setLoadingQR]);
+
+  // --- Handlers ---
+
+  /** Updates the expiration date state from the DateTimePicker component. */
   const onChangeDate = (event: any, selectedDate: any) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      setFormData(prev => ({
-        ...prev,
-        dataExpiracao: selectedDate,
-      }));
+      setFormData(prev => ({ ...prev, dataExpiracao: selectedDate }));
     }
   };
 
+  /** Validates the current pack inputs and appends it to the formData.pacotes array. */
   const addPack = () => {
     setLoading(true);
     const { descricaoRecompensa, custoEmPontos, stockInicial } = pacote;
@@ -126,13 +150,13 @@ const CreateCampaign = () => {
         pacotes: [...prevState.pacotes, newPack],
       }));
 
+      // Reset pack input fields
       setPacote({
         descricaoRecompensa: '',
         custoEmPontos: '',
         stockInicial: '',
         maximoPorUser: '1',
       });
-
       setSnackbarMessage(
         t('campaign.success_add_pack', {
           defaultValue: 'Pacote adicionado com sucesso!',
@@ -153,6 +177,7 @@ const CreateCampaign = () => {
     }
   };
 
+  /** Requests gallery permissions and launches the image picker for the campaign logo. */
   const selecionarLogo = async () => {
     setLogoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -168,6 +193,7 @@ const CreateCampaign = () => {
       setLogoLoading(false);
       return;
     }
+
     const resultado = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -176,12 +202,12 @@ const CreateCampaign = () => {
     });
 
     if (!resultado.canceled) {
-      const uri = resultado.assets[0].uri;
-      setFormData({ ...formData, logo: uri });
+      setFormData(prev => ({ ...prev, logo: resultado.assets[0].uri }));
     }
     setLogoLoading(false);
   };
 
+  /** Requests gallery permissions and launches the image picker for the campaign flyer. */
   const selecionarPanfleto = async () => {
     setPanfletoLoading(true);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -197,20 +223,21 @@ const CreateCampaign = () => {
       setPanfletoLoading(false);
       return;
     }
+
     const resultado = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.5,
+      quality: 0.5, // Lower quality for flyers to save bandwidth
     });
 
     if (!resultado.canceled) {
-      const uri = resultado.assets[0].uri;
-      setFormData({ ...formData, panfleto: uri });
+      setFormData(prev => ({ ...prev, panfleto: resultado.assets[0].uri }));
     }
     setPanfletoLoading(false);
   };
 
+  /** Validates and adds a 5-digit CAE code to the form data array. */
   const handleAdicionarCae = () => {
     if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
       setErro(
@@ -228,20 +255,148 @@ const CreateCampaign = () => {
       );
       return;
     }
+
     setErro('');
-    setFormData({
-      ...formData,
-      listaCAES: [...formData.listaCAES, caeInput],
-    });
+    setFormData(prev => ({
+      ...prev,
+      listaCAES: [...prev.listaCAES, caeInput],
+    }));
     setCaeInput('');
   };
 
+  /** Removes a specific CAE code from the list. */
   const handleRemoverCae = (caeParaRemover: string) => {
-    setFormData({
-      ...formData,
-      listaCAES: formData.listaCAES.filter(c => c !== caeParaRemover),
-    });
+    setFormData(prev => ({
+      ...prev,
+      listaCAES: prev.listaCAES.filter(c => c !== caeParaRemover),
+    }));
   };
+
+  /**
+   * Main submission handler.
+   * Constructs multipart/form-data to send text fields alongside image files.
+   * Resets the form on success.
+   */
+  const handleFinalSubmit = async () => {
+    setLoading(true);
+
+    if (formData.pacotes.length === 0) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('campaign.error_no_packs', {
+          defaultValue: 'Erro: Adicione pacotes.',
+        }),
+      );
+      setDialogVisible(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = new FormData();
+
+      // Append text fields
+      data.append('titulo', formData.tituloCampanha);
+      data.append('slogan', formData.slogan);
+      data.append('descricao', formData.descricaoCampanha);
+      data.append('normas', formData.normas);
+      data.append('dataInicio', formData.dataInicio.toISOString());
+      data.append('dataExpiracao', formData.dataExpiracao.toISOString());
+
+      // Append arrays/objects as JSON strings
+      data.append('listaCAES', JSON.stringify(formData.listaCAES));
+
+      const packsPayload = formData.pacotes.map(p => ({
+        rewardDescription: p.descricaoRecompensa,
+        pointsCost: Number(p.custoEmPontos),
+        stock: Number(p.stockInicial),
+        maxPerUser: Number(p.maximoPorUser),
+      }));
+      data.append('packs', JSON.stringify(packsPayload));
+
+      // Append Logo File
+      if (formData.logo) {
+        const logoParts = formData.logo.split('.');
+        const logoType = logoParts[logoParts.length - 1];
+        // @ts-ignore // RN FormData allows object assignment for files
+        data.append('logo', {
+          uri: formData.logo,
+          name: `logo.${logoType}`,
+          type: `image/${logoType === 'jpg' ? 'jpeg' : logoType}`,
+        });
+      }
+
+      // Append Flyer File
+      if (formData.panfleto) {
+        const panfletoParts = formData.panfleto.split('.');
+        const panfletoType = panfletoParts[panfletoParts.length - 1];
+        // @ts-ignore
+        data.append('panfleto', {
+          uri: formData.panfleto,
+          name: `panfleto.${panfletoType}`,
+          type: `image/${panfletoType === 'jpg' ? 'jpeg' : panfletoType}`,
+        });
+      }
+
+      const response = await fetch(`${API_URL}/criarCampanha`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          // Note: 'Content-Type' is omitted intentionally. React Native sets it automatically.
+        },
+        body: data,
+      });
+
+      if (response.ok) {
+        setSnackbarMessage(
+          t('campaign.success_created', { defaultValue: 'Campanha criada!' }),
+        );
+        setSnackbarVisible(true);
+
+        // Reset form state
+        setFormData({
+          tituloCampanha: '',
+          slogan: '',
+          descricaoCampanha: '',
+          listaCAES: [],
+          dataExpiracao: new Date(),
+          dataInicio: new Date(),
+          normas: '',
+          logo: '',
+          panfleto: '',
+          pacotes: [],
+        });
+        setCaeInput('');
+        setErro('');
+        setPacote({
+          descricaoRecompensa: '',
+          custoEmPontos: '',
+          stockInicial: '',
+          maximoPorUser: '1',
+        });
+        setStep(1);
+      } else {
+        const errorData = await response.json();
+        setDialogTitle(t('common.error'));
+        setDialogText(errorData.message);
+        setDialogVisible(true);
+      }
+    } catch (err) {
+      console.error('Erro ao submeter campanha:', err);
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('campaign.error_network', {
+          defaultValue: 'Erro na rede ou no upload.',
+        }),
+      );
+      setDialogVisible(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Render Helpers (Sub-components for each step) ---
+  // Extracted to keep the main return block clean and readable.
 
   const renderStep1 = () => (
     <View>
@@ -261,12 +416,14 @@ const CreateCampaign = () => {
         value={formData.tituloCampanha}
         onChangeText={val => setFormData({ ...formData, tituloCampanha: val })}
         required
+        lenght={50}
       />
       <CustomTextInput
         label={t('campaign.slogan')}
         value={formData.slogan}
         onChangeText={val => setFormData({ ...formData, slogan: val })}
         required
+        lenght={50}
       />
       <CustomTextInput
         label={t('campaign.description')}
@@ -275,6 +432,7 @@ const CreateCampaign = () => {
           setFormData({ ...formData, descricaoCampanha: val })
         }
         required
+        lenght={250}
       />
 
       <Text
@@ -309,7 +467,7 @@ const CreateCampaign = () => {
             setCaeInput(text.replace(/[^0-9]/g, ''));
           }}
           className="flex-1"
-          required={formData.listaCAES.length != 0 ? false : true}
+          required={formData.listaCAES.length === 0}
         />
         <CustomButton
           onPress={handleAdicionarCae}
@@ -344,7 +502,6 @@ const CreateCampaign = () => {
             <CustomChip isSelected={true} icon="tag" onPress={() => {}}>
               {cae}
             </CustomChip>
-
             <View
               style={{
                 position: 'absolute',
@@ -363,10 +520,7 @@ const CreateCampaign = () => {
               <Pressable
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel={t('accessibility.remove_cae_name', {
-                  name: cae,
-                  defaultValue: `Remover CAE ${cae}`,
-                })}
+                accessibilityLabel={`Remover CAE ${cae}`}
                 accessibilityHint={t('accessibility.remove_cae')}
                 onPress={() => handleRemoverCae(cae)}
                 hitSlop={10}
@@ -411,14 +565,6 @@ const CreateCampaign = () => {
             icon="image"
             onPress={selecionarLogo}
             loading={logoLoading}
-            accessibilityLabel={
-              formData.logo
-                ? t('campaign.change_logo', {
-                    defaultValue: 'Alterar Logótipo',
-                  })
-                : t('campaign.upload_logo', { defaultValue: 'Upload Logótipo' })
-            }
-            accessibilityHint={t('accessibility.choose_image')}
           >
             {formData.logo
               ? t('common.change', { defaultValue: 'Alterar' })
@@ -454,16 +600,6 @@ const CreateCampaign = () => {
             icon="file-image"
             onPress={selecionarPanfleto}
             loading={panfletoLoading}
-            accessibilityLabel={
-              formData.panfleto
-                ? t('campaign.change_flyer', {
-                    defaultValue: 'Alterar Panfleto',
-                  })
-                : t('campaign.upload_flyer', {
-                    defaultValue: 'Upload Panfleto',
-                  })
-            }
-            accessibilityHint={t('accessibility.choose_flyer')}
           >
             {formData.panfleto
               ? t('common.change', { defaultValue: 'Alterar' })
@@ -507,12 +643,7 @@ const CreateCampaign = () => {
         {t('campaign.expire_date')}
       </Text>
 
-      <CustomButton
-        icon="calendar"
-        onPress={() => setShowDatePicker(true)}
-        accessibilityLabel={t('campaign.select_date')}
-        accessibilityHint={t('accessibility.open_calendar')}
-      >
+      <CustomButton icon="calendar" onPress={() => setShowDatePicker(true)}>
         {formData.dataExpiracao.toLocaleDateString(
           i18n.language === 'pt' ? 'pt-PT' : 'en-US',
         )}
@@ -539,131 +670,13 @@ const CreateCampaign = () => {
         value={formData.normas}
         onChangeText={val => setFormData({ ...formData, normas: val })}
         required
+        lenght={1000}
       />
     </View>
   );
 
-  const handleFinalSubmit = async () => {
-    setLoading(true);
-
-    if (formData.pacotes.length === 0) {
-      setDialogTitle(t('common.error'));
-      setDialogText(
-        t('campaign.error_no_packs', {
-          defaultValue: 'Erro: Adicione pacotes.',
-        }),
-      );
-      setDialogVisible(true);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const data = new FormData();
-
-      data.append('titulo', formData.tituloCampanha);
-      data.append('slogan', formData.slogan);
-      data.append('descricao', formData.descricaoCampanha);
-      data.append('normas', formData.normas);
-      data.append('dataInicio', formData.dataInicio.toISOString());
-      data.append('dataExpiracao', formData.dataExpiracao.toISOString());
-
-      data.append('listaCAES', JSON.stringify(formData.listaCAES));
-
-      const packsPayload = formData.pacotes.map(p => ({
-        rewardDescription: p.descricaoRecompensa,
-        pointsCost: Number(p.custoEmPontos),
-        stock: Number(p.stockInicial),
-        maxPerUser: Number(p.maximoPorUser),
-      }));
-      data.append('packs', JSON.stringify(packsPayload));
-
-      if (formData.logo) {
-        const logoParts = formData.logo.split('.');
-        const logoType = logoParts[logoParts.length - 1];
-
-        // @ts-ignore
-        data.append('logo', {
-          uri: formData.logo,
-          name: `logo.${logoType}`,
-          type: `image/${logoType === 'jpg' ? 'jpeg' : logoType}`,
-        });
-      }
-
-      if (formData.panfleto) {
-        const panfletoParts = formData.panfleto.split('.');
-        const panfletoType = panfletoParts[panfletoParts.length - 1];
-
-        // @ts-ignore
-        data.append('panfleto', {
-          uri: formData.panfleto,
-          name: `panfleto.${panfletoType}`,
-          type: `image/${panfletoType === 'jpg' ? 'jpeg' : panfletoType}`,
-        });
-      }
-
-      const response = await fetch(`${API_URL}/criarCampanha`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-        body: data,
-      });
-
-      if (response.ok) {
-        setSnackbarMessage(
-          t('campaign.success_created', { defaultValue: 'Campanha criada!' }),
-        );
-        setSnackbarVisible(true);
-
-        setFormData({
-          tituloCampanha: '',
-          slogan: '',
-          descricaoCampanha: '',
-          listaCAES: [],
-          dataExpiracao: new Date(),
-          dataInicio: new Date(),
-          normas: '',
-          logo: '',
-          panfleto: '',
-          pacotes: [],
-        });
-
-        setCaeInput('');
-        setErro('');
-        setPacote({
-          descricaoRecompensa: '',
-          custoEmPontos: '',
-          stockInicial: '',
-          maximoPorUser: '1',
-        });
-
-        setStep(1);
-      } else {
-        const errorData = await response.json();
-        setDialogTitle(t('common.error'));
-        setDialogText(errorData.message);
-        setDialogVisible(true);
-      }
-      console.log(response);
-    } catch (err) {
-      console.error('Erro ao submeter campanha:', err);
-      setDialogTitle(t('common.error'));
-      setDialogText(
-        t('campaign.error_network', {
-          defaultValue: 'Erro na rede ou no upload.',
-        }),
-      );
-      setDialogVisible(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    console.log('LOG CAES:', formData.listaCAES);
-  }, [formData.listaCAES]);
-
+  // --- Early Returns ---
+  // Must occur AFTER all hooks (useState, useEffect) have been declared.
   if (!user) {
     return (
       <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -672,14 +685,11 @@ const CreateCampaign = () => {
     );
   }
 
-  useEffect(() => {
-    setLoadingQR(loading);
-  }, [loading]);
-
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Main Render ---
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaView style={{ flex: 1, padding: 16 }}>
@@ -688,10 +698,10 @@ const CreateCampaign = () => {
           style={{ flex: 1 }}
         >
           <Text style={{ textAlign: 'right', marginBottom: 5 }}>
-            {t('addBusiness.step_info', { step, totalSteps })}
+            {t('addBusiness.step_info', { step, totalSteps: TOTAL_STEPS })}
           </Text>
           <ProgressBar
-            progress={step / totalSteps}
+            progress={step / TOTAL_STEPS}
             color={theme.colors.primary}
             style={{ marginBottom: 20 }}
           />
@@ -721,14 +731,14 @@ const CreateCampaign = () => {
                   onChangeText={t =>
                     setPacote({ ...pacote, descricaoRecompensa: t })
                   }
-                  required={formData.pacotes.length != 0 ? false : true}
+                  required={formData.pacotes.length === 0}
                   lenght={100}
                 />
                 <CustomTextInput
                   label={t('campaign.cost_points')}
                   value={pacote.custoEmPontos}
                   onChangeText={t => setPacote({ ...pacote, custoEmPontos: t })}
-                  required={formData.pacotes.length != 0 ? false : true}
+                  required={formData.pacotes.length === 0}
                   isNumber
                   lenght={5}
                 />
@@ -736,17 +746,12 @@ const CreateCampaign = () => {
                   label={t('campaign.initial_stock')}
                   value={pacote.stockInicial}
                   onChangeText={t => setPacote({ ...pacote, stockInicial: t })}
-                  required={formData.pacotes.length != 0 ? false : true}
+                  required={formData.pacotes.length === 0}
                   isNumber
                   lenght={6}
                 />
 
-                <CustomButton
-                  onPress={addPack}
-                  className="m-5"
-                  accessibilityLabel={t('campaign.add_package')}
-                  accessibilityHint={t('accessibility.add_package_list')}
-                >
+                <CustomButton onPress={addPack} className="m-5">
                   + {t('campaign.add_package')}
                 </CustomButton>
 
@@ -787,28 +792,17 @@ const CreateCampaign = () => {
             }}
           >
             {step > 1 && (
-              <CustomButton
-                onPress={() => setStep(step - 1)}
-                accessibilityLabel={t('addBusiness.prev_step')}
-              >
+              <CustomButton onPress={() => setStep(step - 1)}>
                 {t('common.back', { defaultValue: 'Anterior' })}
               </CustomButton>
             )}
 
-            {step < totalSteps ? (
-              <CustomButton
-                onPress={() => setStep(step + 1)}
-                accessibilityLabel={t('addBusiness.next_step')}
-              >
+            {step < TOTAL_STEPS ? (
+              <CustomButton onPress={() => setStep(step + 1)}>
                 {t('common.next', { defaultValue: 'Próximo' })}
               </CustomButton>
             ) : (
-              <CustomButton
-                onPress={handleFinalSubmit}
-                loading={loading}
-                accessibilityLabel={t('campaign.submit_create')}
-                accessibilityHint={t('accessibility.submit_campaign')}
-              >
+              <CustomButton onPress={handleFinalSubmit} loading={loading}>
                 {t('campaign.submit_create', {
                   defaultValue: 'Criar Campanha',
                 })}
@@ -819,8 +813,8 @@ const CreateCampaign = () => {
 
         <CustomSnackBar
           visible={snackbarVisible}
-          onDismiss={() => setSnackbarVisible(false)}
           message={snackbarMessage}
+          onDismiss={() => setSnackbarVisible(false)}
         />
         <CustomDialog
           title={dialogTitle}

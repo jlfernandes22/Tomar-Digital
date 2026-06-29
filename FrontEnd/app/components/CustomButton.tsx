@@ -1,6 +1,13 @@
 import { useAppTheme } from '@/context/ThemeContext';
 import React from 'react';
-import { View, Image, ViewStyle, StyleProp } from 'react-native';
+import {
+  View,
+  Image,
+  ViewStyle,
+  StyleProp,
+  DimensionValue,
+  ImageSourcePropType,
+} from 'react-native';
 import {
   TouchableRipple,
   Text,
@@ -8,7 +15,11 @@ import {
   Icon,
 } from 'react-native-paper';
 
-interface PrimaryButtonProps {
+/**
+ * Defines the props for the CustomButton component.
+ * Provides flexibility to override theme colors, add icons, and control loading states.
+ */
+interface CustomButtonProps {
   children: React.ReactNode;
   onPress: () => void;
   className?: string;
@@ -17,23 +28,31 @@ interface PrimaryButtonProps {
   disabled?: boolean;
   buttonColor?: string;
   textColor?: string;
-  icon?: any;
+  icon?: string | ImageSourcePropType; // Supports both MaterialCommunityIcons strings and local image assets
   labelStyle?: any;
   accessibilityRole?: any;
   accessibilityLabel?: any;
   accessibilityHint?: string;
   numberOfLines?: number;
-  width?: any;
-  height?: any;
+  width?: DimensionValue;
+  height?: DimensionValue;
 }
 
+/**
+ * CustomButton Component
+ *
+ * A versatile, theme-aware button component wrapping React Native Paper's TouchableRipple.
+ * It automatically handles loading states (displaying an ActivityIndicator),
+ * disables interaction when loading or explicitly disabled, and supports both
+ * icon font strings and image assets.
+ */
 const CustomButton = ({
   children,
   onPress,
   className,
-  loading,
-  disabled,
   style,
+  loading = false,
+  disabled = false,
   buttonColor,
   textColor,
   icon,
@@ -44,24 +63,31 @@ const CustomButton = ({
   numberOfLines,
   width,
   height,
-}: PrimaryButtonProps) => {
+}: CustomButtonProps) => {
+  // --- Hooks ---
   const { currentTheme: theme } = useAppTheme();
 
-  // Cores ligadas ao Theme atual
-  const bgColor = buttonColor ? buttonColor : theme.colors.primary;
-  const txtColor = textColor ? textColor : theme.colors.background;
+  // --- Derived Values ---
+  // Fallback to theme primary/background colors if custom colors aren't provided
+  const bgColor = buttonColor || theme.colors.primary;
+  const txtColor = textColor || theme.colors.background;
 
+  // The button should be disabled if it's explicitly disabled OR currently in a loading state
   const isDisabled = disabled || loading;
 
+  // --- Render ---
   return (
     <View
       className={className || ''}
-      style={{
-        backgroundColor: bgColor,
-        borderRadius: theme.roundness,
-        overflow: 'hidden',
-        opacity: isDisabled ? 0.5 : 1,
-      }}
+      style={[
+        {
+          backgroundColor: bgColor,
+          borderRadius: theme.roundness,
+          overflow: 'hidden', // Ensures the ripple effect respects the border radius
+          opacity: isDisabled ? 0.5 : 1, // Visual feedback for disabled state
+        },
+        style, // Apply custom styles passed via props (allows overriding margins, width, etc.)
+      ]}
     >
       <TouchableRipple
         accessible={true}
@@ -72,7 +98,7 @@ const CustomButton = ({
         accessibilityHint={accessibilityHint}
         disabled={isDisabled}
         style={{
-          minWidth: 44,
+          minWidth: 44, // Minimum touch target size for accessibility
           minHeight: 44,
           paddingVertical: 12,
           paddingHorizontal: 24,
@@ -85,6 +111,7 @@ const CustomButton = ({
         }}
       >
         <>
+          {/* Loading Indicator: Shows spinner and hides icon while loading */}
           {loading && (
             <ActivityIndicator
               animating={true}
@@ -94,6 +121,7 @@ const CustomButton = ({
             />
           )}
 
+          {/* Icon: Renders either a font icon or an image asset if provided and not loading */}
           {!loading && icon && (
             <View style={{ marginRight: 8 }}>
               {typeof icon === 'string' ? (
@@ -108,6 +136,7 @@ const CustomButton = ({
             </View>
           )}
 
+          {/* Button Label */}
           <Text
             style={[
               {
@@ -116,7 +145,7 @@ const CustomButton = ({
                 fontWeight: 'bold',
                 letterSpacing: 0.5,
               },
-              labelStyle,
+              labelStyle, // Allows overriding typography if needed
             ]}
             numberOfLines={numberOfLines}
           >

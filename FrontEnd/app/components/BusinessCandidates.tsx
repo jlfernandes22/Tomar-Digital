@@ -1,13 +1,17 @@
+/**
+ * BusinessCandidates Screen
+ *
+ * Displays a list of pending businesses awaiting approval by the City Council ('camara').
+ * It fetches both the pending businesses and their respective owners in parallel,
+ * and provides UI actions to approve or reject (discard) each request.
+ */
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, FlatList, RefreshControl, ScrollView } from 'react-native';
+import { View, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { API_URL } from '@/constants/api';
-import { useAuth } from '@/context/AuthContext';
 import { router, Stack } from 'expo-router';
-// Substituímos os componentes antigos pelos do Paper para suportar Dark Mode
 import {
-  ActivityIndicator,
   TouchableRipple,
   Surface,
   Text,
@@ -16,14 +20,20 @@ import {
   Dialog,
   Portal,
 } from 'react-native-paper';
+
+// Contexts & Hooks
+import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useLoadingState } from '@/context/LoadingContext';
+import { API_URL } from '@/constants/api';
+
+// Components
 import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
 import BusinessList from './BusinessList';
-import { useAppTheme } from '@/context/ThemeContext';
-import { useLoadingState } from '@/context/LoadingContext';
 import LoadingScreen from './LoadingScreen';
 
-// 1. Interfaces MOVIDAS PARA FORA do componente
+// --- Interfaces ---
 interface Business {
   _id: string;
   name: string;
@@ -39,39 +49,34 @@ interface Owner {
 }
 
 export default function AprovarNegocios() {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { currentTheme: theme } = useAppTheme();
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+
+  // --- Local State ---
   const [pendentes, setPendentes] = useState<Business[]>([]);
   const [pendOwners, setPendOwners] = useState<Owner[]>([]);
-  const { loadingQR, setLoadingQR } = useLoadingState();
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
+  // UI Feedback state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
 
+  // Discard confirmation dialog state
   const [discardDialogVisible, setDiscardDialogVisible] = useState(false);
   const [discardId, setDiscardId] = useState<string | null>(null);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  // --- Handlers ---
 
-    try {
-      await carregarDados();
-    } catch (err) {
-      setDialogTitle(t('common.error'));
-      setDialogText(t('camara.error_load_info'));
-      setDialogVisible(true);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const { currentTheme: theme } = useAppTheme();
-
+  /**
+   * Fetches pending businesses and their owners concurrently using Promise.all.
+   * Wrapped in useCallback to provide a stable reference for useEffect and onRefresh.
+   */
   const carregarDados = useCallback(async () => {
-    // Se não há token, paramos o loading para não ficar preso
     if (!user?.token) {
       setLoading(false);
       return;
@@ -104,12 +109,9 @@ export default function AprovarNegocios() {
     } finally {
       setLoading(false);
     }
-  }, [user?.token]);
+  }, [user?.token, t]);
 
-  useEffect(() => {
-    carregarDados();
-  }, [carregarDados]);
-
+  /** Approves a business and removes it from the local pending list optimistically. */
   const handleAprovar = async (id: string) => {
     try {
       const response = await fetch(`${API_URL}/business/aprovar/${id}`, {
@@ -134,11 +136,13 @@ export default function AprovarNegocios() {
     }
   };
 
+  /** Opens the confirmation dialog before discarding a business. */
   const handleDescartar = (id: string) => {
     setDiscardId(id);
     setDiscardDialogVisible(true);
   };
 
+  /** Executes the discard API call after confirmation. */
   const executeDescartar = async (id: string) => {
     try {
       const response = await fetch(`${API_URL}/business/rejeitar/${id}`, {
@@ -159,14 +163,43 @@ export default function AprovarNegocios() {
     }
   };
 
+  /** Pull-to-refresh handler. */
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await carregarDados();
+    } catch (err) {
+      setDialogTitle(t('common.error'));
+      setDialogText(t('camara.error_load_info'));
+      setDialogVisible(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [carregarDados, t]);
+
+  // --- Effects ---
+
+  // Initial data fetch
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
+
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while data is fetching.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
   useEffect(() => {
     setLoadingQR(loading);
-  }, [loading]);
+  }, [loading, setLoadingQR]);
 
+  // --- Early Return (Loading State) ---
+  // Placed after all hooks have been declared.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -180,6 +213,7 @@ export default function AprovarNegocios() {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <SafeAreaView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
         edges={['left', 'right']}
@@ -226,11 +260,11 @@ export default function AprovarNegocios() {
             keyExtractor={item => item._id}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => {
+              // Find the owner details for the current business
               const donoEspecifico = pendOwners.find(
                 dono => dono._id === item.owner,
               );
 
-              //console.log(item);
               return (
                 <Surface
                   style={{
@@ -238,7 +272,7 @@ export default function AprovarNegocios() {
                     marginBottom: 16,
                     borderWidth: 1,
                     borderColor: theme.colors.outlineVariant,
-                    overflow: 'hidden',
+                    overflow: 'hidden', // Clips the TouchableRipple to the border radius
                     backgroundColor: theme.colors.secondaryContainer,
                   }}
                   elevation={1}
@@ -259,7 +293,7 @@ export default function AprovarNegocios() {
                     }}
                     rippleColor="rgba(150, 150, 150, 0.2)"
                   >
-                    <View className="p-1 ">
+                    <View className="p-1">
                       <BusinessList
                         name={item.name}
                         category={item.category}
@@ -274,7 +308,7 @@ export default function AprovarNegocios() {
                   </TouchableRipple>
 
                   <View className="flex-row gap-x-3 px-4 pb-4">
-                    {/* Botão ACEITAR */}
+                    {/* Approve Button */}
                     <CustomButton
                       className="flex-1"
                       onPress={() => handleAprovar(item._id)}
@@ -292,7 +326,7 @@ export default function AprovarNegocios() {
                       {t('common.accept', { defaultValue: 'Aceitar' })}
                     </CustomButton>
 
-                    {/* Botão DESCARTAR */}
+                    {/* Discard Button */}
                     <CustomButton
                       className="flex-1"
                       onPress={() => handleDescartar(item._id)}
@@ -317,6 +351,7 @@ export default function AprovarNegocios() {
         )}
       </SafeAreaView>
 
+      {/* Discard Confirmation Dialog */}
       <Portal>
         <Dialog
           visible={discardDialogVisible}
@@ -357,6 +392,7 @@ export default function AprovarNegocios() {
         </Dialog>
       </Portal>
 
+      {/* Global Error/Info Dialog */}
       <CustomDialog
         title={dialogTitle}
         visible={dialogVisible}

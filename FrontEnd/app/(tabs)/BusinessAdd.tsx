@@ -1,3 +1,11 @@
+/**
+ * AddBusiness Screen
+ *
+ * A multi-step form (wizard) for merchants to register a new business.
+ * It handles complex state management for form data, CAE codes, image uploads,
+ * and map-based geolocation. Upon submission, it sends multipart/form-data
+ * to the backend including images and JSON fields.
+ */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Image, Pressable } from 'react-native';
@@ -6,33 +14,56 @@ import {
   Text,
   ProgressBar,
   HelperText,
-  TextInput,
+  IconButton,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { API_URL } from '@/constants/api';
+import { router } from 'expo-router';
+
+// Contexts & Hooks
 import { useAuth } from '@/context/AuthContext';
-import Map from '@/app/components/Map';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useLoadingState } from '@/context/LoadingContext';
+
+// Utils & Constants
+import { API_URL } from '@/constants/api';
 import { delay } from '../../utils/delay';
+import getAddress from '../../utils/getAddress';
+import { pickImage } from '@/utils/imagePicker';
+
+// Components
+import Map from '@/app/components/Map';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomButton from '../components/CustomButton';
 import CustomSnackBar from '../components/CustomSnackBar';
 import CustomDialog from '../components/CustomDialog';
 import CustomChip from '../components/CustomChip';
-import { pickImage } from '@/utils/imagePicker';
-import { router } from 'expo-router';
-import getAddress from '../../utils/getAddress';
-import { IconButton } from 'react-native-paper';
-import { useAppTheme } from '@/context/ThemeContext';
 import LoadingScreen from '../components/LoadingScreen';
-import { useLoadingState } from '@/context/LoadingContext';
+
+// Static configuration constants
+const TOTAL_STEPS = 3;
+const CATEGORIES = [
+  'Património & Museus',
+  'Restauração',
+  'Cafés & Pastelarias',
+  'Alojamento',
+  'Comércio Local',
+  'Lazer & Natureza',
+  'Serviços',
+];
 
 export default function AddBusiness() {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
-  const [step, setStep] = useState(1);
   const { user } = useAuth();
-  const totalSteps = 3;
+  const { currentTheme: theme } = useAppTheme();
+  const { setLoadingQR } = useLoadingState();
 
-  const INITIAL_FORM_DATA = {
+  // --- Form & UI State ---
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  // Form data initialized with user's email if available
+  const [formData, setFormData] = useState({
     nomeNegocio: '',
     NIFnegocio: '',
     categoriaNegocio: '',
@@ -40,72 +71,96 @@ export default function AddBusiness() {
     moradaNegocio: '',
     freguesiaNegocio: '',
     listaCAES: [] as string[],
-    localizacao: {
-      latitude: 0,
-      longitude: 0,
-    },
+    localizacao: { latitude: 0, longitude: 0 },
     telefoneDono: '',
     emailDono: user?.email ?? '',
     descricaoNegocio: '',
     galeriaFotos: [] as string[],
-  };
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  });
 
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
+  // CAE input specific state
   const [caeInput, setCaeInput] = useState('');
   const [erro, setErro] = useState('');
 
+  // UI Feedback state
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
 
-  const { currentTheme: theme } = useAppTheme();
+  // --- Effects ---
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while the form is submitting.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading, setLoadingQR]);
 
-  const categories = [
-    'Património & Museus',
-    'Restauração',
-    'Cafés & Pastelarias',
-    'Alojamento',
-    'Comércio Local',
-    'Lazer & Natureza',
-    'Serviços',
-  ];
+  // --- Handlers ---
 
+  const nextStep = () => setStep(prev => prev + 1);
+  const prevStep = () => setStep(prev => prev - 1);
+
+  /** Validates and adds a 5-digit CAE code to the form data array. */
+  const handleAdicionarCae = () => {
+    if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
+      setErro(
+        t('addBusiness.cae_length_error', {
+          defaultValue: 'O CAE deve ter exatamente 5 números.',
+        }),
+      );
+      return;
+    }
+    if (formData.listaCAES.includes(caeInput)) {
+      setErro(
+        t('addBusiness.cae_duplicate_error', {
+          defaultValue: 'Este código CAE já foi adicionado.',
+        }),
+      );
+      return;
+    }
+
+    setErro('');
+    setFormData(prev => ({
+      ...prev,
+      listaCAES: [...prev.listaCAES, caeInput],
+    }));
+    setCaeInput('');
+  };
+
+  /** Removes a specific CAE code from the list. */
+  const handleRemoverCae = (caeParaRemover: string) => {
+    setFormData(prev => ({
+      ...prev,
+      listaCAES: prev.listaCAES.filter(c => c !== caeParaRemover),
+    }));
+  };
+
+  /** Opens the image picker for a single logo image (1:1 aspect ratio). */
   const selecionarLogotipo = async () => {
     try {
       const resultado = await pickImage({
         allowsEditing: true,
         aspect: [1, 1],
       });
-
       if (!resultado) return;
 
       const respostaObj = resultado as any;
-
-      // Verifica se é o formato de objeto do Expo ImagePicker com .assets
-      if (
-        respostaObj &&
-        typeof respostaObj === 'object' &&
-        'assets' in respostaObj &&
-        respostaObj.assets &&
-        respostaObj.assets.length > 0
-      ) {
-        const uriLogotipo = respostaObj.assets[0].uri;
-        setFormData({ ...formData, logotipoNegocio: uriLogotipo });
-      }
-      // Fallback caso o teu utilitário já devolva a string direta
-      else if (typeof resultado === 'string') {
-        setFormData({ ...formData, logotipoNegocio: resultado });
+      if (respostaObj?.assets?.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          logotipoNegocio: respostaObj.assets[0].uri,
+        }));
+      } else if (typeof resultado === 'string') {
+        setFormData(prev => ({ ...prev, logotipoNegocio: resultado }));
       }
     } catch (error: any) {
       setDialogTitle(t('common.error'));
       setDialogText(
         t('addBusiness.error_load_image', {
-          error: error.message,
           defaultValue: `Erro ao carregar imagem: ${error.message}`,
         }),
       );
@@ -113,63 +168,64 @@ export default function AddBusiness() {
     }
   };
 
+  /** Opens the image picker for multiple gallery images (up to 5). */
   const adicionarFotosGaleria = async () => {
-    if (formData.galeriaFotos.length < 5) {
-      try {
-        const resultado = await pickImage({
-          allowsMultipleSelection: true,
-          selectionLimit: 5, // não funciona colocar mais que uma por vês //BUG
-          allowsEditing: false,
-        });
-
-        if (!resultado) return;
-
-        const respostaObj = resultado as any;
-
-        // Verifica se veio o objeto contendo o array 'assets'
-        if (
-          respostaObj &&
-          typeof respostaObj === 'object' &&
-          'assets' in respostaObj &&
-          respostaObj.assets
-        ) {
-          const novasUris = respostaObj.assets.map((asset: any) => asset.uri);
-          setFormData({
-            ...formData,
-            galeriaFotos: [...formData.galeriaFotos, ...novasUris],
-          });
-        }
-        // Se o teu utilitário já devolver diretamente um Array de strings
-        else if (Array.isArray(resultado)) {
-          setFormData({
-            ...formData,
-            galeriaFotos: [...formData.galeriaFotos, ...resultado],
-          });
-        }
-        // Se devolver uma única string
-        else if (typeof resultado === 'string') {
-          setFormData({
-            ...formData,
-            galeriaFotos: [...formData.galeriaFotos, resultado],
-          });
-        }
-      } catch (error: any) {
-        setDialogTitle(t('common.error'));
-        setDialogText(
-          t('addBusiness.error_load_gallery', {
-            error: error.message,
-            defaultValue: `Erro ao carregar galeria: ${error.message}`,
-          }),
-        );
-        setDialogVisible(true);
-      }
-    } else {
+    if (formData.galeriaFotos.length >= 5) {
       setDialogTitle(t('common.error'));
       setDialogText(t('addBusiness.imagesSelection'));
+      setDialogVisible(true);
+      return;
+    }
+
+    try {
+      const resultado = await pickImage({
+        allowsMultipleSelection: true,
+        selectionLimit: 5,
+        allowsEditing: false,
+      });
+      if (!resultado) return;
+
+      const respostaObj = resultado as any;
+      let novasUris: string[] = [];
+
+      if (respostaObj?.assets) {
+        novasUris = respostaObj.assets.map((asset: any) => asset.uri);
+      } else if (Array.isArray(resultado)) {
+        novasUris = resultado;
+      } else if (typeof resultado === 'string') {
+        novasUris = [resultado];
+      }
+
+      if (novasUris.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          galeriaFotos: [...prev.galeriaFotos, ...novasUris],
+        }));
+      }
+    } catch (error: any) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('addBusiness.error_load_gallery', {
+          defaultValue: `Erro ao carregar galeria: ${error.message}`,
+        }),
+      );
       setDialogVisible(true);
     }
   };
 
+  /** Removes an image from the gallery state by its index. */
+  const handleRemoverFoto = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      galeriaFotos: prev.galeriaFotos.filter((_, i) => i !== indexToRemove),
+    }));
+  };
+
+  /**
+   * Main submission handler.
+   * Validates required fields, constructs multipart/form-data (for file uploads),
+   * and sends the request to the backend.
+   */
   const handleNewBusiness = async () => {
     if (!user?.token) {
       setDialogTitle(t('common.error'));
@@ -202,6 +258,8 @@ export default function AddBusiness() {
     setLoading(true);
     try {
       const dataToSend = new FormData();
+
+      // Append text fields
       dataToSend.append('nomeNegocio', formData.nomeNegocio);
       dataToSend.append('NIFnegocio', formData.NIFnegocio);
       dataToSend.append('categoriaNegocio', formData.categoriaNegocio);
@@ -210,65 +268,47 @@ export default function AddBusiness() {
       dataToSend.append('telefoneDono', formData.telefoneDono);
       dataToSend.append('emailDono', formData.emailDono);
       dataToSend.append('descricaoNegocio', formData.descricaoNegocio);
-      dataToSend.append('telefoneDono', formData.telefoneDono);
+      dataToSend.append('owner', user.id);
 
-      if (user?.id) {
-        dataToSend.append('owner', user.id);
-      }
-
-      if (formData.listaCAES && formData.listaCAES.length > 0) {
+      // Append arrays/objects as JSON strings
+      if (formData.listaCAES.length > 0) {
         dataToSend.append('listaCAES', JSON.stringify(formData.listaCAES));
       }
-
-      if (
-        formData.localizacao &&
-        formData.localizacao.latitude &&
-        formData.localizacao.longitude
-      ) {
-        dataToSend.append(
-          'localizacao',
-          JSON.stringify({
-            latitude: formData.localizacao.latitude,
-            longitude: formData.localizacao.longitude,
-          }),
-        );
+      if (formData.localizacao.latitude && formData.localizacao.longitude) {
+        dataToSend.append('localizacao', JSON.stringify(formData.localizacao));
       }
 
-      // Adicionar o Logótipo
+      // Append Logo File
       if (formData.logotipoNegocio) {
-        const logoUri = formData.logotipoNegocio;
-        const filename = logoUri.split('/').pop() || 'logo.jpg';
+        const filename =
+          formData.logotipoNegocio.split('/').pop() || 'logo.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image`;
-
         dataToSend.append('logo', {
-          uri: logoUri,
+          uri: formData.logotipoNegocio,
           name: filename,
           type,
         } as any);
       }
 
-      // Adicionar as Fotos da Galeria
-      if (formData.galeriaFotos && formData.galeriaFotos.length > 0) {
-        formData.galeriaFotos.forEach((fotoUri: string) => {
-          const filename = fotoUri.split('/').pop() || 'foto.jpg';
-          const match = /\.(\w+)$/.exec(filename);
-          const type = match ? `image/${match[1]}` : `image`;
-
-          dataToSend.append('galeria', {
-            uri: fotoUri,
-            name: filename,
-            type,
-          } as any);
-        });
-      }
+      // Append Gallery Files
+      formData.galeriaFotos.forEach(fotoUri => {
+        const filename = fotoUri.split('/').pop() || 'foto.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+        dataToSend.append('galeria', {
+          uri: fotoUri,
+          name: filename,
+          type,
+        } as any);
+      });
 
       const response = await fetch(`${API_URL}/registarNegocio`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user?.token}`,
-          // Nota: O 'Content-Type': 'multipart/form-data' é omitido propositadamente
-          // para que o fetch do React Native crie o cabeçalho correto com o 'boundary'.
+          Authorization: `Bearer ${user.token}`,
+          // Note: 'Content-Type' is intentionally omitted. React Native's fetch
+          // sets it automatically with the correct boundary parameter for FormData.
         },
         body: dataToSend,
       });
@@ -283,93 +323,49 @@ export default function AddBusiness() {
         );
         setSnackbarVisible(true);
         await delay(500);
-        setFormData(INITIAL_FORM_DATA);
         router.back();
-        setStep(1);
-        console.log(response);
+        setStep(1); // Reset wizard on success
       } else {
         setDialogTitle(t('common.error'));
-
-        // Mostra a mensagem de erro, seja 'message', 'erro', ou o JSON completo
-        const errorMessage = data.message || data.erro || JSON.stringify(data);
-
-        setDialogText(errorMessage);
+        setDialogText(data.message || data.erro || JSON.stringify(data));
         setDialogVisible(true);
       }
     } catch (error) {
       setDialogTitle(t('common.error'));
-
       setDialogText(
         t('addBusiness.error_server_conn', {
           defaultValue: 'Erro de ligação ao servidor.',
         }),
       );
-
       setDialogVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const nextStep = () => setStep(step + 1);
-  const prevStep = () => setStep(step - 1);
-
-  const handleAdicionarCae = () => {
-    if (caeInput.length !== 5 || isNaN(Number(caeInput))) {
-      setErro(
-        t('addBusiness.cae_length_error', {
-          defaultValue: 'O CAE deve ter exatamente 5 números.',
-        }),
-      );
-      return;
-    }
-    if (formData.listaCAES.includes(caeInput)) {
-      setErro(
-        t('addBusiness.cae_duplicate_error', {
-          defaultValue: 'Este código CAE já foi adicionado.',
-        }),
-      );
-      return;
-    }
-    setErro('');
-    setFormData({
-      ...formData,
-      listaCAES: [...formData.listaCAES, caeInput],
-    });
-    setCaeInput('');
-  };
-
-  const handleRemoverCae = (caeParaRemover: string) => {
-    setFormData({
-      ...formData,
-      listaCAES: formData.listaCAES.filter(c => c !== caeParaRemover),
-    });
-  };
-
-  useEffect(() => {
-    setLoadingQR(loading);
-  }, [loading]);
-
+  // --- Early Return for Loading State ---
+  // This must be placed AFTER all hooks (useEffect, useState) have been declared.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <SafeAreaView
         style={{ flex: 1, padding: 16 }}
         edges={['top', 'left', 'right']}
       >
-        {/* Barra de Progresso e Paginação Baseada no CreateCampaign */}
+        {/* Progress Indicator */}
         <Text style={{ textAlign: 'right', marginBottom: 5 }}>
           {t('addBusiness.step_info', {
             step,
-            totalSteps,
-            defaultValue: `Passo ${step} de ${totalSteps}`,
+            totalSteps: TOTAL_STEPS,
+            defaultValue: `Passo ${step} de ${TOTAL_STEPS}`,
           })}
         </Text>
         <ProgressBar
-          progress={step / totalSteps}
+          progress={step / TOTAL_STEPS}
           color={theme.colors.primary}
           style={{ marginBottom: 20 }}
         />
@@ -378,7 +374,7 @@ export default function AddBusiness() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* STEP 1: IDENTIDADE DO ESTABELECIMENTO */}
+          {/* STEP 1: Business Identity */}
           {step === 1 && (
             <View>
               <Text
@@ -404,7 +400,6 @@ export default function AddBusiness() {
                 lenght={100}
                 required
               />
-
               <CustomTextInput
                 label={t('addBusiness.nif', { defaultValue: 'NIF' })}
                 value={formData.NIFnegocio}
@@ -414,7 +409,7 @@ export default function AddBusiness() {
                 required
               />
 
-              {/* Módulo de CAEs Baseado Inteiramente no Modelo do CreateCampaign */}
+              {/* CAE Codes Section */}
               <Text
                 variant="titleMedium"
                 style={{
@@ -429,7 +424,6 @@ export default function AddBusiness() {
                   defaultValue: 'CAES do Negócio',
                 })}
               </Text>
-
               <View
                 style={{
                   flexDirection: 'row',
@@ -453,15 +447,12 @@ export default function AddBusiness() {
                     setCaeInput(text.replace(/[^0-9]/g, ''));
                   }}
                   className="flex-1"
-                  required={formData.listaCAES.length != 0 ? false : true}
+                  required={formData.listaCAES.length === 0}
                 />
                 <CustomButton
                   onPress={handleAdicionarCae}
                   accessibilityLabel={t('addBusiness.add_cae', {
                     defaultValue: 'Adicionar CAE',
-                  })}
-                  accessibilityHint={t('accessibility.add_cae_list', {
-                    defaultValue: 'Clica para adicionar o código CAE à lista',
                   })}
                 >
                   +
@@ -496,7 +487,6 @@ export default function AddBusiness() {
                     <CustomChip isSelected={true} icon="tag" onPress={() => {}}>
                       {cae}
                     </CustomChip>
-
                     <View
                       style={{
                         position: 'absolute',
@@ -516,13 +506,7 @@ export default function AddBusiness() {
                       <Pressable
                         accessible={true}
                         accessibilityRole="button"
-                        accessibilityLabel={t('accessibility.remove_cae_name', {
-                          name: cae,
-                          defaultValue: `Remover CAE ${cae}`,
-                        })}
-                        accessibilityHint={t('accessibility.remove_cae', {
-                          defaultValue: 'Clica para remover este CAE',
-                        })}
+                        accessibilityLabel={`Remover CAE ${cae}`}
                         onPress={() => handleRemoverCae(cae)}
                         hitSlop={10}
                       >
@@ -542,7 +526,7 @@ export default function AddBusiness() {
                 ))}
               </View>
 
-              {/* Categorias */}
+              {/* Categories */}
               <Text
                 variant="titleMedium"
                 style={{
@@ -563,7 +547,7 @@ export default function AddBusiness() {
                 contentContainerStyle={{ gap: 8, paddingBottom: 15 }}
                 style={{ flexDirection: 'row' }}
               >
-                {categories.map(cat => (
+                {CATEGORIES.map(cat => (
                   <CustomChip
                     key={cat}
                     isSelected={formData.categoriaNegocio === cat}
@@ -576,7 +560,7 @@ export default function AddBusiness() {
                 ))}
               </ScrollView>
 
-              {/* Upload do Logótipo */}
+              {/* Logo Upload */}
               <View
                 style={{ width: '100%', alignItems: 'center', marginTop: 10 }}
               >
@@ -593,23 +577,7 @@ export default function AddBusiness() {
                     defaultValue: 'Logótipo do Estabelecimento',
                   })}
                 </Text>
-                <CustomButton
-                  icon="image"
-                  onPress={selecionarLogotipo}
-                  accessibilityLabel={
-                    formData.logotipoNegocio
-                      ? t('addBusiness.change_logo', {
-                          defaultValue: 'Alterar Logótipo',
-                        })
-                      : t('addBusiness.upload_logo', {
-                          defaultValue: 'Upload Logótipo',
-                        })
-                  }
-                  accessibilityHint={t('accessibility.choose_business_image', {
-                    defaultValue:
-                      'Clica para escolher uma imagem do estabelecimento',
-                  })}
-                >
+                <CustomButton icon="image" onPress={selecionarLogotipo}>
                   {formData.logotipoNegocio
                     ? t('addBusiness.change_logo', {
                         defaultValue: 'Alterar Logótipo',
@@ -633,7 +601,7 @@ export default function AddBusiness() {
             </View>
           )}
 
-          {/* STEP 2: ENDEREÇOS E GEOLOCALIZAÇÃO */}
+          {/* STEP 2: Location & Geolocation */}
           {step === 2 && (
             <View>
               <Text
@@ -664,7 +632,6 @@ export default function AddBusiness() {
                 }
                 required
               />
-
               <CustomTextInput
                 label={t('addBusiness.parish', { defaultValue: 'Freguesia' })}
                 placeholder={t('addBusiness.parish_placeholder', {
@@ -702,7 +669,6 @@ export default function AddBusiness() {
                     try {
                       const { latitude, longitude } = location;
                       const address = await getAddress({ latitude, longitude });
-
                       if (address && address !== 'undefined') {
                         setFormData(prev => ({
                           ...prev,
@@ -714,7 +680,6 @@ export default function AddBusiness() {
                       setDialogTitle(t('common.error'));
                       setDialogText(
                         t('addBusiness.error_geocode', {
-                          error: err?.message,
                           defaultValue: `Erro ao obter a morada: ${err?.message}`,
                         }),
                       );
@@ -726,7 +691,7 @@ export default function AddBusiness() {
             </View>
           )}
 
-          {/* STEP 3: CONTACTOS GERAIS */}
+          {/* STEP 3: Contact & Gallery */}
           {step === 3 && (
             <View>
               <Text
@@ -795,16 +760,7 @@ export default function AddBusiness() {
                 })}
               </Text>
 
-              <CustomButton
-                icon="file-image"
-                onPress={adicionarFotosGaleria}
-                accessibilityLabel={t('addBusiness.add_images', {
-                  defaultValue: 'Adicionar imagens à galeria',
-                })}
-                accessibilityHint={t('accessibility.choose_images_limit', {
-                  defaultValue: 'Clica para escolher até 5 imagens',
-                })}
-              >
+              <CustomButton icon="file-image" onPress={adicionarFotosGaleria}>
                 {t('addBusiness.add_images', {
                   defaultValue: 'Adicionar Imagens',
                 })}
@@ -838,17 +794,6 @@ export default function AddBusiness() {
                       />
                       <IconButton
                         icon="close-circle"
-                        accessible={true}
-                        accessibilityLabel={t('accessibility.remove_image', {
-                          defaultValue: 'Remover imagem',
-                        })}
-                        accessibilityHint={t(
-                          'accessibility.remove_image_gallery',
-                          {
-                            defaultValue:
-                              'Clica para remover esta imagem da galeria',
-                          },
-                        )}
                         size={20}
                         iconColor={theme.colors.error}
                         style={{
@@ -860,12 +805,7 @@ export default function AddBusiness() {
                           elevation: 4,
                           zIndex: 10,
                         }}
-                        onPress={() => {
-                          const novaLista = formData.galeriaFotos.filter(
-                            (_, i) => i !== index,
-                          );
-                          setFormData({ ...formData, galeriaFotos: novaLista });
-                        }}
+                        onPress={() => handleRemoverFoto(index)}
                       />
                     </View>
                   ) : null,
@@ -875,6 +815,7 @@ export default function AddBusiness() {
           )}
         </ScrollView>
 
+        {/* Navigation Buttons */}
         <View
           style={{
             flexDirection: 'row',
@@ -883,37 +824,17 @@ export default function AddBusiness() {
           }}
         >
           {step > 1 && (
-            <CustomButton
-              accessibilityLabel={t('addBusiness.prev_step', {
-                defaultValue: 'Voltar ao passo anterior',
-              })}
-              onPress={prevStep}
-            >
+            <CustomButton onPress={prevStep}>
               {t('common.back', { defaultValue: 'Anterior' })}
             </CustomButton>
           )}
 
-          {step < totalSteps ? (
-            <CustomButton
-              accessibilityLabel={t('addBusiness.next_step', {
-                defaultValue: 'Avançar para o próximo passo',
-              })}
-              onPress={nextStep}
-            >
+          {step < TOTAL_STEPS ? (
+            <CustomButton onPress={nextStep}>
               {t('common.next', { defaultValue: 'Próximo' })}
             </CustomButton>
           ) : (
-            <CustomButton
-              loading={loading}
-              onPress={handleNewBusiness}
-              accessibilityLabel={t('addBusiness.submit_register', {
-                defaultValue: 'Submeter e registar negócio',
-              })}
-              accessibilityHint={t('accessibility.submit_business', {
-                defaultValue:
-                  'Clica para enviar os dados do teu negócio para aprovação',
-              })}
-            >
+            <CustomButton loading={loading} onPress={handleNewBusiness}>
               {t('addBusiness.send_business', {
                 defaultValue: 'Enviar Negócio',
               })}
@@ -922,6 +843,7 @@ export default function AddBusiness() {
         </View>
       </SafeAreaView>
 
+      {/* Global UI Feedback */}
       <CustomSnackBar
         visible={snackbarVisible}
         message={snackbarMessage}

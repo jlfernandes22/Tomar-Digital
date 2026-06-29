@@ -1,5 +1,12 @@
+/**
+ * Preferences Screen
+ *
+ * Allows users to customize app-wide settings, including visual themes
+ * (handled by the ThemeSelector component) and language preferences.
+ * Language changes are persisted to AsyncStorage so they remain active across app restarts.
+ */
+
 import React from 'react';
-import { View } from 'react-native';
 import {
   Appbar,
   Divider,
@@ -7,23 +14,36 @@ import {
   Surface,
   Text,
 } from 'react-native-paper';
-import { ModeType, PaletteType, useAppTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import ThemeSelector from './ThemeSelector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LANGUAGE_KEY } from '../../i18n';
 import { useTranslation } from 'react-i18next';
 
+// Contexts & Config
+import { useAppTheme } from '@/context/ThemeContext';
+import { LANGUAGE_KEY } from '../../i18n';
+
+// Components
+import ThemeSelector from './ThemeSelector';
+
 const Preferences = () => {
+  // --- Hooks ---
   const { currentTheme: theme } = useAppTheme();
   const { i18n, t } = useTranslation();
 
+  // --- Handlers ---
+
+  /**
+   * Changes the app's language and persists the choice to AsyncStorage.
+   * 1. Updates the i18n instance (triggers an immediate re-render of all translated text).
+   * 2. Saves the selection to AsyncStorage so it can be loaded on the next app launch.
+   */
   const handleLanguageChange = async (value: string) => {
     await i18n.changeLanguage(value);
     await AsyncStorage.setItem(LANGUAGE_KEY, value);
   };
 
+  // --- Render ---
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
@@ -36,7 +56,9 @@ const Preferences = () => {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        {/* Hides the default Expo Router header to use our custom Appbar instead */}
         <Stack.Screen options={{ headerShown: false }} />
 
         <SafeAreaView
@@ -44,8 +66,7 @@ const Preferences = () => {
           style={{ flex: 1 }}
           edges={['left', 'right']}
         >
-          {/* Header Elegante */}
-
+          {/* Screen Header */}
           <Text
             variant="headlineMedium"
             style={{
@@ -64,8 +85,10 @@ const Preferences = () => {
             }}
           />
 
-          <ThemeSelector></ThemeSelector>
+          {/* Theme Selection (Mode + Palette) */}
+          <ThemeSelector />
 
+          {/* Language Selection */}
           <Text
             variant="titleMedium"
             style={{ fontWeight: 'bold', marginTop: 24, marginBottom: 10 }}

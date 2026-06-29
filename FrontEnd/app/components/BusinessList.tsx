@@ -1,19 +1,44 @@
 import { Text } from 'react-native-paper';
 import { View } from 'react-native';
 import React from 'react';
-import { useAppTheme } from '@/context/ThemeContext';
 
-const BusinessList = ({ name, category, location, ownerName }: any) => {
-  const { currentTheme: theme } = useAppTheme();
+/**
+ * Defines the expected props for the BusinessList component.
+ * Using specific types instead of 'any' improves type safety and developer experience.
+ */
+interface BusinessListProps {
+  name: string;
+  category: string;
+  location?: { lat: number; long: number } | string;
+  ownerName?: string;
+}
+
+/**
+ * BusinessList Component
+ *
+ * A purely presentational component used to render a summary card for a business.
+ * It displays the business name, category, and conditionally shows either the
+ * owner's name or the business location depending on what data is available.
+ */
+const BusinessList = ({
+  name,
+  category,
+  location,
+  ownerName,
+}: BusinessListProps) => {
+  /**
+   * Formats the location data for display.
+   * Handles both coordinate objects (lat/long) and legacy string addresses.
+   */
   const formatLocation = () => {
     if (!location) return 'Localização indisponível';
 
-    // Se for o novo formato (Objeto com lat e long)
+    // If location is an object with lat/long properties, format it as a coordinate string
     if (typeof location === 'object' && location.lat && location.long) {
       return `Lat: ${location.lat.toFixed(4)} | Long: ${location.long.toFixed(4)}`;
     }
 
-    // Se for o formato antigo ou uma string simples
+    // Fallback for string-based locations (e.g., physical addresses)
     return String(location);
   };
 
@@ -29,6 +54,10 @@ const BusinessList = ({ name, category, location, ownerName }: any) => {
         </Text>
 
         <View className="flex-row items-center">
+          {/*
+           * Prioritize showing the owner's name if provided.
+           * Otherwise, fall back to displaying the formatted location.
+           */}
           <Text variant="bodySmall" className="opacity-60">
             {ownerName ? `Dono: ${ownerName}` : formatLocation()}
           </Text>

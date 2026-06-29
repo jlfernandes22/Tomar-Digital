@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
+/**
+ * CampaignCandidates Screen
+ *
+ * Displays a list of businesses applying to join active campaigns.
+ * It allows City Council ('camara') users to approve or reject these applications.
+ * Uses an Optimistic UI approach to remove items from the list immediately upon success.
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { API_URL } from '@/constants/api';
-import { useAuth } from '@/context/AuthContext';
 import { router, Stack } from 'expo-router';
 import {
-  ActivityIndicator,
   Surface,
   Text,
   useTheme,
@@ -15,32 +20,45 @@ import {
   Divider,
   Appbar,
 } from 'react-native-paper';
-import CustomButton from './CustomButton';
+
+// Contexts & Hooks
+import { useAuth } from '@/context/AuthContext';
+import { useLoadingState } from '@/context/LoadingContext';
+import { API_URL } from '@/constants/api';
+
+// Components
 import CustomDialog from './CustomDialog';
 import CustomSnackBar from './CustomSnackBar';
-import { curiosidades } from '@/constants/curiosities';
-import Candidatura from '@/constants/Interfaces/Candidate';
-import { useLoadingState } from '@/context/LoadingContext';
 import LoadingScreen from './LoadingScreen';
 
+// Types
+import Candidatura from '@/constants/Interfaces/Candidate';
+
 export default function CandidaturasCampanha() {
+  // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
-  const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
-  const { loadingQR, setLoadingQR } = useLoadingState();
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
   const theme = useTheme();
+  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
 
+  // --- Local State ---
+  const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // UI Feedback state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogText, setDialogText] = useState('');
-
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const carregarCandidaturas = async () => {
+  // --- Handlers ---
+
+  /** Fetches pending campaign applications from the backend. */
+  const carregarCandidaturas = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch(`${API_URL}/candidaturasCampanha`, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
@@ -58,68 +76,92 @@ export default function CandidaturasCampanha() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user?.token, t]);
 
-  const handleDecidir = async (
-    businessId: string,
-    campaignId: string,
-    novoStatus: string,
-  ) => {
-    try {
-      const response = await fetch(`${API_URL}/decidirAdesaoCampanha`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
-        },
-        // Aqui está a correção: usar 'acao' em vez de 'action' ou 'status'
-        body: JSON.stringify({
-          businessId,
-          campaignId,
-          acao: novoStatus,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setCandidaturas(prev =>
-          prev.filter(
-            c => !(c.businessId === businessId && c.campaignId === campaignId),
-          ),
-        );
-        setSnackbarMessage(
-          t('campaign.success_status', {
-            status: t(`common.${novoStatus}`, { defaultValue: novoStatus }),
-            defaultValue: `Candidatura ${novoStatus} com sucesso!`,
+  /**
+   * Approves or rejects a campaign application.
+   * Uses an Optimistic UI pattern: the item is removed from the local list
+   * immediately upon a successful API response to give the user instant feedback.
+   */
+  const handleDecidir = useCallback(
+    async (businessId: string, campaignId: string, novoStatus: string) => {
+      try {
+        const response = await fetch(`${API_URL}/decidirAdesaoCampanha`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.token}`,
+          },
+          // Backend expects 'acao' instead of 'action' or 'status'
+          body: JSON.stringify({
+            businessId,
+            campaignId,
+            acao: novoStatus,
           }),
-        );
-        setSnackbarVisible(true);
-      } else {
-        setDialogTitle(t('common.error'));
-        setDialogText(
-          data.message ||
-            t('common.error_process', { defaultValue: 'Erro ao processar' }),
-        );
-        setDialogVisible(true);
-      }
-    } catch (err) {
-      console.error('Erro na decisão:', err);
-    }
-  };
+        });
 
+        const data = await response.json();
+
+        if (response.ok) {
+          // Remove the processed application from the local state
+          setCandidaturas(prev =>
+            prev.filter(
+              c =>
+                !(c.businessId === businessId && c.campaignId === campaignId),
+            ),
+          );
+
+          setSnackbarMessage(
+            t('campaign.success_status', {
+              status: t(`common.${novoStatus}`, { defaultValue: novoStatus }),
+              defaultValue: `Candidatura ${novoStatus} com sucesso!`,
+            }),
+          );
+          setSnackbarVisible(true);
+        } else {
+          setDialogTitle(t('common.error'));
+          setDialogText(
+            data.message ||
+              t('common.error_process', { defaultValue: 'Erro ao processar' }),
+          );
+          setDialogVisible(true);
+        }
+      } catch (err) {
+        console.error('Erro na decisão:', err);
+      }
+    },
+    [user?.token, t],
+  );
+
+  /** Pull-to-refresh handler. */
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    carregarCandidaturas();
+  }, [carregarCandidaturas]);
+
+  // --- Effects ---
+
+  // Fetch initial data on mount
   useEffect(() => {
     carregarCandidaturas();
-  }, []);
+  }, [carregarCandidaturas]);
 
+  /**
+   * Syncs local loading state with the global LoadingContext.
+   * This ensures the global QrCodeFAB hides while data is fetching.
+   * Must be declared before any early returns to respect React's Rules of Hooks.
+   */
   useEffect(() => {
     setLoadingQR(loading);
-  }, [loading]);
+  }, [loading, setLoadingQR]);
 
+  // --- Early Return (Loading State) ---
+  // Placed after all hooks have been declared.
   if (loading) {
     return <LoadingScreen />;
   }
 
+  // --- Render ---
   return (
     <>
       <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
@@ -132,8 +174,10 @@ export default function CandidaturasCampanha() {
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
+
       <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
         <Stack.Screen options={{ headerShown: false }} />
+
         <Text
           variant="headlineMedium"
           style={{
@@ -155,10 +199,7 @@ export default function CandidaturasCampanha() {
           data={candidaturas}
           contentContainerStyle={{ padding: 16 }}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={carregarCandidaturas}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           keyExtractor={item => `${item.businessId}-${item.campaignId}`}
           renderItem={({ item }) => (
@@ -193,9 +234,7 @@ export default function CandidaturasCampanha() {
                     variant="bodyMedium"
                     style={{ color: theme.colors.onSurfaceVariant }}
                   >
-                    {t('campaign.campaign_name', {
-                      title: item.campaignTitle,
-                    })}
+                    {t('campaign.campaign_name', { title: item.campaignTitle })}
                   </Text>
                   <Text
                     variant="labelSmall"
@@ -258,6 +297,8 @@ export default function CandidaturasCampanha() {
           }
         />
       </SafeAreaView>
+
+      {/* Global UI Feedback Components */}
       <CustomSnackBar
         visible={snackbarVisible}
         message={snackbarMessage}
