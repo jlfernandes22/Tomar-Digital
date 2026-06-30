@@ -340,6 +340,12 @@ const EditProfile = () => {
                   onChangeText={setName}
                   label={t('profile.name_label', { defaultValue: 'Nome' })}
                   className="mb-4 w-full"
+                  accessibilityLabel={t('accessibility.edit_name', {
+                    defaultValue: 'Campo de nome para edição de perfil',
+                  })}
+                  accessibilityHint={t('accessibility.edit_name_hint', {
+                    defaultValue: 'Introduza o seu nome',
+                  })}
                 />
 
                 <CustomTextInput
@@ -347,6 +353,12 @@ const EditProfile = () => {
                   value={city}
                   onChangeText={setCity}
                   className="mb-4 w-full"
+                  accessibilityLabel={t('accessibility.edit_city', {
+                    defaultValue: 'Campo de cidade para edição de perfil',
+                  })}
+                  accessibilityHint={t('accessibility.edit_city_hint', {
+                    defaultValue: 'Introduza a sua cidade de residência',
+                  })}
                 />
 
                 {/* Only show NIF input if the user hasn't set one yet */}
@@ -357,6 +369,14 @@ const EditProfile = () => {
                     onChangeText={setNIF}
                     isNIF
                     className="mb-4 w-full"
+                    accessibilityLabel={t('accessibility.edit_nif', {
+                      defaultValue:
+                        'Campo de NIF para edição de perfil (opcional)',
+                    })}
+                    accessibilityHint={t('accessibility.edit_nif_hint', {
+                      defaultValue:
+                        'Introduza o seu Número de Identificação Fiscal (9 dígitos)',
+                    })}
                   />
                 )}
               </View>

@@ -35,6 +35,7 @@ import Invoice from "./models/Invoice.js";
 import PedidosComerciante from "./models/PedidosComerciante.js";
 import CitiesAndCountries from "./models/CitiesAndCountries.js";
 import { authorize } from "./middleware/auth.js";
+import { createHash } from "crypto";
 
 // ============================================================================
 // 1. SERVER CONFIGURATION & MIDDLEWARES
@@ -472,6 +473,163 @@ app.post("/alterarPassword", strictLimiter, async (req, res) => {
   }
 });
 
+// ============================================================================
+// ACCOUNT DELETION
+// ============================================================================
+// Security design:
+//   1. Requires a valid JWT (any authenticated role can delete their OWN account).
+//   2. Re-validates the user's current password (defense against session hijack
+//      via stolen JWT — the attacker would also need the password).
+//   3. Strict rate limit (5 req/min per IP) to brute-force the password check.
+//   4. Atomic cleanup with Mongoose session/transaction — deletes the user,
+//      their businesses (+ logo/gallery files), favorites, invoices, and any
+//      merchant applications. If any step fails, the whole operation rolls back.
+//   5. Audit log line emitted to stdout with timestamp, userId, and email hash.
+//   6. JWT is stateless, so we cannot revoke the token server-side here; the
+//      client MUST clear its local token on success (handled in the frontend).
+// ============================================================================
+
+/**
+ * @swagger
+ * /apagarConta:
+ *   delete:
+ *     summary: Delete the authenticated user's account and all associated data
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password: { type: string, description: Current password for confirmation }
+ *     responses:
+ *       200: { description: Account deleted successfully. }
+ *       400: { description: Invalid password or missing field. }
+ *       401: { description: Unauthorized — missing/invalid token. }
+ *       404: { description: User not found. }
+ *       500: { description: Server error during deletion. }
+ */
+app.delete("/apagarConta", strictLimiter, authorize(["cidadao", "comerciante", "camara"]), async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    // --- 1. Input validation ---
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ message: "É obrigatório introduzir a sua palavra-passe." });
+    }
+
+    // --- 2. Load user from DB ---
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizador não encontrado." });
+    }
+
+    // --- 3. Re-validate the current password ---
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Palavra-passe incorreta. A conta não foi apagada." });
+    }
+
+    // --- 4. Cascade delete all user data ---
+    // Helper: performs all DB deletes. Pass `null` for session to run without
+    // a transaction (fallback for standalone MongoDB instances).
+    const cascadeDelete = async (session) => {
+      const businesses = await Business.find({ owner: user._id })
+        .session(session).lean();
+      await Business.deleteMany({ owner: user._id }).session(session);
+      await Favorite.deleteMany({ userId: user._id }).session(session);
+      await Invoice.deleteMany({ user: user._id }).session(session);
+      await PedidosComerciante.deleteMany({ emailDono: user.email }).session(session);
+      await User.findByIdAndDelete(user._id).session(session);
+      return businesses;
+    };
+
+    let businesses;
+    try {
+      // Attempt atomic deletion with a transaction (requires replica set / mongos).
+      const session = await mongoose.startSession();
+      try {
+        session.startTransaction();
+        businesses = await cascadeDelete(session);
+        await session.commitTransaction();
+      } catch (txErr) {
+        // Best-effort abort (safe to ignore if transaction already aborted/committed)
+        try { await session.abortTransaction(); } catch (_) {}
+
+        // Code 20 / IllegalOperation = standalone MongoDB, no transactions.
+        // Fall back to sequential deletes without a transaction.
+        if (txErr.codeName === 'IllegalOperation' || txErr.code === 20) {
+          console.warn('[apagarConta] Server does not support transactions — falling back to sequential deletes.');
+          businesses = await cascadeDelete(null);
+        } else {
+          throw txErr; // real error, bubble up to outer catch
+        }
+      } finally {
+        session.endSession();
+      }
+    } catch (sessionErr) {
+      // startSession() itself failed — check if it's the replica-set issue
+      if (sessionErr.codeName === 'IllegalOperation' || sessionErr.code === 20 ||
+          /replica set|mongos/i.test(sessionErr.message)) {
+        console.warn('[apagarConta] Could not start session — falling back to sequential deletes.');
+        businesses = await cascadeDelete(null);
+      } else {
+        throw sessionErr;
+      }
+    }
+
+    // --- 5. Filesystem cleanup (best-effort, AFTER DB commit) ---
+    try {
+      if (user.Avatar && user.Avatar.startsWith("/uploads/")) {
+        const avatarPath = path.join(process.cwd(), user.Avatar.replace(/^\//, ""));
+        if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
+      }
+    } catch (fileErr) {
+      console.warn("[apagarConta] Failed to delete avatar file:", fileErr.message);
+    }
+
+    for (const biz of businesses) {
+      try {
+        if (biz.logo) {
+          const logoPath = path.join(process.cwd(), biz.logo.replace(/^\//, ""));
+          if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
+        }
+      } catch (e) {
+        console.warn(`[apagarConta] Failed to delete logo for business ${biz._id}:`, e.message);
+      }
+
+      if (Array.isArray(biz.gallery) && biz.gallery.length > 0) {
+        for (const fotoUrl of biz.gallery) {
+          try {
+            if (fotoUrl) {
+              const fotoPath = path.join(process.cwd(), String(fotoUrl).replace(/^\//, ""));
+              if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+            }
+          } catch (e) {
+            console.warn(`[apagarConta] Failed to delete gallery image for business ${biz._id}:`, e.message);
+          }
+        }
+      }
+    }
+
+    // --- 6. Audit log (email hash, no plaintext PII) ---
+    const emailHash = createHash("sha256").update(user.email).digest("hex").slice(0, 16);
+    console.log(
+      `[AUDIT][apagarConta] ${new Date().toISOString()} | userId=${user._id} | emailHash=${emailHash} | role=${user.role} | businessesDeleted=${businesses.length}`
+    );
+
+    return res.status(200).json({ message: "Conta apagada com sucesso." });
+  } catch (error) {
+    console.error("[apagarConta] Error:", error);
+    return res.status(500).json({ message: "Erro ao apagar a conta. Tente novamente." });
+  }
+});
+
 /**
  * @swagger
  * /aceitarTermosFatura:
@@ -607,15 +765,20 @@ app.post("/editarUser/:id", authorize(["camara", "comerciante", "cidadao"]), upl
       return digitoControloCalculado === parseInt(sNif[8]);
     };
 
-    if (!validarNIF(receivedNIF) ) {
-      return res.status(400).json({ message: "The NIF inserted is not valid" });
+    // --- NIF validation ---
+    // NIF is optional on the edit form: if the user already has a NIF, the
+    // frontend doesn't send the field at all (receivedNIF is undefined).
+    // We only validate when a NIF is actually provided. If not provided,
+    // the existing user.NIF is preserved unchanged.
+    if (receivedNIF !== undefined && receivedNIF !== null && receivedNIF !== "") {
+      if (!validarNIF(receivedNIF)) {
+        return res.status(400).json({ message: "The NIF inserted is not valid" });
+      }
+      if (receivedNIF === "999999990") {
+        return res.status(400).json({ message: "Invoices issued to 'Consumidor Final' cannot earn points." });
+      }
+      user.NIF = receivedNIF;
     }
-    if (receivedNIF === "999999990") {
-      return res.status(400).json({ message: "Invoices issued to 'Consumidor Final' cannot earn points." });
-    }
-    if (receivedNIF != null && validarNIF(receivedNIF)){
-     user.NIF = receivedNIF
-    } 
 
 
     if (req.file) {

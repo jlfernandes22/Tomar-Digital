@@ -15,7 +15,7 @@ import { useClusterer, isClusterFeature } from 'react-native-clusterer';
 // Contexts & Constants
 import { useAppTheme } from '@/context/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import darkMapStyle from '@/constants/DarkMapStyle';
+import darkMapStyle, { lightMapStyle } from '@/constants/DarkMapStyle';
 import MapProps from '@/constants/Interfaces/MapProps';
 import MapRefType from '@/constants/Interfaces/MapRefType';
 import NegocioInterface from '@/constants/Interfaces/Negocio';
@@ -96,9 +96,17 @@ const SingleMap = forwardRef<MapRefType, MapProps>(
     }));
 
     // --- Render ---
+    // NOTE: `key` forces the MapView to fully remount when the theme mode toggles.
+    // react-native-maps with the Google provider only reads `customMapStyle` on
+    // initial mount — changing the prop dynamically has no effect on the native
+    // map instance. Without this key, the map style gets "stuck" on whatever
+    // mode (light/dark) it first rendered with.
+    const mapKey = `single-map-${theme.dark ? 'dark' : 'light'}`;
+
     return (
       <View style={{ flex: 1 }}>
         <MapView
+          key={mapKey}
           provider="google"
           ref={mapRef}
           style={{ flex: 1, padding: 16 }}
@@ -110,8 +118,11 @@ const SingleMap = forwardRef<MapRefType, MapProps>(
             setSelectedLocation(novasCoordenadas);
             if (onLocationSelect) onLocationSelect(novasCoordenadas);
           }}
-          // Apply custom dark mode styling if the app theme is dark
-          customMapStyle={theme.dark ? darkMapStyle : []}
+          // Apply custom dark mode styling if the app theme is dark.
+          // NOTE: We use an explicit lightMapStyle (not []) for light mode because
+          // Android's Google Maps base map follows the system dark mode — an empty
+          // array would let the system-dark base map bleed through.
+          customMapStyle={theme.dark ? darkMapStyle : lightMapStyle}
         >
           {showPin && selectedLocation && (
             <Marker coordinate={selectedLocation} />
@@ -308,18 +319,33 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
     };
 
     // --- Render ---
+    // NOTE: `key` forces the MapView to fully remount when the theme mode toggles.
+    // react-native-maps with the Google provider only reads `customMapStyle` on
+    // initial mount — changing the prop dynamically has no effect on the native
+    // map instance. Without this key, the map style gets "stuck" on whatever
+    // mode (light/dark) it first rendered with.
+    //
+    // To preserve the user's camera position across the remount, we feed the
+    // last known `mapRegion` (tracked via onRegionChangeComplete) back in as
+    // `initialRegion`. On first mount, `mapRegion` defaults to TOMAR_REGION.
+    const mapKey = `cluster-map-${theme.dark ? 'dark' : 'light'}`;
+
     return (
       <>
         <View style={{ flex: 1 }}>
           <MapView
+            key={mapKey}
             provider="google"
             ref={mapRef}
             style={{ flex: 1, padding: 16 }}
-            initialRegion={TOMAR_REGION}
+            initialRegion={mapRegion}
             showsUserLocation={true}
             scrollEnabled={true}
             onRegionChangeComplete={region => setMapRegion(region)}
-            customMapStyle={theme.dark ? darkMapStyle : []}
+            // NOTE: We use an explicit lightMapStyle (not []) for light mode because
+            // Android's Google Maps base map follows the system dark mode — an empty
+            // array would let the system-dark base map bleed through.
+            customMapStyle={theme.dark ? darkMapStyle : lightMapStyle}
             showsMyLocationButton={false} // Using custom FAB instead
             toolbarEnabled={false} // Disables default Google Maps toolbar on marker press
           >

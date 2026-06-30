@@ -231,6 +231,12 @@ const Register = () => {
                     className="mb-5"
                     lenght={200}
                     required
+                    accessibilityLabel={t('accessibility.register_email', {
+                      defaultValue: 'Campo de email para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_email_hint', {
+                      defaultValue: 'Introduza o seu endereço de email',
+                    })}
                   />
 
                   <CustomTextField
@@ -239,6 +245,13 @@ const Register = () => {
                     onChangeText={setCity}
                     className="mb-5"
                     lenght={30}
+                    accessibilityLabel={t('accessibility.register_city', {
+                      defaultValue: 'Campo de cidade para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_city_hint', {
+                      defaultValue: 'Introduza a sua cidade de residência',
+                    })}
+                    required
                   />
 
                   <CustomTextField
@@ -248,6 +261,13 @@ const Register = () => {
                     className="mb-5"
                     isNIF
                     lenght={9}
+                    accessibilityLabel={t('accessibility.register_nif', {
+                      defaultValue: 'Campo de NIF para registo (opcional)',
+                    })}
+                    accessibilityHint={t('accessibility.register_nif_hint', {
+                      defaultValue:
+                        'Introduza o seu Número de Identificação Fiscal (9 dígitos). Opcional.',
+                    })}
                   />
 
                   <CustomTextField
@@ -258,6 +278,16 @@ const Register = () => {
                     className="mb-5"
                     lenght={100}
                     required
+                    accessibilityLabel={t('accessibility.register_password', {
+                      defaultValue: 'Campo de palavra-passe para registo',
+                    })}
+                    accessibilityHint={t(
+                      'accessibility.register_password_hint',
+                      {
+                        defaultValue:
+                          'Introduza uma palavra-passe com pelo menos 8 caracteres, uma maiúscula, um número e um caractere especial',
+                      },
+                    )}
                   />
 
                   <CustomTextField
@@ -268,6 +298,19 @@ const Register = () => {
                     className="mb-8"
                     lenght={100}
                     required
+                    accessibilityLabel={t(
+                      'accessibility.register_confirm_password',
+                      {
+                        defaultValue: 'Campo de confirmação de palavra-passe',
+                      },
+                    )}
+                    accessibilityHint={t(
+                      'accessibility.register_confirm_password_hint',
+                      {
+                        defaultValue:
+                          'Reintroduza a mesma palavra-passe para confirmação',
+                      },
+                    )}
                   />
 
                   <CustomButton

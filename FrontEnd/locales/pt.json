@@ -488,11 +488,41 @@
     "accumulate_points_desc": "Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar",
     "vat_required": "- Necessário Contribuinte -",
     "email_address": "Endereço de E-mail",
-    "delete_account_confirm": "Tem a certeza que deseja apagar a sua conta?"
+    "delete_account_confirm": "Tem a certeza que deseja apagar a sua conta?",
+    "delete_account_warning": "Esta ação é irreversível. Todos os seus dados (perfil, favoritos, pontos, faturas e negócios) serão permanentemente apagados.",
+    "delete_account_password_label": "Introduza a sua palavra-passe",
+    "delete_account_password_required": "Introduza a sua palavra-passe para confirmar.",
+    "delete_account_wrong_password": "Palavra-passe incorreta. A conta não foi apagada.",
+    "delete_account_user_not_found": "Utilizador não encontrado.",
+    "delete_account_rate_limited": "Muitas tentativas. Aguarde um minuto e tente novamente.",
+    "delete_account_error": "Ocorreu um erro ao apagar a conta. Tente novamente.",
+    "delete_account_confirm_btn": "Apagar Conta",
+    "delete_account_sucess": "A sua conta foi apagada"
   },
   "accessibility": {
     "close_info": "Clica para fechar o cartão de informação",
     "search_area": "Clica para pesquisar negócios na tua área",
+    "delete_account_password": "Campo para introduzir a palavra-passe de confirmação",
+    "delete_account_password_hint": "Introduza a sua palavra-passe para confirmar a eliminação da conta",
+    "cancel_delete_account": "Cancelar e fechar",
+    "confirm_delete_account": "Apagar definitivamente a minha conta",
+    "confirm_delete_account_hint": "Esta ação é irreversível. Todos os seus dados serão apagados.",
+    "register_email": "Campo de email para registo",
+    "register_email_hint": "Introduza o seu endereço de email",
+    "register_city": "Campo de cidade para registo",
+    "register_city_hint": "Introduza a sua cidade de residência",
+    "register_nif": "Campo de NIF para registo (opcional)",
+    "register_nif_hint": "Introduza o seu Número de Identificação Fiscal (9 dígitos). Opcional.",
+    "register_password": "Campo de palavra-passe para registo",
+    "register_password_hint": "Introduza uma palavra-passe com pelo menos 8 caracteres, uma maiúscula, um número e um caractere especial",
+    "register_confirm_password": "Campo de confirmação de palavra-passe",
+    "register_confirm_password_hint": "Reintroduza a mesma palavra-passe para confirmação",
+    "edit_name": "Campo de nome para edição de perfil",
+    "edit_name_hint": "Introduza o seu nome",
+    "edit_city": "Campo de cidade para edição de perfil",
+    "edit_city_hint": "Introduza a sua cidade de residência",
+    "edit_nif": "Campo de NIF para edição de perfil (opcional)",
+    "edit_nif_hint": "Introduza o seu Número de Identificação Fiscal (9 dígitos)",
     "open_map": "Clica para abrir numa aplicação de mapas",
     "close_business": "Clica para fechar o negócio",
     "focus_business": "Clica para focar o mapa neste negócio",
@@ -630,5 +660,9 @@
     "cidadao": "Cidadão",
     "comerciante": "Comerciante",
     "camara": "Câmara Municipal"
+  },
+  "validation": {
+    "invisible_chars_removed": "Foram detetados e removidos caracteres invisíveis do texto.",
+    "nif_invalid": "NIF inválido. Verifique os 9 dígitos."
   }
 }

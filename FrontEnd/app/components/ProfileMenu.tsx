@@ -3,15 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Surface,
-  Text,
-  Menu,
-  IconButton,
-  Divider,
-  Dialog,
-  Portal,
-} from 'react-native-paper';
+import { Surface, Text, Menu, IconButton, Divider } from 'react-native-paper';
 
 // Contexts & Hooks
 import { useAuth } from '@/context/AuthContext';
@@ -21,6 +13,7 @@ import { images } from '@/constants/images';
 
 // Components
 import CustomButton from './CustomButton';
+import DeleteAccountDialog from './DeleteAccountDialog';
 
 // --- Constants ---
 // Maps internal role keys to display names. Defined outside the component
@@ -48,10 +41,8 @@ const ProfileDetails = () => {
   // Controls the visibility of the React Native Paper Menu component.
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // Dialog state
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [dialogTitle, setDialogTitle] = useState('');
-  const [dialogText, setDialogText] = useState('');
+  // Controls the visibility of the delete-account confirmation dialog.
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
 
   // --- Refs ---
   // Used as a lock to prevent double-tapping menu items which could trigger multiple navigations
@@ -76,14 +67,6 @@ const ProfileDetails = () => {
     setTimeout(() => {
       isActionLockedRef.current = false;
     }, 500);
-  };
-
-  /** Triggered when the user confirms they want to delete the account */
-  const handleConfirmDelete = () => {
-    setDialogVisible(false);
-    // TODO: Add API call here to actually delete the user account from the backend
-    // For now, we just log them out
-    logout();
   };
 
   // --- Early Return (Loading State) ---
@@ -213,21 +196,9 @@ const ProfileDetails = () => {
 
               {/* Destructive actions are visually highlighted using the theme's error color */}
               <Menu.Item
-                onPress={() => {
-                  closeMenu();
-                  setDialogText(
-                    t('profile.delete_account_confirm', {
-                      defaultValue:
-                        'Tem a certeza que pretende apagar a sua conta? Esta ação é irreversível.',
-                    }),
-                  );
-                  setDialogTitle(
-                    t('profile.delete_account', {
-                      defaultValue: 'Apagar Conta',
-                    }),
-                  );
-                  setDialogVisible(true);
-                }}
+                onPress={() =>
+                  handleMenuAction(() => setDeleteDialogVisible(true))
+                }
                 leadingIcon="delete"
                 title={t('profile.delete_account', {
                   defaultValue: 'Apagar Conta',
@@ -402,46 +373,15 @@ const ProfileDetails = () => {
       </SafeAreaView>
 
       {/* 
-        Confirmation Dialog (Two Actions) 
-        We wrap it in a Portal so it renders above everything else.
-        We put BOTH buttons inside a SINGLE Dialog.Actions block, formatted as a flex-row.
+        Delete Account Dialog
+        Self-contained component that handles password confirmation,
+        the DELETE /apagarConta API call, loading states, error feedback,
+        and post-success logout + redirect to login.
       */}
-      <Portal>
-        <Dialog
-          visible={dialogVisible}
-          onDismiss={() => setDialogVisible(false)}
-          style={{ backgroundColor: theme.colors.surface }}
-        >
-          <Dialog.Title>{dialogTitle}</Dialog.Title>
-          <Dialog.Content>
-            <Text
-              variant="bodyMedium"
-              style={{ color: theme.colors.onSurfaceVariant }}
-            >
-              {dialogText}
-            </Text>
-          </Dialog.Content>
-          <Dialog.Actions
-            style={{ gap: 10, paddingHorizontal: 16, paddingBottom: 26 }}
-          >
-            <CustomButton
-              onPress={() => setDialogVisible(false)}
-              buttonColor={theme.colors.surfaceVariant}
-              textColor={theme.colors.onSurfaceVariant}
-            >
-              {t('common.cancel', { defaultValue: 'Não' })}
-            </CustomButton>
-            <CustomButton
-              onPress={handleConfirmDelete}
-              buttonColor={theme.colors.error}
-              textColor={theme.colors.onError}
-              className="flex-1"
-            >
-              {t('common.delete', { defaultValue: 'Sim' })}
-            </CustomButton>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      <DeleteAccountDialog
+        visible={deleteDialogVisible}
+        onDismiss={() => setDeleteDialogVisible(false)}
+      />
     </>
   );
 };
