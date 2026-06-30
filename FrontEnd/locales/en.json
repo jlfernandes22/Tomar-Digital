@@ -30,7 +30,8 @@
     "error_generic": "Could not create account.",
     "error_server": "Please check your internet connection.",
     "has_account": "Already have an account?",
-    "login": "Log in"
+    "login": "Log in",
+    "NIF": "NIF"
   },
   "recoverPassword": {
     "title": "Create new password",

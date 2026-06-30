@@ -30,7 +30,8 @@
     "error_generic": "Não foi possível criar a conta.",
     "error_server": "Verifique a sua ligação à internet.",
     "has_account": "Já tem conta?",
-    "login": "Inicie sessão"
+    "login": "Inicie sessão",
+    "NIF": "NIF"
   },
   "recoverPassword": {
     "title": "Criar nova palavra-passe",

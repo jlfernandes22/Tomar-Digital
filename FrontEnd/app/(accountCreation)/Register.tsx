@@ -39,6 +39,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [city, setCity] = useState('');
+  const [nif, setNif] = useState('');
 
   // UI feedback state
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -100,7 +101,7 @@ const Register = () => {
       const response = await fetch(`${API_URL}/registar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, city }),
+        body: JSON.stringify({ email, password, city, nif }),
       });
 
       // Handle rate limiting (HTTP 429) early without attempting to parse JSON
@@ -128,6 +129,11 @@ const Register = () => {
           pathname: '/Validate',
           params: { email: email },
         });
+        setEmail('');
+        setCity('');
+        setNif('');
+        setPassword('');
+        setConfirmPassword('');
       } else {
         // Handle expected API errors (e.g., email already in use)
         setDialogTitle(t('common.error'));
@@ -223,6 +229,8 @@ const Register = () => {
                     onChangeText={setEmail}
                     isEmail // Triggers email-specific keyboard and validation in CustomTextInput
                     className="mb-5"
+                    lenght={200}
+                    required
                   />
 
                   <CustomTextField
@@ -230,6 +238,16 @@ const Register = () => {
                     value={city}
                     onChangeText={setCity}
                     className="mb-5"
+                    lenght={30}
+                  />
+
+                  <CustomTextField
+                    label={t('register.NIF')}
+                    value={nif}
+                    onChangeText={setNif}
+                    className="mb-5"
+                    isNIF
+                    lenght={9}
                   />
 
                   <CustomTextField
@@ -238,6 +256,8 @@ const Register = () => {
                     onChangeText={setPassword}
                     isPassword // CustomTextInput handles the secure entry and eye icon internally
                     className="mb-5"
+                    lenght={100}
+                    required
                   />
 
                   <CustomTextField
@@ -246,6 +266,8 @@ const Register = () => {
                     onChangeText={setConfirmPassword}
                     isPassword
                     className="mb-8"
+                    lenght={100}
+                    required
                   />
 
                   <CustomButton

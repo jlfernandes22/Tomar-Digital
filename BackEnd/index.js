@@ -24,7 +24,8 @@ import Tesseract from "tesseract.js"; // Restored import as requested
 import { DocumentAnalysisClient, AzureKeyCredential } from "@azure/ai-form-recognizer";
 import nodemailer from "nodemailer";
 
-// 3. Local models and middleware
+// 3. Local models, middleware and services
+import { sendVerificationEmail, sendPasswordRecoveryEmail } from "./utils/emailService.js";
 import User from "./models/User.js";
 import Business from "./models/Business.js";
 import Favorite from "./models/Favorite.js";
@@ -171,15 +172,36 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  */
 app.post("/registar", strictLimiter, async (req, res) => {
   try {
-    const { password, city } = req.body;
+    const { password, city, nif } = req.body;
     const rawEmail = req.body.email;
+    let validNIF = null
 
     if (!rawEmail || !password || !city) {
       return res.status(400).json({ message: "Please fill all required fields." });
     }
 
+    const validarNIF = (nif) => {
+      const sNif = String(nif);
+      if (!/^\d{9}$/.test(sNif)) return false;
+      const prefixosValidos = ["1", "2", "3", "5", "6", "8", "9"];
+      if (!prefixosValidos.includes(sNif[0])) return false;
+      let soma = 0;
+      for (let i = 0; i < 8; i++) soma += parseInt(sNif[i]) * (9 - i);
+      const resto = soma % 11;
+      const digitoControloCalculado = resto === 0 || resto === 1 ? 0 : 11 - resto;
+      return digitoControloCalculado === parseInt(sNif[8]);
+    };
+
+    console.log(validarNIF(nif))
+
+    if (nif != null && validarNIF(nif)){
+      
+      validNIF = nif
+    } 
+
     const email = rawEmail.toLowerCase().trim();
     const name = req.body.name || email;
+    
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -208,22 +230,30 @@ app.post("/registar", strictLimiter, async (req, res) => {
         await existingUser.save();
       }
     } else {
+      if(validNIF!=null){
+        const newUser = new User({ 
+          name, email, 
+          password: await bcrypt.hash(password, 10), 
+          city: cidadeParaGuardar, 
+          codigoValidar: code, 
+          isVerified: false,
+          NIF: validNIF
+        });
+      await newUser.save();
+      }else{
       const newUser = new User({ 
         name, email, 
         password: await bcrypt.hash(password, 10), 
         city: cidadeParaGuardar, 
         codigoValidar: code, 
-        isVerified: false 
+        isVerified: false,
+        NIF:null
       });
       await newUser.save();
+      }
     }
     
-    await transporter.sendMail({
-        from: '"Tomar+Digital Support" <tomardigitalsuporte@gmail.com>',
-        to: email,
-        subject: 'Confirm your account',
-        html: `<p>Your validation code is: <strong>${code}</strong></p>`
-    });
+    await sendVerificationEmail(transporter, { to: email, code, name });
 
     return res.status(200).json({ message: "Registration completed successfully." });
   } catch (err) {
@@ -367,15 +397,8 @@ app.post("/recuperarPassword", strictLimiter, async (req, res) => {
     user.codigoResetExpira = new Date(Date.now() + 15 * 60 * 1000); 
     await user.save();
 
-    // Send email
-    await transporter.sendMail({
-      from: '"Tomar+Digital Support" <tomardigitalsuporte@gmail.com>',
-      to: email,
-      subject: 'Recuperação de Palavra-passe',
-      html: `<p>Recebemos um pedido para redefinir a sua palavra-passe.</p>
-             <p>O seu código de recuperação é: <strong>${code}</strong></p>
-             <p>Este código expira em 15 minutos.</p>`
-    });
+    // Send branded recovery email
+    await sendPasswordRecoveryEmail(transporter, { to: email, code, name: user.name });
 
     return res.status(200).json({ message: "Se o email existir, um código foi enviado." });
   } catch (error) {
@@ -570,7 +593,30 @@ app.post("/editarUser/:id", authorize(["camara", "comerciante", "cidadao"]), upl
 
     if (user.name !== receivedName) user.name = receivedName;
     if (user.city !== receivedCity) user.city = receivedCity;
-    if (receivedNIF != null) user.NIF = receivedNIF;
+   
+
+    const validarNIF = (nif) => {
+      const sNif = String(nif);
+      if (!/^\d{9}$/.test(sNif)) return false;
+      const prefixosValidos = ["1", "2", "3", "5", "6", "8", "9"];
+      if (!prefixosValidos.includes(sNif[0])) return false;
+      let soma = 0;
+      for (let i = 0; i < 8; i++) soma += parseInt(sNif[i]) * (9 - i);
+      const resto = soma % 11;
+      const digitoControloCalculado = resto === 0 || resto === 1 ? 0 : 11 - resto;
+      return digitoControloCalculado === parseInt(sNif[8]);
+    };
+
+    if (!validarNIF(receivedNIF) ) {
+      return res.status(400).json({ message: "The NIF inserted is not valid" });
+    }
+    if (receivedNIF === "999999990") {
+      return res.status(400).json({ message: "Invoices issued to 'Consumidor Final' cannot earn points." });
+    }
+    if (receivedNIF != null && validarNIF(receivedNIF)){
+     user.NIF = receivedNIF
+    } 
+
 
     if (req.file) {
       if (user.Avatar && user.Avatar.startsWith('/uploads/')) {
