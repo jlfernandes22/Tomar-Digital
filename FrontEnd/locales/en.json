@@ -486,7 +486,8 @@
     "scan_qr": "Scan QR-Code",
     "accumulate_points_desc": "Accumulate points for each purchase made in participating stores in Tomar",
     "vat_required": "- VAT Number Required -",
-    "email_address": "Email Address"
+    "email_address": "Email Address",
+    "delete_account_confirm": "Are you sure you wanna delete your account?"
   },
   "accessibility": {
     "close_info": "Click to close the information card",

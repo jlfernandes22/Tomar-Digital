@@ -486,7 +486,8 @@
     "scan_qr": "Ler QR-Code",
     "accumulate_points_desc": "Acumula pontos por cada compra efetuada nas lojas aderentes de Tomar",
     "vat_required": "- Necessário Contribuinte -",
-    "email_address": "Endereço de E-mail"
+    "email_address": "Endereço de E-mail",
+    "delete_account_confirm": "Tem a certeza que deseja apagar a sua conta?"
   },
   "accessibility": {
     "close_info": "Clica para fechar o cartão de informação",
