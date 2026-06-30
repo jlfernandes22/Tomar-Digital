@@ -144,6 +144,8 @@ const CustomButton = ({
                 fontSize: 16,
                 fontWeight: 'bold',
                 letterSpacing: 0.5,
+
+                textAlign: 'center',
               },
               labelStyle, // Allows overriding typography if needed
             ]}

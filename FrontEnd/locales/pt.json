@@ -10,8 +10,11 @@
     "password": "Palavra-passe",
     "login_button": "Iniciar Sessão",
     "success": "Sucesso!",
-    "error_login": "Erro no Login, ",
-    "error_server": "Não foi possível contactar o servidor."
+    "error_server": "Não foi possível contactar o servidor.",
+    "no_account": "Não tem conta?",
+    "register": "Registe-se",
+    "forgot_password": "Esqueceu-se da palavra passe?",
+    "create_new_password": "Crie uma nova"
   },
   "register": {
     "title": "Criar conta",
@@ -22,11 +25,32 @@
     "register_button": "Criar Conta",
     "warning_empty": "Por favor, preencha pelo menos email e password.",
     "warning_mismatch": "As palavras-passe não coincidem!",
-    "warning_weak_password":"A password deve ter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial",
+    "warning_weak_password": "A password deve ter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial",
     "success": "Sucesso:A redirecionar...",
-    "error": "Erro:",
     "error_generic": "Não foi possível criar a conta.",
-    "error_server": "Verifique a sua ligação à internet."
+    "error_server": "Verifique a sua ligação à internet.",
+    "has_account": "Já tem conta?",
+    "login": "Inicie sessão"
+  },
+  "recoverPassword": {
+    "title": "Criar nova palavra-passe",
+    "subtitle": "Introduza o seu email para receber um código de verificação.",
+    "send_btn": "Enviar Código",
+    "success_msg": "Se o email existir, um código foi enviado.",
+    "error_title": "Erro",
+    "connection_error": "Não foi possível ligar ao servidor.",
+    "missing_email": "Por favor, insira o seu email.",
+    "login_screen": "Voltar à tela de iniciar sessão"
+  },
+  "newPassword": {
+    "title": "Nova Palavra-passe",
+    "subtitle": "Insira o código recebido no email e a sua nova palavra-passe.",
+    "change_btn": "Alterar Palavra-passe",
+    "success_msg": "Palavra-passe alterada com sucesso!",
+    "error_title": "Erro",
+    "connection_error": "Não foi possível ligar ao servidor.",
+    "missing_fields": "Por favor, preencha todos os campos.",
+    "password_mismatch": "As palavras-passe não coincidem."
   },
   "common": {
     "error_429": "Muitos pedidos realizados! Por favor, aguarde uns minutos e tente novamente.",

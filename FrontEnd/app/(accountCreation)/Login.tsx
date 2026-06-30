@@ -6,7 +6,6 @@
  */
 
 import {
-  Text,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -27,7 +26,7 @@ import { delay } from '../../utils/delay';
 import CustomSnackBar from '../components/CustomSnackBar';
 import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Surface, Text as PaperText } from 'react-native-paper';
+import { Surface, Text } from 'react-native-paper';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -119,7 +118,7 @@ const Login = () => {
         // Handle expected API errors (e.g., invalid credentials)
         setLoading(false);
         setDialogTitle(t('common.error'));
-        setDialogText(t('login.error_login') + dados.message);
+        setDialogText(dados.message);
         setDialogVisible(true);
       }
     } catch (error) {
@@ -191,8 +190,13 @@ const Login = () => {
                   }}
                 >
                   <Text
-                    className="mb-8 text-center text-4xl font-bold"
-                    style={{ color: theme.colors.primary }}
+                    className="mb-4 text-center text-4xl font-bold"
+                    style={{
+                      color: theme.colors.primary,
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                    }}
+                    variant="headlineLarge"
                   >
                     {t('login.title')}
                   </Text>
@@ -223,6 +227,36 @@ const Login = () => {
                   >
                     {t('login.login_button')}
                   </CustomButton>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingTop: 16,
+                      alignSelf: 'center',
+                    }}
+                  >
+                    <Text>{t('login.no_account')} </Text>
+                    <Text
+                      onPress={() => router.replace('/Register')}
+                      style={{ color: theme.colors.error }}
+                    >
+                      {t('login.register')}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      paddingTop: 16,
+                      alignSelf: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text>{t('login.forgot_password')} </Text>
+                    <Text
+                      onPress={() => router.replace('/RecoverPassword')}
+                      style={{ color: theme.colors.error }}
+                    >
+                      {t('login.create_new_password')}
+                    </Text>
+                  </View>
                 </Surface>
               </View>
             </TouchableWithoutFeedback>
@@ -239,7 +273,7 @@ const Login = () => {
             visible={dialogVisible}
             onDismiss={() => setDialogVisible(false)}
           >
-            <PaperText>{dialogText}</PaperText>
+            <Text>{dialogText}</Text>
           </CustomDialog>
         </KeyboardAvoidingView>
       </SafeAreaView>

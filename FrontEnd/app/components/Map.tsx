@@ -372,8 +372,8 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
                         style={{
                           color: theme.colors.onPrimary,
                           fontWeight: 'bold',
-                          paddingHorizontal: 6,
-                          paddingVertical: 2,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
                           fontSize: 12,
                         }}
                         numberOfLines={1}

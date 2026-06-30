@@ -14,6 +14,7 @@ import { BottomNavigation } from 'react-native-paper';
 import { useAppTheme } from '@/context/ThemeContext';
 import { CommonActions } from '@react-navigation/native';
 import { Platform } from 'react-native';
+import RecoverPassword from './RecoverPassword';
 
 const _layout = () => {
   const { user } = useAuth();
@@ -31,11 +32,22 @@ const _layout = () => {
         if (currentRoute.name === 'Validate') {
           return null;
         }
+        if (currentRoute.name === 'NewPassword') {
+          return null;
+        }
+        if (currentRoute.name === 'RecoverPassword') {
+          return null;
+        }
 
         // Filter out routes that should not appear in the bottom bar.
         // A route is hidden if it explicitly sets `href: null` or if it lacks a tab icon.
         const visibleRoutes = state.routes.filter(route => {
-          if (route.name === 'Validate') return false;
+          if (
+            route.name === 'Validate' ||
+            route.name === 'NewPassword' ||
+            route.name === 'RecoverPassword'
+          )
+            return false;
           const options = descriptors[route.key].options as any;
           const isHidden = options.href === null;
           const hasIcon = options.tabBarIcon !== undefined;
@@ -131,6 +143,24 @@ const _layout = () => {
 
       <Tabs.Screen
         name="Validate"
+        options={{
+          // `href: null` removes this route from the tab bar entirely,
+          // making it only accessible via programmatic navigation (e.g., after registering).
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="NewPassword"
+        options={{
+          // `href: null` removes this route from the tab bar entirely,
+          // making it only accessible via programmatic navigation (e.g., after registering).
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="RecoverPassword"
         options={{
           // `href: null` removes this route from the tab bar entirely,
           // making it only accessible via programmatic navigation (e.g., after registering).

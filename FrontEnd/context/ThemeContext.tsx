@@ -4,14 +4,14 @@ import React, {
   useContext,
   ReactNode,
   useEffect,
-} from "react";
-import type { MD3Theme } from "react-native-paper";
-import { useColorScheme } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { appThemes } from "../constants/themes";
+} from 'react';
+import type { MD3Theme } from 'react-native-paper';
+import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { appThemes } from '../constants/themes';
 
-export type ModeType = "system" | "light" | "dark";
-export type PaletteType = "convento" | "mata" | "tabuleiros";
+export type ModeType = 'system' | 'light' | 'dark';
+export type PaletteType = 'convento' | 'mata' | 'tabuleiros';
 
 export interface AppTheme extends MD3Theme {
   colors: MD3Theme['colors'] & {
@@ -30,14 +30,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 // Chaves utilizadas para guardar os dados no armazenamento do dispositivo
-const STORAGE_MODE_KEY = "@app_theme_mode";
-const STORAGE_PALETTE_KEY = "@app_theme_palette";
+const STORAGE_MODE_KEY = '@app_theme_mode';
+const STORAGE_PALETTE_KEY = '@app_theme_palette';
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const systemMode = useColorScheme();
 
-  const [userMode, setUserModeState] = useState<ModeType>("system");
-  const [userPalette, setUserPaletteState] = useState<PaletteType>("convento");
+  const [userMode, setUserModeState] = useState<ModeType>('system');
+  const [userPalette, setUserPaletteState] = useState<PaletteType>('convento');
 
   // Hook executado na montagem para recuperar as configurações salvas anteriormente
   useEffect(() => {
@@ -49,7 +49,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         if (savedMode) setUserModeState(savedMode as ModeType);
         if (savedPalette) setUserPaletteState(savedPalette as PaletteType);
       } catch (error) {
-        console.error("Erro ao carregar tema do AsyncStorage:", error);
+        console.error('Erro ao carregar tema do AsyncStorage:', error);
       }
     };
     loadSavedTheme();
@@ -66,9 +66,9 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     await AsyncStorage.setItem(STORAGE_PALETTE_KEY, palette);
   };
 
-  let activeMode: "light" | "dark" = "light";
-  if (userMode === "system") {
-    activeMode = systemMode === "dark" ? "dark" : "light";
+  let activeMode: 'light' | 'dark' = 'light';
+  if (userMode === 'system') {
+    activeMode = systemMode === 'dark' ? 'dark' : 'light';
   } else {
     activeMode = userMode;
   }
@@ -78,7 +78,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const safePalette: PaletteType = themeRecord[userPalette]
     ? userPalette
-    : "convento";
+    : 'convento';
 
   const currentTheme = themeRecord[safePalette];
 
@@ -100,7 +100,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 export const useAppTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useAppTheme deve ser usado dentro de um ThemeProvider");
+    throw new Error('useAppTheme deve ser usado dentro de um ThemeProvider');
   }
   return context;
 };

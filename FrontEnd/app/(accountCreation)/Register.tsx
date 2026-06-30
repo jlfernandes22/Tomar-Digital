@@ -9,7 +9,6 @@
 
 import {
   Image,
-  Text,
   View,
   KeyboardAvoidingView,
   Platform,
@@ -28,7 +27,7 @@ import CustomTextField from '../components/CustomTextInput';
 import CustomSnackBar from '../components/CustomSnackBar';
 import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Surface, Text as PaperText } from 'react-native-paper';
+import { Surface, Text } from 'react-native-paper';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -207,8 +206,13 @@ const Register = () => {
                   }}
                 >
                   <Text
-                    className="mb-8 text-center text-4xl font-bold"
-                    style={{ color: theme.colors.primary }}
+                    className="mb-4 text-center text-4xl font-bold"
+                    style={{
+                      color: theme.colors.primary,
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                    }}
+                    variant="headlineLarge"
                   >
                     {t('register.title')}
                   </Text>
@@ -254,6 +258,22 @@ const Register = () => {
                   >
                     {t('register.register_button')}
                   </CustomButton>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingTop: 16,
+                      alignSelf: 'center',
+                    }}
+                  >
+                    <Text>{t('register.has_account')} </Text>
+                    <Text
+                      onPress={() => router.replace('/Login')}
+                      style={{ color: theme.colors.error }}
+                    >
+                      {t('register.login')}
+                    </Text>
+                  </View>
                 </Surface>
               </View>
             </TouchableWithoutFeedback>
@@ -270,7 +290,7 @@ const Register = () => {
             visible={dialogVisible}
             onDismiss={() => setDialogVisible(false)}
           >
-            <PaperText>{dialogText}</PaperText>
+            <Text>{dialogText}</Text>
           </CustomDialog>
         </KeyboardAvoidingView>
       </SafeAreaView>

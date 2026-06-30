@@ -10,8 +10,11 @@
     "password": "Password",
     "login_button": "Log in",
     "success": "Success!",
-    "error_login": "Error:\n",
-    "error_server": "Unable to contact the server."
+    "error_server": "Unable to contact the server.",
+    "no_account": "Don't have an account?",
+    "register": "Register",
+    "forgot_password": "Forgot your password?",
+    "create_new_password": "Create a new one"
   },
   "register": {
     "title": "Create account",
@@ -24,9 +27,30 @@
     "warning_mismatch": "Passwords do not match!",
     "warning_weak_password": "Password needs at least 8 characters, an uppercase, one number and a special character ",
     "success": "Success:Redirecting...",
-    "error": "Error:",
     "error_generic": "Could not create account.",
-    "error_server": "Please check your internet connection."
+    "error_server": "Please check your internet connection.",
+    "has_account": "Already have an account?",
+    "login": "Log in"
+  },
+  "recoverPassword": {
+    "title": "Create new password",
+    "subtitle": "Enter your email to receive a verification code.",
+    "send_btn": "Send Code",
+    "success_msg": "If the email exists, a code has been sent.",
+    "error_title": "Error",
+    "connection_error": "Could not connect to the server.",
+    "missing_email": "Please enter your email.",
+    "login_screen": "Go back to the login screen"
+  },
+  "newPassword": {
+    "title": "New Password",
+    "subtitle": "Enter the code received by email and your new password.",
+    "change_btn": "Change Password",
+    "success_msg": "Password changed successfully!",
+    "error_title": "Error",
+    "connection_error": "Could not connect to the server.",
+    "missing_fields": "Please fill in all fields.",
+    "password_mismatch": "Passwords do not match."
   },
   "common": {
     "error_429": "Too many requests! Please wait a few minutes and try again.",
