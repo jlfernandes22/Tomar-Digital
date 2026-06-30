@@ -30,3 +30,39 @@ export const isValidText = (value: string): boolean => {
   const cleaned = stripInvisibleChars(value).trim();
   return cleaned.length > 0;
 };
+
+/**
+ * Valida um NIF (Número de Identificação Fiscal) português.
+ * Verifica:
+ *   1. Tem exatamente 9 dígitos.
+ *   2. O primeiro dígito é um prefixo válido (1, 2, 3, 5, 6, 8, 9).
+ *   3. O dígito de controlo (9º) corresponde ao cálculo de checksum.
+ *
+ * @param nif O NIF como string ou número.
+ * @returns true se o NIF for válido, false caso contrário.
+ */
+export const isValidNIF = (
+  nif: string | number | null | undefined,
+): boolean => {
+  if (nif === null || nif === undefined) return false;
+
+  const sNif = String(nif).trim();
+
+  // Must be exactly 9 digits
+  if (!/^\d{9}$/.test(sNif)) return false;
+
+  // Valid first-digit prefixes per Portuguese tax authority rules
+  const validPrefixes = ['1', '2', '3', '5', '6', '8', '9'];
+  if (!validPrefixes.includes(sNif[0])) return false;
+
+  // Checksum: multiply first 8 digits by weights 9..2, sum, mod 11
+  let sum = 0;
+  for (let i = 0; i < 8; i++) {
+    sum += parseInt(sNif[i], 10) * (9 - i);
+  }
+  const remainder = sum % 11;
+  const calculatedCheckDigit =
+    remainder === 0 || remainder === 1 ? 0 : 11 - remainder;
+
+  return calculatedCheckDigit === parseInt(sNif[8], 10);
+};

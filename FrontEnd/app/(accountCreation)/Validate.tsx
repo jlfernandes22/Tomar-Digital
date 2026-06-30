@@ -90,11 +90,13 @@ const Validate = () => {
 
         // Brief pause to let the user read the success message before transitioning screens.
         await delay(500);
+        setCode('');
         router.replace('/Login');
       } else {
         // Increment failed attempt counter
         const novasTentativas = tentativas + 1;
         setTentativas(novasTentativas);
+        setCode('');
 
         // If the user exceeds the allowed attempts, force them back to registration.
         if (novasTentativas >= 3) {

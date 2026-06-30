@@ -53,7 +53,11 @@ const UserSchema = new mongoose.Schema({
 
   codigoValidar: {type: String},
 
-  isVerified: {type: Boolean, required:true}
+  isVerified: {type: Boolean, required:true},
+
+  codigoResetPassword: { type: String, default: null },
+  
+  codigoResetExpira: { type: Date, default: null },
 });
 
 export default mongoose.model("User", UserSchema);

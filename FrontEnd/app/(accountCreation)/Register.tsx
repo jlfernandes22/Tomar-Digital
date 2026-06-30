@@ -9,7 +9,6 @@
 
 import {
   Image,
-  Text,
   View,
   KeyboardAvoidingView,
   Platform,
@@ -28,7 +27,7 @@ import CustomTextField from '../components/CustomTextInput';
 import CustomSnackBar from '../components/CustomSnackBar';
 import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Surface, Text as PaperText } from 'react-native-paper';
+import { Surface, Text } from 'react-native-paper';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -40,6 +39,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [city, setCity] = useState('');
+  const [nif, setNif] = useState('');
 
   // UI feedback state
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -101,7 +101,7 @@ const Register = () => {
       const response = await fetch(`${API_URL}/registar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, city }),
+        body: JSON.stringify({ email, password, city, nif }),
       });
 
       // Handle rate limiting (HTTP 429) early without attempting to parse JSON
@@ -129,6 +129,11 @@ const Register = () => {
           pathname: '/Validate',
           params: { email: email },
         });
+        setEmail('');
+        setCity('');
+        setNif('');
+        setPassword('');
+        setConfirmPassword('');
       } else {
         // Handle expected API errors (e.g., email already in use)
         setDialogTitle(t('common.error'));
@@ -207,8 +212,13 @@ const Register = () => {
                   }}
                 >
                   <Text
-                    className="mb-8 text-center text-4xl font-bold"
-                    style={{ color: theme.colors.primary }}
+                    className="mb-4 text-center text-4xl font-bold"
+                    style={{
+                      color: theme.colors.primary,
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                    }}
+                    variant="headlineLarge"
                   >
                     {t('register.title')}
                   </Text>
@@ -219,6 +229,14 @@ const Register = () => {
                     onChangeText={setEmail}
                     isEmail // Triggers email-specific keyboard and validation in CustomTextInput
                     className="mb-5"
+                    lenght={200}
+                    required
+                    accessibilityLabel={t('accessibility.register_email', {
+                      defaultValue: 'Campo de email para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_email_hint', {
+                      defaultValue: 'Introduza o seu endereço de email',
+                    })}
                   />
 
                   <CustomTextField
@@ -226,6 +244,30 @@ const Register = () => {
                     value={city}
                     onChangeText={setCity}
                     className="mb-5"
+                    lenght={30}
+                    accessibilityLabel={t('accessibility.register_city', {
+                      defaultValue: 'Campo de cidade para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_city_hint', {
+                      defaultValue: 'Introduza a sua cidade de residência',
+                    })}
+                    required
+                  />
+
+                  <CustomTextField
+                    label={t('register.NIF')}
+                    value={nif}
+                    onChangeText={setNif}
+                    className="mb-5"
+                    isNIF
+                    lenght={9}
+                    accessibilityLabel={t('accessibility.register_nif', {
+                      defaultValue: 'Campo de NIF para registo (opcional)',
+                    })}
+                    accessibilityHint={t('accessibility.register_nif_hint', {
+                      defaultValue:
+                        'Introduza o seu Número de Identificação Fiscal (9 dígitos). Opcional.',
+                    })}
                   />
 
                   <CustomTextField
@@ -234,6 +276,18 @@ const Register = () => {
                     onChangeText={setPassword}
                     isPassword // CustomTextInput handles the secure entry and eye icon internally
                     className="mb-5"
+                    lenght={100}
+                    required
+                    accessibilityLabel={t('accessibility.register_password', {
+                      defaultValue: 'Campo de palavra-passe para registo',
+                    })}
+                    accessibilityHint={t(
+                      'accessibility.register_password_hint',
+                      {
+                        defaultValue:
+                          'Introduza uma palavra-passe com pelo menos 8 caracteres, uma maiúscula, um número e um caractere especial',
+                      },
+                    )}
                   />
 
                   <CustomTextField
@@ -242,6 +296,21 @@ const Register = () => {
                     onChangeText={setConfirmPassword}
                     isPassword
                     className="mb-8"
+                    lenght={100}
+                    required
+                    accessibilityLabel={t(
+                      'accessibility.register_confirm_password',
+                      {
+                        defaultValue: 'Campo de confirmação de palavra-passe',
+                      },
+                    )}
+                    accessibilityHint={t(
+                      'accessibility.register_confirm_password_hint',
+                      {
+                        defaultValue:
+                          'Reintroduza a mesma palavra-passe para confirmação',
+                      },
+                    )}
                   />
 
                   <CustomButton
@@ -254,6 +323,22 @@ const Register = () => {
                   >
                     {t('register.register_button')}
                   </CustomButton>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingTop: 16,
+                      alignSelf: 'center',
+                    }}
+                  >
+                    <Text>{t('register.has_account')} </Text>
+                    <Text
+                      onPress={() => router.replace('/Login')}
+                      style={{ color: theme.colors.error }}
+                    >
+                      {t('register.login')}
+                    </Text>
+                  </View>
                 </Surface>
               </View>
             </TouchableWithoutFeedback>
@@ -270,7 +355,7 @@ const Register = () => {
             visible={dialogVisible}
             onDismiss={() => setDialogVisible(false)}
           >
-            <PaperText>{dialogText}</PaperText>
+            <Text>{dialogText}</Text>
           </CustomDialog>
         </KeyboardAvoidingView>
       </SafeAreaView>

@@ -10,8 +10,11 @@
     "password": "Password",
     "login_button": "Log in",
     "success": "Success!",
-    "error_login": "Error:\n",
-    "error_server": "Unable to contact the server."
+    "error_server": "Unable to contact the server.",
+    "no_account": "Don't have an account?",
+    "register": "Register",
+    "forgot_password": "Forgot your password?",
+    "create_new_password": "Create a new one"
   },
   "register": {
     "title": "Create account",
@@ -24,9 +27,31 @@
     "warning_mismatch": "Passwords do not match!",
     "warning_weak_password": "Password needs at least 8 characters, an uppercase, one number and a special character ",
     "success": "Success:Redirecting...",
-    "error": "Error:",
     "error_generic": "Could not create account.",
-    "error_server": "Please check your internet connection."
+    "error_server": "Please check your internet connection.",
+    "has_account": "Already have an account?",
+    "login": "Log in",
+    "NIF": "NIF"
+  },
+  "recoverPassword": {
+    "title": "Create new password",
+    "subtitle": "Enter your email to receive a verification code.",
+    "send_btn": "Send Code",
+    "success_msg": "If the email exists, a code has been sent.",
+    "error_title": "Error",
+    "connection_error": "Could not connect to the server.",
+    "missing_email": "Please enter your email.",
+    "login_screen": "Go back to the login screen"
+  },
+  "newPassword": {
+    "title": "New Password",
+    "subtitle": "Enter the code received by email and your new password.",
+    "change_btn": "Change Password",
+    "success_msg": "Password changed successfully!",
+    "error_title": "Error",
+    "connection_error": "Could not connect to the server.",
+    "missing_fields": "Please fill in all fields.",
+    "password_mismatch": "Passwords do not match."
   },
   "common": {
     "error_429": "Too many requests! Please wait a few minutes and try again.",
@@ -462,11 +487,42 @@
     "scan_qr": "Scan QR-Code",
     "accumulate_points_desc": "Accumulate points for each purchase made in participating stores in Tomar",
     "vat_required": "- VAT Number Required -",
-    "email_address": "Email Address"
+    "email_address": "Email Address",
+    "delete_account_confirm": "Are you sure you wanna delete your account?",
+    "delete_account_warning": "This action is irreversible. All your data (profile, favorites, points, invoices, and businesses) will be permanently deleted.",
+    "delete_account_password_label": "Enter your password",
+    "delete_account_password_required": "Enter your password to confirm.",
+    "delete_account_wrong_password": "Incorrect password. The account was not deleted.",
+    "delete_account_user_not_found": "User not found.",
+    "delete_account_rate_limited": "Too many attempts. Please wait a minute and try again.",
+    "delete_account_error": "An error occurred while deleting the account. Please try again.",
+    "delete_account_confirm_btn": "Delete Account",
+    "delete_account_sucess": "Your account was deleted"
   },
   "accessibility": {
     "close_info": "Click to close the information card",
     "search_area": "Click to search businesses in your area",
+    "delete_account_password": "Field to enter the confirmation password",
+    "delete_account_password_hint": "Enter your password to confirm account deletion",
+    "cancel_delete_account": "Cancel and close",
+    "confirm_delete_account": "Permanently delete my account",
+    "confirm_delete_account_hint": "This action is irreversible. All your data will be deleted.",
+    "register_email": "Email field for registration",
+    "register_email_hint": "Enter your email address",
+    "register_city": "City field for registration",
+    "register_city_hint": "Enter your city of residence",
+    "register_nif": "NIF field for registration (optional)",
+    "register_nif_hint": "Enter your Tax Identification Number (9 digits). Optional.",
+    "register_password": "Password field for registration",
+    "register_password_hint": "Enter a password with at least 8 characters, one uppercase letter, one number, and one special character",
+    "register_confirm_password": "Password confirmation field",
+    "register_confirm_password_hint": "Re-enter the same password to confirm",
+    "edit_name": "Name field for profile editing",
+    "edit_name_hint": "Enter your name",
+    "edit_city": "City field for profile editing",
+    "edit_city_hint": "Enter your city of residence",
+    "edit_nif": "NIF field for profile editing (optional)",
+    "edit_nif_hint": "Enter your Tax Identification Number (9 digits)",
     "open_map": "Click to open in a map application",
     "close_business": "Click to close the business",
     "focus_business": "Click to focus the map on this business",
@@ -604,5 +660,9 @@
     "8": "The Knights Templar were extinguished by the Pope in 1312, but reborn in Portugal in Tomar as the 'Order of Christ'?",
     "9": "The famous Prince Henry the Navigator was Governor of the Order of Christ and lived in Tomar while planning the Discoveries?",
     "10": "The Castle of Tomar was never conquered? In 1190, it heroically resisted a siege by the Moorish king Almanzor."
+  },
+  "validation": {
+    "invisible_chars_removed": "Invisible characters were detected and removed from the text.",
+    "nif_invalid": "Invalid NIF. Check the 9 digits."
   }
 }

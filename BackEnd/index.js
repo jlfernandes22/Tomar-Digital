@@ -1,7 +1,13 @@
-// 1. O dotenv tem de ser SEMPRE a primeira coisa a ser carregada!
+// ============================================================================
+// Tomar+Digital API
+// Description: Backend server handling authentication, business management, 
+//              gamification (QR Code/OCR), favorites, and municipal dashboards.
+// ============================================================================
+
+// 1. Load environment variables first
 import "dotenv/config"; 
 
-// 2. Bibliotecas de terceiros
+// 2. Third-party dependencies
 import express from "express";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
@@ -14,11 +20,12 @@ import path from "path";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import sharp from "sharp";
-import Tesseract from "tesseract.js";
+import Tesseract from "tesseract.js"; // Restored import as requested
 import { DocumentAnalysisClient, AzureKeyCredential } from "@azure/ai-form-recognizer";
 import nodemailer from "nodemailer";
 
-// 3. Os teus modelos e middlewares locais
+// 3. Local models, middleware and services
+import { sendVerificationEmail, sendPasswordRecoveryEmail } from "./utils/emailService.js";
 import User from "./models/User.js";
 import Business from "./models/Business.js";
 import Favorite from "./models/Favorite.js";
@@ -26,14 +33,18 @@ import Campaign from "./models/Campaign.js";
 import Cae from "./models/Cae.js";
 import Invoice from "./models/Invoice.js";
 import PedidosComerciante from "./models/PedidosComerciante.js";
-import CitiesAndCountries from "./models/CitiesAndCountries.js"; // Corrigido e limpo!
+import CitiesAndCountries from "./models/CitiesAndCountries.js";
 import { authorize } from "./middleware/auth.js";
+import { createHash } from "crypto";
+
 // ============================================================================
-// 1. CONFIGURAÇÃO BASE DO SERVIDOR E MIDDLEWARES
+// 1. SERVER CONFIGURATION & MIDDLEWARES
 // ============================================================================
 
 const app = express();
 const SECRET_KEY = process.env.JWT_SECRET;
+
+// Email Transporter Setup (Gmail SMTP)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -42,380 +53,602 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Database Connection URI
 const dbURI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 
+// Core Middlewares
 app.use(cors());
-// Limite de 20mb estabelecido para suportar uploads de PDFs e panfletos de alta resolução
-app.use(express.json({ limit: '20mb' }));
+app.use(express.json({ limit: '20mb' })); // 20mb limit to support high-res PDFs/images
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
-// 2. Criar o Limite Global (ex: 100 pedidos a cada 15 minutos por IP)
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos em milissegundos
-  max: 100, // Máximo de 100 pedidos por janela de tempo
-  message: { message: "Muitos pedidos realizados, por favor tente novamente mais tarde." },
-  standardHeaders: true, // Envia os cabeçalhos 'RateLimit-*' para o Frontend
-  legacyHeaders: false, // Desativa os cabeçalhos antigos 'X-RateLimit-*'
-});
-
-// Aplica o limite global a TODAS as rotas
-app.use(globalLimiter);
-
-// 3. Criar o Limite Estrito (ex: 5 tentativas por minuto por IP)
-const strictLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minuto
-  max: 5, // Apenas 5 tentativas permitidas por minuto
-  message: { message: "Demasiadas tentativas. Por favor, aguarde 1 minuto." }
-});
-
-// Torna a pasta 'uploads' pública para que o Front-End possa consumir as imagens e PDFs via URL
+// Serve static files from the 'uploads' directory
 app.use('/uploads', express.static('uploads'));
 
-// ============================================================================
-// 2. CONFIGURAÇÃO DO MULTER (SISTEMA DE UPLOADS TEMPORÁRIOS)
-// ============================================================================
-/**
- * O Multer é utilizado aqui apenas como "Ponto de Entrada" (Staging). 
- * Ele guarda os ficheiros originais no disco para que, posteriormente, 
- * o Sharp (imagens) ou os controladores (PDFs) os possam processar e mover.
- */
+// Rate Limiters
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: { message: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(globalLimiter);
+
+const strictLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 requests per minute
+  message: { message: "Too many attempts. Please wait 1 minute." }
+});
+
+// Multer Configuration (File Uploads Staging)
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
     let targetFolder = 'uploads/';
+    if (file.mimetype === 'application/pdf') targetFolder = 'uploads/pdfs/';
+    else if (file.mimetype.startsWith('image/')) targetFolder = 'uploads/imagens/';
 
-    // Encaminhamento dinâmico consoante o MimeType
-    if (file.mimetype === 'application/pdf') {
-      targetFolder = 'uploads/pdfs/';
-    } else if (file.mimetype.startsWith('image/')) {
-      targetFolder = 'uploads/imagens/';
-    }
-
-    // Garante que a estrutura de pastas existe no servidor antes de gravar
-    if (!fs.existsSync(targetFolder)) {
-      fs.mkdirSync(targetFolder, { recursive: true });
-    }
-
+    if (!fs.existsSync(targetFolder)) fs.mkdirSync(targetFolder, { recursive: true });
     cb(null, targetFolder);
   },
-  filename: function (req, file, cb) {
-    // Prevenção de colisões: Timestamp + Randomização para nomes únicos
+  filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 const upload = multer({ storage: storage });
-const uploadParaMemoria = multer({ storage: multer.memoryStorage() });
+const uploadMemory = multer({ storage: multer.memoryStorage() });
+
+// Database Connection
+mongoose.connect(dbURI)
+  .then(() => console.log("Successfully connected to the Database."))
+  .catch((err) => console.error("Database Connection Error: ", err));
 
 // ============================================================================
-// 3. CONEXÃO À BASE DE DADOS
-// ============================================================================
-mongoose
-  .connect(dbURI)
-  .then(() => console.log("Conectado a Base de Dados com sucesso!"))
-  .catch((err) => console.error("Erro na Base de Dados: ", err));
-
-// ============================================================================
-// 4. ROTAS DE AUTENTICAÇÃO E GESTÃO DE UTILIZADORES
+// 2. SWAGGER DOCUMENTATION SETUP
 // ============================================================================
 
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Tomar+Digital API",
+      version: "1.0.0",
+      description: "Official API documentation for the Tomar+Digital civic-tech platform.",
+    },
+    // Explicitly define tags here to control grouping and order in the Swagger UI
+    tags: [
+      { name: "Auth", description: "Authentication and session management" },
+      { name: "Users", description: "User profile and account management" },
+      { name: "Businesses", description: "Business registration and management" },
+      { name: "Favorites", description: "User favorite businesses" },
+      { name: "Merchant Applications", description: "Citizen applications to become merchants" },
+      { name: "Invoices & Gamification", description: "Invoice processing (QR/OCR) and points system" },
+      { name: "Campaigns", description: "Campaign creation and management" },
+      { name: "Dashboard", description: "Municipal analytics and statistics" },
+    ],
+    servers: [
+      { url: "https://tomar-rg-b0bvd9e7fkdhatbh.westeurope-01.azurewebsites.net", description: "Production (Azure)" },
+      { url: "http://localhost:3000", description: "Local Development Server" },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+      },
+    },
+  },
+  apis: ["./index.js"],
+};
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-
-//////////////////////////////////////////////////
-//Registar utilizador teste para usar no postman//
-//////////////////////////////////////////////////
-//app.post("/registar-teste", async (req, res) => {
-//  console.log("Recebido pedido do Postman para registo de teste:", req.body);
-//
-//  // Retiramos o confirmPassword para ser mais rápido escrever o JSON no Postman
-//  const { name, email, password, city, role } = req.body;
-//
-//  try {
-//    // Verificar se já existe
-//    const user = await User.findOne({ email: email });
-//    if (user) {
-//      return res
-//        .status(400)
-//        .json({ message: "Este utilizador de teste já existe" });
-//    }
-//
-//    const salt = 10;
-//    const hashedPassword = await bcrypt.hash(password, salt);
-//
-//    // Definir utilizador com password em hash
-//    const newUser = new User({
-//      name: name || "Utilizador de Teste", // Se não enviares nome, ele assume este
-//      email: email,
-//      password: hashedPassword,
-//      role: role,
-//      city: city || "Tomar", // Se não enviares cidade, ele assume Tomar
-//    });
-//
-//    await newUser.save();
-//    res.status(201).json({
-//      message: "Utilizador de teste criado com sucesso via Postman!",
-//      dados: { email: newUser.email, name: newUser.name },
-//    });
-//  } catch (err) {
-//    console.error("Erro na criação via Postman:", err);
-//    res.status(500).json({ message: "Erro ao criar conta de teste" });
-//  }
-//});
-
-////////////////////////
-//Upload de Imagem
-
-app.post('/uploadImage', uploadParaMemoria.single('image'), async (req, res) => {
-  try {
-    if (!req.file || !req.file.buffer) {
-      return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
-    }
-
-    // Garante que a pasta existe
-    const targetFolder = 'uploads/imagens/';
-    if (!fs.existsSync(targetFolder)) {
-      fs.mkdirSync(targetFolder, { recursive: true });
-    }
-
-    // 1. Preparar o nome e o caminho do ficheiro
-    const nomeSemExtensao = path.parse(req.file.originalname).name.replace(/\s+/g, '_');
-    const webpFilename = `${Date.now()}-${nomeSemExtensao}.webp`; // Nome único
-    const caminhoNoDisco = path.join(targetFolder, webpFilename); // Onde vai gravar no servidor
-    const caminhoParaBD = `/uploads/imagens/${webpFilename}`; // O que vai para o Front-End/BD
-
-    // 2. O Sharp processa a imagem na memória e GUARDA NO FILESYSTEM 
-    await sharp(req.file.buffer)
-      .resize({ width: 800 }) 
-      .toFormat('webp')
-      .webp({ quality: 80 })  
-      .toFile(caminhoNoDisco); 
-
-    res.status(201).json({ 
-      message: 'Imagem guardada com sucesso no disco!', 
-      caminho: caminhoNoDisco,
-    });
-
-  } catch (error) {
-    console.error('Erro no upload:', error);
-    res.status(500).json({ error: 'Erro ao processar imagem.' });
-  }
-});
-
-////////////////////////
-// Mostrar Imagem
-app.get('/mostrarImagem/:id', async (req, res) => {
-  try {
-    let imagem = await Image.findById(req.params.id);
-
-    if (!imagem) {
-      return res.status(404).json({ error: 'Imagem não encontrada .' });
-    }
-
-    // Se tiver dados na BD (retrocompatibilidade), envia os dados directos
-    if (imagem.dados) {
-      res.set('Content-Type', imagem.contentType);
-      return res.send(imagem.dados);
-    }
-
-    // Caso contrário, lê o ficheiro do disco
-    const diskPath = path.join(process.cwd(), imagem.caminho);
-    if (!fs.existsSync(diskPath)) {
-      return res.status(404).json({ error: 'Ficheiro de imagem não encontrado no disco.' });
-    }
-
-    res.set('Content-Type', imagem.contentType);
-    res.sendFile(diskPath);
-  } catch (error) {
-    console.error('Erro ao procurar imagem:', error);
-    res.status(500).json({ error: 'Erro ao procurar imagem.' });
-  }
-});
-
-
-//////////////////////
-//Registar utilizador
-app.post("/registar", strictLimiter, async (req, res) => {
-  try {
-    console.log("Pedido recebido");
-    
-    const { password, city } = req.body;
-    const rawEmail = req.body.email;
-
-    // 1. Validação Básica de Presença
-    if (!rawEmail || !password || !city) {
-      return res.status(400).json({ message: "Preencha todos os campos obrigatórios." });
-    }
-
-    const email = rawEmail.toLowerCase().trim();
-    const name = req.body.name || email;
-    
-    // 2. Validação do Formato do Email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Por favor, insira um endereço de email válido." });
-    }
-
-    // 3. Validação da Cidade pelo NOME (Ignorando maiúsculas/minúsculas)
-    // O 'i' na regex significa case-insensitive (Tomar == tomar == TOMAR)
-    const cidadeExiste = await CitiesAndCountries.findOne({ 
-      name: { $regex: new RegExp(`^${city}$`, 'i') } 
-    }); 
-    
-    if (!cidadeExiste) {
-      return res.status(400).json({ message: "A cidade selecionada não é válida ou não existe no sistema." });
-    }
-
-    // 4. Lógica de Registo
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
-
-    const existingUser = await User.findOne({ email });
-    
-    const cidadeParaGuardar = cidadeExiste.name; 
-    
-    if (existingUser) {
-      if (existingUser.isVerified) {
-        return res.status(400).json({ message: "Este email já está associado a outra conta." });
-      } else {
-        console.log("Atualizando utilizador não verificado na base de dados...");
-        
-        existingUser.name = name;
-        existingUser.password = await bcrypt.hash(password, 10);
-        existingUser.city = cidadeParaGuardar; 
-        existingUser.codigoValidar = code;
-        
-        await existingUser.save();
-        console.log("Utilizador atualizado com novos dados e novo código.");
-      }
-    } else {
-      console.log("Criando novo utilizador na base de dados...");
-      
-      const newUser = new User({ 
-        name,  
-        email, 
-        password: await bcrypt.hash(password, 10), 
-        city: cidadeParaGuardar, 
-        codigoValidar: code, 
-        isVerified: false 
-      });
-      
-      await newUser.save();
-      console.log("Novo utilizador criado.");
-    }
-    
-    // 5. Enviar o Email
-    console.log("Enviando email...");
-    await transporter.sendMail({
-        from: '"Suporte Tomar+Digital" <tomardigitalsuporte@gmail.com>',
-        to: email,
-        subject: 'Confirme a sua conta',
-        html: `<p>O seu código de validação é: <strong>${code}</strong></p>`
-    });
-    console.log("Email enviado");
-
-    // 6. Responder ao Frontend
-    return res.status(200).json({ message: "Registo concluído com sucesso" });
-
-  } catch (err) {
-    console.error("Erro ao registar:", err);
-    return res.status(500).json({ message: "Erro interno no servidor ao processar o registo." });
-  }
-});
-    
-
-
-app.post("/verificar-codigo", strictLimiter, async (req, res) => {
- const rawEmail = req.body.email;
-  const email = rawEmail.toLowerCase().trim();
-  const code = req.body.code;
-  const user = await User.findOne({ email: email });
-
-  if (!user) {
-    return res.status(400).json({ message: "Utilizador não encontrado." });
-  }
-
-  if (user.codigoValidar !== code) {
-    return res.status(400).json({ message: "Código inválido." });
-  }
-
-  user.isVerified = true;
-  user.codigoValidar = null;
-  await user.save();
-
-  return res.status(200).json({ message: "Conta validada com sucesso!" });
-})
-
+// ============================================================================
+// 3. AUTHENTICATION & USER MANAGEMENT ROUTES
+// ============================================================================
 
 /**
  * @swagger
- * /iniciarSessao:
+ * /registar:
  *   post:
- *     summary: Iniciar sessão
- *     tags: [Autenticação]
+ *     summary: Register a new user
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - city
  *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ *               email: { type: string }
+ *               password: { type: string }
+ *               city: { type: string }
+ *               name: { type: string }
  *     responses:
- *       200:
- *         description: Login bem sucedido
- *       400:
- *         description: Credenciais inválidas
+ *       200: { description: Registration successful, verification email sent. }
+ *       400: { description: Invalid input or user already exists. }
+ *       500: { description: Server error. }
+ */
+app.post("/registar", strictLimiter, async (req, res) => {
+  try {
+    const { password, city, nif } = req.body;
+    const rawEmail = req.body.email;
+    let validNIF = null
+
+    if (!rawEmail || !password || !city) {
+      return res.status(400).json({ message: "Please fill all required fields." });
+    }
+
+    const validarNIF = (nif) => {
+      const sNif = String(nif);
+      if (!/^\d{9}$/.test(sNif)) return false;
+      const prefixosValidos = ["1", "2", "3", "5", "6", "8", "9"];
+      if (!prefixosValidos.includes(sNif[0])) return false;
+      let soma = 0;
+      for (let i = 0; i < 8; i++) soma += parseInt(sNif[i]) * (9 - i);
+      const resto = soma % 11;
+      const digitoControloCalculado = resto === 0 || resto === 1 ? 0 : 11 - resto;
+      return digitoControloCalculado === parseInt(sNif[8]);
+    };
+
+    console.log(validarNIF(nif))
+
+    if (nif != null && validarNIF(nif)){
+      
+      validNIF = nif
+    } 
+
+    const email = rawEmail.toLowerCase().trim();
+    const name = req.body.name || email;
+    
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please enter a valid email address." });
+    }
+
+    const cidadeExiste = await CitiesAndCountries.findOne({ 
+      name: { $regex: new RegExp(`^${city}$`, 'i') } 
+    }); 
+    if (!cidadeExiste) {
+      return res.status(400).json({ message: "The selected city is not valid or does not exist in the system." });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); 
+    const existingUser = await User.findOne({ email });
+    const cidadeParaGuardar = cidadeExiste.name; 
+    
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        return res.status(400).json({ message: "This email is already associated with another account." });
+      } else {
+        existingUser.name = name;
+        existingUser.password = await bcrypt.hash(password, 10);
+        existingUser.city = cidadeParaGuardar; 
+        existingUser.codigoValidar = code;
+        await existingUser.save();
+      }
+    } else {
+      if(validNIF!=null){
+        const newUser = new User({ 
+          name, email, 
+          password: await bcrypt.hash(password, 10), 
+          city: cidadeParaGuardar, 
+          codigoValidar: code, 
+          isVerified: false,
+          NIF: validNIF
+        });
+      await newUser.save();
+      }else{
+      const newUser = new User({ 
+        name, email, 
+        password: await bcrypt.hash(password, 10), 
+        city: cidadeParaGuardar, 
+        codigoValidar: code, 
+        isVerified: false,
+        NIF:null
+      });
+      await newUser.save();
+      }
+    }
+    
+    await sendVerificationEmail(transporter, { to: email, code, name });
+
+    return res.status(200).json({ message: "Registration completed successfully." });
+  } catch (err) {
+    console.error("Registration Error:", err);
+    return res.status(500).json({ message: "Internal server error during registration." });
+  }
+});
+
+/**
+ * @swagger
+ * /verificar-codigo:
+ *   post:
+ *     summary: Verify user email with code
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *           properties:
+ *             email: { type: string }
+ *             code: { type: string }
+ *   responses:
+ *     200: { description: Account validated successfully. }
+ *     400: { description: Invalid code or user not found. }
+ */
+app.post("/verificar-codigo", strictLimiter, async (req, res) => {
+  const rawEmail = req.body.email;
+  const email = rawEmail.toLowerCase().trim();
+  const code = req.body.code;
+  const user = await User.findOne({ email: email });
+
+  if (!user) return res.status(400).json({ message: "User not found." });
+  if (user.codigoValidar !== code) return res.status(400).json({ message: "Invalid code." });
+
+  user.isVerified = true;
+  user.codigoValidar = null;
+  await user.save();
+
+  return res.status(200).json({ message: "Account validated successfully!" });
+});
+
+/**
+ * @swagger
+ * /iniciarSessao:
+ *   post:
+ *     summary: User login
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *           properties:
+ *             email: { type: string }
+ *             password: { type: string }
+ *   responses:
+ *     200: { description: Login successful, returns JWT token. }
+ *     400: { description: Invalid credentials. }
  */
 app.post("/iniciarSessao", strictLimiter, async (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body)
   try {
     const user = await User.findOne({ email: email });
-    console.log(user)
-    if (!user) {
-      return res.status(400).json({ message: "Conta não existe" });
-    }
+    if (!user) return res.status(400).json({ message: "Account does not exist." });
+    if(!user.isVerified) return res.status(400).json({ message: "Please validate your account first." });
 
-    if(!user.isVerified){
-      return res.status(400).json({message: "Por favor valide a sua conta"})
-    }
-
-    // Comparação do Hash guardado com a password em plain-text inserida
     const rightPassword = await bcrypt.compare(password, user.password);
-    if (!rightPassword) {
-      return res.status(400).json({ message: "Palavra-passe errada" });
-    }
+    if (!rightPassword) return res.status(400).json({ message: "Wrong password." });
 
-    // Geração do JsonWebToken (JWT) com os dados não-sensíveis do utilizador no Payload
     const token = jwt.sign(
       { id: user._id, role: user.role, acceptedInvoiceTerms: user.acceptedInvoiceTerms },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "1d" }
     );
 
     res.json({
       token,
       userId: user._id,
       user: {
-        name: user.name,
-        email: user.email,
-        Points: user.Points,
-        role: user.role,
-        city: user.city,
-        NIF: user.NIF,
-        acceptedInvoiceTerms: user.acceptedInvoiceTerms,
-        Avatar: user.Avatar,
+        name: user.name, email: user.email, Points: user.Points,
+        role: user.role, city: user.city, NIF: user.NIF,
+        acceptedInvoiceTerms: user.acceptedInvoiceTerms, Avatar: user.Avatar,
       },
     });
   } catch (err) {
-    console.error("Erro ao iniciar sessão: ", err);
-    res.status(400).json({ message: "Erro ao iniciar sessão" });
+    console.error("Login Error: ", err);
+    res.status(400).json({ message: "Error during login." });
+  }
+});
+
+// ============================================================================
+// PASSWORD RECOVERY ROUTES
+// ============================================================================
+
+/**
+ * @swagger
+ * /recuperarPassword:
+ *   post:
+ *     summary: Request a password recovery code
+ *   tags: [Auth]
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required:
+ *             - email
+ *           properties:
+ *             email: { type: string }
+ *   responses:
+ *     200: { description: Recovery code sent successfully. }
+ *     404: { description: User not found. }
+ *     500: { description: Server error. }
+ */
+app.post("/recuperarPassword", strictLimiter, async (req, res) => {
+  try {
+    const rawEmail = req.body.email;
+    const email = rawEmail ? rawEmail.toLowerCase().trim() : "";
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // SECURITY BEST PRACTICE: Don't reveal if the email exists or not.
+      return res.status(200).json({ message: "Se o email existir, um código foi enviado." });
+    }
+
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Set code and expiration (15 minutes from now)
+    user.codigoResetPassword = code;
+    user.codigoResetExpira = new Date(Date.now() + 15 * 60 * 1000); 
+    await user.save();
+
+    // Send branded recovery email
+    await sendPasswordRecoveryEmail(transporter, { to: email, code, name: user.name });
+
+    return res.status(200).json({ message: "Se o email existir, um código foi enviado." });
+  } catch (error) {
+    console.error("Password Recovery Error:", error);
+    return res.status(500).json({ message: "Internal server error." });
   }
 });
 
 /**
- * Endpoint para aceitar ou revogar os termos e condições da fatura.
+ * @swagger
+ * /alterarPassword:
+ *   post:
+ *     summary: Reset password using the recovery code
+ *   tags: [Auth]
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required:
+ *             - email
+ *             - code
+ *             - newPassword
+ *           properties:
+ *             email: { type: string }
+ *             code: { type: string }
+ *             newPassword: { type: string }
+ *   responses:
+ *     200: { description: Password updated successfully. }
+ *     400: { description: Invalid or expired code. }
+ *     500: { description: Server error. }
+ */
+app.post("/alterarPassword", strictLimiter, async (req, res) => {
+  try {
+    const { code, newPassword } = req.body;
+    const rawEmail = req.body.email;
+    const email = rawEmail ? rawEmail.toLowerCase().trim() : "";
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Utilizador não encontrado." });
+    }
+
+    // Check if code exists and matches
+    if (!user.codigoResetPassword || user.codigoResetPassword !== code) {
+      return res.status(400).json({ message: "Código de recuperação inválido." });
+    }
+
+    // Check if code has expired
+    if (new Date() > user.codigoResetExpira) {
+      return res.status(400).json({ message: "O código de recuperação expirou." });
+    }
+
+    // Validate new password strength (same regex as registration)
+    const isSecure = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(newPassword);
+    if (!isSecure) {
+      return res.status(400).json({ message: "A palavra-passe deve ter pelo menos 8 caracteres, uma maiúscula, um número e um caractere especial." });
+    }
+
+    // Update password and clear reset fields
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.codigoResetPassword = null;
+    user.codigoResetExpira = null;
+    await user.save();
+
+    return res.status(200).json({ message: "Palavra-passe alterada com sucesso!" });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// ============================================================================
+// ACCOUNT DELETION
+// ============================================================================
+// Security design:
+//   1. Requires a valid JWT (any authenticated role can delete their OWN account).
+//   2. Re-validates the user's current password (defense against session hijack
+//      via stolen JWT — the attacker would also need the password).
+//   3. Strict rate limit (5 req/min per IP) to brute-force the password check.
+//   4. Atomic cleanup with Mongoose session/transaction — deletes the user,
+//      their businesses (+ logo/gallery files), favorites, invoices, and any
+//      merchant applications. If any step fails, the whole operation rolls back.
+//   5. Audit log line emitted to stdout with timestamp, userId, and email hash.
+//   6. JWT is stateless, so we cannot revoke the token server-side here; the
+//      client MUST clear its local token on success (handled in the frontend).
+// ============================================================================
+
+/**
+ * @swagger
+ * /apagarConta:
+ *   delete:
+ *     summary: Delete the authenticated user's account and all associated data
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password: { type: string, description: Current password for confirmation }
+ *     responses:
+ *       200: { description: Account deleted successfully. }
+ *       400: { description: Invalid password or missing field. }
+ *       401: { description: Unauthorized — missing/invalid token. }
+ *       404: { description: User not found. }
+ *       500: { description: Server error during deletion. }
+ */
+app.delete("/apagarConta", strictLimiter, authorize(["cidadao", "comerciante", "camara"]), async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    // --- 1. Input validation ---
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ message: "É obrigatório introduzir a sua palavra-passe." });
+    }
+
+    // --- 2. Load user from DB ---
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizador não encontrado." });
+    }
+
+    // --- 3. Re-validate the current password ---
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Palavra-passe incorreta. A conta não foi apagada." });
+    }
+
+    // --- 4. Cascade delete all user data ---
+    // Helper: performs all DB deletes. Pass `null` for session to run without
+    // a transaction (fallback for standalone MongoDB instances).
+    const cascadeDelete = async (session) => {
+      const businesses = await Business.find({ owner: user._id })
+        .session(session).lean();
+      await Business.deleteMany({ owner: user._id }).session(session);
+      await Favorite.deleteMany({ userId: user._id }).session(session);
+      await Invoice.deleteMany({ user: user._id }).session(session);
+      await PedidosComerciante.deleteMany({ emailDono: user.email }).session(session);
+      await User.findByIdAndDelete(user._id).session(session);
+      return businesses;
+    };
+
+    let businesses;
+    try {
+      // Attempt atomic deletion with a transaction (requires replica set / mongos).
+      const session = await mongoose.startSession();
+      try {
+        session.startTransaction();
+        businesses = await cascadeDelete(session);
+        await session.commitTransaction();
+      } catch (txErr) {
+        // Best-effort abort (safe to ignore if transaction already aborted/committed)
+        try { await session.abortTransaction(); } catch (_) {}
+
+        // Code 20 / IllegalOperation = standalone MongoDB, no transactions.
+        // Fall back to sequential deletes without a transaction.
+        if (txErr.codeName === 'IllegalOperation' || txErr.code === 20) {
+          console.warn('[apagarConta] Server does not support transactions — falling back to sequential deletes.');
+          businesses = await cascadeDelete(null);
+        } else {
+          throw txErr; // real error, bubble up to outer catch
+        }
+      } finally {
+        session.endSession();
+      }
+    } catch (sessionErr) {
+      // startSession() itself failed — check if it's the replica-set issue
+      if (sessionErr.codeName === 'IllegalOperation' || sessionErr.code === 20 ||
+          /replica set|mongos/i.test(sessionErr.message)) {
+        console.warn('[apagarConta] Could not start session — falling back to sequential deletes.');
+        businesses = await cascadeDelete(null);
+      } else {
+        throw sessionErr;
+      }
+    }
+
+    // --- 5. Filesystem cleanup (best-effort, AFTER DB commit) ---
+    try {
+      if (user.Avatar && user.Avatar.startsWith("/uploads/")) {
+        const avatarPath = path.join(process.cwd(), user.Avatar.replace(/^\//, ""));
+        if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
+      }
+    } catch (fileErr) {
+      console.warn("[apagarConta] Failed to delete avatar file:", fileErr.message);
+    }
+
+    for (const biz of businesses) {
+      try {
+        if (biz.logo) {
+          const logoPath = path.join(process.cwd(), biz.logo.replace(/^\//, ""));
+          if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
+        }
+      } catch (e) {
+        console.warn(`[apagarConta] Failed to delete logo for business ${biz._id}:`, e.message);
+      }
+
+      if (Array.isArray(biz.gallery) && biz.gallery.length > 0) {
+        for (const fotoUrl of biz.gallery) {
+          try {
+            if (fotoUrl) {
+              const fotoPath = path.join(process.cwd(), String(fotoUrl).replace(/^\//, ""));
+              if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+            }
+          } catch (e) {
+            console.warn(`[apagarConta] Failed to delete gallery image for business ${biz._id}:`, e.message);
+          }
+        }
+      }
+    }
+
+    // --- 6. Audit log (email hash, no plaintext PII) ---
+    const emailHash = createHash("sha256").update(user.email).digest("hex").slice(0, 16);
+    console.log(
+      `[AUDIT][apagarConta] ${new Date().toISOString()} | userId=${user._id} | emailHash=${emailHash} | role=${user.role} | businessesDeleted=${businesses.length}`
+    );
+
+    return res.status(200).json({ message: "Conta apagada com sucesso." });
+  } catch (error) {
+    console.error("[apagarConta] Error:", error);
+    return res.status(500).json({ message: "Erro ao apagar a conta. Tente novamente." });
+  }
+});
+
+/**
+ * @swagger
+ * /aceitarTermosFatura:
+ *   post:
+ *     summary: Accept or revoke invoice processing terms
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           properties:
+ *             acceptedInvoiceTerms: { type: boolean }
+ *   responses:
+ *     200: { description: Terms updated successfully. }
+ *     500: { description: Server error. }
  */
 app.post("/aceitarTermosFatura", authorize(["cidadao", "comerciante", "camara"]), async (req, res) => {
   try {
@@ -427,16 +660,15 @@ app.post("/aceitarTermosFatura", authorize(["cidadao", "comerciante", "camara"])
       { acceptedInvoiceTerms: valueToSet },
       { returnDocument: 'after' }
     );
-    if (!user) {
-      return res.status(404).json({ message: "Utilizador não encontrado." });
-    }
+    if (!user) return res.status(404).json({ message: "User not found." });
+    
     res.status(200).json({
-      message: valueToSet ? "Termos aceites com sucesso." : "Consentimento revogado com sucesso.",
+      message: valueToSet ? "Terms accepted successfully." : "Consent revoked successfully.",
       acceptedInvoiceTerms: valueToSet
     });
   } catch (error) {
-    console.error("Erro ao atualizar termos:", error);
-    res.status(500).json({ message: "Erro ao atualizar os termos." });
+    console.error("Error updating terms:", error);
+    res.status(500).json({ message: "Error updating terms." });
   }
 });
 
@@ -444,411 +676,281 @@ app.post("/aceitarTermosFatura", authorize(["cidadao", "comerciante", "camara"])
  * @swagger
  * /utilizadores:
  *   get:
- *     summary: Obter lista de todos os utilizadores
- *     tags: [Utilizadores]
+ *     summary: List all users
+ *     tags: [Users]
  *     responses:
- *       200:
- *         description: Lista de utilizadores
+ *       200: { description: List of all users. }
  */
 app.get("/utilizadores", async (req, res) => {
   const users = await User.find();
   res.json(users);
 });
 
-// ============================================================================
-// 5. ROTAS DE GESTÃO DE NEGÓCIOS (B2B / B2C)
-// ============================================================================
-
 /**
  * @swagger
  * /utilizador/{id}:
  *   get:
- *     summary: Obter donos de negócios com status pendente
- *     tags: [Utilizadores]
+ *     summary: Get owners of pending businesses (City Council only)
+ *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Lista de donos encontrados
- *       403:
- *         description: Não autorizado
+ *         schema: { type: string }
+ *   responses:
+ *     200: { description: List of pending business owners. }
+ *     403: { description: Unauthorized. }
  */
 app.get("/utilizador/:id", authorize(["camara"]), async (req, res) => {
   try {
-    // 1. Procura negócios não aprovados
     const pendentes = await Business.find({ status: "pendente" });
     const ownerIds = pendentes.map((negocio) => negocio.owner);
-
-    // 2. Mapeia e devolve os utilizadores responsáveis por esses negócios
     const owners = await User.find({ _id: { $in: ownerIds } });
     res.json(owners);
   } catch (error) {
-    console.error("Erro ao procurar donos:", error);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    console.error("Error fetching owners:", error);
+    res.status(500).json({ message: "Internal server error." });
   }
 });
 
+/**
+ * @swagger
+ * /editarUser/{id}:
+ *   post:
+ *     summary: Update user profile and avatar
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               city: { type: string }
+ *               NIF: { type: string }
+ *               avatar: { type: string, format: binary }
+ *     responses:
+ *       200: { description: Profile updated successfully. }
+ *       500: { description: Server error. }
+ */
+app.post("/editarUser/:id", authorize(["camara", "comerciante", "cidadao"]), upload.single("avatar"), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const { name: receivedName, city: receivedCity, NIF: receivedNIF } = req.body;
+
+    if (user.name !== receivedName) user.name = receivedName;
+    if (user.city !== receivedCity) user.city = receivedCity;
+   
+
+    const validarNIF = (nif) => {
+      const sNif = String(nif);
+      if (!/^\d{9}$/.test(sNif)) return false;
+      const prefixosValidos = ["1", "2", "3", "5", "6", "8", "9"];
+      if (!prefixosValidos.includes(sNif[0])) return false;
+      let soma = 0;
+      for (let i = 0; i < 8; i++) soma += parseInt(sNif[i]) * (9 - i);
+      const resto = soma % 11;
+      const digitoControloCalculado = resto === 0 || resto === 1 ? 0 : 11 - resto;
+      return digitoControloCalculado === parseInt(sNif[8]);
+    };
+
+    // --- NIF validation ---
+    // NIF is optional on the edit form: if the user already has a NIF, the
+    // frontend doesn't send the field at all (receivedNIF is undefined).
+    // We only validate when a NIF is actually provided. If not provided,
+    // the existing user.NIF is preserved unchanged.
+    if (receivedNIF !== undefined && receivedNIF !== null && receivedNIF !== "") {
+      if (!validarNIF(receivedNIF)) {
+        return res.status(400).json({ message: "The NIF inserted is not valid" });
+      }
+      if (receivedNIF === "999999990") {
+        return res.status(400).json({ message: "Invoices issued to 'Consumidor Final' cannot earn points." });
+      }
+      user.NIF = receivedNIF;
+    }
 
 
+    if (req.file) {
+      if (user.Avatar && user.Avatar.startsWith('/uploads/')) {
+        const oldPath = path.join(process.cwd(), user.Avatar.replace(/^\//, ''));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
 
-const uploadNegocio = upload.fields([
+      const nomeSemExtensao = path.parse(req.file.filename).name;
+      const webpFilename = `${nomeSemExtensao}_avatar.webp`;
+      const targetPath = path.join('uploads/imagens/', webpFilename);
+
+      try {
+        await sharp(req.file.path)
+          .resize({ width: 400, height: 400, fit: 'cover' })
+          .toFormat('webp')
+          .webp({ quality: 80 })
+          .toFile(targetPath);
+        user.Avatar = `/uploads/imagens/${webpFilename}`;
+      } finally {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      }
+    }
+
+    await user.save();
+    res.status(200).json({ 
+      message: "Changes saved successfully!",
+      user: { name: user.name, city: user.city, NIF: user.NIF, avatar: user.Avatar }
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Error updating information." });
+  }
+});
+
+// ============================================================================
+// 5. BUSINESS MANAGEMENT ROUTES
+// ============================================================================
+
+const uploadBusiness = upload.fields([
   { name: 'logo', maxCount: 1 },
-  { name: 'galeria', maxCount: 10 } // Permite o upload de até 10 fotos na galeria
+  { name: 'galeria', maxCount: 10 }
 ]);
+
 /**
  * @swagger
  * /registarNegocio:
  *   post:
- *     summary: Registar um novo negócio
- *     tags: [Negócios]
+ *     summary: Register a new business
+ *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               nomeNegocio:
- *                 type: string
- *               NIFnegocio:
- *                 type: string
- *               categoriaNegocio:
- *                 type: string
- *               logotipoNegocio:
- *                 type: string
- *               moradaNegocio:
- *                 type: string
- *               freguesiaNegocio:
- *                 type: string
- *               localizacao:
- *                 type: object
- *                 properties:
- *                   latitude:
- *                     type: number
- *                   longitude:
- *                     type: number
- *               telefoneDono:
- *                 type: string
- *               emailDono:
- *                 type: string
- *               descricaoNegocio:
- *                 type: string
- *               galeriaFotos:
- *                 type: array
- *                 items:
- *                   type: string
+ *               nomeNegocio: { type: string }
+ *               categoriaNegocio: { type: string }
+ *               telefoneDono: { type: string }
+ *               emailDono: { type: string }
+ *               listaCAES: { type: string } # JSON string array
+ *               localizacao: { type: string } # JSON string object
+ *               logo: { type: string, format: binary }
+ *               galeria: { type: array, items: { type: string, format: binary } }
  *     responses:
- *       201:
- *         description: Negócio registado
+ *       201: { description: Business registered successfully. }
+ *       400: { description: Missing required data. }
+ *       500: { description: Server error. }
  */
-app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadNegocio, async (req, res) => {
+app.post("/registarNegocio", authorize(["comerciante", "camara"]), uploadBusiness, async (req, res) => {
   try {
-    const { 
-      nomeNegocio, NIFnegocio, categoriaNegocio, moradaNegocio, 
-      freguesiaNegocio, localizacao, telefoneDono, emailDono, 
-      descricaoNegocio, listaCAES, owner 
-    } = req.body;
+    const { nomeNegocio, NIFnegocio, categoriaNegocio, moradaNegocio, freguesiaNegocio, localizacao, telefoneDono, emailDono, descricaoNegocio, listaCAES, owner } = req.body;
 
-    console.log(req.body)
-    
-
-    // Validação da integridade dos dados obrigatórios
-    // Nota: O envio da galeria é processado separadamente através do req.files (Multer)
     if (!nomeNegocio || !categoriaNegocio || !localizacao || !telefoneDono || !emailDono) {
-      
-      return res.status(400).json({ message: "Dados essenciais incompletos." });
+      return res.status(400).json({ message: "Essential data is missing." });
     }
-    // Remove todos os espaços vazios do número antes de validar
+
     const telefoneLimpo = telefoneDono ? telefoneDono.replace(/\s+/g, '') : '';
-      
-    // Regex para números de Portugal:
-    // Aceita opcionalmente +351 ou 00351
-    // Obriga a começar por 9 (telemóvel) ou 2 (fixo) seguido de 8 dígitos numéricos
     const telefoneRegex = /^(?:(?:\+|00)351)?[29]\d{8}$/;
-    
     if (!telefoneLimpo || !telefoneRegex.test(telefoneLimpo)) {
-      return res.status(400).json({ 
-        erro: "Número de telefone inválido. Deve ser um número português válido (ex: 912345678 ou +351912345678)." 
-      });
+      return res.status(400).json({ error: "Invalid phone number. Must be a valid Portuguese number." });
     }
 
-
-    // Conversão de estruturas de dados enviadas como texto via FormData
     let parsedLocalizacao = localizacao ? (typeof localizacao === 'string' ? JSON.parse(localizacao) : localizacao) : null;
     let parsedCAES = listaCAES ? (typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES) : [];
-    // 1. Remove duplicados (caso o utilizador envie ['56102', '56102'])
     const uniqueCAES = [...new Set(parsedCAES)];
 
     if (uniqueCAES.length > 0) {
-      // 2. Procura na base de dados todos os CAEs que correspondam à lista fornecida
       const caesComoNumeros = uniqueCAES.map(c => Number(c));
-      
-      // Procura por Strings OU por Números (para garantir que encontra)
-      const caesEncontrados = await Cae.find({ 
-        $or: [
-          { cae: { $in: uniqueCAES } }, 
-          { cae: { $in: caesComoNumeros } }
-        ]
-      });
-      console.log(caesEncontrados)
-      // 3. Se a quantidade de CAEs encontrados não for igual à quantidade enviada, algo está errado
+      const caesEncontrados = await Cae.find({ $or: [{ cae: { $in: uniqueCAES } }, { cae: { $in: caesComoNumeros } }] });
       if (caesEncontrados.length !== uniqueCAES.length) {
-
-        // (Opcional) Descobrir exatamente quais são os inválidos para dar uma resposta mais útil
         const codigosEncontrados = caesEncontrados.map(c => c.cae);
         const caesInvalidos = uniqueCAES.filter(c => !codigosEncontrados.includes(c));
-        return res.status(400).json({
-          erro: "Um ou mais códigos CAE fornecidos não existem no sistema.",
-          caesInvalidos: caesInvalidos
-           
-        });
-       
+        return res.status(400).json({ error: "One or more CAE codes provided do not exist in the system.", invalidCAEs: caesInvalidos });
       }
     } else {
-      return res.status(400).json({
-        erro: "A lista de CAEs não pode estar vazia."
-      });
+      return res.status(400).json({ error: "The CAE list cannot be empty." });
     }
 
-    // Inicialização das variáveis de URL para persistência
     let logoUrl = "";
     let galeriaUrls = [];
     
-    // --- Processamento do Logótipo ---
     if (req.files && req.files['logo'] && req.files['logo'][0]) {
       const logoFile = req.files['logo'][0];
-      
-      // Obter o nome original do ficheiro e atribuir formato otimizado WebP
       const nomeSemExtensao = path.parse(logoFile.filename).name;
       const webpFilename = `${Date.now()}-${nomeSemExtensao}_logo.webp`;
       const logoTargetPath = path.join('uploads/imagens/', webpFilename);
 
       try {
-        await sharp(logoFile.path)
-          .resize({ width: 800 })
-          .toFormat('webp')
-          .webp({ quality: 80 })
-          .toFile(logoTargetPath);
-          
+        await sharp(logoFile.path).resize({ width: 800 }).toFormat('webp').webp({ quality: 80 }).toFile(logoTargetPath);
         logoUrl = `/uploads/imagens/${webpFilename}`;
       } catch (e) {
-        console.error("Erro no processamento do logo:", e);
         try { fs.unlinkSync(logoFile.path); } catch (err) {}
-        return res.status(500).json({ message: "Erro ao processar o logótipo do negócio." });
+        return res.status(500).json({ message: "Error processing business logo." });
       }
-      
-      // Limpeza do ficheiro temporário
       try { fs.unlinkSync(logoFile.path); } catch (e) {}
     }
 
-    // --- Processamento da Galeria (Iteração de Múltiplas Fotos) ---
     if (req.files && req.files['galeria'] && req.files['galeria'].length > 0) {
       for (const fotoFile of req.files['galeria']) {
-        // Obter o nome original do ficheiro e atribuir formato otimizado WebP
         const nomeSemExtensao = path.parse(fotoFile.filename).name;
-        const webpFilename = `${Date.now()}-${nomeSemExtensao}_galeria.webp`;
+        const webpFilename = `${Date.now()}-${nomeSemExtensao}_gallery.webp`;
         const fotoTargetPath = path.join('uploads/imagens/', webpFilename);
-        console.log(req.files['galeria'])
         try {
-          await sharp(fotoFile.path)
-            .resize({ width: 1080 }) // Galeria otimizada com resolução adequada
-            .toFormat('webp')
-            .webp({ quality: 80 })
-            .toFile(fotoTargetPath);
-            
+          await sharp(fotoFile.path).resize({ width: 1080 }).toFormat('webp').webp({ quality: 80 }).toFile(fotoTargetPath);
           galeriaUrls.push(`/uploads/imagens/${webpFilename}`);
         } catch (e) {
-          console.error("Erro ao processar foto da galeria:", e);
+          console.error("Error processing gallery photo:", e);
         }
-        
-        // Limpeza do ficheiro temporário independentemente do resultado
         try { fs.unlinkSync(fotoFile.path); } catch (e) {}
       }
     }
 
-    // Validação de presença de ficheiros na galeria do negócio
     if (galeriaUrls.length === 0) {
-       return res.status(400).json({ message: "É obrigatório enviar pelo menos uma foto para a galeria do negócio." });
+       return res.status(400).json({ message: "At least one photo for the business gallery is mandatory." });
     }
 
-    // --- Registo do Negócio na Base de Dados ---
-    // Determinação do proprietário em função dos privilégios de acesso
     const ownerId = req.user.role === "camara" ? owner || req.user.id : req.user.id;
-    
-    console.log(parsedLocalizacao)
-
     const novoNegocio = new Business({
-      name: nomeNegocio, 
-      category: categoriaNegocio, 
-      NIF: NIFnegocio, 
-      logo: logoUrl, 
-      address: moradaNegocio,
-      parish: freguesiaNegocio,
+      name: nomeNegocio, category: categoriaNegocio, NIF: NIFnegocio, logo: logoUrl, 
+      address: moradaNegocio, parish: freguesiaNegocio,
       location: parsedLocalizacao ? { lat: Number(parsedLocalizacao.latitude), long: Number(parsedLocalizacao.longitude) } : undefined,
-      phone: telefoneDono, 
-      email: emailDono, 
-      listaCAES: uniqueCAES, 
-      description: descricaoNegocio, 
-      gallery: galeriaUrls, 
-      owner: ownerId,
+      phone: telefoneDono, email: emailDono, listaCAES: uniqueCAES, description: descricaoNegocio, 
+      gallery: galeriaUrls, owner: ownerId,
       status: req.user.role === "camara" ? "aprovado" : "pendente"
     });
 
     await novoNegocio.save();
-    
-    res.status(201).json({ message: "Negócio registado com sucesso!", business: novoNegocio });
+    res.status(201).json({ message: "Business registered successfully!", business: novoNegocio });
   } catch (error) {
-    console.error("Erro no registo de negócio:", error);
-    res.status(500).json({ message: "Erro interno ao tentar registar o negócio." });
+    console.error("Business Registration Error:", error);
+    res.status(500).json({ message: "Internal server error registering business." });
   }
 });
-
-// ============================================================================
-//PEDIDOS DE COMERCIANTES
-// ============================================================================
-
-/**
- * Criação de um pedido de estatuto de comerciante, incluindo o upload do documento comprovativo (PDF).
- */
-app.post("/pedidoComerciante", authorize(["cidadao"]), upload.single('documentoPDF'), async (req, res) => {
-  try {
-    const { tituloComercio, donoComercio, emailDono, telefoneDono } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ message: "O documento PDF é obrigatório." });
-    }
-
-    const newPedidoComerciante = new PedidosComerciante({
-      tituloComercio: tituloComercio,
-      donoComercio: donoComercio,
-      emailDono: emailDono,
-      telefoneDono: telefoneDono,
-      documentoPdfUrl: `/uploads/pdfs/${req.file.filename}`
-    });
-
-    await newPedidoComerciante.save();
-    res.status(200).json({ message: "Sucesso!", id: newPedidoComerciante._id });
-  } catch (err) {
-    console.error("Erro no servidor (pedidoComerciante):", err);
-    res.status(500).json({ message: "Erro ao guardar o pedido.", details: err.message });
-  }
-});
-
-/**
- * Elimina fisicamente o PDF do disco e rejeita o pedido na Base de Dados.
- */
-app.delete("/apagarPedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const pedido = await PedidosComerciante.findById(id);
-
-    if (!pedido) {
-      return res.status(404).json({ message: "Pedido não encontrado." });
-    }
-
-    // 1. Limpeza do sistema de ficheiros (Impede a acumulação de PDFs rejeitados no disco)
-    if (pedido.documentoPdfUrl) {
-      // Uso do replace(/^\//, '') garante que o pathing funciona perfeitamente em Windows e Linux
-      const relativePath = pedido.documentoPdfUrl.replace(/^\//, '');
-      const filePath = path.join(process.cwd(), relativePath);
-
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-          console.log(`Ficheiro PDF eliminado do disco: ${filePath}`);
-        } catch (fsErr) {
-          // Este try/catch interno garante que se o ficheiro falhar a apagar (ex: permissões), 
-          // o MongoDB continua a limpar o registo da base de dados!
-          console.error(`Aviso: Falha ao apagar o ficheiro físico, mas o registo DB será eliminado. Erro: ${fsErr.message}`);
-        }
-      }
-    }
-
-    // 2. Remoção do Documento no MongoDB
-    await pedido.deleteOne();
-    res.status(200).json({ message: "Pedido rejeitado e eliminado com sucesso!" });
-
-  } catch (err) {
-    console.error("Erro ao eliminar o pedido:", err);
-    res.status(500).json({ message: "Erro interno ao eliminar o pedido", details: err.message });
-  }
-});
-
-/**
- * Aprova o pedido, promovendo o Cidadão a Comerciante, e apaga o comprovativo por questões de RGPD.
- */
-app.post("/aprovar/PedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const pedido = await PedidosComerciante.findById(id);
-    if (!pedido) return res.status(404).json({ message: "Pedido não encontrado." });
-
-    const utilizador = await User.findOne({ email: pedido.emailDono });
-    if (!utilizador) return res.status(404).json({ message: "Utilizador associado ao pedido não encontrado." });
-
-    // 1. Alteração de Privilégios (Role Based Access Control)
-    utilizador.role = "comerciante";
-    await utilizador.save();
-
-    // 2. Limpeza de Dados Sensíveis (Privacidade / RGPD)
-    if (pedido.documentoPdfUrl) {
-      const relativePath = pedido.documentoPdfUrl.replace(/^\//, '');
-      const filePath = path.join(process.cwd(), relativePath);
-
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    // 3. Conclusão do Processo
-    await pedido.deleteOne();
-    res.status(200).json({
-      message: "Pedido aprovado com sucesso! O utilizador agora é comerciante.",
-      user: { id: utilizador._id, name: utilizador.name, role: utilizador.role }
-    });
-
-  } catch (err) {
-    console.error("Erro ao aprovar o pedido:", err);
-    res.status(500).json({ message: "Erro interno ao aprovar o pedido", details: err.message });
-  }
-});
-
-app.get("/obter/PedidosComerciante", authorize(["camara"]), async (req, res) => {
-  try {
-    const pedidosComerciante = await PedidosComerciante.find().lean();
-    res.json(pedidosComerciante);
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao procurar pedidos." });
-  }
-});
-
-// ============================================================================
-// 7. LISTAGEM E OPERAÇÕES BÁSICAS DE NEGÓCIOS / FAVORITOS
-// ============================================================================
 
 /**
  * @swagger
  * /negocios:
  *   get:
- *     summary: Obter lista de negócios aprovados
- *     tags: [Negócios]
+ *     summary: Get all approved businesses
+ *     tags: [Businesses]
  *     responses:
- *       200:
- *         description: Lista de negócios
+ *       200: { description: List of businesses. }
  */
 app.get("/negocios", async (req, res) => {
   try {
     const negocios = await Business.find({ status: "aprovado" });
     res.json(negocios);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao procurar lojas." });
+    res.status(500).json({ message: "Error fetching businesses." });
   }
 });
 
@@ -856,36 +958,25 @@ app.get("/negocios", async (req, res) => {
  * @swagger
  * /negocios/{id}:
  *   get:
- *     summary: Obter detalhes de um negócio por ID
- *     tags: [Negócios]
+ *     summary: Get business details by ID
+ *     tags: [Businesses]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *     responses:
- *       200:
- *         description: Detalhes do negócio
+ *       200: { description: Business details. }
+ *       404: { description: Business not found. }
  */
 app.get("/negocios/:id", async (req, res) => {
   try {
-    
-    const negocio = await Business.findById(req.params.id)
-      .populate({
-        path: 'campaigns.campaign', 
-        model: 'Campaign' 
-      });
-    if (!negocio) {
-      return res.status(404).json({ message: "Negócio não encontrado." });
-    }
-
-    console.log(negocio)
-
+    const negocio = await Business.findById(req.params.id).populate({ path: 'campaigns.campaign', model: 'Campaign' });
+    if (!negocio) return res.status(404).json({ message: "Business not found." });
     res.json(negocio);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Erro ao encontrar id." });
+    res.status(500).json({ message: "Error finding business ID." });
   }
 });
 
@@ -893,33 +984,31 @@ app.get("/negocios/:id", async (req, res) => {
  * @swagger
  * /apagarNegocio/{id}:
  *   delete:
- *     summary: Apagar um negócio por ID
- *     tags: [Negócios]
+ *     summary: Delete a business and its associated files (City Council only)
+ *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *     responses:
- *       200:
- *         description: Negócio apagado
+ *       200: { description: Business deleted successfully. }
+ *       404: { description: Business not found. }
  */
 app.delete("/apagarNegocio/:id", authorize(["camara"]), async (req, res) => {
   try {
     const business = await Business.findById(req.params.id);
-    if (!business) return res.status(404).json({ erro: "Negócio não encontrado." });
+    if (!business) return res.status(404).json({ error: "Business not found." });
 
-
-    //Apagar o logotipo do disco
+    // Delete logo from disk
     if (business.logo) {
       const logoPath = path.join(process.cwd(), business.logo.replace(/^\//, ''));
       if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
     }
 
-    // Apagar as fotos da galeria do disco
+    // Delete gallery photos from disk
     if (business.gallery && business.gallery.length > 0) {
       business.gallery.forEach(fotoUrl => {
         const fotoPath = path.join(process.cwd(), fotoUrl.replace(/^\//, ''));
@@ -928,107 +1017,178 @@ app.delete("/apagarNegocio/:id", authorize(["camara"]), async (req, res) => {
     }
 
     await business.deleteOne();
-    res.status(200).json({ sucesso: "Negócio apagado com sucesso!" });
+    res.status(200).json({ success: "Business deleted successfully!" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ erro: "Falha ao apagar o negócio." });
+    res.status(500).json({ error: "Failed to delete business." });
   }
-});
-
-app.put("/editarNegocio", authorize(["camara"]), async (req, res) => {
-  // TODO: Implementar lógica de atualização de negócio
 });
 
 /**
  * @swagger
  * /meusNegocios:
  *   get:
- *     summary: Listar negócios de um comerciante logado
- *     tags: [Negócios]
+ *     summary: Get businesses owned by the logged-in merchant
+ *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
  *     responses:
- *       200:
- *         description: Lista de negócios
+ *       200: { description: List of user's businesses. }
  */
 app.get("/meusNegocios", authorize(["comerciante"]), async (req, res) => {
   try {
-    const filtro = {
-      owner: req.user.id,
-      status: "aprovado"
-    };
-
-    const negocios = await Business.find(filtro).populate("owner", "name");
-    
-    console.log("Lojas aprovadas encontradas:", negocios.length);
-
-    // Retorna array vazio se não encontrar nada, o que já está correto
+    const negocios = await Business.find({ owner: req.user.id, status: "aprovado" }).populate("owner", "name");
     res.status(200).json(negocios || []);
-    
   } catch (error) {
-    console.error("Erro na rota /meusNegocios:", error);
-    res.status(500).json({ message: "Erro ao procurar lojas." });
+    console.error("Error in /meusNegocios:", error);
+    res.status(500).json({ message: "Error fetching businesses." });
   }
 });
 
+/**
+ * @swagger
+ * /negociosCae:
+ *   get:
+ *     summary: Get businesses filtered by CAE code
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: cae
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: List of businesses matching the CAE. }
+ *       500: { description: Server error. }
+ */
 app.get("/negociosCae", authorize(["comerciante"]), async (req, res) => {
   let { cae } = req.query;
-  
   if (Array.isArray(cae)) cae = cae[0];
   const caeLimpo = String(cae).replace(/[\[\]"']/g, '').trim();
 
   try {
-    console.log("Procurando negócios onde listaCAES contém:", caeLimpo);
-    
-    // CORREÇÃO: Usar 'listaCAES: caeLimpo' funciona se o array contiver o valor
-    // O MongoDB faz o match automaticamente se o valor estiver no array
     const negocios = await Business.find({ 
       owner: req.user.id,
       listaCAES: caeLimpo 
     });
-    
-    console.log(`Negócios encontrados: ${negocios.length}`);
     res.json(negocios);
   } catch (error) {
-    console.error("Erro na busca:", error);
-    res.status(500).json({ message: "Erro ao buscar negócios" });
+    console.error("Search Error:", error);
+    res.status(500).json({ message: "Error searching businesses" });
   }
 });
 
+/**
+ * @swagger
+ * /business/aprovar/{id}:
+ *   post:
+ *     summary: Approve a pending business (City Council only)
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Business approved. }
+ *       404: { description: Business not found. }
+ */
+app.post("/business/aprovar/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const business = await Business.findByIdAndUpdate(req.params.id, { status: "aprovado" }, { returnDocument: 'after' });
+    if (!business) return res.status(404).json({ message: "Business not found." });
+    res.json({ message: "Business approved successfully!", business });
+  } catch (error) {
+    res.status(500).json({ message: "Error approving business." });
+  }
+});
 
+/**
+ * @swagger
+ * /business/rejeitar/{id}:
+ *   delete:
+ *     summary: Reject/Delete a pending business (City Council only)
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Business discarded. }
+ */
+app.delete("/business/rejeitar/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    await Business.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Business discarded successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Error discarding business." });
+  }
+});
+
+/**
+ * @swagger
+ * /business/pendentes:
+ *   get:
+ *     summary: List all pending businesses (City Council only)
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: List of pending businesses. }
+ */
+app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
+  try {
+    const lista = await Business.find({ status: "pendente" });
+    res.status(200).json(lista);
+  } catch (error) {
+    res.status(500).json({ message: "Error loading pending list." });
+  }
+});
+
+// ============================================================================
+// 6. FAVORITES ROUTES
+// ============================================================================
 
 /**
  * @swagger
  * /guardarFavorito:
  *   post:
- *     summary: Adicionar um negócio aos favoritos
- *     tags: [Favoritos]
+ *     summary: Add a business to favorites
+ *     tags: [Favorites]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - userId
+ *               - businessId
  *             properties:
- *               userId:
- *                 type: string
- *               businessId:
- *                 type: string
+ *               userId: { type: string }
+ *               businessId: { type: string }
  *     responses:
- *       200:
- *         description: Guardado com sucesso
+ *       200: { description: Added to favorites successfully. }
+ *       400: { description: Already in favorites. }
+ *       500: { description: Server error. }
  */
 app.post("/guardarFavorito", async (req, res) => {
   const { userId, businessId } = req.body;
   try {
     const existe = await Favorite.findOne({ userId, businessId });
-    if (existe) return res.status(400).json({ message: "Já está na lista" });
+    if (existe) return res.status(400).json({ message: "Already in favorites list." });
 
     const novoFavorito = new Favorite({ userId, businessId });
     await novoFavorito.save();
-    res.status(200).json({ message: "Guardado com sucesso!" });
+    res.status(200).json({ message: "Added to favorites successfully!" });
   } catch (err) {
-    res.status(500).json({message: err});
+    res.status(500).json({ message: err });
   }
 });
 
@@ -1036,31 +1196,33 @@ app.post("/guardarFavorito", async (req, res) => {
  * @swagger
  * /retirarFavorito:
  *   post:
- *     summary: Remover um negócio dos favoritos
- *     tags: [Favoritos]
+ *     summary: Remove a business from favorites
+ *     tags: [Favorites]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - userId
+ *               - businessId
  *             properties:
- *               userId:
- *                 type: string
- *               businessId:
- *                 type: string
+ *               userId: { type: string }
+ *               businessId: { type: string }
  *     responses:
- *       200:
- *         description: Removido com sucesso
+ *       200: { description: Removed from favorites successfully. }
+ *       404: { description: Favorite not found. }
+ *       500: { description: Server error. }
  */
 app.post("/retirarFavorito", async (req, res) => {
   const { userId, businessId } = req.body;
   try {
     const resultado = await Favorite.findOneAndDelete({ userId, businessId });
-    if (!resultado) return res.status(404).json({ message: "Favorito não encontrado." });
-    res.status(200).json({ message: "Removido dos favoritos com sucesso!" });
+    if (!resultado) return res.status(404).json({ message: "Favorite not found." });
+    res.status(200).json({ message: "Removed from favorites successfully!" });
   } catch (err) {
-    res.status(500).json({ message: "Erro interno ao remover.", error: err });
+    res.status(500).json({ message: "Internal server error removing favorite.", error: err });
   }
 });
 
@@ -1068,17 +1230,16 @@ app.post("/retirarFavorito", async (req, res) => {
  * @swagger
  * /meusFavoritos/{userId}:
  *   get:
- *     summary: Obter lista de favoritos de um utilizador
- *     tags: [Favoritos]
+ *     summary: Get a user's favorite businesses
+ *     tags: [Favorites]
  *     parameters:
  *       - in: path
  *         name: userId
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *     responses:
- *       200:
- *         description: Lista de favoritos
+ *       200: { description: List of favorite businesses. }
+ *       500: { description: Server error. }
  */
 app.get("/meusFavoritos/:userId", async (req, res) => {
   try {
@@ -1090,123 +1251,203 @@ app.get("/meusFavoritos/:userId", async (req, res) => {
   }
 });
 
-// Operações de Câmara sobre os negócios pendentes
+// ============================================================================
+// 7. MERCHANT APPLICATION ROUTES
+// ============================================================================
+
 /**
  * @swagger
- * /business/aprovar/{id}:
+ * /pedidoComerciante:
  *   post:
- *     summary: Aprovar um negócio pendente
- *     tags: [Negócios]
+ *     summary: Citizen applies to become a merchant
+ *     tags: [Merchant Applications]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               tituloComercio: { type: string }
+ *               donoComercio: { type: string }
+ *               emailDono: { type: string }
+ *               telefoneDono: { type: string }
+ *               documentoPDF: { type: string, format: binary }
  *     responses:
- *       200:
- *         description: Negócio aprovado
+ *       200: { description: Application submitted successfully. }
+ *       400: { description: PDF document is mandatory. }
+ *       500: { description: Server error. }
  */
-app.post("/business/aprovar/:id", authorize(["camara"]), async (req, res) => {
+app.post("/pedidoComerciante", authorize(["cidadao"]), upload.single('documentoPDF'), async (req, res) => {
   try {
-    const business = await Business.findByIdAndUpdate(
-      req.params.id, { status: "aprovado" }, { returnDocument: 'after' }
-    );
-    if (!business) return res.status(404).json({ message: "Negócio não encontrado." });
-    res.json({ message: "Loja aprovada com sucesso!", business });
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao aprovar loja." });
+    const { tituloComercio, donoComercio, emailDono, telefoneDono } = req.body;
+    if (!req.file) return res.status(400).json({ message: "The PDF document is mandatory." });
+
+    const newPedidoComerciante = new PedidosComerciante({
+      tituloComercio, donoComercio, emailDono, telefoneDono,
+      documentoPdfUrl: `/uploads/pdfs/${req.file.filename}`
+    });
+
+    await newPedidoComerciante.save();
+    res.status(200).json({ message: "Success!", id: newPedidoComerciante._id });
+  } catch (err) {
+    console.error("Error (merchant application):", err);
+    res.status(500).json({ message: "Error saving application.", details: err.message });
   }
 });
 
 /**
  * @swagger
- * /business/rejeitar/{id}:
- *   delete:
- *     summary: Rejeitar um negócio pendente
- *     tags: [Negócios]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Negócio rejeitado
- */
-app.delete("/business/rejeitar/:id", authorize(["camara"]), async (req, res) => {
-  try {
-    await Business.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Negócio descartado com sucesso." });
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao descartar." });
-  }
-});
-
-/**
- * @swagger
- * /business/pendentes:
+ * /obter/PedidosComerciante:
  *   get:
- *     summary: Listar todos os negócios pendentes de aprovação
- *     tags: [Negócios]
+ *     summary: List all merchant applications (City Council only)
+ *     tags: [Merchant Applications]
  *     security:
  *       - bearerAuth: []
  *     responses:
- *       200:
- *         description: Lista de negócios pendentes
+ *       200: { description: List of merchant applications. }
+ *       500: { description: Server error. }
  */
-app.get("/business/pendentes", authorize(["camara"]), async (req, res) => {
+app.get("/obter/PedidosComerciante", authorize(["camara"]), async (req, res) => {
   try {
-    const lista = await Business.find({ status: "pendente" });
-    res.status(200).json(lista);
+    const pedidosComerciante = await PedidosComerciante.find().lean();
+    res.json(pedidosComerciante);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao carregar lista da Câmara." });
+    res.status(500).json({ message: "Error fetching applications." });
+  }
+});
+
+/**
+ * @swagger
+ * /aprovar/PedidoComerciante/{id}:
+ *   post:
+ *     summary: Approve merchant application and upgrade user role
+ *     tags: [Merchant Applications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: User upgraded to merchant. }
+ *       404: { description: Application or User not found. }
+ */
+app.post("/aprovar/PedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pedido = await PedidosComerciante.findById(id);
+    if (!pedido) return res.status(404).json({ message: "Application not found." });
+
+    const utilizador = await User.findOne({ email: pedido.emailDono });
+    if (!utilizador) return res.status(404).json({ message: "User associated with application not found." });
+
+    utilizador.role = "comerciante";
+    await utilizador.save();
+
+    // RGPD Compliance: Delete PDF after approval
+    if (pedido.documentoPdfUrl) {
+      const relativePath = pedido.documentoPdfUrl.replace(/^\//, '');
+      const filePath = path.join(process.cwd(), relativePath);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    await pedido.deleteOne();
+    res.status(200).json({ message: "Application approved! User is now a merchant.", user: { id: utilizador._id, name: utilizador.name, role: utilizador.role } });
+  } catch (err) {
+    console.error("Error approving application:", err);
+    res.status(500).json({ message: "Internal server error approving application", details: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /apagarPedidoComerciante/{id}:
+ *   delete:
+ *     summary: Delete/Reject merchant application and PDF (RGPD)
+ *     tags: [Merchant Applications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Application rejected and deleted successfully. }
+ *       404: { description: Application not found. }
+ */
+app.delete("/apagarPedidoComerciante/:id", authorize(["camara"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pedido = await PedidosComerciante.findById(id);
+
+    if (!pedido) return res.status(404).json({ message: "Application not found." });
+
+    // RGPD: Clean up file system
+    if (pedido.documentoPdfUrl) {
+      const relativePath = pedido.documentoPdfUrl.replace(/^\//, '');
+      const filePath = path.join(process.cwd(), relativePath);
+
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+          console.log(`PDF file deleted from disk: ${filePath}`);
+        } catch (fsErr) {
+          console.error(`Warning: Failed to delete physical file, but DB record will be removed. Error: ${fsErr.message}`);
+        }
+      }
+    }
+
+    await pedido.deleteOne();
+    res.status(200).json({ message: "Application rejected and deleted successfully!" });
+
+  } catch (err) {
+    console.error("Error deleting application:", err);
+    res.status(500).json({ message: "Internal server error deleting application", details: err.message });
   }
 });
 
 // ============================================================================
-// 8. MOTOR DE GAMIFICAÇÃO E PROCESSAMENTO DE FATURAS (OCR/QRCODE)
+// 8. GAMIFICATION & INVOICE PROCESSING ROUTES (OCR / QR CODE)
 // ============================================================================
 
 /**
  * @swagger
  * /lerFatura:
  *   post:
- *     summary: Ler QR Code de uma fatura e atribuir pontos
- *     tags: [Campanhas e Faturas]
+ *     summary: Process invoice QR Code and image to award points
+ *     tags: [Invoices & Gamification]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - ReceiptImage
+ *               - QRCodeData
  *             properties:
- *               QRCodeData:
- *                 type: string
+ *               ReceiptImage: { type: string, format: binary }
+ *               QRCodeData: { type: string }
  *     responses:
- *       200:
- *         description: Fatura lida com sucesso
- *       400:
- *         description: Erro na validação da fatura
+ *       200: { description: Invoice processed successfully, points awarded. }
+ *       400: { description: Validation error or duplicate invoice. }
+ *       429: { description: Daily limit reached. }
+ *       500: { description: Server error during processing. }
  */
 app.post("/lerFatura", strictLimiter, authorize(["cidadao", "comerciante", "camara"]), upload.single('ReceiptImage'), async (req, res) => {
-  // A lógica permanece inalterada pois já contém um excelente rigor de verificação (RFC/ATCUD).
   try {
     const { QRCodeData } = req.body;
-    if (!req.file) {
-      return res.status(400).json({ message: "É obrigatório enviar a fotografia da fatura." });
-    }
+    if (!req.file) return res.status(400).json({ message: "Receipt photo is mandatory." });
 
     if (!QRCodeData || String(QRCodeData).trim() === "") {
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ message: "O QR Code da fatura nao foi detetado. Por favor, certifique-se de que o QR Code esta focado antes de tirar a fotografia." });
+      return res.status(400).json({ message: "QR Code not detected. Ensure it is focused." });
     }
 
     const parseQRCodeFields = (data) => {
@@ -1221,110 +1462,69 @@ app.post("/lerFatura", strictLimiter, authorize(["cidadao", "comerciante", "cama
     };
 
     const QRCodeFields = parseQRCodeFields(QRCodeData);
-    // Mapeamento dos campos segundo as especificações técnicas da Autoridade Tributária
-    const NIFStore = QRCodeFields["A"]; // NIF do comerciante/emitente
-    const NIFClient = QRCodeFields["B"]; // NIF do adquirente (cliente)
-    const CountryClient = QRCodeFields["C"]; // País do adquirente
-    const TypeDocument = QRCodeFields["D"]; // Tipo de documento (FT: Fatura, FS: Fatura Simplificada, etc.)
-    const StateDocument = QRCodeFields["E"]; // Estado do documento (N: Normal, etc.)
-    const BoughtDate = QRCodeFields["F"]; // Data do documento (Formato: YYYYMMDD)
-    const SerialNumber = QRCodeFields["G"]; // Identificação única do documento pela loja
-    const CodeATCUD = QRCodeFields["H"]; // ATCUD - Código Único do Documento (Validação central da AT)
-    const hash = QRCodeFields["Q"]; // Assinatura digital do documento (Hash de 4 caracteres)
-    const SoftCertNumber = QRCodeFields["R"]; // Número do certificado do software de faturação
+    const NIFStore = QRCodeFields["A"];
+    const NIFClient = QRCodeFields["B"];
+    const CountryClient = QRCodeFields["C"];
+    const TypeDocument = QRCodeFields["D"];
+    const StateDocument = QRCodeFields["E"];
+    const BoughtDate = QRCodeFields["F"];
+    const SerialNumber = QRCodeFields["G"];
+    const CodeATCUD = QRCodeFields["H"];
+    const hash = QRCodeFields["Q"];
+    const SoftCertNumber = QRCodeFields["R"];
+    const RegionTax = QRCodeFields["11"];
+    const NoIVAValue = QRCodeFields["L"];
+    const AllTaxValue = QRCodeFields["N"];
+    const BoughtValue = QRCodeFields["O"];
+    const AditionalInfo = QRCodeFields["S"];
 
-    // Campos Fiscais e Financeiros
-    const RegionTax = QRCodeFields["11"]; // Espaço fiscal (ex: PT, PT-MA, PT-AC)
-    const NoIVAValue = QRCodeFields["L"]; // Valor total não sujeito a IVA / isento
-    const AllTaxValue = QRCodeFields["N"]; // Valor total de todos os impostos cobrados (IVA + Selo)
-    const BoughtValue = QRCodeFields["O"]; // Valor TOTAL do documento com impostos (o valor pago pelo cliente)
-    const AditionalInfo = QRCodeFields["S"]; // Outras informações (Ex: Referências multibanco)
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    /// Usando Document Intelisence Azure Tools -> resultados perfeitos em 10 testes consecutivos 
-    /////////////////////////////////////////////////////////////////////////////////////////////
-
-    // 1. Em vez de ler o ficheiro diretamente, usamos o 'sharp' para o comprimir em memória
-    // Importa o sharp no topo do index.js se o tiveres apagado: import sharp from "sharp";
-    
-    console.log("A comprimir a imagem para respeitar os limites do Azure...");
-    
+    // 1. Compress image in memory before sending to Azure
     const compressedImageBuffer = await sharp(req.file.path)
-      .resize({ width: 2500, withoutEnlargement: true }) // Reduz imagens gigantes (ex: 4000px) para máx 2500px
-      .jpeg({ quality: 80 }) // Guarda em JPEG com 80% de qualidade (perfeito para OCR e reduz 70% do peso)
-      .toBuffer(); // Guarda o resultado diretamente na RAM (Buffer) sem criar novos ficheiros
+      .resize({ width: 2500, withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer();
 
     const azureEndpoint = process.env.AZURE_VISION_ENDPOINT; 
     const azureKey = process.env.AZURE_VISION_KEY;
     
-    console.log("A enviar fatura comprimida para o Azure Document Intelligence...");
     const client = new DocumentAnalysisClient(azureEndpoint, new AzureKeyCredential(azureKey));
-    
-    // 2. Enviamos o BUFFER COMPRIMIDO para o Azure, e não o ficheiro original
     const poller = await client.beginAnalyzeDocument("prebuilt-layout", compressedImageBuffer);
     const { pages } = await poller.pollUntilDone();
 
     let extractedText = "";
-
     if (pages && pages.length > 0) {
-      pages.forEach(page => {
-        page.lines.forEach(line => {
-          extractedText += line.content + "\n";
-        });
-      });
+      pages.forEach(page => page.lines.forEach(line => extractedText += line.content + "\n"));
     }
 
-    console.log("Texto extraído:\n", extractedText);
-
-    // 1. Apagar a imagem original do servidor (fazemos isto logo para garantir que não acumula lixo)
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
-    // 2. Criar a variável 'ocrDigits' que faltava
-    // Isto pega no texto gigante do Azure e remove TUDO o que não seja número.
     const ocrDigits = extractedText.replace(/\D/g, '');
-    
-    // Opcional: Debug para veres os números que o Azure encontrou
-    // console.log("Dígitos puros do documento:", ocrDigits);
 
-    // 3. Validação do NIF do Cliente (OCR-Resilient)
-    // Em vez de procurar em linhas específicas, verificamos se o NIF do QR Code 
-    // existe no meio de todos os números lidos na fatura.
+    // 2. OCR Resilient Validation: Check if NIF and ATCUD exist in the extracted text
     if (!ocrDigits.includes(NIFClient)) {
-      return res.status(400).json({ message: "O NIF do cliente não foi detetado corretamente na fotografia do documento." });
+      return res.status(400).json({ message: "Client NIF not detected correctly in the photo." });
     }
 
-    // 4. Validação do ATCUD (OCR-Resilient)
-    // O ATCUD tem formato "ABCD-1234". Limpamos as letras/hífens do QR Code e verificamos 
-    // se essa sequência exata de números também foi lida pelo Azure.
     const atcudDigits = CodeATCUD.replace(/\D/g, '');
     if (!ocrDigits.includes(atcudDigits)) {
-      return res.status(400).json({ message: "O código ATCUD não foi detetado corretamente na fotografia do documento." });
+      return res.status(400).json({ message: "ATCUD code not detected correctly in the photo." });
     }
 
-    /**
-     * VERIFICAÇÃO DE SEGURANÇA 1: Prevenção de Duplicados
-     * Bloqueia a operação se a mesma combinação de ATCUD e Hash já existir na base de dados.
-     * Isto impede que o mesmo talão seja lido várias vezes por pessoas diferentes.
-     */
-    const faturaRepetida = await Invoice.findOne({
-      ATCUD: CodeATCUD,
-      hash: hash,
-    });
-    
+    // 3. Prevent Duplicate Invoices
+    const faturaRepetida = await Invoice.findOne({ ATCUD: CodeATCUD, hash: hash });
     if (faturaRepetida) {
-      return res.status(400).json({ message: "Esta fatura já foi lida e os pontos já foram atribuídos anteriormente." });
+      return res.status(400).json({ message: "This invoice has already been scanned." });
     }
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "Utilizador não encontrado." });
+    if (!user) return res.status(404).json({ message: "User not found." });
 
-    // Algoritmo Matemático de Validação de NIF Português
+    // 4. Portuguese NIF Mathematical Validation
     const validarNIF = (nif) => {
       const sNif = String(nif);
       if (!/^\d{9}$/.test(sNif)) return false;
       const prefixosValidos = ["1", "2", "3", "5", "6", "8", "9"];
       if (!prefixosValidos.includes(sNif[0])) return false;
-
       let soma = 0;
       for (let i = 0; i < 8; i++) soma += parseInt(sNif[i]) * (9 - i);
       const resto = soma % 11;
@@ -1333,41 +1533,35 @@ app.post("/lerFatura", strictLimiter, authorize(["cidadao", "comerciante", "cama
     };
 
     if (!validarNIF(NIFClient) || !validarNIF(NIFStore)) {
-      return res.status(400).json({ message: "O QR Code contém um NIF matematicamente inválido." });
+      return res.status(400).json({ message: "QR Code contains mathematically invalid NIF." });
     }
-
     if (NIFClient === "999999990") {
-      return res.status(400).json({ message: "A fatura foi emitida a 'Consumidor Final' e não pode acumular pontos." });
+      return res.status(400).json({ message: "Invoices issued to 'Consumidor Final' cannot earn points." });
+    }
+    if (user.NIF !== Number(NIFClient)) {
+      return res.status(400).json({ message: "The NIF on this invoice does not belong to your account." });
     }
 
-    const numberNif = Number(NIFClient)
-    if (user.NIF !== numberNif) {
-      console.log(user.NIF, NIFClient)
-      return res.status(400).json({ message: "O NIF nesta fatura não pertence à sua conta." });
-    }
-
-    // Validações do Formato ATCUD da Autoridade Tributária
-    if (!CodeATCUD || typeof CodeATCUD !== "string") return res.status(400).json({ message: "Código ATCUD ausente ou inválido." });
+    // 5. Format Validations
     const atcudRegex = /^[A-Z0-9]+-[0-9]+$/;
-    if (!atcudRegex.test(CodeATCUD)) return res.status(400).json({ message: "O formato do código ATCUD é inválido." });
-    if (CodeATCUD.length < 10) return res.status(400).json({ message: "Código ATCUD demasiado curto para ser autêntico." });
-
+    if (!CodeATCUD || !atcudRegex.test(CodeATCUD) || CodeATCUD.length < 10) {
+      return res.status(400).json({ message: "Invalid ATCUD format." });
+    }
     const documentosElegiveis = ["FT", "FS", "FR"];
     if (!TypeDocument || !documentosElegiveis.includes(TypeDocument.toUpperCase())) {
-      return res.status(400).json({ message: "Este tipo de documento não é válido para ganhar pontos." });
+      return res.status(400).json({ message: "This document type is not valid for points." });
     }
-
     if (!StateDocument || StateDocument.toUpperCase() !== "N") {
-      return res.status(400).json({ message: "Apenas faturas em estado 'Normal' podem acumular pontos." });
+      return res.status(400).json({ message: "Only 'Normal' state invoices can earn points." });
     }
-
     if (BoughtValue < 1) {
-      return res.status(400).json({ message: "O valor gasto é inferior a 1€." });
+      return res.status(400).json({ message: "Amount spent is less than 1€." });
     }
 
-    // Validação de Elegibilidade da Campanha
+    // 6. Campaign Eligibility Check
     const store = await Business.findOne({ NIF: Number(NIFStore) }).populate("campaigns.campaign");
-    if (!store) return res.status(404).json({ message: "Esta loja não está registada na aplicação." })
+    if (!store) return res.status(404).json({ message: "This store is not registered in the app." });
+    
     const activeCampaignEntry = store.campaigns.find((entry) => {
       if (entry.status !== "aprovado") return false;
       const camp = entry.campaign;
@@ -1378,54 +1572,48 @@ app.post("/lerFatura", strictLimiter, authorize(["cidadao", "comerciante", "cama
     });
     
     if (!activeCampaignEntry) {
-      return res.status(400).json({ message: "Esta loja não tem nenhuma campanha de pontos ativa no momento." });
+      return res.status(400).json({ message: "This store has no active points campaign at the moment." });
     }
 
-    // Aplicação de Limites de Gamificação (Rate Limiting)
+    // 7. Gamification Rate Limiting (20 invoices per day)
     const inicioDoDia = new Date();
     inicioDoDia.setHours(0, 0, 0, 0);
     const faturasLidasHoje = await Invoice.countDocuments({ user: user._id, createdAt: { $gte: inicioDoDia } });
-
     if (faturasLidasHoje >= 20) {
-      return res.status(429).json({ message: "Limite diário atingido. Só pode registar 20 faturas por dia." });
+      return res.status(429).json({ message: "Daily limit reached. You can only register 20 invoices per day." });
     }
 
+    // 8. Date Validation
     const invoiceYear = parseInt(BoughtDate.substring(0, 4));
     const invoiceMonth = parseInt(BoughtDate.substring(4, 6)) - 1;
     const invoiceDay = parseInt(BoughtDate.substring(6, 8));
     const dataDaFatura = new Date(invoiceYear, invoiceMonth, invoiceDay);
-
     if (dataDaFatura > new Date()) {
-      return res.status(400).json({ message: "A data da fatura não pode ser futura." });
+      return res.status(400).json({ message: "Invoice date cannot be in the future." });
     }
 
-    // Processamento e Persistência
+    // 9. Persist Data & Award Points
     const pointsDeserved = Math.trunc(BoughtValue);
     user.Points += pointsDeserved;
     await user.save();
 
     await Invoice.create({
-      user: user._id,
-      business: store._id,
-      ATCUD: CodeATCUD,
-      hash: hash,
-      amount: BoughtValue,
-      purchaseDate: BoughtDate,
+      user: user._id, business: store._id, ATCUD: CodeATCUD, hash: hash, amount: BoughtValue, purchaseDate: BoughtDate,
     });
 
     return res.status(200).json({
-      sucesso: "Fatura lida com sucesso!",
+      sucesso: "Invoice processed successfully!",
       pontosGanhos: pointsDeserved,
       saldoAtual: user.Points,
     });
   } catch (error) {
-    console.error("Erro no processamento da fatura:", error);
-    return res.status(500).json({ erro: "Ocorreu um erro interno no servidor ao processar a fatura." });
+    console.error("Invoice Processing Error:", error);
+    return res.status(500).json({ erro: "Internal server error processing invoice." });
   }
 });
 
 // ============================================================================
-// 9. GESTÃO DE CAMPANHAS E PROCESSAMENTO AVANÇADO DE IMAGENS (SHARP)
+// 9. CAMPAIGN MANAGEMENT ROUTES
 // ============================================================================
 
 const uploadCampanha = upload.fields([
@@ -1434,99 +1622,89 @@ const uploadCampanha = upload.fields([
 ]);
 
 /**
- * Criação de uma campanha promocional.
- * Utiliza o módulo Sharp para otimizar imediatamente as imagens geradas, garantindo
- * performance (formato WebP) e poupança de armazenamento no servidor.
+ * @swagger
+ * /criarCampanha:
+ *   post:
+ *     summary: Create a new campaign (City Council only)
+ *     tags: [Campaigns]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               titulo: { type: string }
+ *               slogan: { type: string }
+ *               descricao: { type: string }
+ *               listaCAES: { type: string } # JSON string array
+ *               dataInicio: { type: string }
+ *               dataExpiracao: { type: string }
+ *               normas: { type: string }
+ *               packs: { type: string } # JSON string array
+ *               logo: { type: string, format: binary }
+ *               panfleto: { type: string, format: binary }
+ *     responses:
+ *       200: { description: Campaign created successfully. }
+ *       500: { description: Server error. }
  */
 app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, res) => {
   try {
     const { titulo, slogan, descricao, listaCAES, dataInicio, dataExpiracao, normas, packs } = req.body;
 
-    console.log(req.body);
-
     let parsedPacks = packs ? (typeof packs === 'string' ? JSON.parse(packs) : packs) : [];
     let parsedCAES = listaCAES ? (typeof listaCAES === 'string' ? JSON.parse(listaCAES) : listaCAES) : [];
 
-    // Inicialização das variáveis de URL para garantir a sua disponibilidade no momento da persistência
     let logoUrl = "";
     let panfletoUrl = "";
 
-    // --- Processamento do Logótipo ---
+    // Process Logo
     if (req.files && req.files['logo'] && req.files['logo'][0]) {
       const logoFile = req.files['logo'][0];
-      
-      // Obter o nome original do ficheiro gerado pelo Multer
       const nomeSemExtensao = path.parse(logoFile.filename).name;
       const webpFilename = `${Date.now()}-${nomeSemExtensao}_logo.webp`;
       const logoTargetPath = path.join('uploads/imagens/', webpFilename);
       
       try {
-        await sharp(logoFile.path)
-          .resize({ width: 800 })
-          .toFormat('webp')
-          .webp({ quality: 80 })
-          .toFile(logoTargetPath);
-          
-        logoUrl = `/uploads/imagens/${webpFilename}`; // Caminho relativo formatado para o Front-End
+        await sharp(logoFile.path).resize({ width: 800 }).toFormat('webp').webp({ quality: 80 }).toFile(logoTargetPath);
+        logoUrl = `/uploads/imagens/${webpFilename}`;
       } catch (e) {
-        console.error("Erro no processamento do logo:", e);
         try { fs.unlinkSync(logoFile.path); } catch (err) {}
-        return res.status(500).json({ message: "Erro ao processar o logótipo da campanha." });
+        return res.status(500).json({ message: "Error processing campaign logo." });
       }
-      
-      // Limpeza do ficheiro temporário
-      try { fs.unlinkSync(logoFile.path); } catch (e) { console.error("Erro ao apagar logo temporário:", e); }
+      try { fs.unlinkSync(logoFile.path); } catch (e) {}
     } 
 
-    // --- Processamento do Panfleto ---
+    // Process Flyer
     if (req.files && req.files['panfleto'] && req.files['panfleto'][0]) {
       const panfletoFile = req.files['panfleto'][0];
-      
-      // Obter o nome original do ficheiro gerado pelo Multer
       const nomeSemExtensao = path.parse(panfletoFile.filename).name;
-      const webpFilename = `${Date.now()}-${nomeSemExtensao}_panfleto.webp`;
+      const webpFilename = `${Date.now()}-${nomeSemExtensao}_flyer.webp`;
       const panfletoTargetPath = path.join('uploads/imagens/', webpFilename);
 
       try {
-        await sharp(panfletoFile.path)
-          .resize({ width: 800 })
-          .toFormat('webp')
-          .webp({ quality: 80 })
-          .toFile(panfletoTargetPath);
-          
-        panfletoUrl = `/uploads/imagens/${webpFilename}`; // Caminho relativo formatado para o Front-End
+        await sharp(panfletoFile.path).resize({ width: 800 }).toFormat('webp').webp({ quality: 80 }).toFile(panfletoTargetPath);
+        panfletoUrl = `/uploads/imagens/${webpFilename}`;
       } catch (e) {
-        console.error("Erro no processamento do panfleto:", e);
         try { fs.unlinkSync(panfletoFile.path); } catch (err) {}
-        return res.status(500).json({ message: "Erro ao processar o panfleto da campanha." });
+        return res.status(500).json({ message: "Error processing flyer." });
       }
-      
-      // Limpeza do ficheiro temporário
-      try { fs.unlinkSync(panfletoFile.path); } catch (e) { console.error("Erro ao apagar panfleto temporário:", e); }
+      try { fs.unlinkSync(panfletoFile.path); } catch (e) {}
     }
 
-    // --- Registo da Campanha na Base de Dados ---
     const newCampaign = new Campaign({
-      createdBy: req.user.id,
-      titulo,
-      slogan,
-      descricao,
-      listaCAES: parsedCAES, 
+      createdBy: req.user.id, titulo, slogan, descricao, listaCAES: parsedCAES, 
       dataInicio: dataInicio ? new Date(dataInicio) : undefined, 
       DataExpiracao: dataExpiracao ? new Date(dataExpiracao) : undefined,
-      normas,
-      packs: parsedPacks,
-      logo: logoUrl,
-      panfleto: panfletoUrl
+      normas, packs: parsedPacks, logo: logoUrl, panfleto: panfletoUrl
     });
     
     await newCampaign.save();
-    
-    return res.status(200).json({ message: "Campanha criada com sucesso!", id: newCampaign._id });
-
+    return res.status(200).json({ message: "Campaign created successfully!", id: newCampaign._id });
   } catch (error) {
-    console.error("Erro ao criar campanha:", error);
-    return res.status(500).json({ message: "Erro interno ao processar a campanha." });
+    console.error("Error creating campaign:", error);
+    return res.status(500).json({ message: "Internal server error processing campaign." });
   }
 });
 
@@ -1534,11 +1712,11 @@ app.post("/criarCampanha", authorize(["camara"]), uploadCampanha, async (req, re
  * @swagger
  * /listaCampanhas:
  *   get:
- *     summary: Listar todas as campanhas
- *     tags: [Campanhas e Faturas]
+ *     summary: List all campaigns
+ *     tags: [Campaigns]
  *     responses:
- *       200:
- *         description: Lista de campanhas
+ *       200: { description: List of campaigns. }
+ *       500: { description: Server error. }
  */
 app.get("/listaCampanhas", async (req, res) => {
   try {
@@ -1550,41 +1728,63 @@ app.get("/listaCampanhas", async (req, res) => {
     }));
     res.status(200).json(formatadas);
   } catch (err) {
-    res.status(500).json("Erro ao listar as campanhas");
+    res.status(500).json("Error listing campaigns.");
   }
 });
 
-// ==========================================
-//Verificar se um negócio pode aderir a uma campanha
-
+/**
+ * @swagger
+ * /campanhas/aderir:
+ *   post:
+ *     summary: Merchant applies a business to a campaign
+ *     tags: [Campaigns]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - businessId
+ *               - campaignId
+ *             properties:
+ *               businessId: { type: string }
+ *               campaignId: { type: string }
+ *     responses:
+ *       200: { description: Application sent successfully. }
+ *       400: { description: Already applied. }
+ *       404: { description: Business not found. }
+ */
 app.post("/campanhas/aderir", authorize(["comerciante"]), async (req, res) => {
   const { businessId, campaignId } = req.body;
-  
   try {
-    // 1. Encontra APENAS o negócio selecionado
     const business = await Business.findById(businessId);
-    if (!business) return res.status(404).json({ message: "Negócio não encontrado" });
+    if (!business) return res.status(404).json({ message: "Business not found." });
 
-    // 2. Verifica se já existe um pedido para esta campanha neste negócio
     const jaAderiu = business.campaigns.find(c => c.campaign.toString() === campaignId);
-    if (jaAderiu) return res.status(400).json({ message: "Já submeteu candidatura para este negócio." });
+    if (jaAderiu) return res.status(400).json({ message: "Application already submitted for this business." });
 
-    // 3. Adiciona apenas a este negócio
-    business.campaigns.push({
-      campaign: campaignId,
-      status: "pendente",
-      requestDate: new Date()
-    });
-    
+    business.campaigns.push({ campaign: campaignId, status: "pendente", requestDate: new Date() });
     await business.save();
-    return res.status(200).json({ message: "Pedido enviado com sucesso!" });
-
+    return res.status(200).json({ message: "Application sent successfully!" });
   } catch (error) {
-    return res.status(500).json({ message: "Erro interno" });
+    return res.status(500).json({ message: "Internal server error." });
   }
 });
-// ==========================================
-// Listar campanhas compatíveis com os negócios do comerciante
+
+/**
+ * @swagger
+ * /campanhas/comerciante-disponiveis:
+ *   get:
+ *     summary: List campaigns matching merchant's CAEs
+ *     tags: [Campaigns]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: List of compatible campaigns. }
+ *       500: { description: Server error. }
+ */
 app.get("/campanhas/comerciante-disponiveis", authorize(["comerciante"]), async (req, res) => {
   try {
     const hoje = new Date();
@@ -1592,16 +1792,6 @@ app.get("/campanhas/comerciante-disponiveis", authorize(["comerciante"]), async 
     
     const meusNegocios = await Business.find({ owner: ownerId, status: "aprovado" });
     const todosOsMeusCaes = [...new Set(meusNegocios.flatMap(n => n.listaCAES || []))];
-
-    const totalCampanhasAtivas = await Campaign.countDocuments({ estado: "ativa" });
-
-    const campComDatasCertas = await Campaign.find({
-        estado: "ativa",
-        DataInicio: { $lte: hoje },
-        DataExpiracao: { $gte: hoje }
-    });
-    
-    campComDatasCertas.forEach(c => console.log(`   Campanha "${c.titulo}" tem listaCAES:`, c.listaCAES));
 
     const campanhas = await Campaign.find({
         DataInicio: { $lte: hoje },
@@ -1611,17 +1801,26 @@ app.get("/campanhas/comerciante-disponiveis", authorize(["comerciante"]), async 
 
     return res.status(200).json(campanhas);
   } catch (error) {
-    console.error("ERRO:", error);
-    return res.status(500).json({ message: "Erro" });
+    console.error("ERROR:", error);
+    return res.status(500).json({ message: "Error fetching compatible campaigns." });
   }
 });
-// =========================================================================
-// Câmara lista todos os negócios com candidaturas PENDENTES
+
+/**
+ * @swagger
+ * /candidaturasCampanha:
+ *   get:
+ *     summary: List all pending campaign applications (City Council only)
+ *     tags: [Campaigns]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: List of pending campaign applications. }
+ *       500: { description: Server error. }
+ */
 app.get("/candidaturasCampanha", authorize(["camara"]), async (req, res) => {
   try {
-
     const businesses = await Business.find({}).populate('campaigns.campaign');
-    
     let candidaturas = [];
     
     businesses.forEach(business => {
@@ -1640,123 +1839,98 @@ app.get("/candidaturasCampanha", authorize(["camara"]), async (req, res) => {
 
     res.json(candidaturas);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar candidaturas" });
-  }
-});
-
-// =========================================================================
-// câmara envia a decisão (Aceitar ou Rejeitar candidaturas)
-app.post("/decidirAdesaoCampanha",  authorize(["camara"]), async (req, res) => {
-  try {
-    const { businessId, campaignId, acao } = req.body; 
-
-    if (!businessId || !campaignId || !["aprovado", "rejeitado"].includes(acao)) {
-      return res.status(400).json({ message: "Dados inválidos. A ação deve ser 'aprovado' ou 'rejeitado'." });
-    }
-
-    const business = await Business.findById(businessId);
-    if (!business) {
-      return res.status(404).json({ message: "Negócio não encontrado." });
-    }
-
-    // Procura o pedido correto no array do negócio
-    const candidatura = business.campaigns.find(
-      (c) => c.campaign.toString() === campaignId.toString()
-    );
-
-    if (!candidatura) {
-      return res.status(404).json({ message: "Pedido de adesão não encontrado neste negócio." });
-    }
-
-    // Atualiza o estado conforme a decisão enviada 
-    candidatura.status = acao;
-    await business.save();
-
-    return res.status(200).json({ 
-      success: true, 
-      message: `Candidatura avaliada com sucesso como: ${acao}.` 
-    });
-
-  } catch (error) {
-    console.error("Erro ao salvar decisão da câmara:", error);
-    res.status(500).json({ message: "Erro interno ao salvar decisão." });
+    res.status(500).json({ message: "Error fetching applications." });
   }
 });
 
 /**
  * @swagger
+ * /decidirAdesaoCampanha:
+ *   post:
+ *     summary: City Council approves or rejects campaign application
+ *     tags: [Campaigns]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - businessId
+ *               - campaignId
+ *               - acao
+ *             properties:
+ *               businessId: { type: string }
+ *               campaignId: { type: string }
+ *               acao: { type: string, enum: [aprovado, rejeitado] }
+ *     responses:
+ *       200: { description: Application evaluated successfully. }
+ *       400: { description: Invalid data. }
+ *       404: { description: Business or application not found. }
+ */
+app.post("/decidirAdesaoCampanha", authorize(["camara"]), async (req, res) => {
+  try {
+    const { businessId, campaignId, acao } = req.body; 
+    if (!businessId || !campaignId || !["aprovado", "rejeitado"].includes(acao)) {
+      return res.status(400).json({ message: "Invalid data. Action must be 'aprovado' or 'rejeitado'." });
+    }
+
+    const business = await Business.findById(businessId);
+    if (!business) return res.status(404).json({ message: "Business not found." });
+
+    const candidatura = business.campaigns.find((c) => c.campaign.toString() === campaignId.toString());
+    if (!candidatura) return res.status(404).json({ message: "Application not found in this business." });
+
+    candidatura.status = acao;
+    await business.save();
+
+    return res.status(200).json({ success: true, message: `Application evaluated successfully as: ${acao}.` });
+  } catch (error) {
+    console.error("Error saving council decision:", error);
+    res.status(500).json({ message: "Internal server error saving decision." });
+  }
+});
+
+// ============================================================================
+// 10. DASHBOARD & ANALYTICS ROUTES
+// ============================================================================
+
+/**
+ * @swagger
  * /dashboard:
  *   get:
- *     summary: Obter estatísticas para o dashboard (Câmara)
+ *     summary: Get statistics for the City Council dashboard
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
  *     responses:
- *       200:
- *         description: Dados estatísticos
+ *       200: { description: Statistical data retrieved successfully. }
+ *       500: { description: Server error. }
  */
 app.get("/dashboard", authorize(["camara"]), async (req, res) => {
   try {
-
     const [cityAndCountryStats, businessByCategory, totalUsersCount, totalBusinessesCount] = await Promise.all([
-
-    // Consulta 1: Agrupar cidades, fazer o Join, e devolver a lista
       User.aggregate([
-        // Agrupar PRIMEIRO 
         { $group: { _id: "$city", total: { $sum: 1 } } },
-        
-        // Fazer o lookup na lista que já está curta
-        {
-          $lookup: {
-            from: CitiesAndCountries.collection.name,
-            localField: "_id", // O _id agora é a city do $group
-            foreignField: "name",
-            as: "locationData"
-          }
-        },
+        { $lookup: { from: CitiesAndCountries.collection.name, localField: "_id", foreignField: "name", as: "locationData" } },
         { $unwind: { path: "$locationData", preserveNullAndEmptyArrays: false } },
-        { 
-          $project: { 
-            city: "$_id", 
-            country: "$locationData.country_name", 
-            total: 1 
-          } 
-        }
+        { $project: { city: "$_id", country: "$locationData.country_name", total: 1 } }
       ]),
-
-      // Consulta 2: Agrupar os Negócios
       Business.aggregate([{ $group: { _id: "$category", total: { $sum: 1 } } }]),
-
-      // Consulta 3: Contar Utilizadores
       User.countDocuments(),
-
-      // Consulta 4: Contar Negócios
       Business.countDocuments()
     ]);
 
-    // 2. Separar os dados de Cidades (Portugal) e Países rapidamente em JavaScript
     const usersByCity = [];
     const countryMap = {};
 
     cityAndCountryStats.forEach(stat => {
-      // Preencher o array de cidades de Portugal
-      if (stat.country === "Portugal") {
-        usersByCity.push({ _id: stat.city, total: stat.total });
-      }
-
-      // Preencher o mapa global de Países
-      if (countryMap[stat.country]) {
-        countryMap[stat.country] += stat.total;
-      } else {
-        countryMap[stat.country] = stat.total;
-      }
+      if (stat.country === "Portugal") usersByCity.push({ _id: stat.city, total: stat.total });
+      countryMap[stat.country] = (countryMap[stat.country] || 0) + stat.total;
     });
 
-    // Converter o objeto do countryMap num Array limpo
-    const usersByCountry = Object.keys(countryMap).map(key => ({
-      _id: key,
-      total: countryMap[key]
-    }));
+    const usersByCountry = Object.keys(countryMap).map(key => ({ _id: key, total: countryMap[key] }));
 
     res.status(200).json({
       cities: usersByCity,
@@ -1766,112 +1940,15 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
       totalBusinesses: totalBusinessesCount,
     });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao obter as informações" });
+    res.status(500).json({ message: "Error retrieving information." });
   }
 });
 
 // ============================================================================
-// 11. GESTÃO DE PERFIL E ATUALIZAÇÃO DE DADOS 
+// 11. SERVER INITIALIZATION
 // ============================================================================
-
-/**
- * Atualização do Perfil do Utilizador.
- * Processa a atualização de dados em texto e a substituição do avatar, mantendo o disco limpo.
- */
-app.post(
-  "/editarUser/:id",
-  authorize(["camara", "comerciante", "cidadao"]),
-  upload.single("avatar"),
-  async (req, res) => {
-    try {
-      const user = await User.findById(req.user.id);
-      if (!user) return res.status(404).json({ message: "Utilizador não encontrado." });
-
-      const { name: receivedName, city: receivedCity, NIF: receivedNIF } = req.body;
-
-      // Mutação Condicional: Apenas atualiza propriedades que efetivamente sofreram alterações
-      if (user.name !== receivedName) user.name = receivedName;
-      if (user.city !== receivedCity) user.city = receivedCity;
-      if (receivedNIF != null) user.NIF = receivedNIF;
-      console.log(receivedNIF)
-      // Tratamento Exclusivo da Imagem de Perfil (Avatar)
-      if (req.file) {
-        console.log(req.file)
-        //Apagar o avatar antigo do disco (se existir)
-        if (user.Avatar && user.Avatar.startsWith('/uploads/')) {
-          const caminhoAntigo = path.join(process.cwd(), user.Avatar.replace(/^\//, ''));
-          if (fs.existsSync(caminhoAntigo)) {
-            fs.unlinkSync(caminhoAntigo);
-            console.log("Avatar antigo apagado do disco.");
-          }
-        }
-
-        const nomeSemExtensao = path.parse(req.file.filename).name;
-        const webpFilename = `${nomeSemExtensao}_avatar.webp`;
-        const targetPath = path.join('uploads/imagens/', webpFilename);
-
-        try {
-          await sharp(req.file.path)
-            .resize({ width: 400, height: 400, fit: 'cover' })
-            .toFormat('webp')
-            .webp({ quality: 80 })
-            .toFile(targetPath);
-            
-          user.Avatar = `/uploads/imagens/${webpFilename}`;
-        } finally {
-          console.log(user.Avatar)
-          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        }
-      }
-
-      await user.save();
-
-      res.status(200).json({ 
-        message: "Alterações guardadas com sucesso!",
-        user: {
-          name: user.name,
-          city: user.city,
-          NIF: user.NIF,
-          avatar: user.Avatar
-        }
-      });
-      
-    } catch (error) {
-      console.error("Erro ao alterar informações:", error);
-      res.status(500).json({ message: "Erro ao alterar as informações" });
-    }
-  },
-);
-
-// ============================================================================
-// 12. DOCUMENTAÇÃO SWAGGER & ARRANQUE DA APLICAÇÃO
-// ============================================================================
-
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: "3.0.0",
-    info: {
-      title: "API de Tomar",
-      version: "1.0.0",
-      description: "Documentação oficial dos endpoints da aplicação de Gamificação local.",
-    },
-    servers: [
-      { url: "https://tomar-rg-b0bvd9e7fkdhatbh.westeurope-01.azurewebsites.net", description: "Produção (Azure)" },
-      { url: "http://localhost:3000", description: "Servidor Local (Dev)" },
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
-      },
-    },
-  },
-  apis: ["./index.js"],
-};
-
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Servidor ligado com sucesso na porta ${PORT}`),
+  console.log(`Server started successfully on port ${PORT}`)
 );

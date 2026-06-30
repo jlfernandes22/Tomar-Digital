@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, KeyboardTypeOptions } from 'react-native';
+import { View, KeyboardTypeOptions, AccessibilityRole } from 'react-native';
 import {
   Button,
   Dialog,
@@ -14,6 +14,7 @@ import {
 import { useAppTheme } from '@/context/ThemeContext';
 import {
   hasInvisibleChars,
+  isValidNIF,
   isValidText,
   stripInvisibleChars,
 } from '@/utils/textValidation';
@@ -37,6 +38,12 @@ interface CustomTextInputProps {
   keyboardType?: KeyboardTypeOptions;
   lenght?: number; // Note: Kept original spelling to maintain compatibility with callers
   required?: boolean;
+  // --- Accessibility props ---
+  // Passed through to the underlying TextInput so screen readers can announce
+  // a meaningful label and hint for each field.
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: AccessibilityRole;
 }
 
 /**
@@ -63,6 +70,9 @@ const CustomTextInput = ({
   isNIF,
   lenght,
   required,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole,
 }: CustomTextInputProps) => {
   // --- Hooks ---
   const { t } = useTranslation();
@@ -94,7 +104,14 @@ const CustomTextInput = ({
   );
 
   // A required field is considered to have an error if it's empty or contains only invisible chars
-  const hasError = required ? !isValidText(value) : false;
+  const hasRequiredError = required ? !isValidText(value) : false;
+
+  // NIF format validation: only validates when the field has input.
+  // An empty NIF is valid (the field is optional) — we only flag errors
+  // when the user has typed something that doesn't pass the checksum.
+  const hasNIFError = isNIF && value.length > 0 ? !isValidNIF(value) : false;
+
+  const hasError = hasRequiredError || hasNIFError;
 
   // --- Handlers ---
 
@@ -132,6 +149,18 @@ const CustomTextInput = ({
         keyboardType={keyboardType}
         maxLength={currentMaxLength}
         error={hasError}
+        // --- Accessibility ---
+        // If no explicit label is provided, fall back to the visible label prop
+        // so screen readers always have something to announce.
+        accessible={true}
+        accessibilityLabel={accessibilityLabel || label}
+        accessibilityHint={accessibilityHint}
+        accessibilityRole={accessibilityRole}
+        // Mark the input as a header for required fields so screen readers
+        // can navigate quickly between form fields.
+        textContentType={
+          isEmail ? 'emailAddress' : isPassword ? 'password' : 'none'
+        }
         // Conditionally render the "eye" icon to toggle password visibility
         right={
           isPassword ? (
@@ -153,9 +182,18 @@ const CustomTextInput = ({
       />
 
       {/* Validation Error Text */}
-      {hasError && (
-        <HelperText type="error" visible={hasError}>
+      {hasRequiredError && (
+        <HelperText type="error" visible={hasRequiredError}>
           {t('common.obrigatorio')}
+        </HelperText>
+      )}
+
+      {/* NIF format error — shown only when the user has typed an invalid NIF */}
+      {hasNIFError && (
+        <HelperText type="error" visible={hasNIFError}>
+          {t('validation.nif_invalid', {
+            defaultValue: 'NIF inválido. Verifique os 9 dígitos.',
+          })}
         </HelperText>
       )}
 
