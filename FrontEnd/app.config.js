@@ -9,8 +9,15 @@ module.exports = {
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     ios: {
+      bundleIdentifier: 'com.jlfernandes.TomarDigital',
+      config: {
+        googleMapsApiKey:
+          process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'CHAVE_TEMPORARIA',
+      },
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
+          'Precisamos da tua localização para ter acesso a todas as funcionalidades.',
+        NSLocationAlwaysAndWhenInUseUsageDescription:
           'Precisamos da tua localização para ter acesso a todas as funcionalidades.',
         NSPhotoLibraryUsageDescription:
           'Precisamos de acesso às tuas fotos para poder carregar fotos.',

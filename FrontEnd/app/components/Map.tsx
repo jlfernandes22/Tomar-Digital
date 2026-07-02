@@ -109,7 +109,7 @@ const SingleMap = forwardRef<MapRefType, MapProps>(
           key={mapKey}
           provider="google"
           ref={mapRef}
-          style={{ flex: 1, padding: 16 }}
+          style={{ flex: 1 }}
           initialRegion={TOMAR_REGION}
           scrollEnabled={true}
           onPress={e => {
@@ -337,7 +337,7 @@ const ClusterMap = forwardRef<MapRefType, MapProps>(
             key={mapKey}
             provider="google"
             ref={mapRef}
-            style={{ flex: 1, padding: 16 }}
+            style={{ flex: 1 }}
             initialRegion={mapRegion}
             showsUserLocation={true}
             scrollEnabled={true}
