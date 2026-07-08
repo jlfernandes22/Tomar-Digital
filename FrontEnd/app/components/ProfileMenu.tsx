@@ -165,6 +165,33 @@ const ProfileDetails = () => {
                 </>
               )}
 
+              {/* My Purchases (Voucher Wallet) — visible to cidadao and comerciante */}
+              {user.role !== 'camara' && (
+                <>
+                  <Menu.Item
+                    onPress={() =>
+                      handleMenuAction(() =>
+                        router.push('/components/MyPurchases'),
+                      )
+                    }
+                    leadingIcon={({ size }) => (
+                      <Image
+                        source={images.compraImg}
+                        style={{
+                          width: size,
+                          height: size,
+                          tintColor: theme.colors.onSurfaceVariant,
+                        }}
+                      />
+                    )}
+                    title={t('profile.my_purchases', {
+                      defaultValue: 'Minhas Compras',
+                    })}
+                  />
+                  <Divider />
+                </>
+              )}
+
               <Menu.Item
                 onPress={() =>
                   handleMenuAction(() => router.push('/components/Preferences'))
@@ -355,7 +382,12 @@ const ProfileDetails = () => {
               accessibilityElementsHidden={true}
               importantForAccessibility="no-hide-descendants"
             />
-            <View style={{ marginLeft: 20 }}>
+            {/*
+              flex: 1 ensures this View takes the remaining width after the icon,
+              preventing long emails from overflowing the card. Without it, the
+              View expands to fit the full email text, pushing past the border.
+            */}
+            <View style={{ marginLeft: 20, flex: 1 }}>
               <Text style={{ fontWeight: 'bold', fontSize: 15 }}>
                 {t('profile.email_address', {
                   defaultValue: 'Endereço de E-mail',
@@ -363,7 +395,7 @@ const ProfileDetails = () => {
               </Text>
               <Text
                 style={{ fontWeight: 'bold', fontSize: 13 }}
-                numberOfLines={1}
+                numberOfLines={2}
               >
                 {user.email}
               </Text>

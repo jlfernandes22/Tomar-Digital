@@ -41,9 +41,7 @@ export const isValidText = (value: string): boolean => {
  * @param nif O NIF como string ou número.
  * @returns true se o NIF for válido, false caso contrário.
  */
-export const isValidNIF = (
-  nif: string | number | null | undefined,
-): boolean => {
+export const isValidNIF = (nif: string | number | null | undefined): boolean => {
   if (nif === null || nif === undefined) return false;
 
   const sNif = String(nif).trim();
@@ -61,8 +59,7 @@ export const isValidNIF = (
     sum += parseInt(sNif[i], 10) * (9 - i);
   }
   const remainder = sum % 11;
-  const calculatedCheckDigit =
-    remainder === 0 || remainder === 1 ? 0 : 11 - remainder;
+  const calculatedCheckDigit = remainder === 0 || remainder === 1 ? 0 : 11 - remainder;
 
   return calculatedCheckDigit === parseInt(sNif[8], 10);
 };

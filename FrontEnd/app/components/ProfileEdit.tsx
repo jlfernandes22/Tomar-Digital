@@ -370,8 +370,7 @@ const EditProfile = () => {
                     isNIF
                     className="mb-4 w-full"
                     accessibilityLabel={t('accessibility.edit_nif', {
-                      defaultValue:
-                        'Campo de NIF para edição de perfil (opcional)',
+                      defaultValue: 'Campo de NIF para edição de perfil (opcional)',
                     })}
                     accessibilityHint={t('accessibility.edit_nif_hint', {
                       defaultValue:

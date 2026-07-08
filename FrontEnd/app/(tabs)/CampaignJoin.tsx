@@ -5,14 +5,16 @@
  * It fetches campaigns dynamically based on the user's role (e.g., 'comerciante'
  * sees campaigns relevant to their business CAEs, while others see general campaigns).
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, RefreshControl } from 'react-native';
 import { Card, Divider, Surface, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import DetalhesCampanha from '@/app/components/CampaignDetails';
+import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
 import LoadingScreen from '../components/LoadingScreen';
@@ -28,35 +30,58 @@ export default function JoinCampaign() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+
+  // Snackbar state — owned by this parent so messages persist after the
+  // CampaignDetails modal closes and render above the modal overlay.
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+
+  // Error dialog state — owned by this parent so error dialogs render above
+  // the modal overlay (same reason as the snackbar).
+  const [errorDialogVisible, setErrorDialogVisible] = useState(false);
+  const [errorDialogTitle, setErrorDialogTitle] = useState('');
+  const [errorDialogText, setErrorDialogText] = useState('');
+
+  /**
+   * Shows a snackbar message. Passed to CampaignDetails via the onSnackbar
+   * prop so the modal can trigger feedback without rendering its own snackbar.
+   * Used ONLY for success messages.
+   */
+  const showSnackbar = (message: string) => {
+    setSnackbarMessage(message);
+    setSnackbarVisible(true);
+  };
+
+  /**
+   * Shows an error dialog. Passed to CampaignDetails via the onError prop.
+   * Used for errors and warnings that require user acknowledgement.
+   */
+  const showError = (title: string, message: string) => {
+    setErrorDialogTitle(title);
+    setErrorDialogText(message);
+    setErrorDialogVisible(true);
+  };
 
   // --- Handlers ---
 
   /**
    * Fetches campaigns from the backend.
-   * Uses a different API endpoint and authentication headers based on the user's role.
-   * Merchants see campaigns relevant to their CAEs, while citizens see all active campaigns.
+   * Citizens see all active campaigns (to browse and buy packs).
+   * Uses GET /listaCampanhas (no auth required).
+   *
+   * The `isRefresh` parameter controls whether we set `loading` (full-screen
+   * LoadingScreen) or `refreshing` (pull-to-refresh spinner).
    */
-  const fetchCampaigns = async () => {
-    setLoading(true);
+  const fetchCampaigns = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
-      const isComerciante = user?.role === 'comerciante';
-
-      const url = isComerciante
-        ? `${API_URL}/campanhas/comerciante-disponiveis`
-        : `${API_URL}/listaCampanhas`;
-
-      const config: RequestInit = isComerciante
-        ? {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${user?.token}`,
-            },
-          }
-        : { method: 'GET' };
-
-      const response = await fetch(url, config);
+      const response = await fetch(`${API_URL}/listaCampanhas`);
       const dados = await response.json();
       setCampaigns(dados);
     } catch (error) {
@@ -64,8 +89,14 @@ export default function JoinCampaign() {
       setCampaigns([]); // Fallback to empty array on failure to prevent crashes
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  /** Pull-to-refresh handler. */
+  const handleRefresh = useCallback(() => {
+    fetchCampaigns(true);
+  }, [fetchCampaigns]);
 
   /** Opens the campaign details modal for a specific campaign. */
   const handleOpenDetails = (campaign: any) => {
@@ -120,7 +151,7 @@ export default function JoinCampaign() {
   // Fetch campaigns on component mount
   useEffect(() => {
     fetchCampaigns();
-  }, []);
+  }, [fetchCampaigns]);
 
   /**
    * Syncs local loading state with the global LoadingContext.
@@ -152,7 +183,7 @@ export default function JoinCampaign() {
             marginBottom: 10,
           }}
         >
-          {t('campaign.join_title')}
+          {t('campaign.join_title_citizen', { defaultValue: 'Campanhas a decorrer' })}
         </Text>
 
         <Divider
@@ -168,6 +199,9 @@ export default function JoinCampaign() {
           renderItem={renderItem}
           keyExtractor={item => item._id?.toString()}
           contentContainerStyle={{ paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
           ListEmptyComponent={
             <Text style={{ textAlign: 'center', marginTop: 20 }}>
               {t('campaign.no_campaigns')}
@@ -184,9 +218,28 @@ export default function JoinCampaign() {
               setShowDetails(false);
               setSelectedCampaign(null); // Clear selection on close
             }}
+            onSnackbar={showSnackbar}
+            onError={showError}
+            onPurchaseSuccess={() => fetchCampaigns(true)}
           />
         )}
       </SafeAreaView>
+
+      {/* Snackbar — rendered at the parent level so it appears above the modal */}
+      <CustomSnackBar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
+
+      {/* Error dialog — rendered at the parent level so it appears above the modal */}
+      <CustomDialog
+        title={errorDialogTitle}
+        visible={errorDialogVisible}
+        onDismiss={() => setErrorDialogVisible(false)}
+      >
+        <Text>{errorDialogText}</Text>
+      </CustomDialog>
     </Surface>
   );
 }

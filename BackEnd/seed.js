@@ -12,6 +12,8 @@ import Invoice from "./models/Invoice.js";
 import Favorite from "./models/Favorite.js";
 import Cae from "./models/Cae.js";
 import CitiesAndCountries from "./models/CitiesAndCountries.js";
+import Redemption from "./models/Redemption.js";
+import { randomBytes } from "crypto";
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 console.log("A ligar a:", MONGO_URI);
@@ -68,6 +70,7 @@ const seedDatabase = async () => {
     await Campaign.deleteMany();
     await Invoice.deleteMany();
     await Favorite.deleteMany();
+    await Redemption.deleteMany();
     await Cae.deleteMany();
     await CitiesAndCountries.deleteMany();
     console.log("🗑️ Dados antigos apagados com sucesso.");
@@ -8359,8 +8362,154 @@ quais não nos foi possível relocalizar Sítio arqueológico.",
       };
     });
 
-    await Business.insertMany(finalBusinesses);
-    console.log(`✅ ${finalBusinesses.length} Negócios reais criados no mapa de Tomar.`);
+    const insertedBusinesses = await Business.insertMany(finalBusinesses);
+    console.log(`✅ ${insertedBusinesses.length} Negócios reais criados no mapa de Tomar.`);
+
+    // ==========================================
+    // SEED: FATURAS E REDENÇÕES (para o dashboard ter dados)
+    // ==========================================
+    // Criar faturas reais para os cidadãos nos negócios que aderiram à campanha
+    const allCitizens = await User.find({ role: "cidadao" });
+    const campaignBusinesses = insertedBusinesses; // Use inserted docs (have _id)
+
+    // --- Step 1: Create invoices (more per citizen so they have enough points) ---
+    const invoicesToCreate = [];
+    let totalPointsAwarded = 0;
+
+    // Give each citizen 2-5 invoices with amounts between 15€-90€
+    for (const citizen of allCitizens) {
+      const numInvoices = Math.floor(Math.random() * 4) + 2; // 2-5 invoices
+      for (let j = 0; j < numInvoices; j++) {
+        const business = campaignBusinesses[Math.floor(Math.random() * campaignBusinesses.length)];
+        const amount = parseFloat((Math.random() * 75 + 15).toFixed(2)); // 15€ - 90€
+        const points = Math.trunc(amount);
+
+        invoicesToCreate.push({
+          user: citizen._id,
+          business: business._id,
+          ATCUD: `ATCUD-SEED-${Date.now()}-${invoicesToCreate.length}`,
+          hash: randomBytes(16).toString("hex"),
+          amount: amount,
+          purchaseDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+
+        totalPointsAwarded += points;
+      }
+    }
+
+    await Invoice.insertMany(invoicesToCreate);
+    console.log(`✅ ${invoicesToCreate.length} Faturas criadas (${totalPointsAwarded} pontos distribuídos).`);
+
+    // --- Step 2: Distribute points to citizens ---
+    for (const citizen of allCitizens) {
+      const citizenInvoices = invoicesToCreate.filter(inv => inv.user.toString() === citizen._id.toString());
+      const points = citizenInvoices.reduce((sum, inv) => sum + Math.trunc(inv.amount), 0);
+      if (points > 0) {
+        await User.findByIdAndUpdate(citizen._id, { $inc: { Points: points } });
+      }
+    }
+    console.log(`✅ Pontos distribuídos a ${allCitizens.length} cidadãos.`);
+
+    // --- Step 3: Refresh citizens from DB (they now have points) ---
+    const citizensWithPoints = await User.find({ role: "cidadao", Points: { $gt: 0 } });
+
+    // --- Step 4: Create redemptions (pack purchases) ---
+    // Use ALL campaigns that have packs, not just the first
+    // IMPORTANT: Respect stock limits — don't sell more than pack.stock
+    const redemptionsToCreate = [];
+    // Track how many packs sold per packId so we can update currentStock later
+    const packsSoldCount = {};
+
+    for (const campaign of insertedCampaigns) {
+      if (!campaign.packs || campaign.packs.length === 0) continue;
+
+      for (const pack of campaign.packs) {
+        const pointsCost = pack.pointsCost || 50;
+        const maxStock = pack.stock || 50;
+        const packKey = pack._id.toString();
+        packsSoldCount[packKey] = 0;
+
+        // 30-50% of citizens with enough points want to buy this pack
+        const numWantToBuy = Math.floor(citizensWithPoints.length * (0.3 + Math.random() * 0.2));
+
+        for (let i = 0; i < numWantToBuy; i++) {
+          const citizen = citizensWithPoints[i];
+
+          // Skip if citizen doesn't have enough points
+          if (citizen.Points < pointsCost) continue;
+
+          // STOP if we've sold all stock for this pack
+          if (packsSoldCount[packKey] >= maxStock) break;
+
+          const year = new Date().getFullYear();
+          const random = randomBytes(4).toString("hex").toUpperCase();
+          const pickupCode = `TD-${year}-${random}`;
+
+          // 50% entregue, 35% ativo, 15% expirado
+          const rand = Math.random();
+          let status = "ativo";
+          let validatedAt = null;
+          let validatedBy = null;
+          if (rand < 0.5) {
+            status = "entregue";
+            validatedAt = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
+            const camaraUser = await User.findOne({ role: "camara" });
+            validatedBy = camaraUser ? camaraUser._id : null;
+          } else if (rand < 0.65) {
+            status = "expirado";
+          }
+
+          redemptionsToCreate.push({
+            user: citizen._id,
+            campaign: campaign._id,
+            pack: {
+              packId: pack._id,
+              rewardDescription: pack.rewardDescription,
+              pointsCost: pointsCost,
+            },
+            pickupCode,
+            status,
+            redeemedAt: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000),
+            validatedAt,
+            validatedBy,
+            expiresAt: new Date(new Date(campaign.DataExpiracao).getTime() + 7 * 24 * 60 * 60 * 1000),
+          });
+
+          // Track sold count for this pack
+          packsSoldCount[packKey]++;
+
+          // Deduct points from citizen
+          citizen.Points -= pointsCost;
+          await citizen.save();
+        }
+      }
+    }
+
+    if (redemptionsToCreate.length > 0) {
+      await Redemption.insertMany(redemptionsToCreate);
+      console.log(`✅ ${redemptionsToCreate.length} Redenção(ões) (compra de pacotes) criadas.`);
+
+      // --- Step 5: Update currentStock on each campaign's packs ---
+      // The dashboard calculates "sold" as: pack.stock - pack.currentStock
+      // So we need to decrement currentStock by the number of redemptions per pack.
+      for (const campaign of insertedCampaigns) {
+        let modified = false;
+        for (const pack of campaign.packs) {
+          const packKey = pack._id.toString();
+          const sold = packsSoldCount[packKey] || 0;
+          if (sold > 0) {
+            pack.currentStock = Math.max(0, (pack.stock || 0) - sold);
+            modified = true;
+          }
+        }
+        if (modified) {
+          await campaign.save();
+        }
+      }
+      console.log(`✅ currentStock atualizado em ${insertedCampaigns.length} campanha(s).`);
+    } else {
+      console.log("ℹ️ Nenhuma redenção criada (cidadãos sem pontos suficientes).");
+    }
 
     // ==========================================
     // FIM DO SEED

@@ -41,15 +41,24 @@ const _layout = () => {
             return false;
           if (route.name === 'DashboardTab' && user?.role !== 'camara')
             return false;
-          if (route.name === 'CampaignCreate' && user?.role !== 'camara')
+          if (route.name === 'CampaignIndex' && user?.role !== 'camara')
             return false;
+
+          // CampaignCreate is now accessed via CampaignIndex hub (not a direct tab)
 
           // Only show merchant-specific tabs to the 'comerciante' role.
           if (route.name === 'BusinessAdd' && user?.role !== 'comerciante')
             return false;
           if (route.name === 'BusinessMine' && user?.role !== 'comerciante')
             return false;
-          if (route.name === 'CampaignJoin' && user?.role !== 'comerciante')
+          if (route.name === 'CampaignMerchant' && user?.role !== 'comerciante')
+            return false;
+
+          // CampaignJoin is for citizens only (browse + buy packs).
+          // Merchants have their own CampaignMerchant hub (which exposes
+          // "Ver Campanhas" for browsing/buying and "Aderir a Campanhas" for
+          // managing participation). Camara creates campaigns via CampaignIndex.
+          if (route.name === 'CampaignJoin' && user?.role !== 'cidadao')
             return false;
 
           return true;
@@ -191,12 +200,47 @@ const _layout = () => {
         }}
       />
 
+      {/*
+        CampaignMerchant — Merchant's campaign HUB.
+        Mirrors the Camara's CampaignIndex layout, exposing two cards:
+          - "Ver Campanhas"       → CampaignListMerchant (browse + buy packs)
+          - "Aderir a Campanhas"  → CampaignMerchantJoin (manage participation)
+        A comerciante can ALSO buy packs (the backend /packs/comprar accepts
+        the comerciante role); the previous design hid this flow from merchants.
+      */}
       <Tabs.Screen
-        name="CampaignCreate"
+        name="CampaignMerchant"
         options={{
           tabBarIcon: ({ color }) => (
             <TabIcon icon={images.campaignImg} color={color} />
           ),
+        }}
+      />
+
+      {/*
+        CampaignIndex — Camara's campaign hub.
+        Replaces the old direct CampaignCreate tab. Shows options to:
+        - View all campaigns (CampaignList)
+        - Create a new campaign (CampaignCreate)
+      */}
+      <Tabs.Screen
+        name="CampaignIndex"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.campaignImg} color={color} />
+          ),
+        }}
+      />
+
+      {/*
+        CampaignCreate is kept as a hidden tab route so it can be navigated
+        to via router.push('/components/CampaignCreate'). It has no tab bar
+        icon, so it won't appear in the bottom navigation.
+      */}
+      <Tabs.Screen
+        name="CampaignCreate"
+        options={{
+          href: null, // Hidden from tab bar — accessed via CampaignIndex
         }}
       />
 

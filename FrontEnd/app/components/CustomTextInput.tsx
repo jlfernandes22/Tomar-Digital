@@ -158,9 +158,7 @@ const CustomTextInput = ({
         accessibilityRole={accessibilityRole}
         // Mark the input as a header for required fields so screen readers
         // can navigate quickly between form fields.
-        textContentType={
-          isEmail ? 'emailAddress' : isPassword ? 'password' : 'none'
-        }
+        textContentType={isEmail ? 'emailAddress' : isPassword ? 'password' : 'none'}
         // Conditionally render the "eye" icon to toggle password visibility
         right={
           isPassword ? (

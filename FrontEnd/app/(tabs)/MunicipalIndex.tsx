@@ -62,6 +62,18 @@ export default function CamaraIndex() {
         count: t('camara.pending', { defaultValue: 'Pendentes' }),
         color: theme.colors.secondary,
       },
+      {
+        title: t('camara.validate_packs', {
+          defaultValue: 'Validar Pacotes',
+        }),
+        description: t('camara.validate_packs_desc', {
+          defaultValue: 'Validar códigos e entregar prémios a cidadãos',
+        }),
+        icon: 'qrcode-scan',
+        route: '/components/ValidatePack',
+        count: t('camara.deliver', { defaultValue: 'Entregar' }),
+        color: theme.colors.primary,
+      },
     ],
     [t, theme],
   );

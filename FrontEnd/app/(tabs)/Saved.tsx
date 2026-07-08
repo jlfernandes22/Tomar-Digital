@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Image, FlatList, View } from 'react-native';
+import { Image, FlatList, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Surface, Text, TouchableRipple, Divider } from 'react-native-paper';
@@ -40,6 +40,7 @@ const Saved = () => {
   // --- Local State ---
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // UI Feedback state
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -55,10 +56,14 @@ const Saved = () => {
    * Wrapped in useCallback to ensure a stable reference for useFocusEffect,
    * preventing unnecessary re-renders when the screen regains focus.
    */
-  const carregarFavoritos = useCallback(async () => {
+  const carregarFavoritos = useCallback(async (isRefresh = false) => {
     if (!user?.id) return;
 
-    setLoading(true);
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`);
       const dados = await response.json();
@@ -72,8 +77,14 @@ const Saved = () => {
       setDialogVisible(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [user?.id, t]);
+
+  /** Pull-to-refresh handler. */
+  const handleRefresh = useCallback(() => {
+    carregarFavoritos(true);
+  }, [carregarFavoritos]);
 
   /**
    * Removes a business from favorites using an Optimistic UI approach.
@@ -174,6 +185,9 @@ const Saved = () => {
         data={favoritos}
         keyExtractor={(item: any) => item._id}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
         renderItem={({ item }) => (
           <View className="relative">
             <Surface

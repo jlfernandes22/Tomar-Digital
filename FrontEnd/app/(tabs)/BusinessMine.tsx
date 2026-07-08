@@ -6,7 +6,7 @@
  * UI with a call-to-action if the merchant has no registered businesses.
  */
 import React, { useState, useCallback, useEffect } from 'react';
-import { Image, FlatList, View } from 'react-native';
+import { Image, FlatList, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import {
@@ -57,6 +57,7 @@ const MyBusinesses = () => {
   // --- Local State ---
   const [negocios, setNegocios] = useState<Business[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -67,10 +68,14 @@ const MyBusinesses = () => {
    * Wrapped in useCallback to ensure a stable reference for useFocusEffect,
    * preventing unnecessary re-renders when the screen regains focus.
    */
-  const carregarNegocios = useCallback(async () => {
+  const carregarNegocios = useCallback(async (isRefresh = false) => {
     if (!user?.token) return;
 
-    setLoading(true);
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const response = await fetch(`${API_URL}/meusNegocios`, {
         method: 'GET',
@@ -94,8 +99,14 @@ const MyBusinesses = () => {
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [user?.token, t]);
+
+  /** Pull-to-refresh handler. */
+  const handleRefresh = useCallback(() => {
+    carregarNegocios(true);
+  }, [carregarNegocios]);
 
   // --- Effects ---
 
@@ -156,6 +167,9 @@ const MyBusinesses = () => {
         data={negocios}
         keyExtractor={(item: Business) => item._id}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
         renderItem={({ item }) => (
           <View className="relative">
             <Surface
