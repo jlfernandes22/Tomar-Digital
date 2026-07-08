@@ -29,4 +29,20 @@ export default interface DetalhesProps {
    * counts stay in sync.
    */
   onPurchaseSuccess?: () => void;
+  /**
+   * Optional flag to control whether the merchant "join campaign" flow
+   * (the multi-step business selection + confirmation) is shown inside
+   * the modal.
+   *
+   * - `true` (default): the join flow is shown for comerciantes. Use this
+   *   when the modal is opened from the "Aderir a Campanhas" screen.
+   * - `false`: the join flow is HIDDEN even for comerciantes. Use this
+   *   when the modal is opened from the "Ver Campanhas" screen, where
+   *   the merchant is acting as a customer (browsing + buying packs)
+   *   and shouldn't be prompted to candidate a business.
+   *
+   * The pack-purchase section (visible to cidadao + comerciante) is NOT
+   * affected by this flag — it is controlled by `canBuyPacks` instead.
+   */
+  showJoinFlow?: boolean;
 }

@@ -37,7 +37,7 @@ import CustomDialog from './CustomDialog';
 import LoadingScreen from './LoadingScreen';
 import DetalhesProps from '@/constants/Interfaces/PropsDetails';
 
-const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onPurchaseSuccess }: DetalhesProps) => {
+const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onPurchaseSuccess, showJoinFlow = true }: DetalhesProps) => {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
@@ -285,8 +285,11 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
    */
   useEffect(() => {
     const carregarNegocios = async () => {
-      // Guard clause: only merchants need to load businesses
-      if (!isComerciante || !visible || !campaign?.listaCAES) return;
+      // Guard clause: only merchants need to load businesses, AND only when
+      // the join flow is enabled (i.e. the modal was opened from "Aderir a
+      // Campanhas"). When opened from "Ver Campanhas", showJoinFlow is false
+      // and we skip the fetch entirely to avoid an unnecessary API call.
+      if (!isComerciante || !showJoinFlow || !visible || !campaign?.listaCAES) return;
 
       // Handle CAE being either an array or a single string
       const caeParaBuscar = Array.isArray(renderedCampaign.listaCAES)
@@ -311,7 +314,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
     };
 
     carregarNegocios();
-  }, [visible, user?.token, campaign, isComerciante]);
+  }, [visible, user?.token, campaign, isComerciante, showJoinFlow]);
 
   /**
    * Syncs local loading state with the global LoadingContext.
@@ -629,8 +632,13 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                 )}
               </View>
 
-              {/* --- Merchant Flow: Business join (existing, only for comerciantes) --- */}
-              {isComerciante && (
+              {/* --- Merchant Flow: Business join (only for comerciantes AND only
+                   when the modal was opened from the "Aderir a Campanhas" screen) ---
+                   When the merchant opens the modal from "Ver Campanhas" (where they
+                   act as a customer buying packs), showJoinFlow is false and this
+                   entire section is hidden so the merchant isn't prompted to
+                   candidate a business. */}
+              {isComerciante && showJoinFlow && (
                 <>
                   <Divider style={{ marginVertical: 10 }} />
 
@@ -642,31 +650,49 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                         })}
                       </Text>
 
-                      {meusNegocios.map(negocio => (
-                        <View key={negocio._id} style={{ marginBottom: 12 }}>
-                          <CustomButton
-                            onPress={() => setNegocioSelecionado(negocio._id)}
-                            textColor={
-                              negocioSelecionado === negocio._id
-                                ? '#FFF'
-                                : theme.colors.onSurface
-                            }
-                            accessibilityLabel={t('accessibility.select_name', {
-                              name: negocio.name,
-                              defaultValue: `Selecionar ${negocio.name}`,
-                            })}
-                            accessibilityHint={t(
-                              'accessibility.select_business_campaign',
-                              {
-                                defaultValue:
-                                  'Clica para selecionar este negócio para a campanha',
-                              },
-                            )}
-                          >
-                            {negocio.name}
-                          </CustomButton>
-                        </View>
-                      ))}
+                      {meusNegocios.map(negocio => {
+                        // Track whether THIS specific business is the one currently
+                        // selected. We use this to swap the button colors so the
+                        // selection state is visually obvious.
+                        const isSelected = negocioSelecionado === negocio._id;
+
+                        return (
+                          <View key={negocio._id} style={{ marginBottom: 12 }}>
+                            <CustomButton
+                              onPress={() => setNegocioSelecionado(negocio._id)}
+                              // When NOT selected: use Paper's secondaryContainer
+                              //   (background) + onSecondaryContainer (text) so the
+                              //   button blends with the modal surface like a
+                              //   standard Paper button.
+                              // When selected: use Paper's primary (background) +
+                              //   onPrimary (text) so the selection stands out.
+                              buttonColor={
+                                isSelected
+                                  ? theme.colors.primary
+                                  : theme.colors.secondaryContainer
+                              }
+                              textColor={
+                                isSelected
+                                  ? theme.colors.onPrimary
+                                  : theme.colors.onSecondaryContainer
+                              }
+                              accessibilityLabel={t('accessibility.select_name', {
+                                name: negocio.name,
+                                defaultValue: `Selecionar ${negocio.name}`,
+                              })}
+                              accessibilityHint={t(
+                                'accessibility.select_business_campaign',
+                                {
+                                  defaultValue:
+                                    'Clica para selecionar este negócio para a campanha',
+                                },
+                              )}
+                            >
+                              {negocio.name}
+                            </CustomButton>
+                          </View>
+                        );
+                      })}
 
                       <CustomButton
                         style={{

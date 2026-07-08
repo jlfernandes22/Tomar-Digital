@@ -316,7 +316,7 @@ export default function CampaignMerchantJoin() {
             ListEmptyComponent={
               <View style={{ alignItems: 'center', marginTop: 40 }}>
                 <IconButton
-                  icon="megaphone-off"
+                  icon="shopping-outline"
                   size={48}
                   iconColor={theme.colors.onSurfaceVariant}
                 />
@@ -348,6 +348,9 @@ export default function CampaignMerchantJoin() {
             onSnackbar={showSnackbar}
             onError={showError}
             onPurchaseSuccess={() => fetchCampaigns(true)}
+            // "Aderir a Campanhas" is the merchant's PARTICIPATION flow —
+            // the candidatar-negócio multi-step form MUST appear here.
+            showJoinFlow={true}
           />
         )}
       </Surface>

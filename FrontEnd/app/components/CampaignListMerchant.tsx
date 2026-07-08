@@ -329,7 +329,7 @@ export default function CampaignListMerchant() {
             ListEmptyComponent={
               <View style={{ alignItems: 'center', marginTop: 40 }}>
                 <IconButton
-                  icon="megaphone-off"
+                  icon="shopping-outline"
                   size={48}
                   iconColor={theme.colors.onSurfaceVariant}
                 />
@@ -358,6 +358,10 @@ export default function CampaignListMerchant() {
             onSnackbar={showSnackbar}
             onError={showError}
             onPurchaseSuccess={() => fetchCampaigns(true)}
+            // "Ver Campanhas" is the merchant's CUSTOMER flow (browse + buy
+            // packs). The "candidatar negócio" flow must NOT appear here —
+            // it belongs to the "Aderir a Campanhas" screen instead.
+            showJoinFlow={false}
           />
         )}
       </Surface>

@@ -215,6 +215,11 @@ const seedDatabase = async () => {
         password: hashedPassword,
         city: "Tomar",
         role: "comerciante",
+        // Pontos iniciais para o comerciante demo poder TESTAR a compra de
+        // pacotes (POST /packs/comprar aceita o role comerciante). Sem isto,
+        // o teste do novo hub "Ver Campanhas" exigiria primeiro emitir
+        // faturas noutros negócios para acumular pontos.
+        Points: 500,
         NIF: generateValidNIF(false),
       }),
       buildUser({
@@ -8364,6 +8369,135 @@ quais não nos foi possível relocalizar Sítio arqueológico.",
 
     const insertedBusinesses = await Business.insertMany(finalBusinesses);
     console.log(`✅ ${insertedBusinesses.length} Negócios reais criados no mapa de Tomar.`);
+
+    // ==========================================
+    // SEED: NEGÓCIOS DE TESTE PARA comerciante@tomar.pt
+    // ==========================================
+    // O comerciante@tomar.pt é a conta demo usada para testar manualmente os
+    // fluxos de merchant (criar negócio, aderir a campanhas, e — após o hub
+    // recentemente introduzido — comprar pacotes com pontos).
+    //
+    // Para que o ecrã "Aderir a Campanhas" mostre campanhas com CAEs
+    // correspondentes aos negócios deste comerciante, criamos aqui um conjunto
+    // representativo de 5 negócios cobrindo TODOS os CAEs usados nas duas
+    // campanhas seed:
+    //
+    //   Campanha "Comércio Local Vivo"  → 56101, 56102, 56301, 56302, 47111, 47730, 10712
+    //   Campanha "Tomar Sustentável"    → 47111, 10711, 10712
+    //
+    // Cobertura por negócio:
+    //   1. Restaurante Demo             → 56101 (restaurante c/ espetáculo) — Campanha 1
+    //   2. Café Demo                    → 56302 (cafés)                    — Campanha 1
+    //   3. Pastelaria Demo              → 10712 (pastelaria)               — Campanhas 1 + 2
+    //   4. Mini-Mercado Demo            → 47111 (supermercados)            — Campanhas 1 + 2
+    //   5. Farmácia Demo                → 47730 (produtos farmacêuticos)   — Campanha 1
+    //
+    // Consequência: ao abrir o hub "Aderir a Campanhas" como comerciante@tomar.pt,
+    // o utilizador verá AMBAS as campanhas como elegíveis (matching CAE), podendo
+    // testar a submissão de candidatura. E ao abrir "Ver Campanhas", poderá
+    // comprar pacotes com os 500 pontos iniciais acima.
+    const comercianteDemoUser = getU("comerciante@tomar.pt");
+    const comercianteDemoBusinesses = [
+      {
+        name: "Restaurante Demo do Comerciante",
+        description: "Restaurante de teste para o comerciante@tomar.pt — corresponde ao CAE 56101 da campanha 'Comércio Local Vivo'.",
+        // NOTA: o enum do schema Business.category usa "Restauração" (não
+        // "Restaurantes"). Os 83 restaurantes existentes no seed com CAE 56101
+        // usam todos "Restauração".
+        category: "Restauração",
+        listaCAES: ["56101"],
+        location: { lat: 39.6040, long: -8.4090 },
+        address: "Rua Demo, 1, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Já aderiu à campanha 1 (status aprovado) — para o ecrã mostrar o
+        // badge "Participando" como exemplo de estado pós-adesão.
+        campaigns: [
+          {
+            campaign: insertedCampaigns[0]._id,
+            status: "aprovado",
+            joinedAt: new Date(),
+          },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Café Demo do Comerciante",
+        description: "Café de teste para o comerciante@tomar.pt — corresponde ao CAE 56302 (cafés e estabelecimentos de bebidas).",
+        category: "Cafés & Pastelarias",
+        listaCAES: ["56302"],
+        location: { lat: 39.6050, long: -8.4100 },
+        address: "Rua Demo, 2, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Sem adesão — para o ecrã mostrar o badge "Não participando" e
+        // permitir testar o fluxo de candidatura.
+        campaigns: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Pastelaria Demo do Comerciante",
+        description: "Pastelaria de teste para o comerciante@tomar.pt — corresponde ao CAE 10712, presente em AMBAS as campanhas seed.",
+        category: "Cafés & Pastelarias",
+        listaCAES: ["10712"],
+        location: { lat: 39.6060, long: -8.4110 },
+        address: "Rua Demo, 3, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Candidatura pendente à campanha 2 — para o ecrã mostrar o badge
+        // "Pendente" como exemplo de estado intermédio.
+        campaigns: [
+          {
+            campaign: insertedCampaigns[1]._id,
+            status: "pendente",
+            joinedAt: new Date(),
+          },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Mini-Mercado Demo do Comerciante",
+        description: "Mini-mercado de teste para o comerciante@tomar.pt — corresponde ao CAE 47111 (supermercados), presente em AMBAS as campanhas seed.",
+        category: "Comércio Local",
+        listaCAES: ["47111"],
+        location: { lat: 39.6070, long: -8.4120 },
+        address: "Rua Demo, 4, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Sem adesão — para o ecrã mostrar o badge "Não participando" e
+        // permitir testar o fluxo de candidatura à Campanha 2 (Tomar Sustentável).
+        campaigns: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Farmácia Demo do Comerciante",
+        description: "Farmácia de teste para o comerciante@tomar.pt — corresponde ao CAE 47730 (produtos farmacêuticos), exclusivo da campanha 'Comércio Local Vivo'.",
+        // NOTA: o enum do schema Business.category não inclui "Saúde" — as
+        // farmácias existentes no seed usam "Serviços". Mantemos a coerência.
+        category: "Serviços",
+        listaCAES: ["47730"],
+        location: { lat: 39.6080, long: -8.4130 },
+        address: "Rua Demo, 5, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Sem adesão — para o ecrã mostrar o badge "Não participando".
+        campaigns: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    const insertedDemoBusinesses = await Business.insertMany(comercianteDemoBusinesses);
+    console.log(`✅ ${insertedDemoBusinesses.length} Negócios de teste criados para comerciante@tomar.pt.`);
 
     // ==========================================
     // SEED: FATURAS E REDENÇÕES (para o dashboard ter dados)

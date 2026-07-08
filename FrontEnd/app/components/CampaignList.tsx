@@ -271,7 +271,7 @@ const CampaignList = () => {
             ListEmptyComponent={
               <View style={{ alignItems: 'center', marginTop: 40 }}>
                 <IconButton
-                  icon="megaphone-off"
+                  icon="shopping-outline"
                   size={48}
                   iconColor={theme.colors.onSurfaceVariant}
                 />

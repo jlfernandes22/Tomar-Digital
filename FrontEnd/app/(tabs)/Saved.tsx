@@ -65,7 +65,17 @@ const Saved = () => {
       setLoading(true);
     }
     try {
-      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`);
+      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // The /meusFavoritos endpoint requires JWT authentication
+          // (authorize(["cidadao", "comerciante", "camara"]) middleware).
+          // Without this header the request is rejected with 401 and the
+          // favorites list never loads.
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
       const dados = await response.json();
 
       // Ensure we always have an array to render, even if the API returns an object or null
@@ -79,7 +89,7 @@ const Saved = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id, t]);
+  }, [user?.id, user?.token, t]);
 
   /** Pull-to-refresh handler. */
   const handleRefresh = useCallback(() => {
@@ -101,7 +111,14 @@ const Saved = () => {
       try {
         const response = await fetch(`${API_URL}/retirarFavorito`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            // The /retirarFavorito endpoint requires JWT authentication.
+            // (The backend now derives userId from the JWT, but we keep
+            //  userId in the body for backwards compatibility with older
+            //  backend versions.)
+            Authorization: `Bearer ${user?.token}`,
+          },
           body: JSON.stringify({ userId: user?.id, businessId }),
         });
 
@@ -124,7 +141,7 @@ const Saved = () => {
         setDialogVisible(true);
       }
     },
-    [user?.id, carregarFavoritos, t],
+    [user?.id, user?.token, carregarFavoritos, t],
   );
 
   // --- Effects ---

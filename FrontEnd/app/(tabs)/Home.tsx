@@ -185,7 +185,10 @@ export default function Index() {
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
         body: JSON.stringify({ userId: user.id, businessId }),
       });
       if (!response.ok) throw new Error('Failed to update favorite');
