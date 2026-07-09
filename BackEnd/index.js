@@ -2822,7 +2822,7 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
       })
     );
 
-    // --- NEW: Overall gamification stats ---
+    // --- Overall gamification stats ---
     const totalInvoices = await Invoice.countDocuments();
     const totalRedemptions = await Redemption.countDocuments();
     const totalPointsInCirculation = await User.aggregate([
@@ -2836,9 +2836,9 @@ app.get("/dashboard", authorize(["camara"]), async (req, res) => {
       categories: businessByCategory,
       totalUsers: totalUsersCount,
       totalBusinesses: totalBusinessesCount,
-      // NEW: Campaign analytics
+      // Campaign analytics
       campaigns: campaignAnalytics,
-      // NEW: Overall gamification stats
+      // Overall gamification stats
       gamification: {
         totalInvoices,
         totalRedemptions,
