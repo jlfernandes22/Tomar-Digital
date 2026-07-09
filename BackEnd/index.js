@@ -77,7 +77,7 @@ app.use(globalLimiter);
 
 const strictLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 5, // Limit each IP to 5 requests per minute
+  max: 100, // Limit each IP to 5 requests per minute
   message: { message: "Too many attempts. Please wait 1 minute." }
 });
 
