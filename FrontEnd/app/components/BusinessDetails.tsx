@@ -5,9 +5,16 @@
  * description, photo gallery, active campaigns, and a location map.
  * It can receive initial data via route params to avoid a loading flash,
  * but always fetches fresh data from the backend on mount.
+ *
+ * Layout improvements:
+ *   - Logo is now a full-width banner (16:9 aspect ratio) instead of a small
+ *     circle, giving the screen a more modern "hero image" look.
+ *   - Photo gallery is only shown if the business has real photos (the
+ *     default empty string in the schema is filtered out).
+ *   - Active campaigns section is only shown if there are active campaigns.
  */
 
-import { ScrollView, View, Image } from 'react-native';
+import { ScrollView, View, Image, RefreshControl, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,6 +50,9 @@ const DetalhesBusiness = () => {
   const theme = useTheme();
   const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
 
+  // Screen width — used to calculate the banner image height (16:9 ratio)
+  const screenWidth = Dimensions.get('window').width;
+
   // --- Local State & Refs ---
   const [business, setBusiness] = useState(() =>
     JSON.parse(dadosNegocio || '{}'),
@@ -50,6 +60,7 @@ const DetalhesBusiness = () => {
   // Start in loading state immediately IF we don't have preloaded data.
   // This prevents the error screen from flashing before the fetch begins.
   const [loading, setLoading] = useState(!dadosNegocio);
+  const [refreshing, setRefreshing] = useState(false);
   const mapRef = useRef<MapRefType>(null);
 
   // --- Effects ---
@@ -64,9 +75,13 @@ const DetalhesBusiness = () => {
       return;
     }
 
-    const fetchBusiness = async () => {
+    const fetchBusiness = async (isRefresh = false) => {
       try {
-        setLoading(true);
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
         const response = await fetch(`${API_URL}/negocios/${id}`);
         if (!response.ok) throw new Error('Erro ao carregar');
         const data = await response.json();
@@ -75,11 +90,28 @@ const DetalhesBusiness = () => {
         console.error('Erro ao buscar negócio:', e);
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
 
     fetchBusiness();
   }, [id]);
+
+  /** Pull-to-refresh handler — refetches the business details. */
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const response = await fetch(`${API_URL}/negocios/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setBusiness(data);
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar negócio:', e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   /**
    * Syncs local loading state with the global LoadingContext.
@@ -105,7 +137,20 @@ const DetalhesBusiness = () => {
     });
   }, [business.campaigns]);
 
+  // --- Gallery filtering ---
+  // The Business model has `gallery: { type: [], default: [""] }` which means
+  // businesses with no photos still have an array containing one empty string.
+  // We filter out empty/null/falsy values so the gallery section is only shown
+  // when there are actual photos to display.
+  const validGalleryPhotos = useMemo(() => {
+    if (!business.gallery || !Array.isArray(business.gallery)) return [];
+    return business.gallery.filter(
+      (url: any) => url && typeof url === 'string' && url.trim() !== ''
+    );
+  }, [business.gallery]);
+
   // --- Helpers ---
+
   /**
    * Determines the correct URI for images.
    * Handles local file paths (from camera/picker) vs remote server paths.
@@ -215,23 +260,45 @@ const DetalhesBusiness = () => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
         >
-          {/* Logo Section */}
-          <View className="px-4">
-            {business.logo && (
-              <Image
-                source={{ uri: getImageUri(business.logo) }}
-                className="h-32 w-32 items-center justify-center rounded-full border-2"
-                style={{
-                  backgroundColor: theme.colors.background,
-                  borderColor: theme.colors.outline,
-                }}
+          {/* --- Hero Banner (Logo) --- */}
+          {/* Full-width banner image instead of a small circle.
+              Uses 16:9 aspect ratio for a modern "hero" look.
+              Falls back to a themed placeholder if no logo exists. */}
+          {business.logo ? (
+            <Image
+              source={{ uri: getImageUri(business.logo) }}
+              style={{
+                width: '100%',
+                height: screenWidth * 0.45, // ~16:9 aspect ratio
+                backgroundColor: theme.colors.surfaceVariant,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Surface
+              style={{
+                width: '100%',
+                height: screenWidth * 0.45,
+                backgroundColor: theme.colors.surfaceVariant,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <IconButton
+                icon="storefront"
+                size={64}
+                iconColor={theme.colors.onSurfaceVariant}
               />
-            )}
-          </View>
+            </Surface>
+          )}
 
-          {/* Main Info Section */}
+          {/* --- Main Info Section --- */}
           <View className="mt-5 px-5">
+            {/* Category badge */}
             <Text
               variant="labelLarge"
               style={{
@@ -245,6 +312,7 @@ const DetalhesBusiness = () => {
               })}
             </Text>
 
+            {/* Business name */}
             <Text
               variant="headlineMedium"
               className="mt-1 font-bold"
@@ -253,6 +321,7 @@ const DetalhesBusiness = () => {
               {business.name}
             </Text>
 
+            {/* Owner name */}
             {business.owner?.name && (
               <Text
                 variant="bodyMedium"
@@ -268,6 +337,7 @@ const DetalhesBusiness = () => {
 
             <View className="h-6" />
 
+            {/* Description */}
             <Text
               variant="bodyLarge"
               style={{ color: theme.colors.onSurfaceVariant }}
@@ -278,8 +348,11 @@ const DetalhesBusiness = () => {
                 })}
             </Text>
 
-            {/* Photo Gallery Section */}
-            {business.gallery && business.gallery.length > 0 && (
+            {/* --- Photo Gallery Section --- */}
+            {/* Only rendered if the business has real photos.
+                The default empty string in the schema is filtered out
+                by the validGalleryPhotos memo above. */}
+            {validGalleryPhotos.length > 0 && (
               <View style={{ marginTop: 24 }}>
                 <Text
                   variant="titleMedium"
@@ -294,7 +367,7 @@ const DetalhesBusiness = () => {
                   showsHorizontalScrollIndicator={false}
                   className="flex-row"
                 >
-                  {business.gallery.map((fotoUrl: string, index: number) => (
+                  {validGalleryPhotos.map((fotoUrl: string, index: number) => (
                     <Image
                       key={index}
                       source={{ uri: getImageUri(fotoUrl) }}
@@ -312,19 +385,20 @@ const DetalhesBusiness = () => {
               </View>
             )}
 
-            {/* Active Campaigns Section */}
-            <View style={{ marginTop: 24 }}>
-              <Text
-                variant="titleMedium"
-                style={{ fontWeight: 'bold', marginBottom: 8 }}
-              >
-                {t('merchant.active_campaigns', {
-                  defaultValue: 'Campanhas Ativas:',
-                })}
-              </Text>
+            {/* --- Active Campaigns Section --- */}
+            {/* Only rendered if there are active campaigns. */}
+            {campanhasAtivas.length > 0 && (
+              <View style={{ marginTop: 24 }}>
+                <Text
+                  variant="titleMedium"
+                  style={{ fontWeight: 'bold', marginBottom: 8 }}
+                >
+                  {t('merchant.active_campaigns', {
+                    defaultValue: 'Campanhas Ativas:',
+                  })}
+                </Text>
 
-              {campanhasAtivas.length > 0 ? (
-                campanhasAtivas.map((c: any, index: number) => (
+                {campanhasAtivas.map((c: any, index: number) => (
                   <Surface
                     key={index}
                     elevation={1}
@@ -353,23 +427,21 @@ const DetalhesBusiness = () => {
                       )}
                     </Text>
                   </Surface>
-                ))
-              ) : (
-                <Text
-                  variant="bodyMedium"
-                  style={{ fontStyle: 'italic', opacity: 0.7 }}
-                >
-                  {t('merchant.no_active_campaigns', {
-                    defaultValue: 'Não existem campanhas ativas neste momento.',
-                  })}
-                </Text>
-              )}
-            </View>
+                ))}
+              </View>
+            )}
 
-            {/* Location Map Section */}
+            {/* --- Location Map Section --- */}
+            <Text
+              variant="titleMedium"
+              style={{ fontWeight: 'bold', marginTop: 32, marginBottom: 8 }}
+            >
+              {t('merchant.location', {
+                defaultValue: 'Localização',
+              })}
+            </Text>
             <Surface
               style={{
-                marginTop: 32,
                 borderRadius: 16,
                 elevation: 4,
                 backgroundColor: theme.colors.surface,

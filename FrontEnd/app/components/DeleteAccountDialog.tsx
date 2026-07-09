@@ -119,6 +119,8 @@ const DeleteAccountDialog = ({
         // dismisses the success dialog (see handleSuccessDismiss).
         setLoading(false);
         onDismiss();
+        // Wait for the close animation of the first dialog to finish,
+        // THEN open the success dialog (avoids visual overlap).
         await delay(300);
         setSuccessDialogVisible(true);
         return;

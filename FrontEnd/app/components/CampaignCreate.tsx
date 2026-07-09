@@ -25,16 +25,18 @@ import {
   HelperText,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomTextInput from '../components/CustomTextInput';
+import CustomTextInput from './CustomTextInput';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import CustomButton from '../components/CustomButton';
-import CustomSnackBar from '../components/CustomSnackBar';
-import CustomDialog from '../components/CustomDialog';
-import CustomChip from '../components/CustomChip';
+import CustomButton from './CustomButton';
+import CustomSnackBar from './CustomSnackBar';
+import CustomDialog from './CustomDialog';
+import CustomChip from './CustomChip';
 import * as ImagePicker from 'expo-image-picker';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import LoadingScreen from '../components/LoadingScreen';
+import LoadingScreen from './LoadingScreen';
+import { router, Stack } from 'expo-router';
+import { Appbar } from 'react-native-paper';
 import PacketInterface from '@/constants/Interfaces/PacketInterface';
 
 // --- Constants & Interfaces ---
@@ -691,8 +693,21 @@ const CreateCampaign = () => {
 
   // --- Main Render ---
   return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Appbar.Header style={{ backgroundColor: theme.colors.background }}>
+        <Appbar.BackAction
+          onPress={() => router.back()}
+          color={theme.colors.onBackground}
+        />
+        <Appbar.Content
+          title={t('campaign.create_title', { defaultValue: 'Criar Campanha' })}
+          titleStyle={{ fontWeight: 'bold' }}
+        />
+      </Appbar.Header>
+
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1, padding: 16 }}>
+      <SafeAreaView style={{ flex: 1, padding: 16 }} edges={['left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
@@ -825,6 +840,7 @@ const CreateCampaign = () => {
         </CustomDialog>
       </SafeAreaView>
     </Surface>
+    </>
   );
 };
 

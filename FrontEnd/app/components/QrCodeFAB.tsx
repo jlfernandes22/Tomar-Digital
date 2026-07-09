@@ -30,6 +30,9 @@ const QrCodeFAB = () => {
   const isCreateCampaign = segments.includes('CampaignCreate');
   const isAddBusiness = segments.includes('BusinessAdd');
   const isProfile = segments.includes('Profile');
+  const isValidatePack = segments.includes('ValidatePack');
+  const isMyPurchases = segments.includes('MyPurchases');
+  const isBusinessDetails = segments.includes('BusinessDetails');
 
   // Hide the FAB on auth screens, specific full-screen forms, the scanner itself,
   // or if a global loading state is active to prevent navigation overlaps.
@@ -39,7 +42,10 @@ const QrCodeFAB = () => {
     isCreateCampaign ||
     isAddBusiness ||
     isProfile ||
-    loadingQR;
+    loadingQR ||
+    isValidatePack ||
+    isMyPurchases ||
+    isBusinessDetails;
 
   // --- Early Return ---
   if (shouldHideFAB) {

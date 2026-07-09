@@ -12,6 +12,8 @@ import Invoice from "./models/Invoice.js";
 import Favorite from "./models/Favorite.js";
 import Cae from "./models/Cae.js";
 import CitiesAndCountries from "./models/CitiesAndCountries.js";
+import Redemption from "./models/Redemption.js";
+import { randomBytes } from "crypto";
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/tomar_db";
 console.log("A ligar a:", MONGO_URI);
@@ -68,6 +70,7 @@ const seedDatabase = async () => {
     await Campaign.deleteMany();
     await Invoice.deleteMany();
     await Favorite.deleteMany();
+    await Redemption.deleteMany();
     await Cae.deleteMany();
     await CitiesAndCountries.deleteMany();
     console.log("🗑️ Dados antigos apagados com sucesso.");
@@ -212,6 +215,11 @@ const seedDatabase = async () => {
         password: hashedPassword,
         city: "Tomar",
         role: "comerciante",
+        // Pontos iniciais para o comerciante demo poder TESTAR a compra de
+        // pacotes (POST /packs/comprar aceita o role comerciante). Sem isto,
+        // o teste do novo hub "Ver Campanhas" exigiria primeiro emitir
+        // faturas noutros negócios para acumular pontos.
+        Points: 500,
         NIF: generateValidNIF(false),
       }),
       buildUser({
@@ -8359,8 +8367,283 @@ quais não nos foi possível relocalizar Sítio arqueológico.",
       };
     });
 
-    await Business.insertMany(finalBusinesses);
-    console.log(`✅ ${finalBusinesses.length} Negócios reais criados no mapa de Tomar.`);
+    const insertedBusinesses = await Business.insertMany(finalBusinesses);
+    console.log(`✅ ${insertedBusinesses.length} Negócios reais criados no mapa de Tomar.`);
+
+    // ==========================================
+    // SEED: NEGÓCIOS DE TESTE PARA comerciante@tomar.pt
+    // ==========================================
+    // O comerciante@tomar.pt é a conta demo usada para testar manualmente os
+    // fluxos de merchant (criar negócio, aderir a campanhas, e — após o hub
+    // recentemente introduzido — comprar pacotes com pontos).
+    //
+    // Para que o ecrã "Aderir a Campanhas" mostre campanhas com CAEs
+    // correspondentes aos negócios deste comerciante, criamos aqui um conjunto
+    // representativo de 5 negócios cobrindo TODOS os CAEs usados nas duas
+    // campanhas seed:
+    //
+    //   Campanha "Comércio Local Vivo"  → 56101, 56102, 56301, 56302, 47111, 47730, 10712
+    //   Campanha "Tomar Sustentável"    → 47111, 10711, 10712
+    //
+    // Cobertura por negócio:
+    //   1. Restaurante Demo             → 56101 (restaurante c/ espetáculo) — Campanha 1
+    //   2. Café Demo                    → 56302 (cafés)                    — Campanha 1
+    //   3. Pastelaria Demo              → 10712 (pastelaria)               — Campanhas 1 + 2
+    //   4. Mini-Mercado Demo            → 47111 (supermercados)            — Campanhas 1 + 2
+    //   5. Farmácia Demo                → 47730 (produtos farmacêuticos)   — Campanha 1
+    //
+    // Consequência: ao abrir o hub "Aderir a Campanhas" como comerciante@tomar.pt,
+    // o utilizador verá AMBAS as campanhas como elegíveis (matching CAE), podendo
+    // testar a submissão de candidatura. E ao abrir "Ver Campanhas", poderá
+    // comprar pacotes com os 500 pontos iniciais acima.
+    const comercianteDemoUser = getU("comerciante@tomar.pt");
+    const comercianteDemoBusinesses = [
+      {
+        name: "Restaurante Demo do Comerciante",
+        description: "Restaurante de teste para o comerciante@tomar.pt — corresponde ao CAE 56101 da campanha 'Comércio Local Vivo'.",
+        // NOTA: o enum do schema Business.category usa "Restauração" (não
+        // "Restaurantes"). Os 83 restaurantes existentes no seed com CAE 56101
+        // usam todos "Restauração".
+        category: "Restauração",
+        listaCAES: ["56101"],
+        location: { lat: 39.6040, long: -8.4090 },
+        address: "Rua Demo, 1, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Já aderiu à campanha 1 (status aprovado) — para o ecrã mostrar o
+        // badge "Participando" como exemplo de estado pós-adesão.
+        campaigns: [
+          {
+            campaign: insertedCampaigns[0]._id,
+            status: "aprovado",
+            joinedAt: new Date(),
+          },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Café Demo do Comerciante",
+        description: "Café de teste para o comerciante@tomar.pt — corresponde ao CAE 56302 (cafés e estabelecimentos de bebidas).",
+        category: "Cafés & Pastelarias",
+        listaCAES: ["56302"],
+        location: { lat: 39.6050, long: -8.4100 },
+        address: "Rua Demo, 2, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Sem adesão — para o ecrã mostrar o badge "Não participando" e
+        // permitir testar o fluxo de candidatura.
+        campaigns: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Pastelaria Demo do Comerciante",
+        description: "Pastelaria de teste para o comerciante@tomar.pt — corresponde ao CAE 10712, presente em AMBAS as campanhas seed.",
+        category: "Cafés & Pastelarias",
+        listaCAES: ["10712"],
+        location: { lat: 39.6060, long: -8.4110 },
+        address: "Rua Demo, 3, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Candidatura pendente à campanha 2 — para o ecrã mostrar o badge
+        // "Pendente" como exemplo de estado intermédio.
+        campaigns: [
+          {
+            campaign: insertedCampaigns[1]._id,
+            status: "pendente",
+            joinedAt: new Date(),
+          },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Mini-Mercado Demo do Comerciante",
+        description: "Mini-mercado de teste para o comerciante@tomar.pt — corresponde ao CAE 47111 (supermercados), presente em AMBAS as campanhas seed.",
+        category: "Comércio Local",
+        listaCAES: ["47111"],
+        location: { lat: 39.6070, long: -8.4120 },
+        address: "Rua Demo, 4, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Sem adesão — para o ecrã mostrar o badge "Não participando" e
+        // permitir testar o fluxo de candidatura à Campanha 2 (Tomar Sustentável).
+        campaigns: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        name: "Farmácia Demo do Comerciante",
+        description: "Farmácia de teste para o comerciante@tomar.pt — corresponde ao CAE 47730 (produtos farmacêuticos), exclusivo da campanha 'Comércio Local Vivo'.",
+        // NOTA: o enum do schema Business.category não inclui "Saúde" — as
+        // farmácias existentes no seed usam "Serviços". Mantemos a coerência.
+        category: "Serviços",
+        listaCAES: ["47730"],
+        location: { lat: 39.6080, long: -8.4130 },
+        address: "Rua Demo, 5, 2300-000 Tomar",
+        status: "aprovado",
+        owner: comercianteDemoUser._id,
+        NIF: comercianteDemoUser.NIF || generateValidNIF(true),
+        // Sem adesão — para o ecrã mostrar o badge "Não participando".
+        campaigns: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    const insertedDemoBusinesses = await Business.insertMany(comercianteDemoBusinesses);
+    console.log(`✅ ${insertedDemoBusinesses.length} Negócios de teste criados para comerciante@tomar.pt.`);
+
+    // ==========================================
+    // SEED: FATURAS E REDENÇÕES (para o dashboard ter dados)
+    // ==========================================
+    // Criar faturas reais para os cidadãos nos negócios que aderiram à campanha
+    const allCitizens = await User.find({ role: "cidadao" });
+    const campaignBusinesses = insertedBusinesses; // Use inserted docs (have _id)
+
+    // --- Step 1: Create invoices (more per citizen so they have enough points) ---
+    const invoicesToCreate = [];
+    let totalPointsAwarded = 0;
+
+    // Give each citizen 2-5 invoices with amounts between 15€-90€
+    for (const citizen of allCitizens) {
+      const numInvoices = Math.floor(Math.random() * 4) + 2; // 2-5 invoices
+      for (let j = 0; j < numInvoices; j++) {
+        const business = campaignBusinesses[Math.floor(Math.random() * campaignBusinesses.length)];
+        const amount = parseFloat((Math.random() * 75 + 15).toFixed(2)); // 15€ - 90€
+        const points = Math.trunc(amount);
+
+        invoicesToCreate.push({
+          user: citizen._id,
+          business: business._id,
+          ATCUD: `ATCUD-SEED-${Date.now()}-${invoicesToCreate.length}`,
+          hash: randomBytes(16).toString("hex"),
+          amount: amount,
+          purchaseDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+
+        totalPointsAwarded += points;
+      }
+    }
+
+    await Invoice.insertMany(invoicesToCreate);
+    console.log(`✅ ${invoicesToCreate.length} Faturas criadas (${totalPointsAwarded} pontos distribuídos).`);
+
+    // --- Step 2: Distribute points to citizens ---
+    for (const citizen of allCitizens) {
+      const citizenInvoices = invoicesToCreate.filter(inv => inv.user.toString() === citizen._id.toString());
+      const points = citizenInvoices.reduce((sum, inv) => sum + Math.trunc(inv.amount), 0);
+      if (points > 0) {
+        await User.findByIdAndUpdate(citizen._id, { $inc: { Points: points } });
+      }
+    }
+    console.log(`✅ Pontos distribuídos a ${allCitizens.length} cidadãos.`);
+
+    // --- Step 3: Refresh citizens from DB (they now have points) ---
+    const citizensWithPoints = await User.find({ role: "cidadao", Points: { $gt: 0 } });
+
+    // --- Step 4: Create redemptions (pack purchases) ---
+    // Use ALL campaigns that have packs, not just the first
+    // IMPORTANT: Respect stock limits — don't sell more than pack.stock
+    const redemptionsToCreate = [];
+    // Track how many packs sold per packId so we can update currentStock later
+    const packsSoldCount = {};
+
+    for (const campaign of insertedCampaigns) {
+      if (!campaign.packs || campaign.packs.length === 0) continue;
+
+      for (const pack of campaign.packs) {
+        const pointsCost = pack.pointsCost || 50;
+        const maxStock = pack.stock || 50;
+        const packKey = pack._id.toString();
+        packsSoldCount[packKey] = 0;
+
+        // 30-50% of citizens with enough points want to buy this pack
+        const numWantToBuy = Math.floor(citizensWithPoints.length * (0.3 + Math.random() * 0.2));
+
+        for (let i = 0; i < numWantToBuy; i++) {
+          const citizen = citizensWithPoints[i];
+
+          // Skip if citizen doesn't have enough points
+          if (citizen.Points < pointsCost) continue;
+
+          // STOP if we've sold all stock for this pack
+          if (packsSoldCount[packKey] >= maxStock) break;
+
+          const year = new Date().getFullYear();
+          const random = randomBytes(4).toString("hex").toUpperCase();
+          const pickupCode = `TD-${year}-${random}`;
+
+          // 50% entregue, 35% ativo, 15% expirado
+          const rand = Math.random();
+          let status = "ativo";
+          let validatedAt = null;
+          let validatedBy = null;
+          if (rand < 0.5) {
+            status = "entregue";
+            validatedAt = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
+            const camaraUser = await User.findOne({ role: "camara" });
+            validatedBy = camaraUser ? camaraUser._id : null;
+          } else if (rand < 0.65) {
+            status = "expirado";
+          }
+
+          redemptionsToCreate.push({
+            user: citizen._id,
+            campaign: campaign._id,
+            pack: {
+              packId: pack._id,
+              rewardDescription: pack.rewardDescription,
+              pointsCost: pointsCost,
+            },
+            pickupCode,
+            status,
+            redeemedAt: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000),
+            validatedAt,
+            validatedBy,
+            expiresAt: new Date(new Date(campaign.DataExpiracao).getTime() + 7 * 24 * 60 * 60 * 1000),
+          });
+
+          // Track sold count for this pack
+          packsSoldCount[packKey]++;
+
+          // Deduct points from citizen
+          citizen.Points -= pointsCost;
+          await citizen.save();
+        }
+      }
+    }
+
+    if (redemptionsToCreate.length > 0) {
+      await Redemption.insertMany(redemptionsToCreate);
+      console.log(`✅ ${redemptionsToCreate.length} Redenção(ões) (compra de pacotes) criadas.`);
+
+      // --- Step 5: Update currentStock on each campaign's packs ---
+      // The dashboard calculates "sold" as: pack.stock - pack.currentStock
+      // So we need to decrement currentStock by the number of redemptions per pack.
+      for (const campaign of insertedCampaigns) {
+        let modified = false;
+        for (const pack of campaign.packs) {
+          const packKey = pack._id.toString();
+          const sold = packsSoldCount[packKey] || 0;
+          if (sold > 0) {
+            pack.currentStock = Math.max(0, (pack.stock || 0) - sold);
+            modified = true;
+          }
+        }
+        if (modified) {
+          await campaign.save();
+        }
+      }
+      console.log(`✅ currentStock atualizado em ${insertedCampaigns.length} campanha(s).`);
+    } else {
+      console.log("ℹ️ Nenhuma redenção criada (cidadãos sem pontos suficientes).");
+    }
 
     // ==========================================
     // FIM DO SEED

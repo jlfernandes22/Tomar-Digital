@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📍 Tomar+Digital
+# 📍 Tomar Digital
 
 ![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
@@ -15,7 +15,7 @@
 <br>
 *Ecossistema de Backend (Node.js + Express 5 + MongoDB) e Frontend Mobile (React Native + Expo Router + NativeWind)*
 
-[🔧 Instalação](#-instalação-do-projeto) · [⚡ Execução](#-execução) · [📡 API](#-referência-da-api) · [🛡️ Permissões](#-permissões-por-role)
+[🔧 Instalação](#-instalação-do-projeto) · [⚡ Execução](#-execução) · [📡 API](#-referência-completa-da-api) · [🛡️ Permissões](#-permissões-por-role) · [📋 TODO](#-todo-list)
 
 </div>
 
@@ -28,35 +28,29 @@
 3. [Stack Tecnológica](#-stack-tecnológica)
 4. [Pré-requisitos](#-pré-requisitos)
 5. [Configuração do Ambiente](#-configuração-do-ambiente)
-   - [Instalação do Node.js (Recomendado: NVM)](#instalação-do-nodejs-recomendado-nvm)
-   - [Instalação do Docker](#docker--docker-compose)
 6. [Instalação do Projeto](#-instalação-do-projeto)
-   - [Backend (API & Base de Dados)](#backend-api--base-de-dados)
-   - [Frontend (Mobile Expo)](#frontend-mobile-expo)
 7. [Execução](#-execução)
 8. [Estrutura do Projeto](#-estrutura-do-projeto)
-9. [Referência da API](#-referência-da-api)
+9. [Referência Completa da API](#-referência-completa-da-api)
 10. [Permissões por Role](#-permissões-por-role)
 11. [Fluxos da Plataforma](#-fluxos-da-plataforma)
-    - [Leitura de Faturas e Pontos](#-leitura-de-faturas-e-pontos)
-    - [Sistema de Campanhas](#-sistema-de-campanhas)
-    - [Candidatura a Comerciante](#-candidatura-a-comerciante)
 12. [Sistema de Temas](#-sistema-de-temas)
 13. [Internacionalização](#-internacionalização-i18n)
 14. [CI/CD e Deploy](#-cicd-e-deploy)
-15. [Resolução de Problemas (Firewall e Rede)](#-resolução-de-problemas-firewall-e-rede)
+15. [Resolução de Problemas](#-resolução-de-problemas-firewall-e-rede)
+16. [TODO List](#-todo-list)
 
 ---
 
 ## 🧭 Sobre o Projeto
 
-O **Tomar+Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Comerciantes** e a **Câmara Municipal** de Tomar num ciclo económico local digital. A plataforma fomenta o comércio local através de um sistema de gamificação baseado na leitura de faturas fiscais portuguesas (QR Code AT), onde os cidadãos acumulam pontos por cada compra que realizam nos negócios aderentes. Paralelamente, a Câmara Municipal pode criar campanhas temáticas com prémios (Packs) resgatáveis por pontos, incentivando a participação cívica e o turismo local.
+O **Tomar Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Comerciantes** e a **Câmara Municipal** de Tomar num ciclo económico local digital. A plataforma fomenta o comércio local através de um sistema de gamificação baseado na leitura de faturas fiscais portuguesas (QR Code AT), onde os cidadãos acumulam pontos por cada compra que realizam nos negócios aderentes. Paralelamente, a Câmara Municipal pode criar campanhas temáticas com prémios (Packs) resgatáveis por pontos, incentivando a participação cívica e o turismo local.
 
 ### Como funciona
 
-- **Cidadao (Cidadão)** — Explora negócios no mapa, escaneia QR Codes de faturas para acumular pontos, consulta campanhas ativas e resgata prémios. Pode candidatar-se a Comerciante submetendo documentação.
+- **Cidadao (Cidadão)** — Explora negócios no mapa, escaneia QR Codes de faturas para acumular pontos, compra pacotes de campanhas com pontos, consulta campanhas ativas e levanta prémios presencialmente na Câmara. Pode candidatar-se a Comerciante submetendo documentação.
 - **Comerciante (Merchant)** — Regista os seus negócios com logótipo e galeria de imagens, adere a campanhas da Câmara e acompanha os seus estabelecimentos.
-- **Camara (Câmara Municipal)** — Aprova negócios e candidaturas de comerciantes, cria campanhas com packs de prémios, supervisiona candidaturas a campanhas e consulta dashboards analíticos com exportação para PDF/Excel.
+- **Camara (Câmara Municipal)** — Aprova negócios e candidaturas de comerciantes, cria campanhas com packs de prémios, supervisiona candidaturas a campanhas, valida presencialmente vouchers de prémios e consulta dashboards analíticos com exportação para PDF/Excel.
 
 ---
 
@@ -67,38 +61,43 @@ O **Tomar+Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Co
 - 🔍 Pesquisar e filtrar negócios por categoria
 - ⭐ Guardar e gerir favoritos com atualizações otimistas
 - 📱 Escanear QR Codes de faturas fiscais (AT) via câmara do telemóvel
-- 🏆 Acumular pontos por cada euro gasto em negócios locais
-- 🎯 Consultar campanhas ativas e prémios disponíveis
+- 🏆 Acumular pontos por cada euro gasto em negócios locais (1 ponto = 1 €)
+- 🎯 Consultar campanhas ativas e comprar pacotes com pontos
+- 📋 Ver histórico de compras (carteira de vouchers) com filtros por estado
 - 👤 Editar perfil com upload de avatar
 - 📝 Candidatar-se a Comerciante com documento PDF
+- 🔐 Recuperar palavra-passe esquecida via email
+- 🗑️ Apagar a sua própria conta (com confirmação por palavra-passe)
 
 ### Comerciante (Comerciante)
-- 🏪 Registar negócios com logótipo, galeria de imagens, CAE e localização no mapa
+- 🏪 Registar negócios com logótipo, galeria de imagens (até 10), CAE e localização no mapa
 - 📋 Acompanhar os seus negócios aprovados
-- 🎯 Adere a campanhas da Câmara Municipal
+- 🎯 Adere a campanhas da Câmara Municipal com indicação de estado (Participando/Pendente/Rejeitado/Não participando)
 - 👤 Editar perfil com avatar e NIF
 
 ### Câmara (Câmara Municipal)
 - ✅ Aprovar ou rejeitar registos pendentes de negócios
 - 👔 Validar candidaturas de comerciantes com visualização de PDF
-- 🏅 Criar campanhas com logótipo, panfleto, packs de prémios e CAES
+- 🏅 Criar e editar campanhas com logótipo, panfleto, packs de prémios e CAES
 - 📋 Aprovar ou rejeitar adesões de negócios a campanhas
+- ✏️ Editar pacotes (adicionar stock, corrigir descrição) com proteção de preço após compras
+- 🗑️ Apagar campanhas (com proteção se houver compras associadas)
+- 📱 Validar presencialmente vouchers de prémios (código de levantamento)
 - 📈 Dashboard analítico com gráficos (categorias, cidades, países)
 - 📄 Exportar estatísticas para PDF ou Excel (4 folhas)
 - 🗑️ Apagar negócios (com limpeza de ficheiros do servidor)
 
 ### Funcionalidades Transversais
-- 🔐 Autenticação JWT com verificação de email e controlo de acesso por roles
-- 🛡️ Rate limiting (100 req/15min global, 5 req/min em autenticação)
-- 📖 API documentada com Swagger UI (`/api-docs`)
-- 🗺️ Mapa interativo com estilo escuro customizado e clustering de marcadores
+- 🔐 Autenticação JWT com verificação de email e recuperação de palavra-passe
+- 🛡️ Rate limiting (100 req/15min global, 5 req/min em autenticação e ações sensíveis)
+- 📖 API documentada com Swagger UI (`/api-docs`) — 46 endpoints
+- 🗺️ Mapa interativo com estilo escuro/claro customizado e clustering de marcadores
 - 📱 Processamento de imagens com Sharp (conversão para WebP, compressão)
 - 🌍 Internacionalização PT/EN com deteção automática do idioma do sistema
-- 🎨 Sistema de temas com 3 paletas locais × 3 modos (Claro/Escuro/Automático)
+- 🎨 Sistema de temas com 3 paletas locais × 2 modos (Claro/Escuro) + modo Automático
 - ♿ Acessibilidade com labels e hints em todos os elementos interativos
+- 🔄 Pull-to-refresh em todos os ecrãs de lista
 - 🖼️ Pipeline de imagens: Multer (upload) → Sharp (WebP + resize) → Filesystem
-- 🛡️ Sanitização de inputs em tempo real para prevenir ataques de spoofing (caracteres invisíveis)
-- 📱 Tratamento inteligente de permissões de câmara com redirecionamento para definições do OS
 
 ---
 
@@ -116,9 +115,11 @@ O **Tomar+Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Co
 | | react-native-clusterer | ^5.0 |
 | | expo-location | ~19.0 |
 | **QR/Câmera** | expo-camera | ~17.0 |
-| | react-native-qrcode-svg | ^6.3 |
+| | expo-image-picker | ~17.0 |
 | **Gráficos** | react-native-chart-kit | ^6.12 |
 | | react-native-gifted-charts | ^1.4 |
+| **Exportação** | expo-print | ~15.0 |
+| | xlsx | ^0.18 |
 | **i18n** | i18next | ^26.3 |
 | | react-i18next | ^17.0 |
 | **Backend** | Express | ^5.2 |
@@ -131,7 +132,7 @@ O **Tomar+Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Co
 | | Azure Document Intelligence | ^5.1 |
 | | express-rate-limit | ^8.5 |
 | | swagger-ui-express | ^5.0 |
-| **Base de Dados** | MongoDB | 7.0 (via Docker) |
+| **Base de Dados** | MongoDB | 7.0 (via Docker, replica set) |
 | **CI/CD** | GitHub Actions | — |
 | | Azure Web Apps | West Europe |
 | | EAS Build (APK) | — |
@@ -141,14 +142,15 @@ O **Tomar+Digital** é uma plataforma civic-tech que conecta **Cidadãos**, **Co
 
 ## 📋 Pré-requisitos
 
-Antes de começar, garanta que tem instalado:
-
 | Ferramenta | Versão | Propósito |
 |:---|:---|:---|
-| **Node.js** | v20 LTS | Runtime JavaScript (Backend e Frontend) |
-| **Docker & Docker Compose** | Latest | Contentor da base de dados MongoDB 7.0 |
+| **Node.js** | v20 LTS (recomendado) | Runtime JavaScript (Backend e Frontend) |
+| **Docker & Docker Compose** | Latest | Contentor MongoDB 7.0 (replica set) |
 | **Git** | Latest | Controlo de versões |
 | **Expo Go** | Latest | Testar a app no telemóvel |
+
+> [!NOTE]
+> O CI/CD do Azure usa Node 22.x para o backend; o CI do EAS usa Node 20.x. Localmente, recomenda-se Node 20 LTS para compatibilidade com o Expo SDK 54.
 
 **Download Expo Go:**
 - 🤖 [Android (Google Play)](https://play.google.com/store/apps/details?id=host.exp.exponent)
@@ -161,45 +163,26 @@ Antes de começar, garanta que tem instalado:
 ### Instalação do Node.js (Recomendado: NVM)
 
 > [!WARNING]
-> A instalação direta do Node.js e *npm* através de gestores de pacotes do sistema (como `apt`, `dnf` ou `pacman`) costuma causar **erros de permissões** (exigindo `sudo` indevidamente) e graves **conflitos de versão** com o Expo. Utilize sempre um gestor de versões.
-
-A melhor prática na indústria para gerir o Node.js é utilizar o **NVM (Node Version Manager)**. Isto permite instalar pacotes globais sem `sudo` e alternar facilmente entre versões do Node.
+> A instalação direta do Node.js via gestores de pacotes do sistema (`apt`, `dnf`, `pacman`) costuma causar **erros de permissões** e **conflitos de versão** com o Expo. Utilize sempre um gestor de versões.
 
 #### Linux e macOS
 
-1. Instale o NVM executando o script oficial no terminal:
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-```
-
-2. Feche e reabra o seu terminal, ou carregue as novas configurações:
-```bash
-source ~/.bashrc   # ou source ~/.zshrc se usar Zsh
-```
-
-3. Instale e ative a versão 20 (LTS) do Node.js:
-```bash
+source ~/.bashrc   # ou source ~/.zshrc
 nvm install 20
 nvm use 20
 ```
 
 #### Windows
 
-1. Descarregue a versão mais recente do **[nvm-windows](https://github.com/coreybutler/nvm-windows/releases)** (procure o ficheiro `nvm-setup.exe`).
-2. Siga o assistente de instalação normal.
-3. Abra um **novo** terminal (PowerShell ou Command Prompt) como Administrador e execute:
+Descarregue o **[nvm-windows](https://github.com/coreybutler/nvm-windows/releases)** e execute:
 ```powershell
 nvm install 20.11.1
 nvm use 20.11.1
 ```
 
----
-
 ### Docker & Docker Compose
-
-#### Linux (Fedora / Ubuntu / Arch Linux)
-
-Instale o ecossistema Docker conforme a sua distribuição:
 
 | Distribuição | Comando |
 |:---|:---|
@@ -207,22 +190,16 @@ Instale o ecossistema Docker conforme a sua distribuição:
 | **Ubuntu / Mint / Pop!\_OS** | `sudo apt install docker.io docker-compose` |
 | **Arch Linux** | `sudo pacman -S docker docker-compose` |
 
-**Configurar permissões do Docker (Linux)**
-
-Para executar o Docker sem utilizar sempre `sudo`:
-
+**Configurar permissões (Linux):**
 ```bash
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 ```
 
 > [!IMPORTANT]
-> É estritamente necessário **reiniciar a sessão** (logout e login) ou o computador para aplicar as novas permissões do grupo Docker.
+> Reinicie a sessão (logout/login) para aplicar as permissões do grupo Docker.
 
-#### Windows e macOS
-
-1. Instale o **[Docker Desktop](https://www.docker.com/products/docker-desktop)** a partir do site oficial.
-2. (Windows) Certifique-se de que o **WSL2** está ativado nas definições do Docker Desktop (geralmente ativado por predefinição).
+**Windows e macOS:** Instale o **[Docker Desktop](https://www.docker.com/products/docker-desktop)** (WSL2 no Windows).
 
 ---
 
@@ -230,46 +207,49 @@ sudo usermod -aG docker $USER
 
 ### Backend (API & Base de Dados)
 
-**1. Instalar as dependências**
-
+**1. Instalar dependências**
 ```bash
 cd Tomar-Digital/BackEnd
 npm install
 ```
 
-**2. Levantar o contentor da base de dados (MongoDB 7.0)**
-
+**2. Levantar o contentor MongoDB (replica set)**
 ```bash
 docker-compose up -d
 ```
 
-> [!NOTE]
-> Dependendo da versão do Docker, o comando poderá ser `docker compose` (sem o hífen).
+> [!IMPORTANT]
+> O MongoDB corre como **single-node replica set** (`--replSet rs0`) — necessário para suportar multi-document transactions (usadas pelo endpoint `/apagarConta` e `/packs/comprar`). O healthcheck executa `rs.initiate()` automaticamente no primeiro boot. Aguarde ~10 segundos após `docker-compose up -d` para o replica set eleger-se como primary.
 
 **3. Configurar variáveis de ambiente**
 
-Crie um ficheiro `.env` na raiz da pasta `/BackEnd` com o seguinte conteúdo:
+Crie um ficheiro `.env` na raiz de `/BackEnd`:
 
 ```env
+# Porta do servidor (fallback: 8080)
 PORT=3000
+
+# Ligação MongoDB (fallback: mongodb://localhost:27017/tomar_db)
+MONGO_URI=mongodb://localhost:27017/tomar_db
+
+# Chave secreta JWT (use uma string aleatória forte em produção)
 JWT_SECRET=Uma_Chave_Super_Segura_2026_@!
 
-# Email (Nodemailer — Gmail SMTP)
-MAIL_USER=seu_email@gmail.com
-MAIL_PASS=sua_app_password
+# Email (Gmail SMTP via Nodemailer)
+# O remetente está hardcoded: tomardigitalsuporte@gmail.com
+GOOGLE_APP_PASSWORD=sua_app_password_gmail
 
-# Azure Document Intelligence (para validação OCR de faturas)
-AZURE_DOC_INTELLIGENCE_ENDPOINT=https://seu-recurso.cognitiveservices.azure.com/
-AZURE_DOC_INTELLIGENCE_KEY=sua_chave_azure
+# Azure Document Intelligence (validação OCR de faturas)
+AZURE_VISION_ENDPOINT=https://seu-recurso.cognitiveservices.azure.com/
+AZURE_VISION_KEY=sua_chave_azure
 ```
 
 > [!WARNING]
-> Em ambiente de produção, utilize sempre uma chave JWT secreta forte e aleatória com pelo menos 32 caracteres. Nunca partilhe este ficheiro nem o submeta para controlo de versões.
+> Em produção, utilize uma chave JWT forte e aleatória (≥32 caracteres). Nunca submeta o `.env` para controlo de versões.
 
 ### Frontend (Mobile Expo)
 
-**1. Instalar as dependências**
-
+**1. Instalar dependências**
 ```bash
 cd ../FrontEnd
 npm install
@@ -277,10 +257,10 @@ npm install
 
 **2. Configurar variáveis de ambiente**
 
-Crie um ficheiro `.env` na raiz da pasta `/FrontEnd`:
+Crie um ficheiro `.env` na raiz de `/FrontEnd`:
 
 ```env
-# Substitua pelo IP local do seu computador (ex: 192.168.1.120)
+# IP local do PC (ex: 192.168.1.120)
 EXPO_PUBLIC_API_URL="http://SEU_IP_LOCAL:3000"
 
 # Chave da API do Google Maps (obrigatória para o mapa)
@@ -288,49 +268,47 @@ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY="sua_chave_google_maps"
 ```
 
 > [!IMPORTANT]
-> No Expo, todas as variáveis de ambiente projetadas para o Frontend têm **obrigatoriamente de começar** com o prefixo `EXPO_PUBLIC_`. Variáveis sem este prefixo não estarão disponíveis no lado do cliente.
+> No Expo, todas as variáveis de ambiente do Frontend têm de começar com o prefixo `EXPO_PUBLIC_`.
 
 #### 🔍 Como descobrir o seu IP local
 
-**Opção A: Através do Expo (Mais fácil)**
-1. Inicie o Frontend com `npx expo start -c` no terminal.
-2. Observe o texto abaixo do QR Code gerado.
-3. Verá um endereço semelhante a `exp://192.168.1.120:8081`. Copie apenas o IP (neste exemplo, `192.168.1.120`) e coloque no `.env`. Depois pode cancelar com `Ctrl + C`.
+**Opção A: Através do Expo**
+1. Execute `npx expo start -c`
+2. Leia o IP no endereço `exp://192.168.1.120:8081` abaixo do QR Code
+3. Cancele com `Ctrl + C`
 
-**Opção B: Pelo Terminal do Sistema**
-- **Linux / macOS:** Execute `hostname -I` (Linux) ou `ifconfig` (macOS).
-- **Windows:** Execute `ipconfig` no PowerShell e procure por "Endereço IPv4" na secção do adaptador Wi-Fi/Ethernet.
+**Opção B: Pelo Terminal**
+- **Linux:** `hostname -I`
+- **macOS:** `ifconfig`
+- **Windows:** `ipconfig` → "Endereço IPv4"
 
 ---
 
 ## ⚡ Execução
 
-Mantenha **dois terminais distintos e em simultâneo** abertos.
+Mantenha **dois terminais** abertos em simultâneo.
 
 **Terminal 1 — Backend**
-
 ```bash
 cd BackEnd
 npm run dev
 ```
-
-> O servidor arranca em `http://localhost:3000`, liga-se ao MongoDB em `mongodb://localhost:27017/tomar_db`, e disponibiliza a documentação Swagger em `/api-docs`.
+> Servidor em `http://localhost:3000`, ligação MongoDB em `MONGO_URI`, Swagger em `/api-docs`.
 
 **Terminal 2 — Frontend**
-
 ```bash
 cd FrontEnd
 npx expo start -c
 ```
 
 > [!TIP]
-> A flag `-c` limpa a *cache* do Expo. Use-a sempre que alterar o ficheiro `.env` ou atualizar o `package.json`.
+> A flag `-c` limpa a cache do Expo. Use-a sempre que alterar o `.env` ou o `package.json`.
 
 ### 📱 Como testar no telemóvel
 
-1. Certifique-se de que o **PC** e o **telemóvel** estão ligados na **mesma rede Wi-Fi**.
-2. Abra a aplicação **Expo Go**.
-3. Leia o **QR Code** exibido no terminal do Frontend através da app.
+1. PC e telemóvel na **mesma rede Wi-Fi**
+2. Abra a app **Expo Go**
+3. Leia o **QR Code** exibido no terminal do Frontend
 
 ---
 
@@ -342,19 +320,25 @@ npx expo start -c
 BackEnd/
  ├─ middleware/
  │   └─ auth.js                    # Verificação JWT + autorização por roles
- ├─ models/                        # Schemas Mongoose (MongoDB ODM)
+ ├─ models/                        # Schemas Mongoose (10 modelos)
  │   ├─ Business.js                # Negócios (CAE, logo, galeria, campanhas, status)
  │   ├─ Cae.js                     # Códigos CAE (classificação de atividades)
  │   ├─ Campaign.js                # Campanhas (packs embutidos, CAES, estados)
  │   ├─ CitiesAndCountries.js      # Validação de cidades no registo
  │   ├─ Favorite.js                # Favoritos dos utilizadores
- │   ├─ Invoice.js                 # Faturas lidas (ATCUD + hash, índice único)
+ │   ├─ Invoice.js                 # Faturas (ATCUD + hash, índice único)
  │   ├─ Packs.js                   # Sub-schema de prémios (pointsCost, stock)
  │   ├─ PedidosComerciante.js      # Candidaturas de comerciante (PDF)
+ │   ├─ Redemption.js              # Compras de pacotes (voucher com pickupCode)
  │   └─ User.js                    # Utilizadores (email, role, Points, NIF, Avatar)
- ├─ docker-compose.yml             # Contentor MongoDB 7.0 (porta 27017)
- ├─ index.js                       # Ponto de entrada — todas as rotas da API + Swagger
- ├─ package.json                   # Dependências e scripts (ESM)
+ ├─ utils/
+ │   └─ emailService.js            # Emails HTML com imagem embutida (CID)
+ ├─ EmailImages/                   # Imagens usadas nos emails
+ ├─ csvFiles/                      # CAES e cidades para o seed.js
+ ├─ docker-compose.yml             # MongoDB 7.0 replica set (porta 27017)
+ ├─ seed.js                        # Seeder para dados de demonstração
+ ├─ index.js                       # Ponto de entrada — 46 rotas + Swagger
+ ├─ package.json                   # Dependências (ESM)
  └─ .env                           # Ficheiro criado pelo utilizador
 ```
 
@@ -362,136 +346,117 @@ BackEnd/
 
 ```text
 FrontEnd/
- ├─ app/                           # Rotas e ecrãs (Expo Router — file-based)
+ ├─ app/                           # Rotas e ecrãs (Expo Router)
  │   ├─ (accountCreation)/         # Fluxo de autenticação
- │   │   ├─ _layout.tsx            # Tabs de Login / Registo
- │   │   ├─ Login.tsx              # Ecrã de login (com toggle de password)
- │   │   ├─ Register.tsx           # Ecrã de registo
- │   │   └─ Validate.tsx           # Verificação de email (código de 6 dígitos)
- │   ├─ (tabs)/                    # Navegação principal (visibilidade por role)
- │   │   ├─ _layout.tsx            # Configuração das tabs + QrCodeFAB global
- │   │   ├─ Home.tsx               # Mapa interativo com clustering
- │   │   ├─ Saved.tsx              # Favoritos guardados + curiosidades
- │   │   ├─ BusinessAdd.tsx        # Registar negócio (comerciante)
+ │   │   ├─ Login.tsx              # Login
+ │   │   ├─ Register.tsx           # Registo
+ │   │   ├─ Validate.tsx           # Verificação de email (6 dígitos)
+ │   │   ├─ RecoverPassword.tsx    # Pedido de recuperação
+ │   │   └─ NewPassword.tsx        # Definir nova palavra-passe
+ │   ├─ (tabs)/                    # Navegação principal (RBAC por role)
+ │   │   ├─ Home.tsx               # Mapa interativo
+ │   │   ├─ Saved.tsx              # Favoritos
+ │   │   ├─ Profile.tsx            # Perfil (envolvente do ProfileMenu)
+ │   │   ├─ MunicipalIndex.tsx     # Painel da Câmara (camara)
+ │   │   ├─ DashboardTab.tsx       # Dashboard (camara)
+ │   │   ├─ CampaignIndex.tsx      # Hub de campanhas (camara)
+ │   │   ├─ CampaignMerchant.tsx   # Campanhas com estado (comerciante)
+ │   │   ├─ CampaignJoin.tsx       # Campanhas para cidadão
  │   │   ├─ BusinessMine.tsx       # Meus negócios (comerciante)
- │   │   ├─ CampaignJoin.tsx       # Adere a campanhas (comerciante)
- │   │   ├─ CampaignCreate.tsx     # Criar campanha (câmara)
- │   │   ├─ MunicipalIndex.tsx     # Painel de gestão (câmara)
- │   │   ├─ DashboardTab.tsx       # Dashboard analítico (câmara)
- │   │   ├─ ScanScreen.tsx         # Scanner QR de faturas (com permissões)
- │   │   └─ Profile.tsx            # Perfil do utilizador
- │   ├─ components/                # Componentes reutilizáveis e ecrãs auxiliares
- │   │   ├─ AppAbout.tsx           # Acerca da app (missão, RGPD, créditos)
- │   │   ├─ BusinessCandidates.tsx # Aprovar/rejeitar negócios pendentes
- │   │   ├─ BusinessDetails.tsx    # Detalhes do negócio (galeria, mapa, campanhas)
- │   │   ├─ BusinessList.tsx       # Item de lista de negócio
- │   │   ├─ CampaignCandidates.tsx # Aprovar/rejeitar adesões a campanhas
- │   │   ├─ CampaignDetails.tsx    # Detalhes + fluxo de adesão a campanha
- │   │   ├─ CustomButton.tsx       # Botão temático com loading e acessibilidade
- │   │   ├─ CustomChip.tsx         # Chip temático
- │   │   ├─ CustomDialog.tsx       # Dialog temático (alertas/confirmar)
- │   │   ├─ CustomMarker.tsx       # Marcador de mapa por categoria (com zoom dinâmico)
- │   │   ├─ CustomSnackBar.tsx     # Snackbar semântico (sucesso/erro/aviso)
- │   │   ├─ CustomTextInput.tsx    # Input com validação, toggle password e strip de invisíveis
+ │   │   └─ BusinessAdd.tsx        # Registar negócio (comerciante)
+ │   ├─ components/                # 29 componentes reutilizáveis
+ │   │   ├─ ScanScreen.tsx         # Scanner QR de faturas
+ │   │   ├─ DeleteAccountDialog.tsx# Confirmação de apagar conta
+ │   │   ├─ CampaignDetails.tsx    # Detalhes de campanha (role-aware)
+ │   │   ├─ CampaignList.tsx       # Lista de campanhas (camara)
+ │   │   ├─ CampaignCreate.tsx     # Criar campanha (camara)
+ │   │   ├─ CampaignCandidates.tsx # Aprovar adesões a campanhas
+ │   │   ├─ MyPurchases.tsx        # Carteira de vouchers (cidadão)
+ │   │   ├─ ValidatePack.tsx       # Validar vouchers (camara)
  │   │   ├─ Dashboard.tsx          # Gráficos + exportação PDF/Excel
- │   │   ├─ LanguageSwitcher.tsx   # Alternância PT/EN
- │   │   ├─ LoadingScreen.tsx      # Ecrã de carregamento com curiosidades
- │   │   ├─ Map.tsx                # Google Maps com clustering e estilo escuro
- │   │   ├─ MerchantForm.tsx       # Formulário de candidatura a comerciante
- │   │   ├─ MerchantsCandidates.tsx# Aprovar/rejeitar comerciantes (com PDF viewer)
- │   │   ├─ Preferences.tsx        # Definições (tema + idioma)
- │   │   ├─ ProfileEdit.tsx        # Editar perfil (nome, cidade, NIF, avatar)
- │   │   ├─ ProfileMenu.tsx        # Menu do perfil (avatar, pontos, opções)
- │   │   ├─ QrCodeFAB.tsx          # Botão flutuante global para scanner QR
- │   │   ├─ Tabicon.tsx            # Ícone de tab (focused/unfocused)
- │   │   ├─ Terms.tsx              # Termos e condições
- │   │   └─ ThemeSelector.tsx      # Seleção de modo + paleta
- │   ├─ _layout.tsx                # Root: AuthProvider → ThemeProvider → LoadingProvider → SafeArea → Stack
- │   ├─ globals.css                # Imports Tailwind CSS
- │   └─ index.tsx                  # Entry point — verificação de token
- ├─ assets/
- │   ├─ backgroundImages/          # Fundos de ecrã (login, registo)
- │   ├─ CampaignIcons/             # Ícones de campanha
- │   ├─ Logos/                     # Logótipo Tomar Digital
- │   ├─ Markers/                   # 8 ícones de categorias para o mapa
- │   ├─ otherIcons/                # Ícones auxiliares (editar, email, etc.)
- │   └─ tabsImages/                # 15 ícones PNG/SVG para a tab bar
- ├─ constants/
- │   ├─ html/
- │   │   └─ DashboardPdf.js        # Template HTML para exportação PDF
- │   ├─ Interfaces/                # TypeScript interfaces (Negocio, Pack, Map)
- │   ├─ api.ts                     # API_URL a partir de env var
- │   ├─ curiosities.js             # 10 curiosidades sobre Tomar (i18n keys)
- │   ├─ DarkMapStyle.tsx           # Estilo escuro customizado para Google Maps
- │   ├─ excelUtils.ts              # Gerador de relatórios Excel (4 folhas)
- │   ├─ images.ts                  # 26 referências a imagens organizadas
- │   ├─ MapFocous.tsx              # Animação de câmara para localização
- │   └─ themes.js                  # 6 temas MD3 completos (3 paletas × 2 modos)
+ │   │   ├─ Map.tsx                # Google Maps com clustering
+ │   │   ├─ BusinessDetails.tsx    # Detalhes de negócio (hero banner)
+ │   │   └─ ...                    # (ver lista completa no código)
+ │   ├─ _layout.tsx                # Root: AuthProvider → ThemeProvider → Stack
+ │   ├─ index.tsx                  # Gate de rota (verifica sessão em SecureStore)
+ │   └─ globals.css                # Imports Tailwind CSS
  ├─ context/
- │   ├─ AuthContext.tsx            # Estado global de autenticação (SecureStore)
- │   ├─ LoadingContext.tsx         # Estado global de loading (loadingQR para FAB)
- │   └─ ThemeContext.tsx           # Estado do tema (AsyncStorage, 3 paletas × 3 modos)
- ├─ services/
- │   └─ tokenService.ts            # CRUD de tokens (SecureStore)
- ├─ utils/
- │   ├─ delay.ts                   # Utilitário de espera assíncrona
- │   ├─ getAddress.ts              # Geocodificação reversa (expo-location)
- │   ├─ imagePicker.ts             # Seletor de imagens (expo-image-picker)
- │   ├─ locationUtils.ts           # Distância entre coordenadas (Haversine)
- │   └─ textValidation.ts          # Validação de texto (strip invisíveis, isValidText)
- ├─ app.config.js                  # Configuração Expo (pacote Android, permissões, plugins)
- ├─ eas.json                       # Perfis EAS Build (dev, preview APK, produção)
- ├─ i18n.ts                        # Configuração i18next (PT/EN, deteção automática)
- ├─ tailwind.config.js             # NativeWind v4 preset
- ├─ tsconfig.json                  # TypeScript strict mode + path alias @/*
+ │   ├─ AuthContext.tsx            # Sessão (expo-secure-store, chave 'user_data')
+ │   ├─ ThemeContext.tsx           # Tema (AsyncStorage, 3 paletas × 2 modos)
+ │   └─ LoadingContext.tsx         # Estado global de loading (QrCodeFAB)
+ ├─ constants/
+ │   ├─ themes.js                  # 6 temas MD3 (3 paletas × claro/escuro)
+ │   ├─ DarkMapStyle.tsx           # Estilo escuro + claro do Google Maps
+ │   ├─ api.ts                     # API_URL = EXPO_PUBLIC_API_URL
+ │   ├─ images.ts                  # Mapa de assets
+ │   ├─ curiosities.js             # 10 curiosidades sobre Tomar
+ │   ├─ excelUtils.ts              # Gerador de relatórios Excel
+ │   └─ html/DashboardPdf.js       # Template HTML para PDF
+ ├─ utils/                         # delay, getAddress, imagePicker, locationUtils, textValidation
+ ├─ locales/                       # pt.json, en.json
+ ├─ app.config.js                  # Config Expo (pacote Android, plugins, permissões)
+ ├─ eas.json                       # Perfis EAS (dev, preview APK, produção)
+ ├─ i18n.ts                        # Config i18next
+ ├─ tailwind.config.js             # NativeWind v4
+ ├─ tsconfig.json                  # TypeScript strict + path alias @/*
  └─ .env                           # Ficheiro criado pelo utilizador
 ```
 
 ---
 
-## 📡 Referência da API
+## 📡 Referência Completa da API
 
-> A documentação interativa (Swagger UI) está disponível em `/api-docs` quando o servidor está a correr.
+> Documentação interativa (Swagger UI) em `/api-docs` quando o servidor está a correr. **46 endpoints** no total.
 
-### Autenticação & Utilizadores
+### Autenticação & Conta
+
+| Método | Endpoint | Auth | Rate Limit | Descrição |
+|:------:|:---------|:----:|:----------:|:----------|
+| `POST` | `/registar` | ❌ | Strict | Registar + envio de código de verificação por email |
+| `POST` | `/verificar-codigo` | ❌ | Strict | Verificar código de 6 dígitos |
+| `POST` | `/iniciarSessao` | ❌ | Strict | Login → JWT (1 dia) + dados do utilizador |
+| `POST` | `/recuperarPassword` | ❌ | Strict | Pedir código de recuperação (15 min, anti-enumeration) |
+| `POST` | `/alterarPassword` | ❌ | Strict | Redefinir palavra-passe com código de recuperação |
+| `DELETE` | `/apagarConta` | ✅ Todos | Strict | Apagar conta (verifica palavra-passe, cascade delete transacional) |
+
+### Utilizadores
 
 | Método | Endpoint | Auth | Descrição |
 |:------:|:---------|:----:|:----------|
-| `POST` | `/registar` | ❌ | Registar utilizador + envio de código de verificação por email |
-| `POST` | `/verificar-codigo` | ❌ | Verificar código de 6 dígitos enviado por email |
-| `POST` | `/iniciarSessao` | ❌ | Login — retorna JWT (1 dia) + dados do utilizador |
-| `POST` | `/aceitarTermosFatura` | ✅ Todos | Aceitar/revogar termos e condições de faturas |
 | `GET` | `/utilizadores` | ❌ | Listar todos os utilizadores |
-| `GET` | `/utilizador/:id` | ✅ `camara` | Obter proprietários de negócios pendentes |
-| `POST` | `/editarUser/:id` | ✅ Todos | Editar perfil (nome, cidade, NIF, avatar) |
+| `GET` | `/utilizador/:id` | ✅ `camara` | Proprietários de negócios pendentes |
+| `POST` | `/editarUser/:id` | ✅ Todos | Editar perfil (nome, cidade, NIF, avatar via multipart) |
+| `POST` | `/aceitarTermosFatura` | ✅ Todos | Aceitar/revogar termos de processamento de faturas |
 
 ### Negócios
 
 | Método | Endpoint | Auth | Descrição |
 |:------:|:---------|:----:|:----------|
-| `POST` | `/registarNegocio` | ✅ `comerciante`, `camara` | Registar negócio (logo + galeria até 10 imgs, CAE, localização) |
+| `POST` | `/registarNegocio` | ✅ `comerciante`, `camara` | Registar negócio (logo + galeria até 10, CAE, localização) |
 | `GET` | `/negocios` | ❌ | Listar negócios aprovados |
-| `GET` | `/negocios/:id` | ❌ | Obter negócio por ID (com campanhas populadas) |
-| `DELETE` | `/apagarNegocio/:id` | ✅ `camara` | Eliminar negócio + ficheiros do servidor |
-| `GET` | `/meusNegocios` | ✅ `comerciante` | Listar negócios do comerciante autenticado |
-| `GET` | `/negociosCae` | ✅ `comerciante` | Listar negócios por código CAE |
+| `GET` | `/negocios/:id` | ❌ | Obter negócio por ID (com campanhas) |
+| `GET` | `/meusNegocios` | ✅ `comerciante` | Negócios do comerciante autenticado |
+| `GET` | `/negociosCae` | ✅ `comerciante` | Negócios por código CAE |
+| `GET` | `/business/pendentes` | ✅ `camara` | Listar negócios pendentes |
 | `POST` | `/business/aprovar/:id` | ✅ `camara` | Aprovar negócio pendente |
-| `DELETE` | `/business/rejeitar/:id` | ✅ `camara` | Rejeitar (eliminar) negócio pendente |
-| `GET` | `/business/pendentes` | ✅ `camara` | Listar negócios pendentes de aprovação |
+| `DELETE` | `/business/rejeitar/:id` | ✅ `camara` | Rejeitar negócio pendente |
+| `DELETE` | `/apagarNegocio/:id` | ✅ `camara` | Eliminar negócio + ficheiros do servidor |
 
 ### Favoritos
 
 | Método | Endpoint | Auth | Descrição |
 |:------:|:---------|:----:|:----------|
-| `POST` | `/guardarFavorito` | ❌ | Adicionar negócio aos favoritos |
-| `POST` | `/retirarFavorito` | ❌ | Remover negócio dos favoritos |
-| `GET` | `/meusFavoritos/:userId` | ❌ | Listar favoritos de um utilizador |
+| `POST` | `/guardarFavorito` | ✅ Todos | Adicionar aos favoritos (userId do JWT) |
+| `POST` | `/retirarFavorito` | ✅ Todos | Remover dos favorutos (userId do JWT) |
+| `GET` | `/meusFavoritos/:userId` | ✅ Todos | Listar favoritos (próprios ou camara para auditoria) |
 
 ### Faturas & Gamificação
 
 | Método | Endpoint | Auth | Descrição |
 |:------:|:---------|:----:|:----------|
-| `POST` | `/lerFatura` | ✅ Todos | Ler QR Code de fatura AT → validar OCR → atribuir pontos (1 pt/€) |
+| `POST` | `/lerFatura` | ✅ Todos | Ler QR Code de fatura AT → OCR Azure → validar NIF → atribuir pontos (1 pt/€) |
+| `GET` | `/faturas` | ✅ Todos | Listar histórico de faturas do utilizador (paginado) |
+| `GET` | `/faturas/:id` | ✅ Todos | Obter fatura por ID (própria ou camara para auditoria) |
 
 ### Campanhas
 
@@ -499,36 +464,52 @@ FrontEnd/
 |:------:|:---------|:----:|:----------|
 | `POST` | `/criarCampanha` | ✅ `camara` | Criar campanha (logo, panfleto, packs, CAES, datas) |
 | `GET` | `/listaCampanhas` | ❌ | Listar todas as campanhas |
-| `POST` | `/campanhas/aderir` | ✅ `comerciante` | Comerciante candidata um negócio a uma campanha |
+| `GET` | `/campanhas/:id` | ❌ | Obter campanha por ID com packs |
+| `PUT` | `/editarCampanha/:id` | ✅ `camara` | Editar campanha (título, descrição, normas, data de expiração) |
+| `DELETE` | `/apagarCampanha/:id` | ✅ `camara` | Apagar campanha (bloqueado se houver compras) |
 | `GET` | `/campanhas/comerciante-disponiveis` | ✅ `comerciante` | Campanhas disponíveis para o CAE do comerciante |
-| `GET` | `/candidaturasCampanha` | ✅ `camara` | Listar candidaturas pendentes a campanhas |
-| `POST` | `/decidirAdesaoCampanha` | ✅ `camara` | Aprovar ou rejeitar adesão a campanha |
+| `GET` | `/campanhas/comerciante-com-status` | ✅ `comerciante` | Campanhas com estado de participação |
+| `POST` | `/campanhas/aderir` | ✅ `comerciante` | Comerciante candidata um negócio a uma campanha |
+| `GET` | `/candidaturasCampanha` | ✅ `camara` | Candidaturas pendentes a campanhas |
+| `POST` | `/decidirAdesaoCampanha` | ✅ `camara` | Aprovar/rejeitar adesão a campanha |
+
+### Packs (dentro de Campanhas)
+
+| Método | Endpoint | Auth | Descrição |
+|:------:|:---------|:----:|:----------|
+| `PATCH` | `/campanhas/:cid/packs/:pid` | ✅ `camara` | Editar pack (adicionar stock, corrigir descrição; preço bloqueado após compras) |
 
 ### Candidaturas de Comerciante
 
 | Método | Endpoint | Auth | Descrição |
 |:------:|:---------|:----:|:----------|
-| `POST` | `/pedidoComerciante` | ✅ `cidadao` | Submeter candidatura com documento PDF |
-| `GET` | `/obter/PedidosComerciante` | ✅ `camara` | Listar todas as candidaturas |
-| `POST` | `/aprovar/PedidoComerciante/:id` | ✅ `camara` | Aprovar → upgrade de role para comerciante |
-| `DELETE` | `/apagarPedidoComerciante/:id` | ✅ `camara` | Rejeitar candidatura + eliminar PDF (RGPD) |
+| `POST` | `/pedidoComerciante` | ✅ `cidadao` | Submeter candidatura com PDF |
+| `GET` | `/obter/PedidosComerciante` | ✅ `camara` | Listar candidaturas |
+| `POST` | `/aprovar/PedidoComerciante/:id` | ✅ `camara` | Aprovar → upgrade de role + eliminar PDF (RGPD) |
+| `DELETE` | `/apagarPedidoComerciante/:id` | ✅ `camara` | Rejeitar candidatura + eliminar PDF |
 
-### Imagens & Dashboard
+### Compra de Pacotes & Vouchers
+
+| Método | Endpoint | Auth | Rate Limit | Descrição |
+|:------:|:---------|:----:|:----------:|:----------|
+| `POST` | `/packs/comprar` | ✅ Todos | Strict | Comprar pacote com pontos (transação atómica, gera pickupCode) |
+| `GET` | `/packs/minhas-compras` | ✅ Todos | Global | Listar compras do utilizador (com filtro `?status=`) |
+| `GET` | `/packs/:id` | ✅ Todos | Global | Obter compra por ID (própria ou camara para auditoria) |
+| `POST` | `/packs/validar` | ✅ `camara` | Strict | Validar pickupCode e marcar como entregue (atómico) |
+| `GET` | `/packs/campanha/:id/negocios` | ❌ | Global | Listar negócios participantes numa campanha |
+
+### Dashboard
 
 | Método | Endpoint | Auth | Descrição |
 |:------:|:---------|:----:|:----------|
-| `POST` | `/uploadImage` | ❌ | Upload de imagem → Sharp (WebP 800px, 80%) |
-| `GET` | `/mostrarImagem/:id` | ❌ | Obter imagem por ID |
 | `GET` | `/dashboard` | ✅ `camara` | Estatísticas agregadas (categorias, cidades, países) |
 
 > [!NOTE]
-> O cabeçalho de autenticação utiliza o formato `Authorization: Bearer <token_jwt>`. As rotas de autenticação (`/registar`, `/iniciarSessao`, `/verificar-codigo`) estão sujeitas a rate limiting mais restrito (5 req/min).
+> Autenticação via `Authorization: Bearer <token_jwt>`. Ficheiros estáticos servidos em `/uploads`. Swagger UI em `/api-docs`.
 
 ---
 
 ## 🛡️ Permissões por Role
-
-A aplicação define três roles com acesso diferenciado:
 
 | Funcionalidade | Cidadao | Comerciante | Câmara |
 |:---------------|:-------:|:-----------:|:------:|
@@ -537,29 +518,32 @@ A aplicação define três roles com acesso diferenciado:
 | Guardar favoritos | ✅ | ✅ | ✅ |
 | Editar perfil e avatar | ✅ | ✅ | ✅ |
 | Escanear faturas (pontos) | ✅ | ✅ | ✅ |
+| Ver histórico de faturas | ✅ | ✅ | ✅ |
 | Consultar campanhas | ✅ | ✅ | ✅ |
+| Comprar pacotes com pontos | ✅ | ✅ | ✅ |
+| Ver carteira de vouchers | ✅ | ✅ | ✅ |
 | Registar negócio | ❌ | ✅ | ✅ |
 | Ver os seus negócios | ❌ | ✅ | ❌ |
 | Adere a campanhas | ❌ | ✅ | ❌ |
-| Criar campanhas | ❌ | ❌ | ✅ |
+| Criar/editar/apagar campanhas | ❌ | ❌ | ✅ |
+| Editar packs (stock, descrição) | ❌ | ❌ | ✅ |
 | Aprovar/rejeitar negócios | ❌ | ❌ | ✅ |
 | Aprovar/rejeitar comerciantes | ❌ | ❌ | ✅ |
 | Aprovar/rejeitar adesões a campanhas | ❌ | ❌ | ✅ |
+| Validar vouchers presencialmente | ❌ | ❌ | ✅ |
 | Dashboard + exportação | ❌ | ❌ | ✅ |
 | Candidatar-se a comerciante | ✅ | ❌ | ❌ |
 
 ### Categorias de Negócio
 
-Os negócios em Tomar organizam-se nas seguintes categorias, cada uma com um ícone dedicado no mapa:
-
 | Categoria | Ícone no Mapa | Descrição |
 |:---------|:---:|:----------|
-| 🏛️ Património & Museus | Banco | Monumentos, conventos, museus e sítios históricos |
+| 🏛️ Património & Museus | Banco | Monumentos, conventos, museus |
 | 🍽️ Restauração | Talheres | Restaurantes e casas de refeições |
 | ☕ Cafés & Pastelarias | Café | Cafés, pastelarias e padarias |
 | 🏨 Alojamento | Cama | Hotéis, pensões e turismo rural |
 | 🛍️ Comércio Local | Saco | Lojas e comércio tradicional |
-| 🌿 Lazer & Natureza | Árvore | Atividades ao ar livre e espaços verdes |
+| 🌿 Lazer & Natureza | Árvore | Atividades ao ar livre |
 | 🔧 Serviços | Pasta | Serviços profissionais e pessoais |
 
 ---
@@ -568,96 +552,37 @@ Os negócios em Tomar organizam-se nas seguintes categorias, cada uma com um íc
 
 ### 📱 Leitura de Faturas e Pontos
 
-O motor de gamificação da plataforma permite aos cidadãos acumularem pontos ao escanear QR Codes de faturas fiscais portuguesas:
+1. O **Cidadão** escaneia o QR Code da fatura (câmara do telemóvel)
+2. Fotografa o recibo físico
+3. Submete os dados para `POST /lerFatura`
+4. O backend faz **parser dos campos AT (A–S)**, valida via **Azure Document Intelligence OCR**, verifica matematicamente o **NIF**, previne duplicados (índice único `{ATCUD, hash}`) e impõe um **limite diário de 20 faturas**
+5. Pontos atribuídos: **1 ponto por euro** (`Math.trunc(amount)`)
+6. O cidadão pode ver o seu histórico em `GET /faturas`
 
-```
-┌──────────────┐                        ┌──────────────┐
-│    CIDADÃO   │                        │   BACKEND    │
-└──────┬───────┘                        └──────┬───────┘
-       │                                       │
-       │  1. Escaneia QR Code da fatura        │
-       │     (câmara do telemóvel)             │
-       │                                       │
-       │  2. Fotografa o recibo fisicamente    │
-       │                                       │
-       │  3. Submete dados para /lerFatura     │
-       │  ───────────────────────────────────► │
-       │                                       │  4. Parser dos campos AT (A–S)
-       │                                       │     Validação OCR (Azure)
-       │                                       │     Verificação matemática do NIF
-       │                                       │     Verificação ATCUD
-       │                                       │     Prevenção de duplicados
-       │                                       │     Limite diário: 20 faturas
-       │                                       │
-       │  5. Pontos atribuídos (1 ponto/€)     │
-       │  ◄─────────────────────────────────── │
-       │                                       │
-       ▼                                       ▼
-```
+### 🏅 Sistema de Campanhas e Compra de Pacotes
 
-**Detalhes técnicos:**
-- O QR Code fiscal português contém os campos A–S conforme especificação da Autoridade Tributária
-- A validação OCR é feita com **Azure Document Intelligence** para confirmar a autenticidade do documento
-- O índice único composto `{ATCUD, hash}` no modelo Invoice impede o scan duplicado da mesma fatura
-- Apenas documentos do tipo FT (Fatura), FS (Fatura Simplificada) e FR (Fatura Recibo) são aceites
-- O NIF é validado matematicamente (algoritmo de checksum português)
-
-### 🏅 Sistema de Campanhas
-
-A Câmara Municipal cria campanhas temáticas com packs de prémios para incentivar a participação cívica:
-
-```
-┌──────────────┐     ┌──────────────┐       ┌──────────────┐
-│    CÂMARA    │     │ COMERCIANTE  │       │    CIDADÃO   │
-└──────┬───────┘     └──────┬───────┘       └──────┬───────┘
-       │                    │                      │
-  1. Cria campanha     ──►  │                      │
- (logo, CAES, packs)        │                      │
-       │                    │                      │
-       │           2. Vê campanhas disponíveis     │
-       │               (filtradas por CAE)         │
-       │                     │                     │
-       │     ◄───── 3. Seleciona negócio           │
-       │                e candidata-se             │
-       │                    │                      │
-       │                    │                      │
-  4. Aprova/rejeita         │                      │
-     a adesão               │                      │
-       │                    │                      │
-       │                    │                      │
-       │           5. Negócio aparece              │
-       │              na campanha ativa            │
-       │                    │                      │
-       │                    │   6. Vê campanhas    │
-       │                    │      e prémios       │
-       │                    │    ◄─────────────────│
-       │                    │                      │
-       │                    │    7. Resgata packs  │
-       │                    │       com pontos     │
-       │                    │    ─────────────────►│
-       ▼                    ▼                      ▼
-```
-
-**Estados de uma campanha:**
-- **Agendada** — `DataInicio` no futuro
-- **Ativa** — entre `DataInicio` e `DataExpiracao`
-- **Expirada** — após `DataExpiracao`
+1. A **Câmara** cria campanhas com logo, panfleto, packs de prémios e CAES (`POST /criarCampanha`)
+2. A **Câmara** pode editar a campanha (`PUT /editarCampanha/:id`) e os packs (`PATCH /campanhas/:cid/packs/:pid`)
+3. O **Comerciante** vê campanhas disponíveis com estado de participação (`GET /campanhas/comerciante-com-status`)
+4. O **Comerciante** candidata um negócio a uma campanha (`POST /campanhas/aderir`)
+5. A **Câmara** aprova/rejeita a adesão (`POST /decidirAdesaoCampanha`)
+6. O **Cidadão** vê campanhas ativas e os pacotes disponíveis
+7. O **Cidadão** compra um pacote (`POST /packs/comprar`) — transação atómica decrementa stock, deduz pontos, gera pickupCode
+8. O **Cidadão** vê o voucher na carteira (`GET /packs/minhas-compras`) com filtros (Ativo/Entregue/Expirado)
+9. O **Cidadão** desloca-se à Câmara → o funcionário valida o pickupCode (`POST /packs/validar`) → voucher passa a "entregue"
 
 ### 📋 Candidatura a Comerciante
 
-Os cidadãos que pretendam tornar-se comerciantes na plataforma podem candidatar-se:
-
-1. O **Cidadao** preenche o formulário e anexa um documento PDF comprovativo
-2. O PDF é enviado para o servidor e armazenado
-3. A **Câmara** visualiza o PDF na app e aprova ou rejeita
-4. Se aprovado, o role do utilizador é atualizado de `cidadao` para `comerciante`
-5. O PDF é eliminado do servidor (conformidade RGPD)
+1. O **Cidadão** preenche o formulário e anexa um PDF comprovativo
+2. A **Câmara** visualiza o PDF na app e aprova ou rejeita
+3. Se aprovado, o role do utilizador passa de `cidadao` para `comerciante`
+4. O PDF é eliminado do servidor (conformidade RGPD)
 
 ---
 
 ## 🎨 Sistema de Temas
 
-O Tomar+Digital apresenta um sistema de temas inspirado na identidade cultural de Tomar, com **3 paletas** × **3 modos** = 9 combinações:
+O Tomar Digital apresenta um sistema de temas inspirado na identidade cultural de Tomar, com **3 paletas** × **2 modos** (Claro/Escuro), mais o modo **Automático** (segue o sistema):
 
 | Paleta | Inspiração | Cor Primária (Claro) | Cor Primária (Escuro) |
 |:-------|:-----------|:--------------------:|:---------------------:|
@@ -665,9 +590,7 @@ O Tomar+Digital apresenta um sistema de temas inspirado na identidade cultural d
 | **Mata** | Mata dos Sete Montes (Natureza) | `#476500` | `#a1d494` |
 | **Tabuleiros** | Festa dos Tabuleiros (Vermelho Festival) | `#8f000d` | `#ffb4ac` |
 
-**Modos disponíveis:** Claro · Escuro · Automático (segue o sistema)
-
-Todos os temas seguem a especificação **Material Design 3** (MD3) com 50+ tokens de cor, `roundness: 8` e elevação tonal (sem sombras pesadas). As cores são acedidas exclusivamente via `useAppTheme()` — não existem cores hardcoded nos ecrãs.
+Todos os temas seguem a especificação **Material Design 3** (MD3). As cores são acedidas via `useAppTheme()` — não existem cores hardcoded nos ecrãs (exceto `CustomSnackBar` para semáforos universais). Ver `ColorScheme.txt` para as regras completas de design.
 
 ---
 
@@ -675,10 +598,10 @@ Todos os temas seguem a especificação **Material Design 3** (MD3) com 50+ toke
 
 A aplicação suporta **Português** e **Inglês** com deteção automática do idioma do sistema:
 
-- O idioma é detetado automaticamente via `expo-localization` (PT se o sistema estiver em PT, EN caso contrário)
+- Deteção via `expo-localization` (PT se o sistema estiver em PT, EN caso contrário)
 - O utilizador pode alternar manualmente nas Preferências ou no botão de idioma nos ecrãs de autenticação
-- A seleção é persistida em `AsyncStore`
-- Todas as chaves de tradução utilizam `defaultValue` como fallback
+- A seleção é persistida em **AsyncStorage** (chave `@app_language`)
+- Todas as chaves usam `defaultValue` como fallback
 
 ---
 
@@ -686,35 +609,32 @@ A aplicação suporta **Português** e **Inglês** com deteção automática do 
 
 ### Backend — Azure Web Apps
 
-O deploy do backend é feito automaticamente via **GitHub Actions** quando há push para a branch `develop`:
-
 - **Workflow:** `.github/workflows/develop_tomar-rg.yml`
-- **Plataforma:** Azure Web Apps (West Europe)
+- **Trigger:** Push para `develop`
+- **Plataforma:** Azure Web Apps (West Europe), app `tomar-rg`
+- **Node:** 22.x
 - **URL de produção:** `https://tomar-rg-b0bvd9e7fkdhatbh.westeurope-01.azurewebsites.net`
-- **Autenticação:** Azure OIDC com segredos no GitHub
+- **Seeder:** O `seed.js` executa no CI antes do deploy (popula a BD de produção)
 
 ### Frontend — EAS Build
 
-O build do APK Android é feito via **Expo Application Services (EAS)**:
-
 - **Workflow:** `.github/workflows/eas-build.yml`
 - **Trigger:** Push para `main` ou `develop`
-- **Perfil:** `preview` (gera APK, não AAB)
+- **Perfil:** `preview` (gera **APK**, não AAB)
 - **Node:** 20.x
+- **Pacote Android:** `com.jlfernandes.TomarDigital`
+- **EAS Project ID:** `39bcf77c-f4b7-45dc-bb23-3db18bdc0b2d`
 
 ---
 
 ## 🛠️ Resolução de Problemas (Firewall e Rede)
 
-Se o telemóvel não conseguir estabelecer ligação (ecrã a carregar sem resposta), a **Firewall do PC pode estar a bloquear as portas comunicacionais.**
+Se o telemóvel não conseguir estabelecer ligação, a **Firewall do PC pode estar a bloquear as portas** `3000/tcp` (Backend) e `8081/tcp` (Frontend Expo).
 
 > [!WARNING]
-> - O telemóvel **NÃO** deve usar Dados Móveis (4G/5G), apenas Wi-Fi doméstico. A exceção é se fizer *hotspot* a partir do telemóvel para o PC.
-> - Ambos os dispositivos têm de estar na **mesma rede**.
+> O telemóvel não deve usar Dados Móveis (4G/5G), apenas Wi-Fi. Ambos os dispositivos têm de estar na **mesma rede**.
 
-Para abrir as portas **`3000/tcp`** (Backend) e **`8081/tcp`** (Frontend Expo), escolha o seu Sistema Operativo:
-
-### 🐧 Ubuntu / Pop!\_OS / Debian (UFW)
+### 🐧 Ubuntu / Debian (UFW)
 
 ```bash
 sudo ufw allow 3000/tcp
@@ -722,14 +642,7 @@ sudo ufw allow 8081/tcp
 sudo ufw reload
 ```
 
-**Para reverter:**
-```bash
-sudo ufw delete allow 3000/tcp
-sudo ufw delete allow 8081/tcp
-sudo ufw reload
-```
-
-### 🐧 Fedora / Arch Linux / RHEL / Nobara (Firewalld)
+### 🐧 Fedora / Arch / RHEL (Firewalld)
 
 ```bash
 sudo firewall-cmd --add-port=3000/tcp --permanent
@@ -737,41 +650,49 @@ sudo firewall-cmd --add-port=8081/tcp --permanent
 sudo firewall-cmd --reload
 ```
 
-**Para reverter:**
-```bash
-sudo firewall-cmd --remove-port=3000/tcp --permanent
-sudo firewall-cmd --remove-port=8081/tcp --permanent
-sudo firewall-cmd --reload
-```
-
-### 🪟 Windows (PowerShell)
-
-1. Abra o **PowerShell como Administrador** (Botão Direito no Iniciar → Windows PowerShell (Admin)).
-2. Execute:
+### 🪟 Windows (PowerShell como Admin)
 
 ```powershell
 New-NetFirewallRule -DisplayName "Expo Mobile" -Direction Inbound -LocalPort 8081 -Protocol TCP -Action Allow
 New-NetFirewallRule -DisplayName "NodeJS Backend" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
 ```
 
-**Para reverter:**
-```powershell
-Remove-NetFirewallRule -DisplayName "Expo Mobile"
-Remove-NetFirewallRule -DisplayName "NodeJS Backend"
-```
-
-**(Alternativa com Interface Gráfica):**
-1. Abra **"Windows Defender Firewall com Segurança Avançada"**.
-2. Clique em **"Regras de Entrada"** → **"Nova Regra..."**.
-3. Selecione **Porta** → **TCP** → portas: `3000, 8081`.
-4. Deixe "Permitir a ligação" marcado e identifique a regra (ex: "Exceções Tomar Digital").
-
 ### 🍏 macOS
 
-1. Aceda a **Definições do Sistema** > **Rede** > **Firewall**.
-2. Desbloqueie as opções (ícone de cadeado — requer palavra-passe ou TouchID).
-3. Nas **Opções do Firewall**, verifique se `node` ou `expo` estão listados como bloqueados.
-4. Clique em **"+"** para autorizar ligações de entrada.
-5. Confirme as alterações.
+**Definições do Sistema** > **Rede** > **Firewall** → autorizar `node` e `expo` nas ligações de entrada.
 
-**Para reverter:** Selecione a aplicação na lista e clique em **"-"** para remover as permissões.
+---
+
+## 📋 TODO List
+
+Itens identificados para desenvolvimento futuro, ordenados por prioridade:
+
+### Alta Prioridade
+
+- [ ] **Editar negócio** (`PUT /editarNegocio/:id`) — O endpoint existe como TODO vazio no `index.js` mas não tem implementação. O comerciante não pode editar o nome, descrição, galeria ou localização do seu negócio após o registo.
+- [ ] **Ecrã de histórico de faturas** — O endpoint `GET /faturas` existe no backend mas não há ecrã no frontend. Criar um ecrã de histórico acessível a partir do perfil.
+- [ ] **Validar NIF no frontend** — O `CustomTextInput` tem `isNIF` mas a validação de checksum não foi ligada em todos os formulários (ex: `BusinessAdd` não valida o NIF do negócio).
+- [ ] **Notificações push** — Implementar notificações para: campanhas novas ativas, negócio aprovado/rejeitado, candidatura a comerciante aprovada, voucher prestes a expirar.
+
+### Média Prioridade
+
+- [ ] **Cancelar voucher** (`POST /packs/cancelar/:id`) — Permitir cancelar um voucher ativo e devolver os pontos (com transação atómica que restaura `currentStock` e `user.Points`).
+- [ ] **Arquivar campanha** (soft delete) — Em vez de apagar, adicionar um estado `arquivada` para preservar o histórico.
+- [ ] **Dashboard de redemptions** (`GET /dashboard/redemptions`) — Analytics de compras de pacotes: packs mais populares, taxa de levantamento, stock burn rate.
+- [ ] **Paginação nos negócios** — O endpoint `/negocios` retorna todos de uma vez. Adicionar `?page=` e `?limit=` como no `/faturas`.
+- [ ] **Pesquisa fuzzy no mapa** — A pesquisa atual é exata. Implementar pesquisa fuzzy para tolerar erros de digitação.
+- [ ] **Horários de funcionamento** — Adicionar campo `horarios` ao modelo `Business` e exibir no `BusinessDetails`.
+- [ ] **Fotos do negócio em ecrã completo** — No `BusinessDetails`, a galeria de fotos deveria abrir em fullscreen ao tocar.
+
+### Baixa Prioridade / Tech Debt
+
+- [ ] **Migrar POST-as-update para PUT/PATCH** — Endpoints como `/editarUser/:id`, `/retirarFavorito`, `/business/aprovar/:id` usam POST em vez de PUT/PATCH/DELETE. Migrar para verbos REST idiomáticos.
+- [ ] **Padronizar nomes de rotas** — Misto de Português (`/negocios`) e Inglês (`/business/aprovar`). Padronizar num único idioma.
+- [ ] **Separar `index.js` em controllers** — O ficheiro tem 2800+ linhas com 46 rotas. Extrair para `controllers/` e `routes/` para maintainability.
+- [ ] **Testes automatizados** — Não existem testes unitários, de integração ou E2E. Adicionar Jest + Supertest para backend; Jest + React Native Testing Library para frontend.
+- [ ] **Corrigir `app.config.js` `scheme: 'movies'`** — Placeholder leftover que deveria ser `'tomardigital'`.
+- [ ] **Remover `tesseract.js`** — Importado mas não usado (Azure Document Intelligence é usado em vez disso).
+- [ ] **Remover `@react-native-async-storage/async-storage` do backend** — Dependência de RN no `package.json` do backend (provável erro).
+- [ ] **Rate limiting por utilizador** — O rate limiting atual é por IP. Adicionar rate limiting por utilizador (JWT) para endpoints sensíveis.
+- [ ] **Refresh tokens** — O JWT atual expira em 1 dia sem renovação. Implementar refresh tokens para sessões mais longas.
+- [ ] **Logging estruturado** — Substituir `console.log/error` por um logger estruturado (Winston/Pino) com níveis e rotação de ficheiros.

@@ -219,8 +219,9 @@ export default function CandidaturasCampanha() {
                   router.push({
                     pathname: '/components/BusinessDetails',
                     params: {
-                      businessId: item.businessId,
-                      campaignId: item.campaignId,
+                      // BusinessDetails expects 'id' (not 'businessId') to
+                      // fetch the business via GET /negocios/:id
+                      id: item.businessId,
                     },
                   })
                 }

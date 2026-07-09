@@ -150,7 +150,17 @@ export default function Index() {
   const fetchFavorite = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`);
+      // The /meusFavoritos endpoint requires JWT authentication
+      // (authorize(["cidadao", "comerciante", "camara"]) middleware).
+      // Without this header the request is rejected with 401 and the
+      // heart icons on the map never reflect the user's favorites.
+      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
       const dados = await response.json();
       const lista = Array.isArray(dados) ? dados : dados.favoritos || [];
       const ids = lista.map(
@@ -160,7 +170,7 @@ export default function Index() {
     } catch (error) {
       console.log('Erro ao obter favoritos:', error);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.token]);
 
   /** Toggles favorite status using Optimistic UI updates for instant feedback. */
   const toggleFavorite = async (businessId: string) => {
@@ -185,7 +195,10 @@ export default function Index() {
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
         body: JSON.stringify({ userId: user.id, businessId }),
       });
       if (!response.ok) throw new Error('Failed to update favorite');

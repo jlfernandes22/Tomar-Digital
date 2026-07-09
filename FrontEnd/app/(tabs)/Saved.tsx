@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Image, FlatList, View } from 'react-native';
+import { Image, FlatList, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Surface, Text, TouchableRipple, Divider } from 'react-native-paper';
@@ -40,6 +40,7 @@ const Saved = () => {
   // --- Local State ---
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // UI Feedback state
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -55,12 +56,26 @@ const Saved = () => {
    * Wrapped in useCallback to ensure a stable reference for useFocusEffect,
    * preventing unnecessary re-renders when the screen regains focus.
    */
-  const carregarFavoritos = useCallback(async () => {
+  const carregarFavoritos = useCallback(async (isRefresh = false) => {
     if (!user?.id) return;
 
-    setLoading(true);
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
-      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`);
+      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // The /meusFavoritos endpoint requires JWT authentication
+          // (authorize(["cidadao", "comerciante", "camara"]) middleware).
+          // Without this header the request is rejected with 401 and the
+          // favorites list never loads.
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
       const dados = await response.json();
 
       // Ensure we always have an array to render, even if the API returns an object or null
@@ -72,8 +87,14 @@ const Saved = () => {
       setDialogVisible(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [user?.id, t]);
+  }, [user?.id, user?.token, t]);
+
+  /** Pull-to-refresh handler. */
+  const handleRefresh = useCallback(() => {
+    carregarFavoritos(true);
+  }, [carregarFavoritos]);
 
   /**
    * Removes a business from favorites using an Optimistic UI approach.
@@ -90,7 +111,14 @@ const Saved = () => {
       try {
         const response = await fetch(`${API_URL}/retirarFavorito`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            // The /retirarFavorito endpoint requires JWT authentication.
+            // (The backend now derives userId from the JWT, but we keep
+            //  userId in the body for backwards compatibility with older
+            //  backend versions.)
+            Authorization: `Bearer ${user?.token}`,
+          },
           body: JSON.stringify({ userId: user?.id, businessId }),
         });
 
@@ -113,7 +141,7 @@ const Saved = () => {
         setDialogVisible(true);
       }
     },
-    [user?.id, carregarFavoritos, t],
+    [user?.id, user?.token, carregarFavoritos, t],
   );
 
   // --- Effects ---
@@ -174,6 +202,9 @@ const Saved = () => {
         data={favoritos}
         keyExtractor={(item: any) => item._id}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
         renderItem={({ item }) => (
           <View className="relative">
             <Surface
