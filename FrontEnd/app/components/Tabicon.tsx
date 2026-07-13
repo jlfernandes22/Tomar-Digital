@@ -1,28 +1,33 @@
-import { Text, View, Image } from "react-native";
-import React from 'react'
+import React from 'react';
+import { View, Image, ImageSourcePropType, ColorValue } from 'react-native';
 
+/**
+ * Defines the props for the TabIcon component.
+ * Uses specific React Native types for better type safety and developer experience.
+ */
+interface TabIconProps {
+  icon: ImageSourcePropType;
+  color: ColorValue;
+}
 
-const TabIcon = ({ focused, icon, title }: any) => {
-  if (focused) {
-    return (
-      <View className="flex flex-row min-w-[20px] min-h-[20px] bg-tabColor rounded-full justify-center items-center">
-        <Image className="size-6" source={icon} />
-
-
-        <View>
-          <Text className="text-s ml-2" >{title}</Text>
-        </View> 
-
-      </View>
-            
-    );
-  }
+/**
+ * TabIcon Component
+ *
+ * A simple presentational component used to render icons within the bottom navigation bar.
+ * It applies a dynamic `tintColor` so the icon changes color based on whether the tab
+ * is active or inactive, matching the state managed by the parent navigation component.
+ */
+const TabIcon = ({ icon, color }: TabIconProps) => {
   return (
-    <View className="size-full justify-center items-center mt-4 rounded-full ">
-      <Image className="size-6" source={icon} />
+    <View>
+      <Image
+        className="size-6" // NativeWind utility for width: 24, height: 24
+        style={{ tintColor: color }} // Dynamically colors the image asset
+        resizeMode="contain"
+        source={icon}
+      />
     </View>
   );
 };
 
-
-export default TabIcon
+export default TabIcon;

@@ -1,26 +1,37 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { isTokenExpired } from '@/utils/jwt';
 
 export interface User {
   id: string;
   role: string;
-  token: string; 
+  token: string;
   email: string;
-  saldo: number;
-  name?: string;
+  Points: number;
+  name: string;
+  city?: string;
+  NIF?: number | null;
+  acceptedInvoiceTerms?: boolean;
+  Avatar?: string | null;
 }
 
 interface AuthContextData {
   user: User | null;
   updateUser: (updatedData: Partial<User>) => void;
+
   login: (
-    id: string, 
-    role: string, 
-    token: string, 
-    email: string, 
-    saldo: number
-  ) => Promise<void>; 
+    id: string,
+    role: string,
+    token: string,
+    email: string,
+    Points: number,
+    name: string,
+    city?: string,
+    NIF?: number | null,
+    acceptedInvoiceTerms?: boolean,
+    Avatar?: string | null,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -33,35 +44,58 @@ const STORAGE_KEY = 'user_data';
 export const AuthProvider = ({ children }: any) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
   const updateUser = (updatedData: Partial<User>) => {
-  setUser((prev) => {
-    if (!prev) return null;
+    setUser(prev => {
+      if (!prev) return null;
 
-    // Criamos o novo objeto fundindo o antigo com o novo
-    const newUser = { 
-      ...prev, 
-      ...updatedData,
-      // Se o saldo for NaN, ele volta para o saldo anterior ou 0
-      saldo: updatedData.saldo !== undefined && !isNaN(Number(updatedData.saldo)) 
-             ? Number(updatedData.saldo) 
-             : prev.saldo 
-    };
+      // Criamos o novo objeto fundindo o antigo com o novo
+      const newUser = {
+        ...prev,
+        ...updatedData,
+        // Se o saldo for NaN, ele volta para o saldo anterior ou 0
+        Points:
+          updatedData.Points !== undefined && !isNaN(Number(updatedData.Points))
+            ? Number(updatedData.Points)
+            : prev.Points,
+      };
 
-    // Usar a chave constante 'user_data'
-    SecureStore.setItemAsync('user_data', JSON.stringify(newUser));
-    return newUser;
-  });
-};
+      // Usar a chave constante 'user_data'
+      SecureStore.setItemAsync('user_data', JSON.stringify(newUser));
+      return newUser;
+    });
+  };
+
   useEffect(() => {
     const loadStorageData = async () => {
       try {
         const savedUser = await SecureStore.getItemAsync(STORAGE_KEY);
         if (savedUser) {
           const userData = JSON.parse(savedUser);
-          setUser(userData); 
+
+          // --- Token Expiry Check ---
+          // Before restoring the session, check if the JWT has expired.
+          // The backend sets `expiresIn: "1d"` (1 day), so a user who hasn't
+          // opened the app in over a day would have an expired token.
+          // Without this check, the user would be "logged in" but every API
+          // call would return 401, causing confusing error snackbars on
+          // every screen (e.g. "Could not load businesses" on MyBusinesses).
+          //
+          // If the token is expired, we clear the stored session so the user
+          // is sent to the login screen on the next navigation.
+          if (userData && userData.token && isTokenExpired(userData.token)) {
+            console.warn(
+              '[AuthContext] Stored JWT is expired — clearing session. ' +
+                'The user will be redirected to login.',
+            );
+            await SecureStore.deleteItemAsync(STORAGE_KEY);
+            setUser(null);
+          } else {
+            setUser(userData);
+          }
         }
       } catch (e) {
-        console.error("Erro ao carregar dados", e);
+        console.error('Erro ao carregar dados', e);
       } finally {
         setLoading(false);
       }
@@ -69,22 +103,37 @@ export const AuthProvider = ({ children }: any) => {
     loadStorageData();
   }, []);
 
-  const login = async (id: string, role: string, token: string, email: string, saldo: number) => {
+  const login = async (
+    id: string,
+    role: string,
+    token: string,
+    email: string,
+    Points: number,
+    name: string,
+    city?: string,
+    NIF?: number | null,
+    acceptedInvoiceTerms?: boolean,
+    Avatar?: string | null,
+  ) => {
     try {
       const userData: User = {
         id,
         role,
         token,
         email,
-        saldo: Number(saldo) || 0,
-        name: email.split('@')[0] // Atribui um nome logo no login
+        Points: Number(Points) || 0,
+        name,
+        city,
+        NIF,
+        acceptedInvoiceTerms,
+        Avatar,
       };
 
       await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
-      console.log("Login efetuado com sucesso:", userData);
+      console.log('Login efetuado com sucesso:', userData);
     } catch (e) {
-      console.error("Erro ao guardar login", e);
+      console.error('Erro ao guardar login', e);
     }
   };
 
@@ -92,9 +141,9 @@ export const AuthProvider = ({ children }: any) => {
     try {
       await SecureStore.deleteItemAsync(STORAGE_KEY);
       setUser(null);
-      router.replace('/(accountCreation)/login')
+      router.replace({ pathname: '/(accountCreation)/Login' });
     } catch (e) {
-      console.error("Erro no logout:", e);
+      console.error('Erro no logout:', e);
     }
   };
 
@@ -108,7 +157,7 @@ export const AuthProvider = ({ children }: any) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 };

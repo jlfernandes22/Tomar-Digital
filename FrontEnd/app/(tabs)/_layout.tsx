@@ -1,150 +1,257 @@
-import { images } from "@/constants/images";
-import { Tabs } from "expo-router";
-import React from "react";
-import TabIcon from '@/app/components/Tabicon'
-import { useAuth } from "@/context/AuthContext";
-import { Dimensions, Platform } from 'react-native';
-
-
+/**
+ * Main App Tab Layout
+ *
+ * Defines the primary tab-based navigation for the authenticated part of the app.
+ * It uses a custom React Native Paper BottomNavigation bar to maintain visual
+ * consistency with the rest of the UI and handles dynamic, role-based route visibility.
+ */
+import { images } from '@/constants/images';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import TabIcon from '@/app/components/Tabicon';
+import { useAuth } from '@/context/AuthContext';
+import { BottomNavigation } from 'react-native-paper';
+import { useAppTheme } from '@/context/ThemeContext';
+import { CommonActions } from '@react-navigation/native';
+import { Platform } from 'react-native';
 
 const _layout = () => {
-  const {user} = useAuth();
-  const { width } = Dimensions.get('window');
+  // Access the current user's role to determine which tabs they are allowed to see.
+  const { user } = useAuth();
+  const { currentTheme: theme } = useAppTheme();
+
   return (
     <Tabs
-  screenOptions={{
-      tabBarShowLabel: false,
-      tabBarItemStyle:{
-        height: "100%",
-        justifyContent: "center",
-        alignItems: "center"
-      },
-      tabBarStyle:{
-        borderColor: "#ff0000",
-        backgroundColor: "#FFC299",
-        borderRadius: 75,
-      }
-  }}
->
+      // We override the default tab bar to use Paper's BottomNavigation.
+      // This gives us full control over styling, safe area insets, and route filtering.
+      tabBar={({ navigation, state, descriptors, insets }) => {
+        // 1. HYBRID FILTERING:
+        // We filter the navigation state to dynamically show or hide tabs.
+        // This combines standard Expo Router hiding (href: null) with business logic
+        // based on the user's role ('camara', 'comerciante', 'cidadao').
+        const visibleRoutes = state.routes.filter(route => {
+          const options = descriptors[route.key].options as any;
+
+          // Hide routes explicitly marked as hidden or those lacking an icon.
+          if (!options.tabBarIcon || options.href === null) return false;
+
+          // Role-Based Access Control (RBAC) for specific tabs.
+          // Only show management tabs to the 'camara' role.
+          if (route.name === 'MunicipalIndex' && user?.role !== 'camara')
+            return false;
+          if (route.name === 'DashboardTab' && user?.role !== 'camara')
+            return false;
+          if (route.name === 'CampaignIndex' && user?.role !== 'camara')
+            return false;
+
+          // CampaignCreate is now accessed via CampaignIndex hub (not a direct tab)
+
+          // Only show merchant-specific tabs to the 'comerciante' role.
+          if (route.name === 'BusinessAdd' && user?.role !== 'comerciante')
+            return false;
+          if (route.name === 'BusinessMine' && user?.role !== 'comerciante')
+            return false;
+          if (route.name === 'CampaignMerchant' && user?.role !== 'comerciante')
+            return false;
+
+          // CampaignJoin is for citizens only (browse + buy packs).
+          // Merchants have their own CampaignMerchant hub (which exposes
+          // "Ver Campanhas" for browsing/buying and "Aderir a Campanhas" for
+          // managing participation). Camara creates campaigns via CampaignIndex.
+          if (route.name === 'CampaignJoin' && user?.role !== 'cidadao')
+            return false;
+
+          return true;
+        });
+
+        // Determine the index of the currently active route within our filtered array.
+        // This ensures the Paper BottomNavigation highlights the correct tab.
+        const activeRoute = state.routes[state.index];
+        const activeIndex = visibleRoutes.findIndex(
+          r => r.key === activeRoute.key,
+        );
+
+        return (
+          <BottomNavigation.Bar
+            navigationState={{
+              index: activeIndex === -1 ? 0 : activeIndex,
+              // Pass the filtered routes directly. Avoid mapping here to preserve
+              // the internal route object structure expected by React Navigation.
+              routes: visibleRoutes,
+            }}
+            safeAreaInsets={insets}
+            style={{
+              backgroundColor: theme.colors.inverseOnSurface,
+              // Platform-specific adjustment:
+              // On iOS, we manually adjust the height to account for the bottom
+              // safe area inset (home indicator). On Android, we let the default
+              // Paper component behavior handle the spacing.
+              ...Platform.select({
+                ios: {
+                  height: 60 + insets.bottom,
+                  paddingBottom: insets.bottom,
+                },
+                android: {},
+              }),
+            }}
+            // Apply dynamic theme colors for active and inactive states.
+            activeColor={theme.colors.onPrimary}
+            inactiveColor={theme.colors.onSurfaceVariant}
+            activeIndicatorStyle={{
+              backgroundColor: theme.colors.primary,
+              width: 64,
+              minWidth: 64,
+              maxWidth: 64,
+              height: 44,
+              borderRadius: theme.roundness,
+              alignSelf: 'center',
+            }}
+            labeled={false} // Hides text labels, showing only icons for a cleaner UI
+            onTabPress={({ route, preventDefault }) => {
+              // Standard React Navigation logic to emit the tab press event.
+              // This allows other navigation interceptors to prevent the default
+              // navigation action if needed (e.g., if a form has unsaved changes).
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+
+              if (event.defaultPrevented) {
+                preventDefault();
+              } else {
+                // Dispatch the navigation action to switch tabs.
+                navigation.dispatch({
+                  ...CommonActions.navigate(route.name, (route as any).params),
+                  target: state.key,
+                });
+              }
+            }}
+            renderIcon={({ focused, route, color }) => {
+              const { options } = descriptors[route.key];
+              if (options.tabBarIcon) {
+                return options.tabBarIcon({ focused, color, size: 24 });
+              }
+              return null;
+            }}
+          />
+        );
+      }}
+      screenOptions={{
+        headerShown: false, // Hide the top header for a cleaner full-screen experience
+      }}
+    >
+      {/* 
+        Tab Definitions 
+        Each Tabs.Screen defines a route. The options.tabBarIcon is required 
+        for the route to appear in our custom filtered BottomNavigation.
+      */}
       <Tabs.Screen
-        name="home"
+        name="Home"
         options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon 
-              focused={focused} 
-              icon={images.homeImg}  />
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.mapImg} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="search"
+        name="Saved"
         options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon 
-              focused={focused} 
-              icon={images.searchImg}  />
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.bookmarkImg} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="saved"
+        name="MunicipalIndex"
         options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              icon={images.bookmarkImg}
-            />
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.camaraImg} color={color} />
           ),
         }}
       />
 
-       
-
-
-        <Tabs.Screen
-          name="camara"
-          options={{
-            headerShown: false,
-            href: user?.role === 'camara' ? '/camara' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon 
-                focused={focused} 
-                icon={images.camaraImg}   />
-            ),
-          }}
-        />
-
-         <Tabs.Screen
-          name="add"
-          options={{
-            headerShown: false,
-            href: user?.role === 'comerciante' ? '/add' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon 
-                focused={focused} 
-                icon={images.addImg}   />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="purchase"
-          options={{
-            headerShown: false,
-            href: user?.role === 'comerciante' ? '/purchase' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon 
-                focused={focused} 
-                icon={images.compraImg}   />
-            ),
-          }}
-        />
-
-         <Tabs.Screen
-          name="qrcode"
-          options={{
-            headerShown: false,
- 
-            href: user?.role === 'cidadao' ? '/qrcode' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.qrCodeImg}   />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="dashboardTab"
-          options={{
-            headerShown: false,
- 
-            href: user?.role === 'camara' ? '/dashboardTab' : null, 
-            tabBarIcon: ({ focused }) => (
-              <TabIcon focused={focused} icon={images.statsImg}  />
-            )
-          }}
-        />
-
-
       <Tabs.Screen
-        name="profile"
+        name="BusinessMine"
         options={{
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              icon={images.profileImg}
-              
-              
-            />
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.bagImg} color={color} />
           ),
         }}
-      />  
+      />
+
+      <Tabs.Screen
+        name="BusinessAdd"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.addImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="CampaignJoin"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.campaignImg} color={color} />
+          ),
+        }}
+      />
+
+      {/*
+        CampaignMerchant — Merchant's campaign HUB.
+        Mirrors the Camara's CampaignIndex layout, exposing two cards:
+          - "Ver Campanhas"       → CampaignListMerchant (browse + buy packs)
+          - "Aderir a Campanhas"  → CampaignMerchantJoin (manage participation)
+        A comerciante can ALSO buy packs (the backend /packs/comprar accepts
+        the comerciante role); the previous design hid this flow from merchants.
+      */}
+      <Tabs.Screen
+        name="CampaignMerchant"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.campaignImg} color={color} />
+          ),
+        }}
+      />
+
+      {/*
+        CampaignIndex — Camara's campaign hub.
+        Replaces the old direct CampaignCreate tab. Shows options to:
+        - View all campaigns (CampaignList)
+        - Create a new campaign (CampaignCreate)
+      */}
+      <Tabs.Screen
+        name="CampaignIndex"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.campaignImg} color={color} />
+          ),
+        }}
+      />
+
+      {/*
+      */}
+
+      <Tabs.Screen
+        name="DashboardTab"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.statsImg} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="Profile"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={images.profileImg} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 };

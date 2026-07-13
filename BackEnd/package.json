@@ -11,24 +11,25 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@react-native-async-storage/async-storage": "1.18.2",
+    "@azure/ai-form-recognizer": "^5.1.0",
     "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "fast-xml-parser": "^5.3.4",
+    "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.1.6",
-    "uuid": "^13.0.0"
+    "mongoose": "^9.6.2",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.10",
+    "sharp": "^0.34.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.2.1",
     "nodemon": "^3.1.11"
-  },
-  "overrides": {
-    "fast-xml-parser": "^5.3.4"
   }
 }

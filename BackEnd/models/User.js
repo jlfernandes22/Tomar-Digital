@@ -1,46 +1,63 @@
-import mongoose from 'mongoose'
-
+import mongoose from "mongoose";
 
 //Tabela dos utilizadores
 const UserSchema = new mongoose.Schema({
+  //Nome do utilizador
+  name: {
+    type: String,
+    required: false,
+  },
 
-    //Nome do utilizador
-    name: {
-        type: String,
-        required: true
-    },
+  //Email
+  email: {
+    type: String,
+    required: true,
+  },
 
-    //Email
-    email: {
-        type: String,
-        required: true
+  //Password
+  password: {
+    type: String,
+    required: true,
+  },
 
-    },
-    
-    //Password
-    password: {
+  //Cidade
+  city: {
+    type: String,
+    required: false,
+  },
 
-        type: String,
-        required: true
+  role: {
+    type: String,
+    enum: ["cidadao", "comerciante", "camara"],
+    default: "cidadao",
+  },
 
-    },
+  Points: {
+    type: Number,
+    default: 0,
+  },
 
-    //Cidade
-    city:  {
-        type: String,
-        required: false
-    },
+  NIF: {
+    type: Number,
+    default: null,
+  },
 
-    role: { 
-    type: String, 
-    enum: ['cidadao', 'comerciante', 'camara'], 
-    }, 
+  Avatar: {
+    type: String,
+    required: false,
+  },
+  acceptedInvoiceTerms: {
+    type: Boolean,
+    default: false,
+  },
 
-    saldo: {
-        type: Number,
-        default: 0
-    },
+  codigoValidar: {type: String},
 
-})
+  isVerified: {type: Boolean, required:true},
 
-export default mongoose.model('User', UserSchema);
+  codigoResetPassword: { type: String, default: null },
+  
+  codigoResetExpira: { type: Date, default: null },
+});
+
+export default mongoose.model("User", UserSchema);

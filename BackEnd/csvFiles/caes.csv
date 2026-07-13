@@ -1,0 +1,852 @@
+﻿_id,Secção,CAE,Descrição
+6a1021a95428bd9bfa9b99b2,"Secção A - Agricultura, floresta e pesca",1111,Cerealicultura (exceto arroz)
+6a1021a95428bd9bfa9b99b3,"Secção A - Agricultura, floresta e pesca",1112,Cultura de leguminosas secas e sementes oleaginosas
+6a1021a95428bd9bfa9b99b4,"Secção A - Agricultura, floresta e pesca",1120,Cultura de arroz
+6a1021a95428bd9bfa9b99b5,"Secção A - Agricultura, floresta e pesca",1130,"Cultura de produtos hortícolas e melões, raízes e tubérculos"
+6a1021a95428bd9bfa9b99b6,"Secção A - Agricultura, floresta e pesca",1140,Cultura de cana-de-açúcar
+6a1021a95428bd9bfa9b99b7,"Secção A - Agricultura, floresta e pesca",1160,Cultura de plantas têxteis
+6a1021a95428bd9bfa9b99b8,"Secção A - Agricultura, floresta e pesca",1191,Cultura de flores e de plantas ornamentais
+6a1021a95428bd9bfa9b99b9,"Secção A - Agricultura, floresta e pesca",1192,"Outras culturas temporárias, n.e."
+6a1021a95428bd9bfa9b99ba,"Secção A - Agricultura, floresta e pesca",1210,Viticultura
+6a1021a95428bd9bfa9b99bb,"Secção A - Agricultura, floresta e pesca",1220,Cultura de frutos tropicais e subtropicais
+6a1021a95428bd9bfa9b99bc,"Secção A - Agricultura, floresta e pesca",1230,Cultura de citrinos
+6a1021a95428bd9bfa9b99bd,"Secção A - Agricultura, floresta e pesca",1240,Cultura de pomóideas e prunóideas
+6a1021a95428bd9bfa9b99be,"Secção A - Agricultura, floresta e pesca",1251,Cultura de frutos de casca rija
+6a1021a95428bd9bfa9b99bf,"Secção A - Agricultura, floresta e pesca",1252,Cultura de outros frutos em árvores e arbustos
+6a1021a95428bd9bfa9b99c0,"Secção A - Agricultura, floresta e pesca",1261,Olivicultura
+6a1021a95428bd9bfa9b99c1,"Secção A - Agricultura, floresta e pesca",1262,Cultura de outros frutos oleaginosos
+6a1021a95428bd9bfa9b99c2,"Secção A - Agricultura, floresta e pesca",1270,Cultura de plantas destinadas à preparação de bebidas
+6a1021a95428bd9bfa9b99c3,"Secção A - Agricultura, floresta e pesca",1280,"Cultura de especiarias, plantas aromáticas, medicinais e farmacêuticas"
+6a1021a95428bd9bfa9b99c4,"Secção A - Agricultura, floresta e pesca",1290,Outras culturas permanentes
+6a1021a95428bd9bfa9b99c5,"Secção A - Agricultura, floresta e pesca",1300,Propagação de plantas
+6a1021a95428bd9bfa9b99c6,"Secção A - Agricultura, floresta e pesca",1410,Criação de bovinos para produção de leite
+6a1021a95428bd9bfa9b99c7,"Secção A - Agricultura, floresta e pesca",1420,Criação de outros bovinos e búfalos
+6a1021a95428bd9bfa9b99c8,"Secção A - Agricultura, floresta e pesca",1430,Criação de cavalos e outros equídeos
+6a1021a95428bd9bfa9b99c9,"Secção A - Agricultura, floresta e pesca",1440,Criação de camelos e camelídeos
+6a1021a95428bd9bfa9b99ca,"Secção A - Agricultura, floresta e pesca",1450,Criação de ovinos e caprinos
+6a1021a95428bd9bfa9b99cb,"Secção A - Agricultura, floresta e pesca",1460,Suinicultura
+6a1021a95428bd9bfa9b99cc,"Secção A - Agricultura, floresta e pesca",1470,Avicultura
+6a1021a95428bd9bfa9b99cd,"Secção A - Agricultura, floresta e pesca",1481,Apicultura
+6a1021a95428bd9bfa9b99ce,"Secção A - Agricultura, floresta e pesca",1482,Cunicultura
+6a1021a95428bd9bfa9b99cf,"Secção A - Agricultura, floresta e pesca",1483,Criação de animais de companhia
+6a1021a95428bd9bfa9b99d0,"Secção A - Agricultura, floresta e pesca",1484,Criação de insetos para alimentação
+6a1021a95428bd9bfa9b99d1,"Secção A - Agricultura, floresta e pesca",1485,"Outra produção animal, n.e."
+6a1021a95428bd9bfa9b99d2,"Secção A - Agricultura, floresta e pesca",1500,Produções agrícola e animal combinadas
+6a1021a95428bd9bfa9b99d3,"Secção A - Agricultura, floresta e pesca",1610,Atividades de apoio à agricultura
+6a1021a95428bd9bfa9b99d4,"Secção A - Agricultura, floresta e pesca",1620,Atividades de apoio à produção animal
+6a1021a95428bd9bfa9b99d5,"Secção A - Agricultura, floresta e pesca",1631,Preparação de produtos agrícolas para venda
+6a1021a95428bd9bfa9b99d6,"Secção A - Agricultura, floresta e pesca",1632,Preparação e tratamento de sementes para propagação
+6a1021a95428bd9bfa9b99d7,"Secção A - Agricultura, floresta e pesca",1701,Caça e repovoamento cinegético
+6a1021a95428bd9bfa9b99d8,"Secção A - Agricultura, floresta e pesca",1702,Atividades dos serviços relacionados com caça e repovoamento cinegético
+6a1021a95428bd9bfa9b99d9,"Secção A - Agricultura, floresta e pesca",2100,Silvicultura e outras atividades florestais (1)
+6a1021a95428bd9bfa9b99da,"Secção A - Agricultura, floresta e pesca",2200,Exploração florestal
+6a1021a95428bd9bfa9b99db,"Secção A - Agricultura, floresta e pesca",2300,"Extração de cortiça, resina e de outros produtos florestais, exceto madeira (2)"
+6a1021a95428bd9bfa9b99dc,"Secção A - Agricultura, floresta e pesca",2400,Serviços de apoio à silvicultura e à exploração florestal
+6a1021a95428bd9bfa9b99dd,"Secção A - Agricultura, floresta e pesca",3111,"Pesca marítima, exceto apanha de algas e de outros produtos do mar"
+6a1021a95428bd9bfa9b99de,"Secção A - Agricultura, floresta e pesca",3112,Apanha de algas e de outros produtos do mar
+6a1021a95428bd9bfa9b99df,"Secção A - Agricultura, floresta e pesca",3121,"Pesca em água doce, exceto apanha de produtos em água doce"
+6a1021a95428bd9bfa9b99e0,"Secção A - Agricultura, floresta e pesca",3122,Apanha de produtos em água doce
+6a1021a95428bd9bfa9b99e1,"Secção A - Agricultura, floresta e pesca",3210,Aquicultura em águas salgadas e salobras
+6a1021a95428bd9bfa9b99e2,"Secção A - Agricultura, floresta e pesca",3220,Aquicultura em água doce
+6a1021a95428bd9bfa9b99e3,"Secção A - Agricultura, floresta e pesca",3300,Atividades de apoio à pesca e à aquicultura
+6a1021a95428bd9bfa9b99e4,Secção B - Indústrias extrativas,5100,Extração de hulha
+6a1021a95428bd9bfa9b99e5,Secção B - Indústrias extrativas,5200,Extração de lenhite
+6a1021a95428bd9bfa9b99e6,Secção B - Indústrias extrativas,6100,Extração de petróleo bruto
+6a1021a95428bd9bfa9b99e7,Secção B - Indústrias extrativas,6200,Extração de gás natural
+6a1021a95428bd9bfa9b99e8,Secção B - Indústrias extrativas,7100,Extração de minérios de ferro
+6a1021a95428bd9bfa9b99e9,Secção B - Indústrias extrativas,7210,Extração de minérios de urânio e de tório
+6a1021a95428bd9bfa9b99ea,Secção B - Indústrias extrativas,7290,Extração de outros minérios metálicos não ferrosos
+6a1021a95428bd9bfa9b99eb,Secção B - Indústrias extrativas,8111,Extração de mármore e outras rochas carbonatadas
+6a1021a95428bd9bfa9b99ec,Secção B - Indústrias extrativas,8112,Extração de granito ornamental e rochas similares
+6a1021a95428bd9bfa9b99ed,Secção B - Indústrias extrativas,8113,"Extração de calcário, cré e gesso"
+6a1021a95428bd9bfa9b99ee,Secção B - Indústrias extrativas,8114,Extração de ardósia
+6a1021a95428bd9bfa9b99ef,Secção B - Indústrias extrativas,8121,"Extração de saibro, areia e pedra britada"
+6a1021a95428bd9bfa9b99f0,Secção B - Indústrias extrativas,8122,Extração de argilas e caulino
+6a1021a95428bd9bfa9b99f1,Secção B - Indústrias extrativas,8910,Extração de minerais para a indústria química e para a fabricação de adubos
+6a1021a95428bd9bfa9b99f2,Secção B - Indústrias extrativas,8920,Extração de turfa
+6a1021a95428bd9bfa9b99f3,Secção B - Indústrias extrativas,8931,Extração de sal marinho
+6a1021a95428bd9bfa9b99f4,Secção B - Indústrias extrativas,8932,Extração de sal gema
+6a1021a95428bd9bfa9b99f5,Secção B - Indústrias extrativas,8990,"Outras indústrias extrativas, n.e."
+6a1021a95428bd9bfa9b99f6,Secção B - Indústrias extrativas,9100,Atividades de apoio à extração de petróleo e de gás natural
+6a1021a95428bd9bfa9b99f7,Secção B - Indústrias extrativas,9900,Atividades de apoio a outras indústrias extrativas
+6a1021a95428bd9bfa9b99f8,Secção C - Indústrias transformadoras,10110,"Processamento e conservação de carne, exceto carne de aves"
+6a1021a95428bd9bfa9b99f9,Secção C - Indústrias transformadoras,10120,Processamento e conservação de carne de aves
+6a1021a95428bd9bfa9b99fa,Secção C - Indústrias transformadoras,10130,Fabricação de produtos à base de carne
+6a1021a95428bd9bfa9b99fb,Secção C - Indústrias transformadoras,10201,Preparação de produtos da pesca e da aquicultura
+6a1021a95428bd9bfa9b99fc,Secção C - Indústrias transformadoras,10202,Congelação de produtos da pesca e da aquicultura
+6a1021a95428bd9bfa9b99fd,Secção C - Indústrias transformadoras,10203,Conservação de produtos da pesca e da aquicultura em azeite e outros óleos vegetais e outros molhos
+6a1021a95428bd9bfa9b99fe,Secção C - Indústrias transformadoras,10204,"Salga, secagem e outras atividades de transformação de produtos da pesca e aquicultura"
+6a1021a95428bd9bfa9b99ff,Secção C - Indústrias transformadoras,10310,Processamento e conservação de batatas
+6a1021a95428bd9bfa9b9a00,Secção C - Indústrias transformadoras,10320,Fabricação de sumos de frutos e de produtos hortícolas
+6a1021a95428bd9bfa9b9a01,Secção C - Indústrias transformadoras,10391,Congelação de frutos e de produtos hortícolas
+6a1021a95428bd9bfa9b9a02,Secção C - Indústrias transformadoras,10392,Secagem e desidratação de frutos e de produtos hortícolas
+6a1021a95428bd9bfa9b9a03,Secção C - Indústrias transformadoras,10393,"Fabricação de doces, compotas, geleias e marmelada"
+6a1021a95428bd9bfa9b9a04,Secção C - Indústrias transformadoras,10394,Descasque e transformação de frutos de casca rija comestíveis
+6a1021a95428bd9bfa9b9a05,Secção C - Indústrias transformadoras,10395,Preparação e conservação de frutos e de produtos hortícolas por outros processos
+6a1021a95428bd9bfa9b9a06,Secção C - Indústrias transformadoras,10411,Produção de óleos e gorduras animais brutos (3)
+6a1021a95428bd9bfa9b9a07,Secção C - Indústrias transformadoras,10412,Produção de azeite
+6a1021a95428bd9bfa9b9a08,Secção C - Indústrias transformadoras,10413,Produção de óleos vegetais brutos (exceto azeite)
+6a1021a95428bd9bfa9b9a09,Secção C - Indústrias transformadoras,10414,"Refinação de azeite, óleos e gorduras"
+6a1021a95428bd9bfa9b9a0a,Secção C - Indústrias transformadoras,10420,Fabricação de margarinas e de gorduras alimentares similares
+6a1021a95428bd9bfa9b9a0b,Secção C - Indústrias transformadoras,10510,Indústria de laticínios
+6a1021a95428bd9bfa9b9a0c,Secção C - Indústrias transformadoras,10520,Fabricação de gelados e sorvetes
+6a1021a95428bd9bfa9b9a0d,Secção C - Indústrias transformadoras,10611,Moagem de cereais
+6a1021a95428bd9bfa9b9a0e,Secção C - Indústrias transformadoras,10612,"Descasque, branqueamento e outros tratamentos do arroz"
+6a1021a95428bd9bfa9b9a0f,Secção C - Indústrias transformadoras,10613,"Transformação de cereais e leguminosas, n.e."
+6a1021a95428bd9bfa9b9a10,Secção C - Indústrias transformadoras,10620,"Fabricação de amidos, féculas e produtos afins"
+6a1021a95428bd9bfa9b9a11,Secção C - Indústrias transformadoras,10711,Panificação
+6a1021a95428bd9bfa9b9a12,Secção C - Indústrias transformadoras,10712,Pastelaria fresca
+6a1021a95428bd9bfa9b9a13,Secção C - Indústrias transformadoras,10720,"Fabricação de bolachas, biscoitos, tostas e pastelaria de conservação"
+6a1021a95428bd9bfa9b9a14,Secção C - Indústrias transformadoras,10730,Fabricação de produtos à base de farinha
+6a1021a95428bd9bfa9b9a15,Secção C - Indústrias transformadoras,10810,Indústria do açúcar
+6a1021a95428bd9bfa9b9a16,Secção C - Indústrias transformadoras,10821,Fabricação de cacau e de chocolate
+6a1021a95428bd9bfa9b9a17,Secção C - Indústrias transformadoras,10822,Fabricação de produtos de confeitaria
+6a1021a95428bd9bfa9b9a18,Secção C - Indústrias transformadoras,10830,Indústria do café e do chá
+6a1021a95428bd9bfa9b9a19,Secção C - Indústrias transformadoras,10840,Fabricação de condimentos e temperos
+6a1021a95428bd9bfa9b9a1a,Secção C - Indústrias transformadoras,10850,Fabricação de refeições e pratos pré-cozinhados
+6a1021a95428bd9bfa9b9a1b,Secção C - Indústrias transformadoras,10860,Fabricação de alimentos homogeneizados e dietéticos
+6a1021a95428bd9bfa9b9a1c,Secção C - Indústrias transformadoras,10891,"Fabricação de fermentos, leveduras e adjuvantes para panificação e pastelaria"
+6a1021a95428bd9bfa9b9a1d,Secção C - Indústrias transformadoras,10892,"Fabricação de caldos, sopas e sobremesas"
+6a1021a95428bd9bfa9b9a1e,Secção C - Indústrias transformadoras,10893,Fabricação de suplementos alimentares
+6a1021a95428bd9bfa9b9a1f,Secção C - Indústrias transformadoras,10894,Fabricação de produtos alternativos aos produtos lácteos
+6a1021a95428bd9bfa9b9a20,Secção C - Indústrias transformadoras,10895,"Fabricação de outros produtos alimentares diversos, n.e."
+6a1021a95428bd9bfa9b9a21,Secção C - Indústrias transformadoras,10911,Fabricação de pré-misturas (4)
+6a1021a95428bd9bfa9b9a22,Secção C - Indústrias transformadoras,10912,Fabricação de alimentos para animais de criação (exceto para aquicultura)
+6a1021a95428bd9bfa9b9a23,Secção C - Indústrias transformadoras,10913,Fabricação de alimentos para aquicultura
+6a1021a95428bd9bfa9b9a24,Secção C - Indústrias transformadoras,10920,Fabricação de alimentos para animais de estimação
+6a1021a95428bd9bfa9b9a25,Secção C - Indústrias transformadoras,11011,Fabricação de aguardentes preparadas
+6a1021a95428bd9bfa9b9a26,Secção C - Indústrias transformadoras,11012,Fabricação de aguardentes não preparadas
+6a1021a95428bd9bfa9b9a27,Secção C - Indústrias transformadoras,11013,Produção de licores e de outras bebidas destiladas
+6a1021a95428bd9bfa9b9a28,Secção C - Indústrias transformadoras,11021,Produção de vinhos comuns e licorosos
+6a1021a95428bd9bfa9b9a29,Secção C - Indústrias transformadoras,11022,Produção de vinhos espumantes e espumosos
+6a1021a95428bd9bfa9b9a2a,Secção C - Indústrias transformadoras,11030,Fabricação de sidra e outras bebidas fermentadas de frutos
+6a1021a95428bd9bfa9b9a2b,Secção C - Indústrias transformadoras,11040,Fabricação de vermutes e de outras bebidas fermentadas não destiladas
+6a1021a95428bd9bfa9b9a2c,Secção C - Indústrias transformadoras,11050,Fabricação de cerveja
+6a1021a95428bd9bfa9b9a2d,Secção C - Indústrias transformadoras,11060,Fabricação de malte
+6a1021a95428bd9bfa9b9a2e,Secção C - Indústrias transformadoras,11071,Engarrafamento de águas minerais naturais e de nascente
+6a1021a95428bd9bfa9b9a2f,Secção C - Indústrias transformadoras,11072,"Fabricação de refrigerantes e de outras bebidas não alcoólicas, n.e."
+6a1021a95428bd9bfa9b9a30,Secção C - Indústrias transformadoras,13101,"Preparação e fiação de fibras do tipo algodão, lã, seda, linho e outras fibras têxteis; preparação e texturização de filamentos sintéticos e artificiais"
+6a1021a95428bd9bfa9b9a31,Secção C - Indústrias transformadoras,13102,Fabricação de linhas de costura
+6a1021a95428bd9bfa9b9a32,Secção C - Indústrias transformadoras,13200,Tecelagem de têxteis
+6a1021a95428bd9bfa9b9a33,Secção C - Indústrias transformadoras,13301,Branqueamento e tingimento
+6a1021a95428bd9bfa9b9a34,Secção C - Indústrias transformadoras,13302,Estampagem
+6a1021a95428bd9bfa9b9a35,Secção C - Indústrias transformadoras,13303,"Acabamento de fios, tecidos e artigos têxteis, n.e."
+6a1021a95428bd9bfa9b9a36,Secção C - Indústrias transformadoras,13910,Fabricação de tecidos de malha
+6a1021a95428bd9bfa9b9a37,Secção C - Indústrias transformadoras,13920,Fabricação de têxteis para uso doméstico e de artigos têxteis de decoração confecionados
+6a1021a95428bd9bfa9b9a38,Secção C - Indústrias transformadoras,13930,Fabricação de tapetes e carpetes
+6a1021a95428bd9bfa9b9a39,Secção C - Indústrias transformadoras,13941,Fabricação de cordoaria
+6a1021a95428bd9bfa9b9a3a,Secção C - Indústrias transformadoras,13942,Fabricação de redes
+6a1021a95428bd9bfa9b9a3b,Secção C - Indústrias transformadoras,13950,Fabricação de têxteis não tecidos e respetivos artigos
+6a1021a95428bd9bfa9b9a3c,Secção C - Indústrias transformadoras,13961,Fabricação de passamanarias e sirgarias
+6a1021a95428bd9bfa9b9a3d,Secção C - Indústrias transformadoras,13962,"Fabricação de outros têxteis para uso técnico e industrial, n.e."
+6a1021a95428bd9bfa9b9a3e,Secção C - Indústrias transformadoras,13991,Fabricação de bordados
+6a1021a95428bd9bfa9b9a3f,Secção C - Indústrias transformadoras,13992,Fabricação de rendas
+6a1021a95428bd9bfa9b9a40,Secção C - Indústrias transformadoras,13993,"Fabricação de outros têxteis diversos, n.e."
+6a1021a95428bd9bfa9b9a41,Secção C - Indústrias transformadoras,14101,Fabricação de meias e similares de malha
+6a1021a95428bd9bfa9b9a42,Secção C - Indústrias transformadoras,14102,Fabricação de outro vestuário de malha
+6a1021a95428bd9bfa9b9a43,Secção C - Indústrias transformadoras,14211,Confeção de vestuário exterior em série
+6a1021a95428bd9bfa9b9a44,Secção C - Indústrias transformadoras,14212,Confeção de vestuário exterior por medida
+6a1021a95428bd9bfa9b9a45,Secção C - Indústrias transformadoras,14213,Atividades de acabamento de artigos de vestuário
+6a1021a95428bd9bfa9b9a46,Secção C - Indústrias transformadoras,14220,Confeção de vestuário interior
+6a1021a95428bd9bfa9b9a47,Secção C - Indústrias transformadoras,14230,Confeção de vestuário de trabalho
+6a1021a95428bd9bfa9b9a48,Secção C - Indústrias transformadoras,14241,Confeção de vestuário em couro
+6a1021a95428bd9bfa9b9a49,Secção C - Indústrias transformadoras,14242,Confeção de artigos de peles com pelo
+6a1021a95428bd9bfa9b9a4a,Secção C - Indústrias transformadoras,14290,"Confeção de outros artigos e acessórios de vestuário, n.e."
+6a1021a95428bd9bfa9b9a4b,Secção C - Indústrias transformadoras,15111,"Curtimenta, acabamento e tingimento de peles sem pelo"
+6a1021a95428bd9bfa9b9a4c,Secção C - Indústrias transformadoras,15112,Fabricação de couro reconstituído
+6a1021a95428bd9bfa9b9a4d,Secção C - Indústrias transformadoras,15113,Curtimenta e acabamento de peles com pelo
+6a1021a95428bd9bfa9b9a4e,Secção C - Indústrias transformadoras,15120,"Fabricação de artigos de viagem, marroquinaria, arreios e selas de qualquer material"
+6a1021a95428bd9bfa9b9a4f,Secção C - Indústrias transformadoras,15201,Fabricação de calçado
+6a1021a95428bd9bfa9b9a50,Secção C - Indústrias transformadoras,15202,Fabricação de componentes para calçado
+6a1021a95428bd9bfa9b9a51,Secção C - Indústrias transformadoras,16110,Serração e aplainamento da madeira
+6a1021a95428bd9bfa9b9a52,Secção C - Indústrias transformadoras,16120,Processamento e acabamento da madeira
+6a1021a95428bd9bfa9b9a53,Secção C - Indústrias transformadoras,16211,Fabricação de painéis de partículas de madeira
+6a1021a95428bd9bfa9b9a54,Secção C - Indústrias transformadoras,16212,Fabricação de painéis de fibras de madeira
+6a1021a95428bd9bfa9b9a55,Secção C - Indústrias transformadoras,16213,"Fabricação de folheados, contraplacados, lamelados e de outros painéis"
+6a1021a95428bd9bfa9b9a56,Secção C - Indústrias transformadoras,16220,Fabricação de pavimentos em painéis montados
+6a1021a95428bd9bfa9b9a57,Secção C - Indústrias transformadoras,16230,Fabricação de outros produtos de carpintaria para a construção
+6a1021a95428bd9bfa9b9a58,Secção C - Indústrias transformadoras,16240,Fabricação de embalagens de madeira
+6a1021a95428bd9bfa9b9a59,Secção C - Indústrias transformadoras,16250,Fabricação de portas e janelas de madeira
+6a1021a95428bd9bfa9b9a5a,Secção C - Indústrias transformadoras,16260,Fabricação de combustíveis sólidos a partir de biomassa vegetal
+6a1021a95428bd9bfa9b9a5b,Secção C - Indústrias transformadoras,16270,Acabamento de produtos de madeira
+6a1021a95428bd9bfa9b9a5c,Secção C - Indústrias transformadoras,16281,Fabricação de outras obras de madeira
+6a1021a95428bd9bfa9b9a5d,Secção C - Indústrias transformadoras,16282,Fabricação de obras de cestaria e de espartaria
+6a1021a95428bd9bfa9b9a5e,Secção C - Indústrias transformadoras,16283,Indústria de preparação da cortiça
+6a1021a95428bd9bfa9b9a5f,Secção C - Indústrias transformadoras,16284,Fabricação de rolhas de cortiça
+6a1021a95428bd9bfa9b9a60,Secção C - Indústrias transformadoras,16285,Fabricação de outros produtos de cortiça
+6a1021a95428bd9bfa9b9a61,Secção C - Indústrias transformadoras,17110,Fabricação de pasta
+6a1021a95428bd9bfa9b9a62,Secção C - Indústrias transformadoras,17120,Fabricação de papel e de cartão (exceto canelado)
+6a1021a95428bd9bfa9b9a63,Secção C - Indústrias transformadoras,17211,Fabricação de papel e de cartão canelados (inclui embalagens)
+6a1021a95428bd9bfa9b9a64,Secção C - Indústrias transformadoras,17212,Fabricação de outras embalagens de papel e de cartão
+6a1021a95428bd9bfa9b9a65,Secção C - Indústrias transformadoras,17220,Fabricação de artigos de papel para uso doméstico e sanitário
+6a1021a95428bd9bfa9b9a66,Secção C - Indústrias transformadoras,17230,Fabricação de artigos de papel para papelaria
+6a1021a95428bd9bfa9b9a67,Secção C - Indústrias transformadoras,17240,Fabricação de papel de parede
+6a1021a95428bd9bfa9b9a68,Secção C - Indústrias transformadoras,17250,Fabricação de outros artigos de papel e de cartão
+6a1021a95428bd9bfa9b9a69,Secção C - Indústrias transformadoras,18110,Impressão de jornais
+6a1021a95428bd9bfa9b9a6a,Secção C - Indústrias transformadoras,18120,Outra impressão
+6a1021a95428bd9bfa9b9a6b,Secção C - Indústrias transformadoras,18130,Serviços de pré-impressão e pré-media
+6a1021a95428bd9bfa9b9a6c,Secção C - Indústrias transformadoras,18140,Encadernação e atividades relacionadas
+6a1021a95428bd9bfa9b9a6d,Secção C - Indústrias transformadoras,18200,Reprodução de suportes gravados
+6a1021a95428bd9bfa9b9a6e,Secção C - Indústrias transformadoras,19100,Fabricação de produtos de coqueria
+6a1021a95428bd9bfa9b9a6f,Secção C - Indústrias transformadoras,19201,Fabricação de produtos petrolíferos refinados
+6a1021a95428bd9bfa9b9a70,Secção C - Indústrias transformadoras,19202,Fabricação de produtos petrolíferos a partir de resíduos
+6a1021a95428bd9bfa9b9a71,Secção C - Indústrias transformadoras,19203,Fabricação de briquetes e aglomerados de hulha e lenhite
+6a1021a95428bd9bfa9b9a72,Secção C - Indústrias transformadoras,20110,Fabricação de gases industriais
+6a1021a95428bd9bfa9b9a73,Secção C - Indústrias transformadoras,20120,Fabricação de corantes e pigmentos
+6a1021a95428bd9bfa9b9a74,Secção C - Indústrias transformadoras,20130,Fabricação de outros produtos químicos inorgânicos de base
+6a1021a95428bd9bfa9b9a75,Secção C - Indústrias transformadoras,20141,Fabricação de resinosos e seus derivados
+6a1021a95428bd9bfa9b9a76,Secção C - Indústrias transformadoras,20142,Fabricação de carvão (vegetal e animal) e produtos associados
+6a1021a95428bd9bfa9b9a77,Secção C - Indústrias transformadoras,20144,"Fabricação de outros produtos químicos orgânicos de base, n.e."
+6a1021a95428bd9bfa9b9a78,Secção C - Indústrias transformadoras,20151,Fabricação de adubos químicos ou minerais e de compostos azotados
+6a1021a95428bd9bfa9b9a79,Secção C - Indústrias transformadoras,20152,Fabricação de adubos orgânicos e organo-minerais
+6a1021a95428bd9bfa9b9a7a,Secção C - Indústrias transformadoras,20160,Fabricação de matérias plásticas em formas primárias
+6a1021a95428bd9bfa9b9a7b,Secção C - Indústrias transformadoras,20170,Fabricação de borracha sintética em formas primárias
+6a1021a95428bd9bfa9b9a7c,Secção C - Indústrias transformadoras,20200,"Fabricação de pesticidas, desinfetantes e outros produtos agroquímicos"
+6a1021a95428bd9bfa9b9a7d,Secção C - Indústrias transformadoras,20301,"Fabricação de tintas (exceto impressão), vernizes, mastiques e produtos similares"
+6a1021a95428bd9bfa9b9a7e,Secção C - Indústrias transformadoras,20302,Fabricação de tintas de impressão
+6a1021a95428bd9bfa9b9a7f,Secção C - Indústrias transformadoras,20303,"Fabricação de pigmentos preparados, composições vitrificáveis e afins"
+6a1021a95428bd9bfa9b9a80,Secção C - Indústrias transformadoras,20411,"Fabricação de sabões, detergentes e glicerina"
+6a1021a95428bd9bfa9b9a81,Secção C - Indústrias transformadoras,20412,"Fabricação de produtos de limpeza, polimento e proteção"
+6a1021a95428bd9bfa9b9a82,Secção C - Indústrias transformadoras,20420,"Fabricação de perfumes, de cosméticos e de produtos de higiene"
+6a1021a95428bd9bfa9b9a83,Secção C - Indústrias transformadoras,20510,Fabricação de biocombustíveis líquidos
+6a1021a95428bd9bfa9b9a84,Secção C - Indústrias transformadoras,20591,Fabricação de explosivos e artigos de pirotecnia
+6a1021a95428bd9bfa9b9a85,Secção C - Indústrias transformadoras,20592,Fabricação de colas
+6a1021a95428bd9bfa9b9a86,Secção C - Indústrias transformadoras,20593,Fabricação de óleos essenciais
+6a1021a95428bd9bfa9b9a87,Secção C - Indústrias transformadoras,20594,Fabricação de produtos químicos auxiliares para uso industrial
+6a1021a95428bd9bfa9b9a88,Secção C - Indústrias transformadoras,20595,"Fabricação de outros produtos químicos diversos, n.e."
+6a1021a95428bd9bfa9b9a89,Secção C - Indústrias transformadoras,20600,Fabricação de fibras sintéticas ou artificiais
+6a1021a95428bd9bfa9b9a8a,Secção C - Indústrias transformadoras,21100,Fabricação de produtos farmacêuticos de base
+6a1021a95428bd9bfa9b9a8b,Secção C - Indústrias transformadoras,21201,Fabricação de medicamentos
+6a1021a95428bd9bfa9b9a8c,Secção C - Indústrias transformadoras,21202,Fabricação de outras preparações e de artigos farmacêuticos
+6a1021a95428bd9bfa9b9a8d,Secção C - Indústrias transformadoras,22111,Fabricação de pneus e câmaras de ar
+6a1021a95428bd9bfa9b9a8e,Secção C - Indústrias transformadoras,22112,Reconstrução de pneus
+6a1021a95428bd9bfa9b9a8f,Secção C - Indústrias transformadoras,22120,Fabricação de outros produtos de borracha
+6a1021a95428bd9bfa9b9a90,Secção C - Indústrias transformadoras,22210,"Fabricação de chapas, folhas, tubos e perfis de plástico"
+6a1021a95428bd9bfa9b9a91,Secção C - Indústrias transformadoras,22220,Fabricação de embalagens de plástico
+6a1021a95428bd9bfa9b9a92,Secção C - Indústrias transformadoras,22230,Fabricação de portas e janelas de plástico
+6a1021a95428bd9bfa9b9a93,Secção C - Indústrias transformadoras,22240,Fabricação de artigos de plástico para a construção
+6a1021a95428bd9bfa9b9a94,Secção C - Indústrias transformadoras,22250,Processamento e acabamento de produtos de plástico
+6a1021a95428bd9bfa9b9a95,Secção C - Indústrias transformadoras,22260,Fabricação de outros artigos de plástico
+6a1021a95428bd9bfa9b9a96,Secção C - Indústrias transformadoras,23110,Fabricação de vidro plano
+6a1021a95428bd9bfa9b9a97,Secção C - Indústrias transformadoras,23120,Moldagem e processamento de vidro plano
+6a1021a95428bd9bfa9b9a98,Secção C - Indústrias transformadoras,23131,Fabricação de vidro de embalagem
+6a1021a95428bd9bfa9b9a99,Secção C - Indústrias transformadoras,23132,Cristalaria
+6a1021a95428bd9bfa9b9a9a,Secção C - Indústrias transformadoras,23140,Fabricação de fibras de vidro
+6a1021a95428bd9bfa9b9a9b,Secção C - Indústrias transformadoras,23150,Fabricação e processamento de outro vidro (incluindo vidro técnico)
+6a1021a95428bd9bfa9b9a9c,Secção C - Indústrias transformadoras,23200,Fabricação de produtos cerâmicos refratários
+6a1021a95428bd9bfa9b9a9d,Secção C - Indústrias transformadoras,23311,Fabricação de azulejos
+6a1021a95428bd9bfa9b9a9e,Secção C - Indústrias transformadoras,23312,"Fabricação de ladrilhos, mosaicos e lajes de cerâmica"
+6a1021a95428bd9bfa9b9a9f,Secção C - Indústrias transformadoras,23321,Fabricação de tijolos e abobadilhas
+6a1021a95428bd9bfa9b9aa0,Secção C - Indústrias transformadoras,23322,Fabricação de telhas
+6a1021a95428bd9bfa9b9aa1,Secção C - Indústrias transformadoras,23323,Fabricação de outros produtos de cerâmicos para a construção
+6a1021a95428bd9bfa9b9aa2,Secção C - Indústrias transformadoras,23411,Olaria de barro
+6a1021a95428bd9bfa9b9aa3,Secção C - Indústrias transformadoras,23412,"Fabricação de artigos de uso doméstico de faiança, porcelana e grés fino"
+6a1021a95428bd9bfa9b9aa4,Secção C - Indústrias transformadoras,23413,"Fabricação de artigos de ornamentação de faiança, porcelana e grés fino"
+6a1021a95428bd9bfa9b9aa5,Secção C - Indústrias transformadoras,23414,Atividades de decoração de artigos cerâmicos de uso doméstico e ornamental
+6a1021a95428bd9bfa9b9aa6,Secção C - Indústrias transformadoras,23420,Fabricação de artigos cerâmicos para usos sanitários
+6a1021a95428bd9bfa9b9aa7,Secção C - Indústrias transformadoras,23430,Fabricação de isoladores e peças isolantes em cerâmica
+6a1021a95428bd9bfa9b9aa8,Secção C - Indústrias transformadoras,23440,Fabricação de outros produtos em cerâmica para usos técnicos
+6a1021a95428bd9bfa9b9aa9,Secção C - Indústrias transformadoras,23450,Fabricação de outros produtos cerâmicos
+6a1021a95428bd9bfa9b9aaa,Secção C - Indústrias transformadoras,23510,Fabricação de cimento
+6a1021a95428bd9bfa9b9aab,Secção C - Indústrias transformadoras,23521,Fabricação de cal
+6a1021a95428bd9bfa9b9aac,Secção C - Indústrias transformadoras,23522,Fabricação de gesso
+6a1021a95428bd9bfa9b9aad,Secção C - Indústrias transformadoras,23610,Fabricação de produtos de betão para a construção
+6a1021a95428bd9bfa9b9aae,Secção C - Indústrias transformadoras,23620,Fabricação de produtos de gesso para a construção
+6a1021a95428bd9bfa9b9aaf,Secção C - Indústrias transformadoras,23630,Fabricação de betão pronto
+6a1021a95428bd9bfa9b9ab0,Secção C - Indústrias transformadoras,23640,Fabricação de argamassas
+6a1021a95428bd9bfa9b9ab1,Secção C - Indústrias transformadoras,23650,Fabricação de produtos de fibrocimento
+6a1021a95428bd9bfa9b9ab2,Secção C - Indústrias transformadoras,23660,"Fabricação de outros produtos de betão, cimento e gesso"
+6a1021a95428bd9bfa9b9ab3,Secção C - Indústrias transformadoras,23701,Fabricação de artigos de mármore e de rochas similares
+6a1021a95428bd9bfa9b9ab4,Secção C - Indústrias transformadoras,23702,Fabricação de artigos em ardósia (lousa)
+6a1021a95428bd9bfa9b9ab5,Secção C - Indústrias transformadoras,23703,"Fabricação de artigos de granito e de rochas, n.e."
+6a1021a95428bd9bfa9b9ab6,Secção C - Indústrias transformadoras,23910,Fabricação de produtos abrasivos
+6a1021a95428bd9bfa9b9ab7,Secção C - Indústrias transformadoras,23991,Fabricação de misturas betuminosas
+6a1021a95428bd9bfa9b9ab8,Secção C - Indústrias transformadoras,23992,"Fabricação de outros produtos minerais não metálicos diversos, n.e."
+6a1021a95428bd9bfa9b9ab9,Secção C - Indústrias transformadoras,24100,Siderurgia e fabricação de ferro-ligas
+6a1021a95428bd9bfa9b9aba,Secção C - Indústrias transformadoras,24200,"Fabricação de tubos, condutas, perfis ocos e respetivos acessórios, de aço"
+6a1021a95428bd9bfa9b9abb,Secção C - Indústrias transformadoras,24310,Estiragem a frio de barras
+6a1021a95428bd9bfa9b9abc,Secção C - Indústrias transformadoras,24320,Laminagem a frio de arco ou banda
+6a1021a95428bd9bfa9b9abd,Secção C - Indústrias transformadoras,24330,Perfilagem a frio
+6a1021a95428bd9bfa9b9abe,Secção C - Indústrias transformadoras,24340,Trefilagem a frio
+6a1021a95428bd9bfa9b9abf,Secção C - Indústrias transformadoras,24410,Produção de metais preciosos
+6a1021a95428bd9bfa9b9ac0,Secção C - Indústrias transformadoras,24420,Produção de alumínio
+6a1021a95428bd9bfa9b9ac1,Secção C - Indústrias transformadoras,24430,"Produção de chumbo, zinco e estanho"
+6a1021a95428bd9bfa9b9ac2,Secção C - Indústrias transformadoras,24440,Produção de cobre
+6a1021a95428bd9bfa9b9ac3,Secção C - Indústrias transformadoras,24450,Produção de outros metais não ferrosos
+6a1021a95428bd9bfa9b9ac4,Secção C - Indústrias transformadoras,24460,Processamento de combustível nuclear
+6a1021a95428bd9bfa9b9ac5,Secção C - Indústrias transformadoras,24510,Fundição de ferro
+6a1021a95428bd9bfa9b9ac6,Secção C - Indústrias transformadoras,24520,Fundição de aço
+6a1021a95428bd9bfa9b9ac7,Secção C - Indústrias transformadoras,24530,Fundição de metais leves
+6a1021a95428bd9bfa9b9ac8,Secção C - Indústrias transformadoras,24540,Fundição de outros metais não ferrosos
+6a1021a95428bd9bfa9b9ac9,Secção C - Indústrias transformadoras,25110,Fabricação de estruturas e partes de estruturas metálicas
+6a1021a95428bd9bfa9b9aca,Secção C - Indústrias transformadoras,25120,Fabricação de portas e janelas metálicas
+6a1021a95428bd9bfa9b9acb,Secção C - Indústrias transformadoras,25211,Fabricação de radiadores para aquecimento central e caldeiras
+6a1021a95428bd9bfa9b9acc,Secção C - Indústrias transformadoras,25212,Fabricação de geradores de vapor
+6a1021a95428bd9bfa9b9acd,Secção C - Indústrias transformadoras,25220,"Fabricação de outros tanques, reservatórios e contentores metálicos"
+6a1021a95428bd9bfa9b9ace,Secção C - Indústrias transformadoras,25400,Forjamento e moldagem de metais e pulverometalurgia
+6a1021a95428bd9bfa9b9acf,Secção C - Indústrias transformadoras,25510,Revestimento de metais
+6a1021a95428bd9bfa9b9ad0,Secção C - Indústrias transformadoras,25520,Tratamento térmico de metais
+6a1021a95428bd9bfa9b9ad1,Secção C - Indústrias transformadoras,25530,Maquinagem de metais
+6a1021a95428bd9bfa9b9ad2,Secção C - Indústrias transformadoras,25610,Fabricação de cutelaria
+6a1021a95428bd9bfa9b9ad3,Secção C - Indústrias transformadoras,25620,"Fabricação de fechaduras, dobradiças e outras ferragens"
+6a1021a95428bd9bfa9b9ad4,Secção C - Indústrias transformadoras,25631,Fabricação de ferramentas manuais
+6a1021a95428bd9bfa9b9ad5,Secção C - Indústrias transformadoras,25632,Fabricação de ferramentas mecânicas
+6a1021a95428bd9bfa9b9ad6,Secção C - Indústrias transformadoras,25633,Fabricação de peças sinterizadas
+6a1021a95428bd9bfa9b9ad7,Secção C - Indústrias transformadoras,25634,Fabricação de moldes metálicos
+6a1021a95428bd9bfa9b9ad8,Secção C - Indústrias transformadoras,25910,"Fabricação de bidões, tonéis e outros recipientes similares de aço"
+6a1021a95428bd9bfa9b9ad9,Secção C - Indústrias transformadoras,25920,Fabricação de embalagens metálicas ligeiras
+6a1021a95428bd9bfa9b9ada,Secção C - Indústrias transformadoras,25931,Fabricação de produtos de arame
+6a1021a95428bd9bfa9b9adb,Secção C - Indústrias transformadoras,25932,Fabricação de molas
+6a1021a95428bd9bfa9b9adc,Secção C - Indústrias transformadoras,25933,Fabricação de correntes metálicas
+6a1021a95428bd9bfa9b9add,Secção C - Indústrias transformadoras,25940,"Fabricação de rebites, parafusos e porcas"
+6a1021a95428bd9bfa9b9ade,Secção C - Indústrias transformadoras,25991,Fabricação de louça metálica e artigos de uso doméstico
+6a1021a95428bd9bfa9b9adf,Secção C - Indústrias transformadoras,25992,"Fabricação de outros produtos metálicos diversos, n.e."
+6a1021a95428bd9bfa9b9ae0,Secção C - Indústrias transformadoras,26110,Fabricação de componentes eletrónicos
+6a1021a95428bd9bfa9b9ae1,Secção C - Indústrias transformadoras,26120,Fabricação de placas de circuitos eletrónicos
+6a1021a95428bd9bfa9b9ae2,Secção C - Indústrias transformadoras,26200,Fabricação de computadores e de equipamento periférico
+6a1021a95428bd9bfa9b9ae3,Secção C - Indústrias transformadoras,26300,Fabricação de aparelhos e de equipamentos para comunicações
+6a1021a95428bd9bfa9b9ae4,Secção C - Indústrias transformadoras,26400,Fabricação de produtos eletrónicos de consumo
+6a1021a95428bd9bfa9b9ae5,Secção C - Indústrias transformadoras,26511,"Fabricação de contadores de eletricidade, gás, água e de outros líquidos"
+6a1021a95428bd9bfa9b9ae6,Secção C - Indústrias transformadoras,26512,"Fabricação de instrumentos e aparelhos de medida, verificação, navegação e outros fins, n.e."
+6a1021a95428bd9bfa9b9ae7,Secção C - Indústrias transformadoras,26520,Fabricação de relógios e material de relojoaria
+6a1021a95428bd9bfa9b9ae8,Secção C - Indústrias transformadoras,26600,"Fabricação de equipamentos de irradiação, eletromedicina e eletroterapêutico"
+6a1021a95428bd9bfa9b9ae9,Secção C - Indústrias transformadoras,26701,Fabricação de instrumentos e equipamentos óticos não oftálmicos e suportes de informação magnéticos e óticos
+6a1021a95428bd9bfa9b9aea,Secção C - Indústrias transformadoras,26702,Fabricação de material fotográfico e cinematográfico
+6a1021a95428bd9bfa9b9aeb,Secção C - Indústrias transformadoras,27110,"Fabricação de motores, geradores e transformadores elétricos"
+6a1021a95428bd9bfa9b9aec,Secção C - Indústrias transformadoras,27121,Fabricação de material de distribuição e de controlo para instalações elétricas de alta tensão
+6a1021a95428bd9bfa9b9aed,Secção C - Indústrias transformadoras,27122,Fabricação de material de distribuição e de controlo para instalações elétricas de baixa tensão
+6a1021a95428bd9bfa9b9aee,Secção C - Indústrias transformadoras,27200,Fabricação de acumuladores e pilhas
+6a1021a95428bd9bfa9b9aef,Secção C - Indústrias transformadoras,27310,Fabricação de cabos de fibra ótica
+6a1021a95428bd9bfa9b9af0,Secção C - Indústrias transformadoras,27320,Fabricação de outros fios e cabos elétricos e eletrónicos
+6a1021a95428bd9bfa9b9af1,Secção C - Indústrias transformadoras,27330,Fabricação de acessórios para fios e cabos
+6a1021a95428bd9bfa9b9af2,Secção C - Indústrias transformadoras,27400,Fabricação de material de iluminação
+6a1021a95428bd9bfa9b9af3,Secção C - Indústrias transformadoras,27510,Fabricação de aparelhos eletrodomésticos
+6a1021a95428bd9bfa9b9af4,Secção C - Indústrias transformadoras,27520,Fabricação de aparelhos não elétricos para uso doméstico
+6a1021a95428bd9bfa9b9af5,Secção C - Indústrias transformadoras,27900,Fabricação de outro equipamento elétrico
+6a1021a95428bd9bfa9b9af6,Secção C - Indústrias transformadoras,28110,"Fabricação de motores e turbinas, exceto motores para aeronaves, automóveis e motociclos e ciclomotores"
+6a1021a95428bd9bfa9b9af7,Secção C - Indústrias transformadoras,28120,Fabricação de equipamento hidráulico e pneumático
+6a1021a95428bd9bfa9b9af8,Secção C - Indústrias transformadoras,28130,Fabricação de outras bombas e compressores
+6a1021a95428bd9bfa9b9af9,Secção C - Indústrias transformadoras,28140,Fabricação de outras torneiras e válvulas
+6a1021a95428bd9bfa9b9afa,Secção C - Indústrias transformadoras,28150,"Fabricação de rolamentos, de engrenagens e de outros órgãos de transmissão"
+6a1021a95428bd9bfa9b9afb,Secção C - Indústrias transformadoras,28210,Fabricação de fornos e equipamento de aquecimento doméstico fixo
+6a1021a95428bd9bfa9b9afc,Secção C - Indústrias transformadoras,28221,"Fabricação de ascensores e monta cargas, escadas e passadeiras rolantes"
+6a1021a95428bd9bfa9b9afd,Secção C - Indústrias transformadoras,28222,"Fabricação de equipamentos de elevação e de movimentação, n.e."
+6a1021a95428bd9bfa9b9afe,Secção C - Indústrias transformadoras,28230,Fabricação de máquinas e equipamento de escritório (exceto computadores e equipamento periférico)
+6a1021a95428bd9bfa9b9aff,Secção C - Indústrias transformadoras,28240,Fabricação de máquinas-ferramentas portáteis com motor
+6a1021a95428bd9bfa9b9b00,Secção C - Indústrias transformadoras,28250,Fabricação de equipamento não doméstico de ar condicionado
+6a1021a95428bd9bfa9b9b01,Secção C - Indústrias transformadoras,28291,Fabricação de máquinas de acondicionamento e de embalagem
+6a1021a95428bd9bfa9b9b02,Secção C - Indústrias transformadoras,28292,Fabricação de balanças e de outro equipamento para pesagem
+6a1021a95428bd9bfa9b9b03,Secção C - Indústrias transformadoras,28293,"Fabricação de outras máquinas diversas de uso geral, n.e."
+6a1021a95428bd9bfa9b9b04,Secção C - Indústrias transformadoras,28300,"Fabricação de máquinas e de tratores para a agricultura, pecuária e silvicultura"
+6a1021a95428bd9bfa9b9b05,Secção C - Indústrias transformadoras,28410,Fabricação de máquinas de moldagem de metais e de máquinas-ferramentas para trabalhar metais
+6a1021a95428bd9bfa9b9b06,Secção C - Indústrias transformadoras,28420,Fabricação de outras máquinas-ferramentas
+6a1021a95428bd9bfa9b9b07,Secção C - Indústrias transformadoras,28910,Fabricação de máquinas para a metalurgia
+6a1021a95428bd9bfa9b9b08,Secção C - Indústrias transformadoras,28920,Fabricação de máquinas para as indústrias extrativas e para a construção
+6a1021a95428bd9bfa9b9b09,Secção C - Indústrias transformadoras,28930,"Fabricação de máquinas para as indústrias alimentares, das bebidas e do tabaco"
+6a1021a95428bd9bfa9b9b0a,Secção C - Indústrias transformadoras,28940,"Fabricação de máquinas para as indústrias têxtil, do vestuário e do couro"
+6a1021a95428bd9bfa9b9b0b,Secção C - Indústrias transformadoras,28950,Fabricação de máquinas para as indústrias do papel e do cartão
+6a1021a95428bd9bfa9b9b0c,Secção C - Indústrias transformadoras,28960,Fabricação de máquinas para as indústrias do plástico e da borracha
+6a1021a95428bd9bfa9b9b0d,Secção C - Indústrias transformadoras,28970,Fabricação de máquinas para o fabrico aditivo
+6a1021a95428bd9bfa9b9b0e,Secção C - Indústrias transformadoras,28991,"Fabricação de máquinas para as indústrias de materiais de construção, cerâmica e vidro"
+6a1021a95428bd9bfa9b9b0f,Secção C - Indústrias transformadoras,28992,"Fabricação de outras máquinas diversas para uso específico, n.e."
+6a1021a95428bd9bfa9b9b10,Secção C - Indústrias transformadoras,29100,Fabricação de veículos a motor
+6a1021a95428bd9bfa9b9b11,Secção C - Indústrias transformadoras,29200,"Fabricação de carroçarias para veículos a motor, reboques e semirreboques"
+6a1021a95428bd9bfa9b9b12,Secção C - Indústrias transformadoras,29310,Fabricação de equipamento elétrico e eletrónico para veículos a motor
+6a1021a95428bd9bfa9b9b13,Secção C - Indústrias transformadoras,29320,Fabricação de outros componentes e acessórios para veículos a motor
+6a1021a95428bd9bfa9b9b14,Secção C - Indústrias transformadoras,30111,"Construção de embarcações metálicas e estruturas flutuantes civis, exceto de recreio e desporto"
+6a1021a95428bd9bfa9b9b15,Secção C - Indústrias transformadoras,30112,"Construção de embarcações não metálicas civis, exceto de recreio e desporto"
+6a1021a95428bd9bfa9b9b16,Secção C - Indústrias transformadoras,30120,Construção de embarcações de recreio e desporto
+6a1021a95428bd9bfa9b9b17,Secção C - Indústrias transformadoras,30130,Construção de navios e embarcações militares
+6a1021a95428bd9bfa9b9b18,Secção C - Indústrias transformadoras,30200,Fabricação de material circulante para caminhos de ferro
+6a1021a95428bd9bfa9b9b19,Secção C - Indústrias transformadoras,30310,Fabricação de aeronaves e veículos espaciais civis e equipamento relacionado
+6a1021a95428bd9bfa9b9b1a,Secção C - Indústrias transformadoras,30320,Fabricação de aeronaves e veículos espaciais militares e equipamento relacionado
+6a1021a95428bd9bfa9b9b1b,Secção C - Indústrias transformadoras,30400,Fabricação de veículos militares de combate
+6a1021a95428bd9bfa9b9b1c,Secção C - Indústrias transformadoras,30910,Fabricação de motociclos
+6a1021a95428bd9bfa9b9b1d,Secção C - Indústrias transformadoras,30920,Fabricação de bicicletas e de veículos para inválidos
+6a1021a95428bd9bfa9b9b1e,Secção C - Indústrias transformadoras,30990,"Fabricação de outro equipamento de transporte, n.e."
+6a1021a95428bd9bfa9b9b1f,Secção C - Indústrias transformadoras,31001,Fabricação de mobiliário para escritório e comércio
+6a1021a95428bd9bfa9b9b20,Secção C - Indústrias transformadoras,31002,Fabricação de mobiliário de cozinha
+6a1021a95428bd9bfa9b9b21,Secção C - Indústrias transformadoras,31003,Fabricação de colchoaria
+6a1021a95428bd9bfa9b9b22,Secção C - Indústrias transformadoras,31004,Fabricação de mobiliário de madeira para outros fins
+6a1021a95428bd9bfa9b9b23,Secção C - Indústrias transformadoras,31005,Fabricação de mobiliário metálico para outros fins
+6a1021a95428bd9bfa9b9b24,Secção C - Indústrias transformadoras,31006,Fabricação de mobiliário de outros materiais para outros fins
+6a1021a95428bd9bfa9b9b25,Secção C - Indústrias transformadoras,31007,Atividades de acabamento de mobiliário
+6a1021a95428bd9bfa9b9b26,Secção C - Indústrias transformadoras,32110,Cunhagem de moedas
+6a1021a95428bd9bfa9b9b27,Secção C - Indústrias transformadoras,32121,Fabricação de filigranas
+6a1021a95428bd9bfa9b9b28,Secção C - Indústrias transformadoras,32122,Fabricação de artigos de joalharia e de outros artigos de ourivesaria
+6a1021a95428bd9bfa9b9b29,Secção C - Indústrias transformadoras,32123,Trabalho de diamantes e de outras pedras preciosas ou semipreciosas para joalharia e uso industrial
+6a1021a95428bd9bfa9b9b2a,Secção C - Indústrias transformadoras,32130,Fabricação de bijutarias
+6a1021a95428bd9bfa9b9b2b,Secção C - Indústrias transformadoras,32200,Fabricação de instrumentos musicais
+6a1021a95428bd9bfa9b9b2c,Secção C - Indústrias transformadoras,32300,Fabricação de artigos de desporto
+6a1021a95428bd9bfa9b9b2d,Secção C - Indústrias transformadoras,32400,Fabricação de jogos e de brinquedos
+6a1021a95428bd9bfa9b9b2e,Secção C - Indústrias transformadoras,32501,Fabricação de material ótico oftálmico
+6a1021a95428bd9bfa9b9b2f,Secção C - Indústrias transformadoras,32502,Fabricação de material ortopédico e próteses e de instrumentos médico-cirúrgicos
+6a1021a95428bd9bfa9b9b30,Secção C - Indústrias transformadoras,32910,"Fabricação de vassouras, escovas e pincéis"
+6a1021a95428bd9bfa9b9b31,Secção C - Indústrias transformadoras,32991,"Fabricação de canetas, lápis e similares"
+6a1021a95428bd9bfa9b9b32,Secção C - Indústrias transformadoras,32992,"Fabricação de fechos de correr, botões e similares"
+6a1021a95428bd9bfa9b9b33,Secção C - Indústrias transformadoras,32993,Fabricação de guarda-sóis e chapéus de chuva
+6a1021a95428bd9bfa9b9b34,Secção C - Indústrias transformadoras,32994,Fabricação de equipamento de proteção e segurança
+6a1021a95428bd9bfa9b9b35,Secção C - Indústrias transformadoras,32995,Fabricação de caixões mortuários em madeira
+6a1021a95428bd9bfa9b9b36,Secção C - Indústrias transformadoras,32996,"Outras indústrias transformadoras diversas, n.e."
+6a1021a95428bd9bfa9b9b37,Secção C - Indústrias transformadoras,33110,Reparação e manutenção de produtos metálicos
+6a1021a95428bd9bfa9b9b38,Secção C - Indústrias transformadoras,33120,Reparação e manutenção de máquinas
+6a1021a95428bd9bfa9b9b39,Secção C - Indústrias transformadoras,33130,Reparação e manutenção de equipamento eletrónico e ótico
+6a1021a95428bd9bfa9b9b3a,Secção C - Indústrias transformadoras,33140,Reparação e manutenção de equipamento elétrico
+6a1021a95428bd9bfa9b9b3b,Secção C - Indústrias transformadoras,33150,Reparação e manutenção de embarcações civis
+6a1021a95428bd9bfa9b9b3c,Secção C - Indústrias transformadoras,33160,Reparação e manutenção de aeronaves e de veículos espaciais civis
+6a1021a95428bd9bfa9b9b3d,Secção C - Indústrias transformadoras,33170,Reparação e manutenção de outro equipamento de transporte civil
+6a1021a95428bd9bfa9b9b3e,Secção C - Indústrias transformadoras,33180,"Reparação e manutenção de veículos de combate, navios, embarcações, aeronaves e veículos espaciais militares"
+6a1021a95428bd9bfa9b9b3f,Secção C - Indústrias transformadoras,33190,Reparação e manutenção de outro equipamento
+6a1021a95428bd9bfa9b9b40,Secção C - Indústrias transformadoras,33200,Instalação de máquinas e de equipamentos industriais
+6a1021a95428bd9bfa9b9b41,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35110,Produção de eletricidade a partir de fontes não renováveis
+6a1021a95428bd9bfa9b9b42,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35121,Produção de eletricidade de origem hídrica
+6a1021a95428bd9bfa9b9b43,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35122,Produção de eletricidade de origem eólica
+6a1021a95428bd9bfa9b9b44,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35123,Produção de eletricidade de origem solar
+6a1021a95428bd9bfa9b9b45,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35124,Produção de eletricidade a partir de biomassa
+6a1021a95428bd9bfa9b9b46,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35125,Produção de eletricidade de origem geotérmica e de outra origem renovável
+6a1021a95428bd9bfa9b9b47,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35130,Transporte de eletricidade
+6a1021a95428bd9bfa9b9b48,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35140,Distribuição de eletricidade
+6a1021a95428bd9bfa9b9b49,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35151,"Comércio de eletricidade, exceto para mobilidade elétrica"
+6a1021a95428bd9bfa9b9b4a,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35152,Comércio de eletricidade para mobilidade elétrica
+6a1021a95428bd9bfa9b9b4b,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35160,Armazenamento de eletricidade
+6a1021a95428bd9bfa9b9b4c,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35210,Produção de gás
+6a1021a95428bd9bfa9b9b4d,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35220,Distribuição de combustíveis gasosos por condutas
+6a1021a95428bd9bfa9b9b4e,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35230,Comércio de gás por condutas
+6a1021a95428bd9bfa9b9b4f,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35240,Armazenamento de gás como parte dos serviços de abastecimento da rede
+6a1021a95428bd9bfa9b9b50,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35301,"Produção e distribuição de vapor, água quente e fria e ar frio por conduta"
+6a1021a95428bd9bfa9b9b51,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35302,Produção de gelo
+6a1021a95428bd9bfa9b9b52,"Secção D - Produção e distribuição de eletricidade, gás, vapor e ar condicionado",35400,Atividades dos corretores e agentes de energia elétrica e gás natural
+6a1021a95428bd9bfa9b9b53,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",36001,Captação e tratamento de água
+6a1021a95428bd9bfa9b9b54,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",36002,Distribuição de água
+6a1021a95428bd9bfa9b9b55,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",37001,Recolha e drenagem de águas residuais
+6a1021a95428bd9bfa9b9b56,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",37002,Tratamento de águas residuais
+6a1021a95428bd9bfa9b9b57,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38111,Recolha de resíduos inertes
+6a1021a95428bd9bfa9b9b58,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38112,Recolha de outros resíduos não perigosos
+6a1021a95428bd9bfa9b9b59,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38120,Recolha de resíduos perigosos
+6a1021a95428bd9bfa9b9b5a,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38211,"Desmantelamento de veículos automóveis, em fim de vida"
+6a1021a95428bd9bfa9b9b5b,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38212,"Desmantelamento de equipamentos elétricos e eletrónicos, em fim de vida"
+6a1021a95428bd9bfa9b9b5c,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38213,"Desmantelamento de outros equipamentos e bens, em fim de vida"
+6a1021a95428bd9bfa9b9b5d,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38214,Valorização de resíduos metálicos
+6a1021a95428bd9bfa9b9b5e,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38215,Valorização de resíduos não metálicos
+6a1021a95428bd9bfa9b9b5f,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38220,Valorização energética
+6a1021a95428bd9bfa9b9b60,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38230,Outras operações de valorizações de resíduos
+6a1021a95428bd9bfa9b9b61,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38310,Incineração sem valorização energética
+6a1021a95428bd9bfa9b9b62,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38320,Deposição em aterro ou armazenamento permanente
+6a1021a95428bd9bfa9b9b63,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",38330,Outras operações de eliminação de resíduos
+6a1021a95428bd9bfa9b9b64,"Secção E - Captação, tratamento e distribuição de água; saneamento, gestão de resíduos e despoluição",39000,Remediação e outras atividades dos serviços de gestão de resíduos
+6a1021a95428bd9bfa9b9b65,Secção F - Construção,41000,Construção de edifícios residenciais e não residenciais
+6a1021a95428bd9bfa9b9b66,Secção F - Construção,42110,Construção de estradas e autoestradas
+6a1021a95428bd9bfa9b9b67,Secção F - Construção,42120,Construção de vias-férreas de superfície e subterrâneas
+6a1021a95428bd9bfa9b9b68,Secção F - Construção,42130,Construção de pontes e túneis
+6a1021a95428bd9bfa9b9b69,Secção F - Construção,42210,"Construção de redes de transporte de águas, de esgotos e de outros fluidos"
+6a1021a95428bd9bfa9b9b6a,Secção F - Construção,42220,Construção de redes de transporte e distribuição de eletricidade e redes de telecomunicações
+6a1021a95428bd9bfa9b9b6b,Secção F - Construção,42910,Engenharia hidráulica
+6a1021a95428bd9bfa9b9b6c,Secção F - Construção,42990,"Construção de outras obras de engenharia civil, n.e."
+6a1021a95428bd9bfa9b9b6d,Secção F - Construção,43110,Demolição
+6a1021a95428bd9bfa9b9b6e,Secção F - Construção,43120,Preparação dos locais de construção
+6a1021a95428bd9bfa9b9b6f,Secção F - Construção,43130,Perfurações e sondagens
+6a1021a95428bd9bfa9b9b70,Secção F - Construção,43210,Instalação elétrica
+6a1021a95428bd9bfa9b9b71,Secção F - Construção,43221,Instalação de canalizações
+6a1021a95428bd9bfa9b9b72,Secção F - Construção,43222,Instalação de climatização
+6a1021a95428bd9bfa9b9b73,Secção F - Construção,43230,Instalação de isolamento
+6a1021a95428bd9bfa9b9b74,Secção F - Construção,43240,Outras instalações em construções
+6a1021a95428bd9bfa9b9b75,Secção F - Construção,43310,Estucagem
+6a1021a95428bd9bfa9b9b76,Secção F - Construção,43320,Montagem de trabalhos de carpintaria e de caixilharia
+6a1021a95428bd9bfa9b9b77,Secção F - Construção,43330,Revestimento de pavimentos e de paredes
+6a1021a95428bd9bfa9b9b78,Secção F - Construção,43340,Pintura e colocação de vidros
+6a1021a95428bd9bfa9b9b79,Secção F - Construção,43350,Outras atividades de acabamento em edifícios
+6a1021a95428bd9bfa9b9b7a,Secção F - Construção,43410,Atividades de colocação de telhados e coberturas
+6a1021a95428bd9bfa9b9b7b,Secção F - Construção,43420,Outras atividades especializadas de construção na construção de edifícios
+6a1021a95428bd9bfa9b9b7c,Secção F - Construção,43500,Atividades especializadas de construção em engenharia civil
+6a1021a95428bd9bfa9b9b7d,Secção F - Construção,43600,Atividades de serviços de intermediação para serviços especializados de construção
+6a1021a95428bd9bfa9b9b7e,Secção F - Construção,43910,Atividades de alvenaria e assentamento de tijolos
+6a1021a95428bd9bfa9b9b7f,Secção F - Construção,43991,"Aluguer de equipamento de construção e de demolição, com operador"
+6a1021a95428bd9bfa9b9b80,Secção F - Construção,43992,"Outras atividades especializadas de construção diversas, n.e."
+6a1021a95428bd9bfa9b9b81,Secção G - Comércio por grosso e a retalho,46110,"Atividades dos agentes do comércio por grosso de matérias-primas agrícolas e têxteis, animais vivos e produtos semiacabados"
+6a1021a95428bd9bfa9b9b82,Secção G - Comércio por grosso e a retalho,46120,"Atividades dos agentes do comércio por grosso de combustíveis, minérios, metais e de produtos químicos para a indústria"
+6a1021a95428bd9bfa9b9b83,Secção G - Comércio por grosso e a retalho,46130,Atividades dos agentes do comércio por grosso de madeira e materiais de construção
+6a1021a95428bd9bfa9b9b84,Secção G - Comércio por grosso e a retalho,46140,"Atividades dos agentes do comércio por grosso de máquinas, equipamento industrial, embarcações e aeronaves"
+6a1021a95428bd9bfa9b9b85,Secção G - Comércio por grosso e a retalho,46150,"Atividades dos agentes do comércio por grosso de mobiliário, artigos para uso doméstico e ferragens"
+6a1021a95428bd9bfa9b9b86,Secção G - Comércio por grosso e a retalho,46160,"Atividades dos agentes do comércio por grosso de têxteis, vestuário, calçado e artigos de couro e pele"
+6a1021a95428bd9bfa9b9b87,Secção G - Comércio por grosso e a retalho,46170,"Atividades dos agentes do comércio por grosso de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9b88,Secção G - Comércio por grosso e a retalho,46180,Atividades dos agentes do comércio por grosso de outros produtos
+6a1021a95428bd9bfa9b9b89,Secção G - Comércio por grosso e a retalho,46190,Atividades dos agentes do comércio por grosso não especializado
+6a1021a95428bd9bfa9b9b8a,Secção G - Comércio por grosso e a retalho,46211,Comércio por grosso de alimentos para animais
+6a1021a95428bd9bfa9b9b8b,Secção G - Comércio por grosso e a retalho,46213,Comércio por grosso de cortiça em bruto
+6a1021a95428bd9bfa9b9b8c,Secção G - Comércio por grosso e a retalho,46214,"Comércio por grosso de cereais, sementes, leguminosas, oleaginosas e outras matérias-primas agrícolas"
+6a1021a95428bd9bfa9b9b8d,Secção G - Comércio por grosso e a retalho,46220,Comércio por grosso de flores e plantas
+6a1021a95428bd9bfa9b9b8e,Secção G - Comércio por grosso e a retalho,46230,Comércio por grosso de animais vivos
+6a1021a95428bd9bfa9b9b8f,Secção G - Comércio por grosso e a retalho,46240,Comércio por grosso de peles e couro
+6a1021a95428bd9bfa9b9b90,Secção G - Comércio por grosso e a retalho,46311,"Comércio por grosso de fruta e de produtos hortícolas, exceto batata"
+6a1021a95428bd9bfa9b9b91,Secção G - Comércio por grosso e a retalho,46312,Comércio por grosso de batata
+6a1021a95428bd9bfa9b9b92,Secção G - Comércio por grosso e a retalho,46321,Comércio por grosso de carne e produtos à base de carne
+6a1021a95428bd9bfa9b9b93,Secção G - Comércio por grosso e a retalho,46322,"Comércio por grosso de peixe, crustáceos e moluscos e produtos à base de peixe"
+6a1021a95428bd9bfa9b9b94,Secção G - Comércio por grosso e a retalho,46331,"Comércio por grosso de leite, seus derivados e ovos"
+6a1021a95428bd9bfa9b9b95,Secção G - Comércio por grosso e a retalho,46332,"Comércio por grosso de azeite, óleos e gorduras alimentares"
+6a1021a95428bd9bfa9b9b96,Secção G - Comércio por grosso e a retalho,46341,Comércio por grosso de bebidas alcoólicas
+6a1021a95428bd9bfa9b9b97,Secção G - Comércio por grosso e a retalho,46342,Comércio por grosso de bebidas não alcoólicas
+6a1021a95428bd9bfa9b9b98,Secção G - Comércio por grosso e a retalho,46361,Comércio por grosso de açúcar
+6a1021a95428bd9bfa9b9b99,Secção G - Comércio por grosso e a retalho,46362,Comércio por grosso de chocolate e de produtos de confeitaria
+6a1021a95428bd9bfa9b9b9a,Secção G - Comércio por grosso e a retalho,46370,"Comércio por grosso de café, chá, cacau e especiarias"
+6a1021a95428bd9bfa9b9b9b,Secção G - Comércio por grosso e a retalho,46380,Comércio por grosso de outros produtos alimentares
+6a1021a95428bd9bfa9b9b9c,Secção G - Comércio por grosso e a retalho,46390,"Comércio por grosso não especializado de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9b9d,Secção G - Comércio por grosso e a retalho,46410,Comércio por grosso de têxteis
+6a1021a95428bd9bfa9b9b9e,Secção G - Comércio por grosso e a retalho,46421,Comércio por grosso de vestuário e de acessórios
+6a1021a95428bd9bfa9b9b9f,Secção G - Comércio por grosso e a retalho,46422,Comércio por grosso de calçado
+6a1021a95428bd9bfa9b9ba0,Secção G - Comércio por grosso e a retalho,46430,Comércio por grosso de eletrodomésticos
+6a1021a95428bd9bfa9b9ba1,Secção G - Comércio por grosso e a retalho,46441,Comércio por grosso de louças em cerâmica e em vidro
+6a1021a95428bd9bfa9b9ba2,Secção G - Comércio por grosso e a retalho,46442,Comércio por grosso de produtos de limpeza
+6a1021a95428bd9bfa9b9ba3,Secção G - Comércio por grosso e a retalho,46450,Comércio por grosso de perfumes e de produtos de higiene
+6a1021a95428bd9bfa9b9ba4,Secção G - Comércio por grosso e a retalho,46460,Comércio por grosso de produtos farmacêuticos e médicos
+6a1021a95428bd9bfa9b9ba5,Secção G - Comércio por grosso e a retalho,46471,"Comércio por grosso de mobiliário para uso doméstico, carpetes, tapetes e artigos de iluminação"
+6a1021a95428bd9bfa9b9ba6,Secção G - Comércio por grosso e a retalho,46472,Comércio por grosso de mobiliário de escritório
+6a1021a95428bd9bfa9b9ba7,Secção G - Comércio por grosso e a retalho,46480,Comércio por grosso de relógios e de artigos de ourivesaria e joalharia
+6a1021a95428bd9bfa9b9ba8,Secção G - Comércio por grosso e a retalho,46491,Comércio por grosso de artigos de papelaria
+6a1021a95428bd9bfa9b9ba9,Secção G - Comércio por grosso e a retalho,46492,"Comércio por grosso de livros, revistas e jornais"
+6a1021a95428bd9bfa9b9baa,Secção G - Comércio por grosso e a retalho,46493,"Comércio por grosso de brinquedos, jogos e artigos de desporto"
+6a1021a95428bd9bfa9b9bab,Secção G - Comércio por grosso e a retalho,46494,"Outro comércio por grosso de bens de consumo, n.e."
+6a1021a95428bd9bfa9b9bac,Secção G - Comércio por grosso e a retalho,46501,"Comércio por grosso de computadores, equipamentos periféricos e programas informáticos"
+6a1021a95428bd9bfa9b9bad,Secção G - Comércio por grosso e a retalho,46502,"Comércio por grosso de equipamentos eletrónicos, de telecomunicações e suas partes"
+6a1021a95428bd9bfa9b9bae,Secção G - Comércio por grosso e a retalho,46503,Comércio por grosso de outras máquinas e material de escritório
+6a1021a95428bd9bfa9b9baf,Secção G - Comércio por grosso e a retalho,46610,Comércio por grosso de máquinas e equipamentos agrícolas e suas peças e acessórios
+6a1021a95428bd9bfa9b9bb0,Secção G - Comércio por grosso e a retalho,46620,Comércio por grosso de máquinas-ferramentas
+6a1021a95428bd9bfa9b9bb1,Secção G - Comércio por grosso e a retalho,46630,"Comércio por grosso de máquinas para a indústria extrativa, construção e engenharia civil"
+6a1021a95428bd9bfa9b9bb2,Secção G - Comércio por grosso e a retalho,46641,"Comércio por grosso de máquinas para a indústria têxtil, máquinas de costura e de tricotar"
+6a1021a95428bd9bfa9b9bb3,Secção G - Comércio por grosso e a retalho,46642,"Comércio por grosso de outras máquinas e equipamentos, n.e."
+6a1021a95428bd9bfa9b9bb4,Secção G - Comércio por grosso e a retalho,46711,Comércio por grosso de veículos automóveis ligeiros
+6a1021a95428bd9bfa9b9bb5,Secção G - Comércio por grosso e a retalho,46712,Comércio por grosso de outros veículos automóveis
+6a1021a95428bd9bfa9b9bb6,Secção G - Comércio por grosso e a retalho,46720,Comércio por grosso de peças e acessórios para veículos automóveis
+6a1021a95428bd9bfa9b9bb7,Secção G - Comércio por grosso e a retalho,46730,"Comércio por grosso de motociclos, suas partes e acessórios"
+6a1021a95428bd9bfa9b9bb8,Secção G - Comércio por grosso e a retalho,46811,Comércio por grosso de produtos petrolíferos
+6a1021a95428bd9bfa9b9bb9,Secção G - Comércio por grosso e a retalho,46812,"Comércio por grosso de combustíveis sólidos, líquidos e gasosos, não derivados do petróleo"
+6a1021a95428bd9bfa9b9bba,Secção G - Comércio por grosso e a retalho,46820,Comércio por grosso de minérios e de metais
+6a1021a95428bd9bfa9b9bbb,Secção G - Comércio por grosso e a retalho,46831,Comércio por grosso de madeira em bruto e de produtos derivados
+6a1021a95428bd9bfa9b9bbc,Secção G - Comércio por grosso e a retalho,46832,Comércio por grosso de materiais de construção (exceto madeira) e equipamento sanitário
+6a1021a95428bd9bfa9b9bbd,Secção G - Comércio por grosso e a retalho,46840,"Comércio por grosso de ferragens, ferramentas manuais e artigos para canalizações e aquecimento"
+6a1021a95428bd9bfa9b9bbe,Secção G - Comércio por grosso e a retalho,46850,Comércio por grosso de produtos químicos
+6a1021a95428bd9bfa9b9bbf,Secção G - Comércio por grosso e a retalho,46861,"Comércio por grosso de fibras têxteis naturais, artificiais e sintéticas"
+6a1021a95428bd9bfa9b9bc0,Secção G - Comércio por grosso e a retalho,46862,"Comércio por grosso de outros bens intermédios, n.e."
+6a1021a95428bd9bfa9b9bc1,Secção G - Comércio por grosso e a retalho,46871,Comércio por grosso de sucatas e de desperdícios metálicos
+6a1021a95428bd9bfa9b9bc2,Secção G - Comércio por grosso e a retalho,46872,"Comércio por grosso de desperdícios têxteis, de cartão e papéis velhos"
+6a1021a95428bd9bfa9b9bc3,Secção G - Comércio por grosso e a retalho,46873,"Comércio por grosso de desperdícios de materiais, n.e."
+6a1021a95428bd9bfa9b9bc4,Secção G - Comércio por grosso e a retalho,46890,"Outro comércio por grosso especializado, n.e."
+6a1021a95428bd9bfa9b9bc5,Secção G - Comércio por grosso e a retalho,46900,Comércio por grosso não especializado
+6a1021a95428bd9bfa9b9bc6,Secção G - Comércio por grosso e a retalho,47111,Comércio a retalho em supermercados e hipermercados
+6a1021a95428bd9bfa9b9bc7,Secção G - Comércio por grosso e a retalho,47112,"Comércio a retalho em outros estabelecimentos não especializados, com predominância de produtos alimentares, bebidas ou tabaco"
+6a1021a95428bd9bfa9b9bc8,Secção G - Comércio por grosso e a retalho,47113,"Comércio a retalho não especializado, em bancas, feiras e unidades móveis de venda, de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9bc9,Secção G - Comércio por grosso e a retalho,47114,"Comércio a retalho não especializado, por correspondência ou via Internet, com predominância de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9bca,Secção G - Comércio por grosso e a retalho,47115,"Comércio a retalho não especializado, por outros métodos, com predominância de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9bcb,Secção G - Comércio por grosso e a retalho,47121,"Comércio a retalho não especializado, sem predominância de produtos alimentares, bebidas e tabaco, em grandes armazéns e similares"
+6a1021a95428bd9bfa9b9bcc,Secção G - Comércio por grosso e a retalho,47122,"Comércio a retalho em outros estabelecimentos não especializados, sem predominância de produtos alimentares, bebidas ou tabaco"
+6a1021a95428bd9bfa9b9bcd,Secção G - Comércio por grosso e a retalho,47123,"Comércio a retalho não especializado em bancas, feiras e unidades móveis de venda, de têxteis, vestuário, calçado, malas e similares"
+6a1021a95428bd9bfa9b9bce,Secção G - Comércio por grosso e a retalho,47124,"Comércio a retalho não especializado, em bancas, feiras e unidades móveis de venda, de outros produtos, sem predominância de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9bcf,Secção G - Comércio por grosso e a retalho,47125,"Comércio a retalho não especializado, por correspondência ou via Internet, sem predominância de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9bd0,Secção G - Comércio por grosso e a retalho,47126,"Comércio a retalho não especializado, por outros métodos, sem predominância de produtos alimentares, bebidas e tabaco"
+6a1021a95428bd9bfa9b9bd1,Secção G - Comércio por grosso e a retalho,47210,Comércio a retalho de frutas e produtos hortícolas
+6a1021a95428bd9bfa9b9bd2,Secção G - Comércio por grosso e a retalho,47220,Comércio a retalho de carne e produtos à base de carne
+6a1021a95428bd9bfa9b9bd3,Secção G - Comércio por grosso e a retalho,47230,"Comércio a retalho de peixe, crustáceos e moluscos"
+6a1021a95428bd9bfa9b9bd4,Secção G - Comércio por grosso e a retalho,47240,"Comércio a retalho de pão, de produtos de pastelaria e de confeitaria"
+6a1021a95428bd9bfa9b9bd5,Secção G - Comércio por grosso e a retalho,47250,Comércio a retalho de bebidas
+6a1021a95428bd9bfa9b9bd6,Secção G - Comércio por grosso e a retalho,47271,Comércio a retalho de leite e de derivados
+6a1021a95428bd9bfa9b9bd7,Secção G - Comércio por grosso e a retalho,47272,"Comércio a retalho de produtos alimentares, naturais e dietéticos"
+6a1021a95428bd9bfa9b9bd8,Secção G - Comércio por grosso e a retalho,47273,Outro comércio a retalho de produtos alimentares
+6a1021a95428bd9bfa9b9bd9,Secção G - Comércio por grosso e a retalho,47300,Comércio a retalho de combustível para veículos a motor
+6a1021a95428bd9bfa9b9bda,Secção G - Comércio por grosso e a retalho,47401,"Comércio a retalho de computadores, unidades periféricas e programas informáticos"
+6a1021a95428bd9bfa9b9bdb,Secção G - Comércio por grosso e a retalho,47402,Comércio a retalho de equipamento de telecomunicações
+6a1021a95428bd9bfa9b9bdc,Secção G - Comércio por grosso e a retalho,47403,Comércio a retalho de equipamento audiovisual
+6a1021a95428bd9bfa9b9bdd,Secção G - Comércio por grosso e a retalho,47510,Comércio a retalho de têxteis
+6a1021a95428bd9bfa9b9bde,Secção G - Comércio por grosso e a retalho,47521,Comércio a retalho de ferragens e de vidro plano
+6a1021a95428bd9bfa9b9bdf,Secção G - Comércio por grosso e a retalho,47522,"Comércio a retalho de tintas, vernizes e produtos similares"
+6a1021a95428bd9bfa9b9be0,Secção G - Comércio por grosso e a retalho,47523,"Comércio a retalho de material de bricolage, equipamento sanitário, ladrilhos e materiais de construção similares"
+6a1021a95428bd9bfa9b9be1,Secção G - Comércio por grosso e a retalho,47530,"Comércio a retalho de carpetes, tapetes, cortinados e revestimentos para paredes e pavimentos"
+6a1021a95428bd9bfa9b9be2,Secção G - Comércio por grosso e a retalho,47540,Comércio a retalho de eletrodomésticos
+6a1021a95428bd9bfa9b9be3,Secção G - Comércio por grosso e a retalho,47551,Comércio a retalho de mobiliário e artigos de iluminação
+6a1021a95428bd9bfa9b9be4,Secção G - Comércio por grosso e a retalho,47552,"Comércio a retalho de louças, cutelaria e de outros artigos similares para uso doméstico"
+6a1021a95428bd9bfa9b9be5,Secção G - Comércio por grosso e a retalho,47553,"Comércio a retalho de outros artigos para o lar, n.e."
+6a1021a95428bd9bfa9b9be6,Secção G - Comércio por grosso e a retalho,47610,Comércio a retalho de livros
+6a1021a95428bd9bfa9b9be7,Secção G - Comércio por grosso e a retalho,47621,"Comércio a retalho de jornais, revistas e outras publicações periódicas e artigos de papelaria, exceto máquinas e outro material de escritório"
+6a1021a95428bd9bfa9b9be8,Secção G - Comércio por grosso e a retalho,47622,Comércio a retalho de máquinas e de outro material de escritório
+6a1021a95428bd9bfa9b9be9,Secção G - Comércio por grosso e a retalho,47630,Comércio a retalho de artigos de desporto
+6a1021a95428bd9bfa9b9bea,Secção G - Comércio por grosso e a retalho,47640,Comércio a retalho de jogos e brinquedos
+6a1021a95428bd9bfa9b9beb,Secção G - Comércio por grosso e a retalho,47690,"Comércio a retalho de bens culturais e recreativos, n.e."
+6a1021a95428bd9bfa9b9bec,Secção G - Comércio por grosso e a retalho,47711,Comércio a retalho de vestuário para adultos
+6a1021a95428bd9bfa9b9bed,Secção G - Comércio por grosso e a retalho,47712,Comércio a retalho de vestuário para bebés e crianças
+6a1021a95428bd9bfa9b9bee,Secção G - Comércio por grosso e a retalho,47721,Comércio a retalho de calçado
+6a1021a95428bd9bfa9b9bef,Secção G - Comércio por grosso e a retalho,47722,Comércio a retalho de marroquinaria e artigos de viagem
+6a1021a95428bd9bfa9b9bf0,Secção G - Comércio por grosso e a retalho,47730,Comércio a retalho de produtos farmacêuticos
+6a1021a95428bd9bfa9b9bf1,Secção G - Comércio por grosso e a retalho,47741,Comércio a retalho de produtos médicos (exceto material ótico oftálmico) e ortopédicos
+6a1021a95428bd9bfa9b9bf2,Secção G - Comércio por grosso e a retalho,47742,Comércio a retalho de material ótico oftálmico
+6a1021a95428bd9bfa9b9bf3,Secção G - Comércio por grosso e a retalho,47750,Comércio a retalho de produtos cosméticos e de higiene
+6a1021a95428bd9bfa9b9bf4,Secção G - Comércio por grosso e a retalho,47761,"Comércio a retalho de flores, plantas, sementes e fertilizantes"
+6a1021a95428bd9bfa9b9bf5,Secção G - Comércio por grosso e a retalho,47762,Comércio a retalho de animais de companhia e respetivos alimentos
+6a1021a95428bd9bfa9b9bf6,Secção G - Comércio por grosso e a retalho,47770,Comércio a retalho de relógios e de artigos de ourivesaria e joalharia
+6a1021a95428bd9bfa9b9bf7,Secção G - Comércio por grosso e a retalho,47781,"Comércio a retalho de material ótico, exceto oftálmico, fotográfico, cinematográfico e de instrumentos de precisão"
+6a1021a95428bd9bfa9b9bf8,Secção G - Comércio por grosso e a retalho,47782,Comércio a retalho de combustíveis para uso doméstico
+6a1021a95428bd9bfa9b9bf9,Secção G - Comércio por grosso e a retalho,47783,"Comércio a retalho de outros produtos novos, n.e."
+6a1021a95428bd9bfa9b9bfa,Secção G - Comércio por grosso e a retalho,47790,Comércio a retalho de artigos em segunda mão
+6a1021a95428bd9bfa9b9bfb,Secção G - Comércio por grosso e a retalho,47811,Comércio a retalho de veículos automóveis ligeiros
+6a1021a95428bd9bfa9b9bfc,Secção G - Comércio por grosso e a retalho,47812,Comércio a retalho de outros veículos automóveis
+6a1021a95428bd9bfa9b9bfd,Secção G - Comércio por grosso e a retalho,47820,Comércio a retalho de peças e acessórios para veículos automóveis
+6a1021a95428bd9bfa9b9bfe,Secção G - Comércio por grosso e a retalho,47830,"Comércio a retalho de motociclos, suas partes e acessórios"
+6a1021a95428bd9bfa9b9bff,Secção G - Comércio por grosso e a retalho,47910,Atividades de serviços de intermediação no comércio a retalho não especializado
+6a1021a95428bd9bfa9b9c00,Secção G - Comércio por grosso e a retalho,47920,Atividades de serviços de intermediação no comércio a retalho especializado
+6a1021a95428bd9bfa9b9c01,Secção H - Transportes e armazenagem,49110,Transporte de passageiros por ferrovia pesada
+6a1021a95428bd9bfa9b9c02,Secção H - Transportes e armazenagem,49120,Outro transporte ferroviário de passageiros
+6a1021a95428bd9bfa9b9c03,Secção H - Transportes e armazenagem,49200,Transporte ferroviário de mercadorias
+6a1021a95428bd9bfa9b9c04,Secção H - Transportes e armazenagem,49311,"Transporte rodoviário regular, urbano e suburbano de passageiros"
+6a1021a95428bd9bfa9b9c05,Secção H - Transportes e armazenagem,49312,Transporte regular interurbano em autocarros
+6a1021a95428bd9bfa9b9c06,Secção H - Transportes e armazenagem,49320,Transporte rodoviário não regular de passageiros
+6a1021a95428bd9bfa9b9c07,Secção H - Transportes e armazenagem,49330,"Atividades de serviços de transporte de passageiros, a pedido, em veículo com condutor"
+6a1021a95428bd9bfa9b9c08,Secção H - Transportes e armazenagem,49340,"Transporte de passageiros por instalações por cabo (teleféricos, telesquis e outras)"
+6a1021a95428bd9bfa9b9c09,Secção H - Transportes e armazenagem,49390,"Outros transportes terrestres de passageiros, n.e."
+6a1021a95428bd9bfa9b9c0a,Secção H - Transportes e armazenagem,49410,Transportes rodoviários de mercadorias
+6a1021a95428bd9bfa9b9c0b,Secção H - Transportes e armazenagem,49420,Serviços de mudanças
+6a1021a95428bd9bfa9b9c0c,Secção H - Transportes e armazenagem,49500,Transportes por oleodutos ou gasodutos
+6a1021a95428bd9bfa9b9c0d,Secção H - Transportes e armazenagem,50101,Transportes marítimos não costeiros de passageiros
+6a1021a95428bd9bfa9b9c0e,Secção H - Transportes e armazenagem,50102,"Transportes costeiros e locais de passageiros, para fins não turísticos"
+6a1021a95428bd9bfa9b9c0f,Secção H - Transportes e armazenagem,50103,"Transportes costeiros e locais de passageiros, para fins turísticos"
+6a1021a95428bd9bfa9b9c10,Secção H - Transportes e armazenagem,50200,Transportes marítimos de mercadorias
+6a1021a95428bd9bfa9b9c11,Secção H - Transportes e armazenagem,50301,"Transportes de passageiros por vias navegáveis interiores, para fins não turísticos"
+6a1021a95428bd9bfa9b9c12,Secção H - Transportes e armazenagem,50302,"Transportes de passageiros por vias navegáveis interiores, para fins turísticos"
+6a1021a95428bd9bfa9b9c13,Secção H - Transportes e armazenagem,50400,Transportes de mercadorias por vias navegáveis interiores
+6a1021a95428bd9bfa9b9c14,Secção H - Transportes e armazenagem,51100,Transportes aéreos de passageiros
+6a1021a95428bd9bfa9b9c15,Secção H - Transportes e armazenagem,51210,Transportes aéreos de mercadorias
+6a1021a95428bd9bfa9b9c16,Secção H - Transportes e armazenagem,51220,Transportes espaciais
+6a1021a95428bd9bfa9b9c17,Secção H - Transportes e armazenagem,52101,Armazenagem frigorífica
+6a1021a95428bd9bfa9b9c18,Secção H - Transportes e armazenagem,52102,Armazenagem não frigorífica
+6a1021a95428bd9bfa9b9c19,Secção H - Transportes e armazenagem,52211,Gestão de infraestruturas dos transportes terrestres
+6a1021a95428bd9bfa9b9c1a,Secção H - Transportes e armazenagem,52212,Assistência a veículos na estrada
+6a1021a95428bd9bfa9b9c1b,Secção H - Transportes e armazenagem,52213,Outras atividades auxiliares dos transportes terrestres
+6a1021a95428bd9bfa9b9c1c,Secção H - Transportes e armazenagem,52220,Atividades auxiliares dos transportes por água
+6a1021a95428bd9bfa9b9c1d,Secção H - Transportes e armazenagem,52230,Atividades auxiliares dos transportes aéreos
+6a1021a95428bd9bfa9b9c1e,Secção H - Transportes e armazenagem,52240,Manuseamento de carga
+6a1021a95428bd9bfa9b9c1f,Secção H - Transportes e armazenagem,52250,Atividades dos serviços de logística
+6a1021a95428bd9bfa9b9c20,Secção H - Transportes e armazenagem,52261,Agentes aduaneiros e similares de apoio ao transporte
+6a1021a95428bd9bfa9b9c21,Secção H - Transportes e armazenagem,52262,"Outras atividades de apoio ao transporte, n.e."
+6a1021a95428bd9bfa9b9c22,Secção H - Transportes e armazenagem,52310,Atividades de serviços de intermediação dos transportes de mercadorias
+6a1021a95428bd9bfa9b9c23,Secção H - Transportes e armazenagem,52320,Atividades de serviços de intermediação dos transportes de passageiros
+6a1021a95428bd9bfa9b9c24,Secção H - Transportes e armazenagem,53100,Atividades postais sujeitas a obrigações de serviço universal
+6a1021a95428bd9bfa9b9c25,Secção H - Transportes e armazenagem,53201,"Outras atividades postais e de correios, exceto entregas ao domicílio sem tratamento ou triagem"
+6a1021a95428bd9bfa9b9c26,Secção H - Transportes e armazenagem,53202,Atividades de serviços de entrega ao domicílio sem tratamento ou triagem
+6a1021a95428bd9bfa9b9c27,Secção H - Transportes e armazenagem,53300,Atividades de serviços de intermediação de atividades postais e de correios
+6a1021a95428bd9bfa9b9c28,Secção I - Atividades de alojamento e restauração,55101,"Hotéis, exceto hotéis rurais"
+6a1021a95428bd9bfa9b9c29,Secção I - Atividades de alojamento e restauração,55102,Hotéis-Apartamentos
+6a1021a95428bd9bfa9b9c2a,Secção I - Atividades de alojamento e restauração,55103,Pousadas
+6a1021a95428bd9bfa9b9c2b,Secção I - Atividades de alojamento e restauração,55104,Aldeamentos turísticos
+6a1021a95428bd9bfa9b9c2c,Secção I - Atividades de alojamento e restauração,55105,Apartamentos turísticos
+6a1021a95428bd9bfa9b9c2d,Secção I - Atividades de alojamento e restauração,55106,Hotéis Rurais
+6a1021a95428bd9bfa9b9c2e,Secção I - Atividades de alojamento e restauração,55107,Outros estabelecimentos hoteleiros
+6a1021a95428bd9bfa9b9c2f,Secção I - Atividades de alojamento e restauração,55201,Alojamento mobilado para turistas
+6a1021a95428bd9bfa9b9c30,Secção I - Atividades de alojamento e restauração,55202,"Alojamento em estabelecimentos de turismo no espaço rural, exceto hotéis rurais"
+6a1021a95428bd9bfa9b9c31,Secção I - Atividades de alojamento e restauração,55203,Alojamento em estabelecimentos de turismo de habitação
+6a1021a95428bd9bfa9b9c32,Secção I - Atividades de alojamento e restauração,55204,"Estabelecimentos de hospedagem, exceto hostels"
+6a1021a95428bd9bfa9b9c33,Secção I - Atividades de alojamento e restauração,55205,Hostels
+6a1021a95428bd9bfa9b9c34,Secção I - Atividades de alojamento e restauração,55206,Colónias e campos de férias
+6a1021a95428bd9bfa9b9c35,Secção I - Atividades de alojamento e restauração,55207,Outros locais de alojamento de curta duração
+6a1021a95428bd9bfa9b9c36,Secção I - Atividades de alojamento e restauração,55300,Parques de campismo e de caravanismo
+6a1021a95428bd9bfa9b9c37,Secção I - Atividades de alojamento e restauração,55400,Atividades de serviços de intermediação de alojamento
+6a1021a95428bd9bfa9b9c38,Secção I - Atividades de alojamento e restauração,55900,Outros locais de alojamento
+6a1021a95428bd9bfa9b9c39,Secção I - Atividades de alojamento e restauração,56111,Restaurantes tipo tradicional
+6a1021a95428bd9bfa9b9c3a,Secção I - Atividades de alojamento e restauração,56112,Restaurantes com lugares ao balcão
+6a1021a95428bd9bfa9b9c3b,Secção I - Atividades de alojamento e restauração,56113,Restaurantes sem serviço de mesa
+6a1021a95428bd9bfa9b9c3c,Secção I - Atividades de alojamento e restauração,56114,Restaurantes típicos
+6a1021a95428bd9bfa9b9c3d,Secção I - Atividades de alojamento e restauração,56115,Restaurantes com espaço de dança
+6a1021a95428bd9bfa9b9c3e,Secção I - Atividades de alojamento e restauração,56116,Confeção de refeições prontas a levar para casa
+6a1021a95428bd9bfa9b9c3f,Secção I - Atividades de alojamento e restauração,56117,"Restaurantes, n.e."
+6a1021a95428bd9bfa9b9c40,Secção I - Atividades de alojamento e restauração,56120,Atividades de serviços de alimentação em meios móveis
+6a1021a95428bd9bfa9b9c41,Secção I - Atividades de alojamento e restauração,56210,Fornecimento de refeições para eventos
+6a1021a95428bd9bfa9b9c42,Secção I - Atividades de alojamento e restauração,56220,Atividades de serviço de fornecimento de refeições por contrato e outras atividades de serviços de alimentação
+6a1021a95428bd9bfa9b9c43,Secção I - Atividades de alojamento e restauração,56301,Cafés
+6a1021a95428bd9bfa9b9c44,Secção I - Atividades de alojamento e restauração,56302,Bares
+6a1021a95428bd9bfa9b9c45,Secção I - Atividades de alojamento e restauração,56303,Pastelarias e casas de chá
+6a1021a95428bd9bfa9b9c46,Secção I - Atividades de alojamento e restauração,56304,"Outros estabelecimentos de bebidas sem espetáculo, exceto itinerantes"
+6a1021a95428bd9bfa9b9c47,Secção I - Atividades de alojamento e restauração,56305,Estabelecimentos de bebidas com espaço de dança
+6a1021a95428bd9bfa9b9c48,Secção I - Atividades de alojamento e restauração,56306,Estabelecimentos de bebidas itinerantes
+6a1021a95428bd9bfa9b9c49,Secção I - Atividades de alojamento e restauração,56400,Atividades de serviços de intermediação relativas a atividades de serviços de restauração
+6a1021a95428bd9bfa9b9c4a,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",58110,Edição de livros
+6a1021a95428bd9bfa9b9c4b,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",58120,Edição de jornais
+6a1021a95428bd9bfa9b9c4c,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",58130,Edição de revistas e de outras publicações periódicas
+6a1021a95428bd9bfa9b9c4d,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",58190,"Outras atividades de edição, exceto edição de programas informáticos"
+6a1021a95428bd9bfa9b9c4e,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",58210,Edição de jogos de vídeo
+6a1021a95428bd9bfa9b9c4f,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",58290,Edição de outros programas informáticos
+6a1021a95428bd9bfa9b9c50,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",59110,"Atividades de produção de filmes, de vídeos e de programas de televisão"
+6a1021a95428bd9bfa9b9c51,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",59120,"Atividades de pós-produção de filmes, de vídeos e de programas de televisão"
+6a1021a95428bd9bfa9b9c52,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",59130,Atividades de distribuição de filmes e de vídeos
+6a1021a95428bd9bfa9b9c53,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",59140,Atividades de projeção de filmes
+6a1021a95428bd9bfa9b9c54,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",59200,Atividades de gravação de som e edição de música
+6a1021a95428bd9bfa9b9c55,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",60100,Atividades de radiodifusão e de distribuição de áudio
+6a1021a95428bd9bfa9b9c56,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",60200,Atividades de programação e difusão de televisão e de distribuição de vídeo
+6a1021a95428bd9bfa9b9c57,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",60310,Atividades das agências de notícias
+6a1021a95428bd9bfa9b9c58,"Secção J - Atividades de edição, difusão e produção e distribuição de conteúdos",60390,Outras atividades de distribuição de conteúdos
+6a1021a95428bd9bfa9b9c59,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",61101,Atividades de telecomunicações por cabo
+6a1021a95428bd9bfa9b9c5a,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",61102,Atividades de telecomunicações sem fios
+6a1021a95428bd9bfa9b9c5b,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",61103,Atividades de telecomunicações por satélite
+6a1021a95428bd9bfa9b9c5c,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",61200,Atividades de revenda de telecomunicações e atividades de serviços de intermediação no domínio das telecomunicações
+6a1021a95428bd9bfa9b9c5d,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",61900,Outras atividades de telecomunicações
+6a1021a95428bd9bfa9b9c5e,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",62100,Atividades de programação informática
+6a1021a95428bd9bfa9b9c5f,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",62201,Atividades de consultoria em informática
+6a1021a95428bd9bfa9b9c60,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",62202,Gestão e exploração de instalações informáticas
+6a1021a95428bd9bfa9b9c61,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",62900,Outras atividades de serviços relacionados com as tecnologias da informação e informática
+6a1021a95428bd9bfa9b9c62,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",63100,"Infraestruturas de computação, atividades de processamento de dados, domiciliação de informação e atividades relacionadas"
+6a1021a95428bd9bfa9b9c63,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",63910,Atividades de portais de pesquisa Web
+6a1021a95428bd9bfa9b9c64,"Secção K - Telecomunicações, programação informática, consultoria, infraestruturas de computação e outras atividades dos serviços de informação",63920,Outras atividades de serviços de informação
+6a1021a95428bd9bfa9b9c65,Secção L - Atividades financeiras e de seguros,66220,Atividades de mediadores de seguros
+6a1021a95428bd9bfa9b9c66,Secção M - Atividades imobiliárias,68110,Compra e venda de bens imobiliários
+6a1021a95428bd9bfa9b9c67,Secção M - Atividades imobiliárias,68120,Desenvolvimento de projetos de edifícios
+6a1021a95428bd9bfa9b9c68,Secção M - Atividades imobiliárias,68200,Arrendamento e exploração de bens imobiliários próprios ou em locação
+6a1021a95428bd9bfa9b9c69,Secção M - Atividades imobiliárias,68310,Atividades de serviços de intermediação de atividades imobiliárias
+6a1021a95428bd9bfa9b9c6a,Secção M - Atividades imobiliárias,68321,Administração de imóveis por conta de outrem
+6a1021a95428bd9bfa9b9c6b,Secção M - Atividades imobiliárias,68322,Administração de condomínios
+6a1021a95428bd9bfa9b9c6c,Secção M - Atividades imobiliárias,68323,Atividades de angariação imobiliária
+6a1021a95428bd9bfa9b9c6d,Secção M - Atividades imobiliárias,68324,Atividades de avaliação imobiliária
+6a1021a95428bd9bfa9b9c6e,"Secção N - Atividades de consultoria, científicas, técnicas e similares",69101,"Atividades jurídicas, exceto dos cartórios notariais"
+6a1021a95428bd9bfa9b9c6f,"Secção N - Atividades de consultoria, científicas, técnicas e similares",69102,Atividades dos cartórios notariais
+6a1021a95428bd9bfa9b9c70,"Secção N - Atividades de consultoria, científicas, técnicas e similares",69201,Atividades de contabilidade e consultoria fiscal
+6a1021a95428bd9bfa9b9c71,"Secção N - Atividades de consultoria, científicas, técnicas e similares",69202,Atividades de auditoria e revisão de contas
+6a1021a95428bd9bfa9b9c72,"Secção N - Atividades de consultoria, científicas, técnicas e similares",70100,Atividades das sedes sociais
+6a1021a95428bd9bfa9b9c73,"Secção N - Atividades de consultoria, científicas, técnicas e similares",70200,Atividades de consultoria para os negócios e outra consultoria para a gestão (5)
+6a1021a95428bd9bfa9b9c74,"Secção N - Atividades de consultoria, científicas, técnicas e similares",71110,Atividades de arquitetura
+6a1021a95428bd9bfa9b9c75,"Secção N - Atividades de consultoria, científicas, técnicas e similares",71120,Atividades de engenharia e técnicas afins
+6a1021a95428bd9bfa9b9c76,"Secção N - Atividades de consultoria, científicas, técnicas e similares",71200,Atividades de ensaios e análises técnicas
+6a1021a95428bd9bfa9b9c77,"Secção N - Atividades de consultoria, científicas, técnicas e similares",72101,Investigação e desenvolvimento em biotecnologia
+6a1021a95428bd9bfa9b9c78,"Secção N - Atividades de consultoria, científicas, técnicas e similares",72102,Outra investigação e desenvolvimento das ciências físicas e naturais
+6a1021a95428bd9bfa9b9c79,"Secção N - Atividades de consultoria, científicas, técnicas e similares",72200,Investigação e desenvolvimento das ciências sociais e humanas
+6a1021a95428bd9bfa9b9c7a,"Secção N - Atividades de consultoria, científicas, técnicas e similares",73110,Atividades das agências de publicidade
+6a1021a95428bd9bfa9b9c7b,"Secção N - Atividades de consultoria, científicas, técnicas e similares",73120,Atividades de representação nos meios de comunicação
+6a1021a95428bd9bfa9b9c7c,"Secção N - Atividades de consultoria, científicas, técnicas e similares",73200,Estudos de mercado e sondagens de opinião
+6a1021a95428bd9bfa9b9c7d,"Secção N - Atividades de consultoria, científicas, técnicas e similares",73300,Atividades de relações públicas e comunicação
+6a1021a95428bd9bfa9b9c7e,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74110,Atividades de design de produtos industriais e de moda
+6a1021a95428bd9bfa9b9c7f,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74120,Atividades de design gráfico e de comunicação visual
+6a1021a95428bd9bfa9b9c80,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74130,Atividades de design de interiores
+6a1021a95428bd9bfa9b9c81,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74140,Outras atividades especializadas de design
+6a1021a95428bd9bfa9b9c82,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74200,Atividades fotográficas
+6a1021a95428bd9bfa9b9c83,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74300,Atividades de tradução e interpretação
+6a1021a95428bd9bfa9b9c84,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74910,Atividades de serviços de comercialização e corretagem de patentes (5)
+6a1021a95428bd9bfa9b9c85,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74991,Atividades de agentes de profissionais desportivos
+6a1021a95428bd9bfa9b9c86,"Secção N - Atividades de consultoria, científicas, técnicas e similares",74992,"Outras atividades de consultoria, cientificas, técnicas e similares, diversas, n.e., exceto agentes de profissionais desportivos (5)"
+6a1021a95428bd9bfa9b9c87,"Secção N - Atividades de consultoria, científicas, técnicas e similares",75000,Atividades veterinárias
+6a1021a95428bd9bfa9b9c88,Secção O - Atividades administrativas e dos serviços de apoio,77111,Aluguer de veículos automóveis ligeiros de curto prazo
+6a1021a95428bd9bfa9b9c89,Secção O - Atividades administrativas e dos serviços de apoio,77112,Aluguer operacional de veículos automóveis ligeiros
+6a1021a95428bd9bfa9b9c8a,Secção O - Atividades administrativas e dos serviços de apoio,77120,Aluguer de veículos automóveis pesados
+6a1021a95428bd9bfa9b9c8b,Secção O - Atividades administrativas e dos serviços de apoio,77211,Aluguer de bicicletas e similares
+6a1021a95428bd9bfa9b9c8c,Secção O - Atividades administrativas e dos serviços de apoio,77212,Aluguer de outros bens recreativos e desportivos
+6a1021a95428bd9bfa9b9c8d,Secção O - Atividades administrativas e dos serviços de apoio,77220,Aluguer de outros bens de uso pessoal e doméstico
+6a1021a95428bd9bfa9b9c8e,Secção O - Atividades administrativas e dos serviços de apoio,77310,Aluguer de máquinas e equipamentos agrícolas
+6a1021a95428bd9bfa9b9c8f,Secção O - Atividades administrativas e dos serviços de apoio,77320,Aluguer de máquinas e equipamentos para a construção e engenharia civil
+6a1021a95428bd9bfa9b9c90,Secção O - Atividades administrativas e dos serviços de apoio,77330,Aluguer de máquinas e equipamentos de escritório e de computadores
+6a1021a95428bd9bfa9b9c91,Secção O - Atividades administrativas e dos serviços de apoio,77340,Aluguer de meios de transporte marítimo e fluvial
+6a1021a95428bd9bfa9b9c92,Secção O - Atividades administrativas e dos serviços de apoio,77350,Aluguer de meios de transporte aéreo
+6a1021a95428bd9bfa9b9c93,Secção O - Atividades administrativas e dos serviços de apoio,77390,"Aluguer de outras máquinas, equipamentos e bens tangíveis, n.e."
+6a1021a95428bd9bfa9b9c94,Secção O - Atividades administrativas e dos serviços de apoio,77400,"Locação de propriedade intelectual e produtos semelhantes, excetuando obras protegidas por direitos de autor 77510 Atividades de serviços de intermediação de aluguer e locação de automóveis, autocaravanas e reboques"
+6a1021a95428bd9bfa9b9c95,Secção O - Atividades administrativas e dos serviços de apoio,77520,Atividades de serviços de intermediação de aluguer e locação de outros bens corpóreos e ativos incorpóreos não financeiros
+6a1021a95428bd9bfa9b9c96,Secção O - Atividades administrativas e dos serviços de apoio,78100,Atividades das empresas de seleção e colocação de pessoal
+6a1021a95428bd9bfa9b9c97,Secção O - Atividades administrativas e dos serviços de apoio,78201,Atividades das empresas de trabalho temporário
+6a1021a95428bd9bfa9b9c98,Secção O - Atividades administrativas e dos serviços de apoio,78202,Outro fornecimento de recursos humanos
+6a1021a95428bd9bfa9b9c99,Secção O - Atividades administrativas e dos serviços de apoio,79110,Atividades das agências de viagens
+6a1021a95428bd9bfa9b9c9a,Secção O - Atividades administrativas e dos serviços de apoio,79120,Atividades dos operadores turísticos
+6a1021a95428bd9bfa9b9c9b,Secção O - Atividades administrativas e dos serviços de apoio,79900,Outros serviços de reservas e atividades relacionadas
+6a1021a95428bd9bfa9b9c9c,Secção O - Atividades administrativas e dos serviços de apoio,80011,Atividades de segurança privada
+6a1021a95428bd9bfa9b9c9d,Secção O - Atividades administrativas e dos serviços de apoio,80012,"Atividades de investigação, exceto cientifica"
+6a1021a95428bd9bfa9b9c9e,Secção O - Atividades administrativas e dos serviços de apoio,80090,"Atividades de segurança, n.e."
+6a1021a95428bd9bfa9b9c9f,Secção O - Atividades administrativas e dos serviços de apoio,81100,Atividades combinadas de apoio aos edifícios
+6a1021a95428bd9bfa9b9ca0,Secção O - Atividades administrativas e dos serviços de apoio,81210,Limpeza geral de edifícios
+6a1021a95428bd9bfa9b9ca1,Secção O - Atividades administrativas e dos serviços de apoio,81220,Outras atividades de limpeza de edifícios e em equipamentos industriais
+6a1021a95428bd9bfa9b9ca2,Secção O - Atividades administrativas e dos serviços de apoio,81231,"Atividades de desinfeção, desratização e similares"
+6a1021a95428bd9bfa9b9ca3,Secção O - Atividades administrativas e dos serviços de apoio,81232,"Outras atividades de limpeza, n.e."
+6a1021a95428bd9bfa9b9ca4,Secção O - Atividades administrativas e dos serviços de apoio,81300,Atividades dos serviços de plantação e manutenção de jardins
+6a1021a95428bd9bfa9b9ca5,Secção O - Atividades administrativas e dos serviços de apoio,82100,Atividades de serviços administrativos e de apoio
+6a1021a95428bd9bfa9b9ca6,Secção O - Atividades administrativas e dos serviços de apoio,82200,Atividades dos centros de chamadas
+6a1021a95428bd9bfa9b9ca7,Secção O - Atividades administrativas e dos serviços de apoio,82300,"Organização de feiras, congressos e similares"
+6a1021a95428bd9bfa9b9ca8,Secção O - Atividades administrativas e dos serviços de apoio,82400,"Atividades de serviços de intermediação de atividades de serviços de apoio aos negócios, n.e."
+6a1021a95428bd9bfa9b9ca9,Secção O - Atividades administrativas e dos serviços de apoio,82910,Atividades das agências de cobranças e de avaliação do risco de crédito
+6a1021a95428bd9bfa9b9caa,Secção O - Atividades administrativas e dos serviços de apoio,82921,Engarrafamento de gases
+6a1021a95428bd9bfa9b9cab,Secção O - Atividades administrativas e dos serviços de apoio,82922,Outras atividades de embalagem
+6a1021a95428bd9bfa9b9cac,Secção O - Atividades administrativas e dos serviços de apoio,82990,"Outras atividades de serviços de apoio aos negócios, n.e."
+6a1021a95428bd9bfa9b9cad,Secção Q - Educação,85100,Ensino pré-escolar
+6a1021a95428bd9bfa9b9cae,Secção Q - Educação,85201,Ensino básico (1º Ciclo)
+6a1021a95428bd9bfa9b9caf,Secção Q - Educação,85202,Ensino básico (2º Ciclo)
+6a1021a95428bd9bfa9b9cb0,Secção Q - Educação,85310,Ensino básico (3º Ciclo) e secundário geral
+6a1021a95428bd9bfa9b9cb1,Secção Q - Educação,85320,Ensino secundário profissional
+6a1021a95428bd9bfa9b9cb2,Secção Q - Educação,85330,Ensino pós-secundário não superior
+6a1021a95428bd9bfa9b9cb3,Secção Q - Educação,85400,Ensino superior
+6a1021a95428bd9bfa9b9cb4,Secção Q - Educação,85510,Ensino desportivo e recreativo
+6a1021a95428bd9bfa9b9cb5,Secção Q - Educação,85520,Ensino de atividades culturais
+6a1021a95428bd9bfa9b9cb6,Secção Q - Educação,85530,Escolas de condução e pilotagem
+6a1021a95428bd9bfa9b9cb7,Secção Q - Educação,85591,Formação profissional
+6a1021a95428bd9bfa9b9cb8,Secção Q - Educação,85592,Escolas de línguas
+6a1021a95428bd9bfa9b9cb9,Secção Q - Educação,85593,"Outras atividades educativas, diversas, n.e."
+6a1021a95428bd9bfa9b9cba,Secção Q - Educação,85610,Atividades de serviços de intermediação de cursos e tutores
+6a1021a95428bd9bfa9b9cbb,Secção Q - Educação,85690,"Atividades de apoio ao ensino, n.e."
+6a1021a95428bd9bfa9b9cbc,Secção R - Atividades de saúde humana e ação social,86100,Atividades dos estabelecimentos de saúde com internamento
+6a1021a95428bd9bfa9b9cbd,Secção R - Atividades de saúde humana e ação social,86210,Atividades de prática clínica geral
+6a1021a95428bd9bfa9b9cbe,Secção R - Atividades de saúde humana e ação social,86220,Atividades médicas especializadas
+6a1021a95428bd9bfa9b9cbf,Secção R - Atividades de saúde humana e ação social,86230,Atividades de medicina dentária e odontologia
+6a1021a95428bd9bfa9b9cc0,Secção R - Atividades de saúde humana e ação social,86911,Atividades dos serviços dos laboratórios de análises clínicas
+6a1021a95428bd9bfa9b9cc1,Secção R - Atividades de saúde humana e ação social,86912,Atividades dos serviços de diagnóstico por imagem
+6a1021a95428bd9bfa9b9cc2,Secção R - Atividades de saúde humana e ação social,86920,Transporte de doentes em ambulância
+6a1021a95428bd9bfa9b9cc3,Secção R - Atividades de saúde humana e ação social,86930,"Atividades de psicólogos e psicoterapeutas, exceto médicos"
+6a1021a95428bd9bfa9b9cc4,Secção R - Atividades de saúde humana e ação social,86940,Atividades de enfermagem e de parteiras
+6a1021a95428bd9bfa9b9cc5,Secção R - Atividades de saúde humana e ação social,86950,Atividades de fisioterapia
+6a1021a95428bd9bfa9b9cc6,Secção R - Atividades de saúde humana e ação social,86961,Atividades de terapêuticas não convencionais
+6a1021a95428bd9bfa9b9cc7,Secção R - Atividades de saúde humana e ação social,86962,"Outras atividades de medicina tradicional, complementar e alternativa, exceto terapêuticas não convencionais"
+6a1021a95428bd9bfa9b9cc8,Secção R - Atividades de saúde humana e ação social,86970,"Atividades de serviços de intermediação de serviços médicos, odontológicos e outros serviços de saúde humana"
+6a1021a95428bd9bfa9b9cc9,Secção R - Atividades de saúde humana e ação social,86991,Centros de recolha e bancos de órgãos
+6a1021a95428bd9bfa9b9cca,Secção R - Atividades de saúde humana e ação social,86992,Atividades termais
+6a1021a95428bd9bfa9b9ccb,Secção R - Atividades de saúde humana e ação social,86993,"Outras atividades de saúde humana, diversas, n.e."
+6a1021a95428bd9bfa9b9ccc,Secção R - Atividades de saúde humana e ação social,87100,Atividades de cuidados de enfermagem em estruturas residenciais
+6a1021a95428bd9bfa9b9ccd,Secção R - Atividades de saúde humana e ação social,87200,Atividades de apoio social em estruturas residenciais para pessoas com doenças do foro mental ou do abuso de drogas
+6a1021a95428bd9bfa9b9cce,Secção R - Atividades de saúde humana e ação social,87301,Atividades de apoio social em estruturas residenciais para pessoas idosas
+6a1021a95428bd9bfa9b9ccf,Secção R - Atividades de saúde humana e ação social,87302,Atividades de apoio social em estruturas residenciais para pessoas com incapacidade física
+6a1021a95428bd9bfa9b9cd0,Secção R - Atividades de saúde humana e ação social,87910,Atividades dos serviços de intermediação de atividades de apoio social em estruturas residenciais
+6a1021a95428bd9bfa9b9cd1,Secção R - Atividades de saúde humana e ação social,87991,Atividades de apoio social em estruturas residenciais para crianças e jovens
+6a1021a95428bd9bfa9b9cd2,Secção R - Atividades de saúde humana e ação social,87992,"Outras atividades de apoio social em estruturas residenciais, diversas, n.e."
+6a1021a95428bd9bfa9b9cd3,Secção R - Atividades de saúde humana e ação social,88101,"Atividades de ação social para pessoas idosas, sem alojamento"
+6a1021a95428bd9bfa9b9cd4,Secção R - Atividades de saúde humana e ação social,88102,"Atividades de ação social para pessoas com incapacidades, sem alojamento"
+6a1021a95428bd9bfa9b9cd5,Secção R - Atividades de saúde humana e ação social,88910,"Atividades de cuidados diurnos para crianças, sem alojamento"
+6a1021a95428bd9bfa9b9cd6,Secção R - Atividades de saúde humana e ação social,88990,"Outras atividades de ação social sem alojamento, n.e."
+6a1021a95428bd9bfa9b9cd7,"Secção S - Atividades artísticas, desportivas e recreativas",90110,Atividades de criação literária e de composição musical
+6a1021a95428bd9bfa9b9cd8,"Secção S - Atividades artísticas, desportivas e recreativas",90120,Atividades de criação de artes visuais
+6a1021a95428bd9bfa9b9cd9,"Secção S - Atividades artísticas, desportivas e recreativas",90130,Outras atividades de criação artística
+6a1021a95428bd9bfa9b9cda,"Secção S - Atividades artísticas, desportivas e recreativas",90200,Atividades das artes do espetáculo
+6a1021a95428bd9bfa9b9cdb,"Secção S - Atividades artísticas, desportivas e recreativas",90310,Exploração de salas e locais de espetáculos
+6a1021a95428bd9bfa9b9cdc,"Secção S - Atividades artísticas, desportivas e recreativas",90390,Outras atividades de apoio à criação artística e às artes do espetáculo
+6a1021a95428bd9bfa9b9cdd,"Secção S - Atividades artísticas, desportivas e recreativas",91110,Atividades das bibliotecas
+6a1021a95428bd9bfa9b9cde,"Secção S - Atividades artísticas, desportivas e recreativas",91120,Atividades dos arquivos
+6a1021a95428bd9bfa9b9cdf,"Secção S - Atividades artísticas, desportivas e recreativas",91210,Atividades de museus e coleções
+6a1021a95428bd9bfa9b9ce0,"Secção S - Atividades artísticas, desportivas e recreativas",91220,Atividades dos sítios e monumentos históricos
+6a1021a95428bd9bfa9b9ce1,"Secção S - Atividades artísticas, desportivas e recreativas",91300,"Atividades de conservação, restauro e outras atividades de apoio ao património cultural"
+6a1021a95428bd9bfa9b9ce2,"Secção S - Atividades artísticas, desportivas e recreativas",91410,Atividades dos jardins botânicos e zoológicos
+6a1021a95428bd9bfa9b9ce3,"Secção S - Atividades artísticas, desportivas e recreativas",91420,Atividades das reservas naturais
+6a1021a95428bd9bfa9b9ce4,"Secção S - Atividades artísticas, desportivas e recreativas",93110,Gestão de instalações desportivas
+6a1021a95428bd9bfa9b9ce5,"Secção S - Atividades artísticas, desportivas e recreativas",93120,Atividades dos clubes desportivos
+6a1021a95428bd9bfa9b9ce6,"Secção S - Atividades artísticas, desportivas e recreativas",93130,Atividades dos centros de manutenção física
+6a1021a95428bd9bfa9b9ce7,"Secção S - Atividades artísticas, desportivas e recreativas",93191,Organismos reguladores das atividades desportivas
+6a1021a95428bd9bfa9b9ce8,"Secção S - Atividades artísticas, desportivas e recreativas",93192,"Outras atividades desportivas, n.e."
+6a1021a95428bd9bfa9b9ce9,"Secção S - Atividades artísticas, desportivas e recreativas",93211,Atividades de parques de diversão itinerantes
+6a1021a95428bd9bfa9b9cea,"Secção S - Atividades artísticas, desportivas e recreativas",93212,Atividades dos parques de diversão e temáticos fixos
+6a1021a95428bd9bfa9b9ceb,"Secção S - Atividades artísticas, desportivas e recreativas",93291,Atividades tauromáquicas
+6a1021a95428bd9bfa9b9cec,"Secção S - Atividades artísticas, desportivas e recreativas",93292,Atividades dos portos de recreio (marinas)
+6a1021a95428bd9bfa9b9ced,"Secção S - Atividades artísticas, desportivas e recreativas",93293,Organização de atividades de animação turística
+6a1021a95428bd9bfa9b9cee,"Secção S - Atividades artísticas, desportivas e recreativas",93294,Outras atividades de diversão fixas e outras atividades recreativas
+6a1021a95428bd9bfa9b9cef,"Secção S - Atividades artísticas, desportivas e recreativas",93295,Outras atividades de diversão itinerantes
+6a1021a95428bd9bfa9b9cf0,Secção T - Outras atividades de serviços,95101,Reparação e manutenção de computadores e de equipamento periférico
+6a1021a95428bd9bfa9b9cf1,Secção T - Outras atividades de serviços,95102,Reparação e manutenção de equipamento de comunicação
+6a1021a95428bd9bfa9b9cf2,Secção T - Outras atividades de serviços,95210,Reparação e manutenção de televisores e outros produtos similares de eletrónica de consumo
+6a1021a95428bd9bfa9b9cf3,Secção T - Outras atividades de serviços,95220,Reparação e manutenção de eletrodomésticos e de outros equipamentos de uso doméstico e para jardim
+6a1021a95428bd9bfa9b9cf4,Secção T - Outras atividades de serviços,95230,Reparação e manutenção de calçado e de artigos de couro
+6a1021a95428bd9bfa9b9cf5,Secção T - Outras atividades de serviços,95240,"Reparação e manutenção de mobiliário e similares, de uso doméstico"
+6a1021a95428bd9bfa9b9cf6,Secção T - Outras atividades de serviços,95250,Reparação e manutenção de relógios e de artigos de joalharia
+6a1021a95428bd9bfa9b9cf7,Secção T - Outras atividades de serviços,95290,"Reparação e manutenção de bens de uso pessoal e doméstico, n.e."
+6a1021a95428bd9bfa9b9cf8,Secção T - Outras atividades de serviços,95310,Reparação e manutenção de veículos automóveis
+6a1021a95428bd9bfa9b9cf9,Secção T - Outras atividades de serviços,95320,Reparação e manutenção de motociclos
+6a1021a95428bd9bfa9b9cfa,Secção T - Outras atividades de serviços,95400,"Atividades de serviços de intermediação de reparação e manutenção de computadores, bens de uso pessoal e doméstico, e veículos automóveis e motociclos"
+6a1021a95428bd9bfa9b9cfb,Secção T - Outras atividades de serviços,96100,Lavagem e limpeza de têxteis e peles
+6a1021a95428bd9bfa9b9cfc,Secção T - Outras atividades de serviços,96210,Atividades de salões de cabeleireiro e barbeiros
+6a1021a95428bd9bfa9b9cfd,Secção T - Outras atividades de serviços,96220,Atividades de cuidados de beleza e outras atividades de tratamentos de beleza
+6a1021a95428bd9bfa9b9cfe,Secção T - Outras atividades de serviços,96230,"Atividades de centros de bem-estar, saunas e banhos de vapor"
+6a1021a95428bd9bfa9b9cff,Secção T - Outras atividades de serviços,96300,Atividades funerárias e conexas
+6a1021a95428bd9bfa9b9d00,Secção T - Outras atividades de serviços,96400,Atividades de serviços de intermediação dos serviços pessoais
+6a1021a95428bd9bfa9b9d01,Secção T - Outras atividades de serviços,96910,Atividades de prestação de serviços pessoais domésticos
+6a1021a95428bd9bfa9b9d02,Secção T - Outras atividades de serviços,96991,Atividades de tatuagem e similares
+6a1021a95428bd9bfa9b9d03,Secção T - Outras atividades de serviços,96992,Atividades dos serviços para animais de companhia
+6a1021a95428bd9bfa9b9d04,Secção T - Outras atividades de serviços,96993,"Outras atividades de serviços pessoais diversas, n.e."

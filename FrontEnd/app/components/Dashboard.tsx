@@ -1,0 +1,1200 @@
+/**
+ * Dashboard Component
+ *
+ * An analytics dashboard for City Council ('camara') users.
+ * It displays key performance indicators (KPIs), geographic distribution (Pie Charts),
+ * business typology (Bar Chart), and provides utilities to export the data
+ * to PDF (via HTML generation) or Excel.
+ */
+
+import {
+  ScrollView,
+  View,
+  useWindowDimensions,
+  FlatList,
+  Animated,
+  RefreshControl,
+} from 'react-native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Surface,
+  Text,
+  Divider,
+  Modal,
+  Portal,
+  IconButton,
+  Chip,
+} from 'react-native-paper';
+import { PieChart } from 'react-native-chart-kit';
+import { BarChart } from 'react-native-gifted-charts';
+import { ExpandingDot } from 'react-native-animated-pagination-dots';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import { File, Paths } from 'expo-file-system';
+import WebView from 'react-native-webview';
+
+// Contexts & Hooks
+import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import { useLoadingState } from '@/context/LoadingContext';
+// Components & Utils
+import CustomButton from './CustomButton';
+import CustomDialog from './CustomDialog';
+import LoadingScreen from './LoadingScreen';
+import { DashboardPdf } from '@/constants/html/DashboardPdf';
+import { exportDashboardToExcel } from '@/constants/excelUtils';
+
+import { useApiFetch } from '@/utils/apiFetch';
+const Dashboard = () => {
+  // --- Hooks (Context & Global State) ---
+  const { user } = useAuth();
+  const { currentTheme: theme } = useAppTheme();
+  const { t, i18n } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Syncs with global FAB visibility
+
+  // --- Local State ---
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
+
+  // Data state
+  const [allInfo, setAllInfo] = useState<{
+    categories: any[];
+    cities: any[];
+    countries: any[];
+    campaigns: any[];
+    gamification: {
+      totalInvoices: number;
+      totalRedemptions: number;
+      totalPointsInCirculation: number;
+    };
+  }>({
+    categories: [],
+    cities: [],
+    countries: [],
+    campaigns: [],
+    gamification: {
+      totalInvoices: 0,
+      totalRedemptions: 0,
+      totalPointsInCirculation: 0,
+    },
+  });
+  const [summary, setSummary] = useState({ totalUsers: 0, totalBusinesses: 0 });
+
+  // UI/Modal state
+  const [pdfDialogVisible, setPdfDialogVisible] = useState(false);
+  const [html, setHtml] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogText, setDialogText] = useState('');
+
+  // --- Refs ---
+  // Animated value tracking horizontal scroll position for the pagination dots
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const campaignScrollX = useRef(new Animated.Value(0)).current;
+
+  // --- Derived Values & Config ---
+  const chartWidth = screenWidth - 64;
+  const chartHeight = 220;
+
+  // Color palette for charts, derived from the active theme
+  const CHART_COLORS = [
+    theme.colors.primary,
+    theme.colors.tertiary,
+    theme.colors.secondary,
+    theme.colors.error,
+    theme.colors.primaryContainer,
+    theme.colors.tertiaryContainer,
+    theme.colors.outline,
+  ];
+
+  // Configuration object passed to react-native-chart-kit
+  const chartConfig = {
+    backgroundGradientFrom: theme.colors.surfaceContainer,
+    backgroundGradientTo: theme.colors.surfaceContainer,
+    color: (opacity = 1) => theme.colors.onSurface,
+    labelColor: (opacity = 1) => theme.colors.onSurfaceVariant,
+    barPercentage: 0.7,
+    fillShadowGradientFrom: theme.colors.primary,
+    fillShadowGradientFromOpacity: 0.8,
+    fillShadowGradientTo: theme.colors.primaryContainer,
+    fillShadowGradientToOpacity: 0.8,
+    decimalPlaces: 0,
+  };
+
+  // Filter out Portugal from the countries list to show only foreign users
+  const paisesEstrangeiros = allInfo.countries.filter(
+    country => country._id && country._id.toLowerCase() !== 'portugal',
+  );
+
+  /**
+   * Returns the campaign status badge style — matches the style used in
+   * CampaignList and CampaignMerchant for visual coherence.
+   */
+  const getCampaignStatusStyle = (status: string) => {
+    switch (status) {
+      case 'ativa':
+        return {
+          color: '#16A34A',
+          bg: '#16A34A20',
+          icon: 'check-circle',
+          label: t('campaign.status_active', { defaultValue: 'Ativa' }),
+        };
+      case 'agendada':
+        return {
+          color: '#2563EB',
+          bg: '#2563EB20',
+          icon: 'clock-outline',
+          label: t('campaign.status_scheduled', { defaultValue: 'Agendada' }),
+        };
+      case 'expirada':
+        return {
+          color: '#DC2626',
+          bg: '#DC262620',
+          icon: 'close-circle',
+          label: t('campaign.status_expired', { defaultValue: 'Expirada' }),
+        };
+      default:
+        return {
+          color: theme.colors.onSurfaceVariant,
+          bg: theme.colors.surfaceVariant,
+          icon: 'circle-outline',
+          label: status,
+        };
+    }
+  };
+
+  // Configuration for the horizontal FlatList of geographic charts
+  const geographicCharts = [
+    {
+      id: '1',
+      title: t('dashboard.cities_pt', { defaultValue: 'Cidades de Portugal' }),
+      data: allInfo.cities,
+      emptyMessage: t('dashboard.no_cities_data', {
+        defaultValue: 'Sem dados de cidades em Portugal.',
+      }),
+    },
+    {
+      id: '2',
+      title: t('dashboard.rest_of_world', { defaultValue: 'Resto do Mundo' }),
+      data: paisesEstrangeiros,
+      emptyMessage: t('dashboard.no_users_abroad', {
+        defaultValue: 'Sem utilizadores registados fora de Portugal.',
+      }),
+    },
+  ];
+
+  // --- Handlers ---
+
+  /** Fetches aggregated dashboard statistics from the backend. */
+  const fetchAllInfo = async () => {
+    try {
+      setLoading(true);
+      const response = await apiFetch(`/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllInfo(data);
+
+        // Calculate total users by summing up counts from all countries
+        const utilizadoresReais = data.countries.reduce(
+          (soma: number, pais: any) => soma + pais.total,
+          0,
+        );
+
+        setSummary({
+          totalUsers: utilizadoresReais,
+          totalBusinesses: data.totalBusinesses || 0,
+        });
+      } else {
+        setDialogTitle(t('common.error'));
+        setDialogText(
+          t('dashboard.error_server_data', {
+            defaultValue: 'Erro: Servidor não devolveu os dados com sucesso.',
+          }),
+        );
+        setDialogVisible(true);
+      }
+    } catch (error) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('dashboard.error_load_stats', {
+          defaultValue: 'Erro: Não foi possível carregar as estatísticas.',
+        }),
+      );
+      setDialogVisible(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Formats raw category data for the PieChart.
+   * Aggregates categories beyond the top 5 into an "Outros" (Others) slice to prevent clutter.
+   */
+  const formatPieData = (dataArray: any[]) => {
+    const sortedData = [...dataArray].sort((a, b) => b.total - a.total);
+    let processedData = sortedData;
+
+    if (sortedData.length > 5) {
+      const topItems = sortedData.slice(0, 5);
+      const remainingItems = sortedData.slice(5);
+      const totalOthers = remainingItems.reduce(
+        (sum, item) => sum + item.total,
+        0,
+      );
+
+      processedData = [
+        ...topItems,
+        {
+          _id: t('dashboard.others', { defaultValue: 'Outros' }),
+          total: totalOthers,
+        },
+      ];
+    }
+
+    return processedData.map((item, index) => {
+      const isOthers =
+        item._id === t('dashboard.others', { defaultValue: 'Outros' });
+      return {
+        name: isOthers
+          ? item._id
+          : t(`categories.${item._id}` as any, { defaultValue: item._id }),
+        population: item.total,
+        color: isOthers
+          ? theme.colors.outline
+          : CHART_COLORS[index % CHART_COLORS.length],
+        legendFontColor: theme.colors.onSurface,
+        legendFontSize: 13,
+      };
+    });
+  };
+
+  /** Formats raw category data for the horizontal BarChart. */
+  const formatBarData = (dataArray: any[]) => {
+    const sortedData = [...dataArray].sort((a, b) => b.total - a.total);
+    return sortedData.map(item => ({
+      value: item.total,
+      label: t(`categories.${item._id}` as any, { defaultValue: item._id }),
+      frontColor: theme.colors.primary,
+      topLabelComponent: () => (
+        <Text
+          style={{
+            fontSize: 16,
+            marginBottom: 6,
+            color: theme.colors.onSurface,
+          }}
+        >
+          {item.total}
+        </Text>
+      ),
+    }));
+  };
+
+  /** Generates the HTML string for the PDF report and opens the preview modal. */
+  const createPDF = () => {
+    try {
+      const maxCat = Math.max(
+        ...allInfo.categories.map((c: any) => c.total),
+        1,
+      );
+      const maxCity = Math.max(...allInfo.cities.map((c: any) => c.total), 1);
+      const dataAtual = new Date().toLocaleDateString(
+        i18n.language === 'pt' ? 'pt-PT' : 'en-US',
+        {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        },
+      );
+
+      const htmlContent = DashboardPdf({
+        theme,
+        dataAtual,
+        summary,
+        allInfo,
+        maxCat,
+        maxCity,
+        paisesEstrangeiros,
+        campaigns: allInfo.campaigns,
+        gamification: allInfo.gamification,
+      });
+
+      setHtml(htmlContent);
+      setPdfDialogVisible(true);
+    } catch (error) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('dashboard.error_generate_pdf', {
+          defaultValue: 'Erro ao gerar a pré-visualização do PDF.',
+        }),
+      );
+      setDialogVisible(true);
+    }
+  };
+
+  /** Triggers the native OS print dialog using the generated HTML. */
+  const handlePrintPDF = async () => {
+    try {
+      await Print.printAsync({ html });
+    } catch (error) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('dashboard.error_print_action', {
+          defaultValue: 'Ação de impressão cancelada ou falhou.',
+        }),
+      );
+      setDialogVisible(true);
+    }
+  };
+
+  /**
+   * Saves the PDF to the device.
+   * Uses expo-print to generate a temporary file, moves it to the permanent Documents directory,
+   * and then triggers the native Sharing sheet so the user can save or share it.
+   */
+  const handleSavePDF = async () => {
+    try {
+      setPdfLoading(true);
+      // 1. Generate temporary PDF file in cache
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+
+      // 2. Move file to permanent storage using the new expo-file-system File API
+      const tempFile = new File(uri);
+      const finalFile = new File(Paths.document, 'Relatorio_TomarDigital.pdf');
+      tempFile.move(finalFile);
+
+      // 3. Open native share dialog
+      await Sharing.shareAsync(finalFile.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: t('dashboard.save_pdf_report', {
+          defaultValue: 'Guardar Relatório PDF',
+        }),
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (error) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('dashboard.error_save_pdf', {
+          defaultValue: 'Erro ao tentar guardar o PDF.',
+        }),
+      );
+      setDialogVisible(true);
+    } finally {
+      setPdfLoading(false);
+      setPdfDialogVisible(false);
+    }
+  };
+
+  /** Exports the raw dashboard data to an Excel file. */
+  const handleExportExcel = async () => {
+    setExcelLoading(true);
+    const result = await exportDashboardToExcel({
+      summary,
+      categories: allInfo.categories,
+      cities: allInfo.cities,
+      countries: allInfo.countries,
+      campaigns: allInfo.campaigns,
+      gamification: allInfo.gamification,
+    });
+
+    setExcelLoading(false);
+    if (!result.success) {
+      setDialogTitle(t('common.error'));
+      setDialogText(
+        t('dashboard.error_generate_excel', {
+          defaultValue: 'Erro ao gerar ficheiro Excel.',
+        }),
+      );
+      setDialogVisible(true);
+    }
+  };
+
+  /** Pull-to-refresh handler. */
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAllInfo();
+    setRefreshing(false);
+  }, []);
+
+  // --- Effects ---
+
+  // Initial data fetch
+  useEffect(() => {
+    if (user?.token) fetchAllInfo();
+  }, [user?.token]);
+
+  // Sync local loading state with global LoadingContext to hide global FAB during fetches
+  useEffect(() => {
+    setLoadingQR(loading);
+  }, [loading, setLoadingQR]);
+
+  // --- Early Return (Loading State) ---
+  // Must occur AFTER all hooks have been declared.
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // --- Render ---
+  return (
+    <Surface style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <Surface style={{ paddingBottom: 80 }}>
+            <Text
+              variant="headlineMedium"
+              style={{
+                color: theme.colors.primary,
+                fontWeight: 'bold',
+                marginLeft: 8,
+              }}
+            >
+              {t('dashboard.overview', { defaultValue: 'Visão Geral' })}
+            </Text>
+
+            {/* KPIs Section */}
+            <View className="mb-6 flex-row p-4">
+              <Surface
+                className="p-4"
+                style={{
+                  backgroundColor: theme.colors.primaryContainer,
+                  borderRadius: 24,
+                  marginRight: 20,
+                  flex: 1,
+                }}
+                elevation={2}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={{
+                    color: theme.colors.onPrimaryContainer,
+                    opacity: 0.8,
+                    alignSelf: 'center',
+                  }}
+                >
+                  {t('dashboard.citizens', { defaultValue: 'Cidadãos' })}
+                </Text>
+                <Text
+                  variant="displaySmall"
+                  style={{
+                    color: theme.colors.onPrimaryContainer,
+                    fontWeight: 'bold',
+                    alignSelf: 'center',
+                  }}
+                >
+                  {summary.totalUsers}
+                </Text>
+              </Surface>
+
+              <Surface
+                className="p-4"
+                style={{
+                  backgroundColor: theme.colors.secondaryContainer,
+                  borderRadius: 24,
+                  flex: 1,
+                }}
+                elevation={2}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={{
+                    color: theme.colors.onSecondaryContainer,
+                    alignSelf: 'center',
+                    opacity: 0.8,
+                  }}
+                >
+                  {t('dashboard.businesses', { defaultValue: 'Negócios' })}
+                </Text>
+                <Text
+                  variant="displaySmall"
+                  style={{
+                    color: theme.colors.onSecondaryContainer,
+                    fontWeight: 'bold',
+                    alignSelf: 'center',
+                  }}
+                >
+                  {summary.totalBusinesses}
+                </Text>
+              </Surface>
+            </View>
+
+            {/* Geographic Charts Section (Carousel) */}
+            <View>
+              <FlatList
+                data={geographicCharts}
+                horizontal
+                keyExtractor={item => item.id}
+                pagingEnabled={true}
+                showsHorizontalScrollIndicator={false}
+                bounces={false}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                  { useNativeDriver: false },
+                )}
+                renderItem={({ item }) => (
+                  <View style={{ width: screenWidth }}>
+                    <Surface
+                      className="p-4"
+                      style={{
+                        backgroundColor: theme.colors.surfaceContainer,
+                        borderRadius: 24,
+                        paddingBottom: 5,
+                        marginBottom: 10,
+                        marginHorizontal: 10,
+                      }}
+                      elevation={0}
+                    >
+                      <Text
+                        variant="titleLarge"
+                        style={{
+                          color: theme.colors.onSurface,
+                          paddingTop: 16,
+                          paddingLeft: 16,
+                        }}
+                      >
+                        {item.title}
+                      </Text>
+                      {item.data && item.data.length > 0 ? (
+                        <View pointerEvents="none">
+                          <PieChart
+                            data={formatPieData(item.data)}
+                            width={chartWidth}
+                            height={chartHeight}
+                            chartConfig={chartConfig}
+                            accessor={'population'}
+                            backgroundColor={'transparent'}
+                            paddingLeft="15"
+                            center={[3, 0]}
+                          />
+                        </View>
+                      ) : (
+                        <Text
+                          style={{
+                            color: theme.colors.onSurfaceVariant,
+                            marginLeft: 8,
+                          }}
+                        >
+                          {item.emptyMessage}
+                        </Text>
+                      )}
+                    </Surface>
+                  </View>
+                )}
+              />
+              <ExpandingDot
+                data={geographicCharts}
+                expandingDotWidth={30}
+                scrollX={scrollX}
+                inActiveDotOpacity={0.6}
+                activeDotColor={theme.colors.primary}
+                inActiveDotColor={theme.colors.primary}
+                dotStyle={{ width: 10, height: 10, borderRadius: 5 }}
+                containerStyle={{ bottom: 20 }}
+              />
+            </View>
+
+            {/* Business Typology Section (Bar Chart) */}
+            <View style={{ padding: 8 }}>
+              <Surface
+                style={{
+                  backgroundColor: theme.colors.surfaceContainer,
+                  borderRadius: 24,
+                  minHeight: allInfo.categories.length * 55 + 70,
+                  overflow: 'visible',
+                }}
+                elevation={0}
+              >
+                <Text
+                  variant="titleLarge"
+                  style={{
+                    color: theme.colors.onSurface,
+                    paddingLeft: 16,
+                    paddingTop: 16,
+                  }}
+                >
+                  {t('dashboard.business_typology', {
+                    defaultValue: 'Tipologia de Negócios',
+                  })}
+                </Text>
+                <View style={{ alignSelf: 'flex-start', bottom: 40 }}>
+                  {allInfo.categories.length > 0 ? (
+                    <BarChart
+                      data={formatBarData(allInfo.categories)}
+                      horizontal
+                      hideRules
+                      dashGap={0}
+                      hideYAxisText
+                      xAxisLabelsVerticalShift={40}
+                      shiftX={50}
+                      xAxisLabelsHeight={40}
+                      xAxisTextNumberOfLines={2}
+                      xAxisThickness={0}
+                      xAxisLabelTextStyle={{
+                        width: 85,
+                        color: theme.colors.onSurface,
+                      }}
+                      yAxisThickness={0}
+                      disablePress
+                      isAnimated
+                      disableScroll
+                      width={screenWidth / 1.8}
+                    />
+                  ) : (
+                    <Text style={{ color: theme.colors.onSurfaceVariant }}>
+                      {t('dashboard.no_data_available', {
+                        defaultValue: 'Sem dados disponíveis.',
+                      })}
+                    </Text>
+                  )}
+                </View>
+              </Surface>
+            </View>
+
+            <Divider style={{ marginVertical: 20 }} />
+
+            {/* --- Campaign Analytics Section (NEW) --- */}
+            {allInfo.campaigns && allInfo.campaigns.length > 0 && (
+              <View>
+                {/* Section title */}
+                <Text
+                  variant="titleLarge"
+                  style={{
+                    color: theme.colors.onSurface,
+                    marginLeft: 18,
+                    marginBottom: 12,
+                  }}
+                >
+                  {t('dashboard.campaign_analytics', {
+                    defaultValue: 'Análise de Campanhas',
+                  })}
+                </Text>
+
+                {/* Gamification summary cards */}
+                {allInfo.gamification && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      gap: 8,
+                      marginBottom: 16,
+                      marginHorizontal: 10,
+                    }}
+                  >
+                    <Surface
+                      style={{
+                        flex: 1,
+                        minWidth: 100,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: theme.colors.tertiaryContainer,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onTertiaryContainer }}
+                      >
+                        {t('dashboard.total_invoices', {
+                          defaultValue: 'Faturas',
+                        })}
+                      </Text>
+                      <Text
+                        variant="headlineSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: theme.colors.onTertiaryContainer,
+                        }}
+                      >
+                        {allInfo.gamification.totalInvoices || 0}
+                      </Text>
+                    </Surface>
+                    <Surface
+                      style={{
+                        flex: 1,
+                        minWidth: 100,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: theme.colors.surfaceVariant,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onSurfaceVariant }}
+                      >
+                        {t('dashboard.total_packs_sold', {
+                          defaultValue: 'Pacotes Vendidos',
+                        })}
+                      </Text>
+                      <Text
+                        variant="headlineSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: theme.colors.onSurfaceVariant,
+                        }}
+                      >
+                        {allInfo.gamification.totalRedemptions || 0}
+                      </Text>
+                    </Surface>
+                    <Surface
+                      style={{
+                        flex: 1,
+                        minWidth: 100,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: theme.colors.errorContainer,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onErrorContainer }}
+                      >
+                        {t('dashboard.points_in_circulation', {
+                          defaultValue: 'Pontos em Circulação',
+                        })}
+                      </Text>
+                      <Text
+                        variant="headlineSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: theme.colors.onErrorContainer,
+                        }}
+                      >
+                        {allInfo.gamification.totalPointsInCirculation || 0}
+                      </Text>
+                    </Surface>
+                  </View>
+                )}
+
+                {/* Campaign carousel — same pattern as the geographic charts */}
+                <FlatList
+                  data={allInfo.campaigns}
+                  horizontal
+                  keyExtractor={(item, index) => `campaign-${index}`}
+                  pagingEnabled={true}
+                  showsHorizontalScrollIndicator={false}
+                  bounces={false}
+                  onScroll={Animated.event(
+                    [
+                      {
+                        nativeEvent: { contentOffset: { x: campaignScrollX } },
+                      },
+                    ],
+                    { useNativeDriver: false },
+                  )}
+                  renderItem={({ item: campaign }) => {
+                    const statusStyle = getCampaignStatusStyle(campaign.status);
+                    return (
+                      <View style={{ width: screenWidth }}>
+                        <Surface
+                          className="p-4"
+                          style={{
+                            backgroundColor: theme.colors.surfaceContainer,
+                            borderRadius: 24,
+                            paddingBottom: 16,
+                            marginBottom: 10,
+                            marginHorizontal: 10,
+                          }}
+                          elevation={0}
+                        >
+                          {/* Campaign header: title + status chip */}
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingTop: 16,
+                              paddingLeft: 16,
+                              marginBottom: 12,
+                            }}
+                          >
+                            <Text
+                              variant="titleLarge"
+                              style={{
+                                fontWeight: 'bold',
+                                color: theme.colors.primary,
+                                flex: 1,
+                                marginRight: 8,
+                              }}
+                            >
+                              {campaign.titulo}
+                            </Text>
+                            <Chip
+                              icon={statusStyle.icon}
+                              compact
+                              style={{ backgroundColor: statusStyle.bg }}
+                              textStyle={{
+                                color: statusStyle.color,
+                                fontSize: 11,
+                              }}
+                            >
+                              {statusStyle.label}
+                            </Chip>
+                          </View>
+
+                          {/* Stats grid */}
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              flexWrap: 'wrap',
+                              gap: 12,
+                              paddingHorizontal: 16,
+                            }}
+                          >
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.adhered', {
+                                  defaultValue: 'Aderentes',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalBusinessesAdhered}
+                              </Text>
+                            </View>
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.money_spent', {
+                                  defaultValue: 'Dinheiro Gasto',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {(campaign.totalMoneySpent || 0).toFixed(2)} €
+                              </Text>
+                            </View>
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.invoices', {
+                                  defaultValue: 'Faturas',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalInvoicesProcessed}
+                              </Text>
+                            </View>
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.packs_sold', {
+                                  defaultValue: 'Pacotes Vendidos',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalPacksSold}
+                              </Text>
+                            </View>
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.points_spent', {
+                                  defaultValue: 'Pontos Gastos',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalPointsSpent}
+                              </Text>
+                            </View>
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.delivered', {
+                                  defaultValue: 'Vouchers Entregues',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalVouchersDelivered}
+                              </Text>
+                            </View>
+                            <View style={{ minWidth: 100 }}>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.active_vouchers', {
+                                  defaultValue: 'Vouchers Ativos',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalVouchersActive}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Pack details */}
+                          {campaign.packs && campaign.packs.length > 0 && (
+                            <View
+                              style={{
+                                marginTop: 12,
+                                paddingTop: 12,
+                                paddingHorizontal: 16,
+                                borderTopWidth: 1,
+                                borderTopColor: theme.colors.outlineVariant,
+                              }}
+                            >
+                              <Text
+                                variant="titleSmall"
+                                style={{ fontWeight: 'bold', marginBottom: 8 }}
+                              >
+                                {t('dashboard.pack_details', {
+                                  defaultValue: 'Pacotes',
+                                })}
+                              </Text>
+                              {campaign.packs.map(
+                                (pack: any, pIndex: number) => (
+                                  <View
+                                    key={pIndex}
+                                    style={{
+                                      flexDirection: 'row',
+                                      justifyContent: 'space-between',
+                                      marginBottom: 6,
+                                    }}
+                                  >
+                                    <Text
+                                      variant="bodySmall"
+                                      style={{ flex: 1 }}
+                                    >
+                                      {pack.rewardDescription} (
+                                      {pack.pointsCost} pts)
+                                    </Text>
+                                    <Text
+                                      variant="bodySmall"
+                                      style={{
+                                        color: theme.colors.onSurfaceVariant,
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      {pack.sold}/{pack.stock}{' '}
+                                      {t('dashboard.sold', {
+                                        defaultValue: 'vendidos',
+                                      })}
+                                    </Text>
+                                  </View>
+                                ),
+                              )}
+                            </View>
+                          )}
+                        </Surface>
+                      </View>
+                    );
+                  }}
+                />
+                <ExpandingDot
+                  data={allInfo.campaigns}
+                  expandingDotWidth={30}
+                  scrollX={campaignScrollX}
+                  inActiveDotOpacity={0.6}
+                  activeDotColor={theme.colors.primary}
+                  inActiveDotColor={theme.colors.primary}
+                  dotStyle={{ width: 10, height: 10, borderRadius: 5 }}
+                  containerStyle={{ bottom: 20 }}
+                />
+              </View>
+            )}
+
+            <Divider style={{ marginVertical: 20 }} />
+
+            {/* Export Section */}
+            <Text
+              style={{ marginLeft: 8, marginBottom: 10, fontWeight: 'bold' }}
+            >
+              {t('dashboard.export_report', {
+                defaultValue: 'Exportar Relatório',
+              })}
+            </Text>
+            <View style={{ padding: 8, flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <CustomButton
+                  numberOfLines={2}
+                  onPress={createPDF}
+                  buttonColor={theme.colors.error}
+                  icon="file-pdf-box"
+                  accessibilityLabel={t('accessibility.preview_pdf', {
+                    defaultValue: 'Pré-visualizar PDF',
+                  })}
+                  accessibilityHint={t('accessibility.preview_pdf_hint', {
+                    defaultValue:
+                      'Clica para ver uma antevisão do relatório em formato PDF',
+                  })}
+                >
+                  {t('dashboard.preview_pdf_btn', {
+                    defaultValue: 'Pré-visualizar PDF',
+                  })}
+                </CustomButton>
+              </View>
+              <View style={{ flex: 1 }}>
+                <CustomButton
+                  numberOfLines={2}
+                  onPress={handleExportExcel}
+                  loading={excelLoading}
+                  buttonColor="#15cc15"
+                  icon="file-excel-box"
+                  accessibilityLabel={t('accessibility.export_excel', {
+                    defaultValue: 'Exportar para Excel',
+                  })}
+                  accessibilityHint={t('accessibility.export_excel_hint', {
+                    defaultValue:
+                      'Clica para fazer o download do relatório em formato Excel',
+                  })}
+                >
+                  {t('dashboard.export_excel_btn', {
+                    defaultValue: 'Exportar para Excel',
+                  })}
+                </CustomButton>
+              </View>
+            </View>
+          </Surface>
+        </ScrollView>
+
+        {/* PDF Preview Modal & Global Dialogs */}
+        <Portal>
+          <Modal
+            visible={pdfDialogVisible}
+            onDismiss={() => setPdfDialogVisible(false)}
+            contentContainerStyle={{
+              backgroundColor: theme.colors.background,
+              margin: 20,
+              borderRadius: 12,
+              overflow: 'hidden',
+              flex: 1,
+            }}
+          >
+            {/* Modal Header */}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 8,
+                backgroundColor: theme.colors.surfaceContainer,
+              }}
+            >
+              <Text
+                variant="titleMedium"
+                style={{ marginLeft: 16, fontWeight: 'bold' }}
+              >
+                {t('dashboard.pdf_report', { defaultValue: 'Relatório PDF' })}
+              </Text>
+              <IconButton
+                icon="close"
+                size={24}
+                accessible={true}
+                accessibilityLabel={t('accessibility.close_preview', {
+                  defaultValue: 'Fechar pré-visualização',
+                })}
+                accessibilityHint={t('accessibility.close_pdf_hint', {
+                  defaultValue: 'Clica para fechar o relatório PDF',
+                })}
+                onPress={() => setPdfDialogVisible(false)}
+              />
+            </View>
+
+            {/* WebView renders the generated HTML string as a PDF preview */}
+            {pdfDialogVisible && (
+              <WebView
+                originWhitelist={['*']}
+                source={{ html }}
+                style={{ flex: 1 }}
+                scalesPageToFit={true}
+              />
+            )}
+
+            {/* Modal Footer Actions */}
+            <View
+              style={{
+                flexDirection: 'row',
+                padding: 12,
+                backgroundColor: theme.colors.surfaceContainer,
+                gap: 10,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <CustomButton
+                  onPress={handlePrintPDF}
+                  buttonColor={theme.colors.primary}
+                  icon="printer"
+                  accessibilityLabel={t('accessibility.print_report', {
+                    defaultValue: 'Imprimir relatório',
+                  })}
+                >
+                  {t('dashboard.print_btn', { defaultValue: 'Imprimir' })}
+                </CustomButton>
+              </View>
+              <View style={{ flex: 1 }}>
+                <CustomButton
+                  onPress={handleSavePDF}
+                  loading={pdfLoading}
+                  buttonColor={theme.colors.secondaryContainer}
+                  textColor={theme.colors.onSecondaryContainer}
+                  icon="content-save"
+                  accessibilityLabel={t('accessibility.save_report', {
+                    defaultValue: 'Guardar relatório',
+                  })}
+                >
+                  {t('dashboard.save_btn', { defaultValue: 'Guardar' })}
+                </CustomButton>
+              </View>
+            </View>
+          </Modal>
+
+          <CustomDialog
+            title={dialogTitle}
+            visible={dialogVisible}
+            onDismiss={() => setDialogVisible(false)}
+          >
+            <Text>{dialogText}</Text>
+          </CustomDialog>
+        </Portal>
+      </SafeAreaView>
+    </Surface>
+  );
+};
+
+export default Dashboard;
