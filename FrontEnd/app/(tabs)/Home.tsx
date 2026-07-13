@@ -657,7 +657,7 @@ export default function Index() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: (Dimensions.get('window').width - 320) / 2,
-              paddingBottom: 40,
+              paddingBottom: 12,
             }}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={viewabilityConfig}
@@ -834,21 +834,56 @@ export default function Index() {
               );
             }}
           />
-          <ExpandingDot
-            data={bizInArea}
-            expandingDotWidth={20}
-            scrollX={scrollX}
-            inActiveDotOpacity={0.6}
-            activeDotColor={theme.colors.primary}
-            inActiveDotColor={theme.colors.primary}
-            dotStyle={{ width: 5, height: 5, borderRadius: 5 }}
-            containerStyle={{
-              width: 320,
-              backgroundColor: theme.colors.secondaryContainer,
-              borderRadius: 20,
-              padding: 10,
-            }}
-          />
+          {/* Pagination indicator:
+              - ≤ 7 items: show expanding dots (looks nice, fits the width)
+              - > 7 items: show compact "1 / 12" text (dots would overflow)
+              
+              The old code used a fixed width: 320 container which caused dots
+              to overflow both the container and the screen when there were
+              many nearby businesses. */}
+          {bizInArea.length <= 7 ? (
+            <ExpandingDot
+              data={bizInArea}
+              expandingDotWidth={20}
+              scrollX={scrollX}
+              inActiveDotOpacity={0.6}
+              activeDotColor={theme.colors.primary}
+              inActiveDotColor={theme.colors.primary}
+              dotStyle={{ width: 5, height: 5, borderRadius: 5 }}
+              containerStyle={{
+                // Use alignSelf + maxWidth instead of fixed width so the
+                // container shrinks to fit the actual number of dots.
+                alignSelf: 'center',
+                backgroundColor: theme.colors.secondaryContainer,
+                borderRadius: 20,
+                padding: 10,
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                alignSelf: 'center',
+                backgroundColor: theme.colors.secondaryContainer,
+                borderRadius: 20,
+                paddingVertical: 6,
+                paddingHorizontal: 16,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.onSecondaryContainer,
+                  fontSize: 14,
+                  fontWeight: 'bold',
+                }}
+              >
+                {Math.max(
+                  1,
+                  bizInArea.findIndex(b => b._id === itemVisivelId) + 1,
+                )}{' '}
+                / {bizInArea.length}
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
