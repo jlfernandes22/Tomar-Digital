@@ -233,16 +233,7 @@ const _layout = () => {
       />
 
       {/*
-        CampaignCreate is kept as a hidden tab route so it can be navigated
-        to via router.push('/components/CampaignCreate'). It has no tab bar
-        icon, so it won't appear in the bottom navigation.
       */}
-      <Tabs.Screen
-        name="CampaignCreate"
-        options={{
-          href: null, // Hidden from tab bar — accessed via CampaignIndex
-        }}
-      />
 
       <Tabs.Screen
         name="DashboardTab"
