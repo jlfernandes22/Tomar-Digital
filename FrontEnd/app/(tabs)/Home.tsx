@@ -42,7 +42,6 @@ import { useLoadingState } from '@/context/LoadingContext';
 import { useTranslation } from 'react-i18next';
 
 // Utils & Constants
-import { API_URL } from '@/constants/api';
 import { images } from '../../constants/images';
 import MapFocous from '@/constants/MapFocous';
 import { calcularDistancia } from '../../utils/locationUtils';
@@ -59,12 +58,14 @@ import LoadingScreen from '../components/LoadingScreen';
 // Types
 import Negocio from '@/constants/Interfaces/Negocio';
 
+import { useApiFetch } from '@/utils/apiFetch';
 export default function Index() {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   const [listaNegocios, setListaNegocios] = useState<Negocio[]>([]);
@@ -133,7 +134,7 @@ export default function Index() {
   const fetchNegocios = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/negocios`);
+      const response = await apiFetch(`/negocios`);
       const dados = await response.json();
       const apenasAprovados = dados.filter(
         (item: Negocio) => item.status === 'aprovado',
@@ -154,11 +155,10 @@ export default function Index() {
       // (authorize(["cidadao", "comerciante", "camara"]) middleware).
       // Without this header the request is rejected with 401 and the
       // heart icons on the map never reflect the user's favorites.
-      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`, {
+      const response = await apiFetch(`/meusFavoritos/${user.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
         },
       });
       const dados = await response.json();
@@ -193,11 +193,10 @@ export default function Index() {
     }
 
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await apiFetch(`${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({ userId: user.id, businessId }),
       });

@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import {
   ActivityIndicator,
@@ -39,6 +38,7 @@ import { router, Stack } from 'expo-router';
 import { Appbar } from 'react-native-paper';
 import PacketInterface from '@/constants/Interfaces/PacketInterface';
 
+import { useApiFetch } from '@/utils/apiFetch';
 // --- Constants & Interfaces ---
 const TOTAL_STEPS = 3;
 
@@ -61,6 +61,7 @@ const CreateCampaign = () => {
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
   const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch();
 
   // --- Local State ---
   const [step, setStep] = useState(1);
@@ -340,10 +341,9 @@ const CreateCampaign = () => {
         });
       }
 
-      const response = await fetch(`${API_URL}/criarCampanha`, {
+      const response = await apiFetch(`/criarCampanha`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user?.token}`,
           // Note: 'Content-Type' is omitted intentionally. React Native sets it automatically.
         },
         body: data,
@@ -706,140 +706,147 @@ const CreateCampaign = () => {
         />
       </Appbar.Header>
 
-    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SafeAreaView style={{ flex: 1, padding: 16 }} edges={['left', 'right']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
+      <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <SafeAreaView
+          style={{ flex: 1, padding: 16 }}
+          edges={['left', 'right']}
         >
-          <Text style={{ textAlign: 'right', marginBottom: 5 }}>
-            {t('addBusiness.step_info', { step, totalSteps: TOTAL_STEPS })}
-          </Text>
-          <ProgressBar
-            progress={step / TOTAL_STEPS}
-            color={theme.colors.primary}
-            style={{ marginBottom: 20 }}
-          />
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {step === 1 && renderStep1()}
-            {step === 2 && renderStep2()}
-
-            {step === 3 && (
-              <View>
-                <Text
-                  variant="headlineSmall"
-                  style={{
-                    color: theme.colors.primary,
-                    fontWeight: 'bold',
-                    marginBottom: 10,
-                    textAlign: 'center',
-                    margin: 10,
-                  }}
-                >
-                  {t('campaign.config_packages')}
-                </Text>
-
-                <CustomTextInput
-                  label={t('campaign.reward_desc')}
-                  value={pacote.descricaoRecompensa}
-                  onChangeText={t =>
-                    setPacote({ ...pacote, descricaoRecompensa: t })
-                  }
-                  required={formData.pacotes.length === 0}
-                  lenght={100}
-                />
-                <CustomTextInput
-                  label={t('campaign.cost_points')}
-                  value={pacote.custoEmPontos}
-                  onChangeText={t => setPacote({ ...pacote, custoEmPontos: t })}
-                  required={formData.pacotes.length === 0}
-                  isNumber
-                  lenght={5}
-                />
-                <CustomTextInput
-                  label={t('campaign.initial_stock')}
-                  value={pacote.stockInicial}
-                  onChangeText={t => setPacote({ ...pacote, stockInicial: t })}
-                  required={formData.pacotes.length === 0}
-                  isNumber
-                  lenght={6}
-                />
-
-                <CustomButton onPress={addPack} className="m-5">
-                  + {t('campaign.add_package')}
-                </CustomButton>
-
-                {formData.pacotes.length > 0 && (
-                  <View style={{ marginTop: 10 }}>
-                    <Text variant="titleMedium">
-                      {t('campaign.packs_list')}
-                    </Text>
-                    {formData.pacotes.map((p, i) => (
-                      <Surface
-                        key={i}
-                        style={{
-                          padding: 10,
-                          marginVertical: 5,
-                          borderRadius: 8,
-                          backgroundColor: theme.colors.background,
-                        }}
-                      >
-                        <Text>
-                          {t('campaign.package_item', {
-                            desc: p.descricaoRecompensa,
-                            points: p.custoEmPontos,
-                          })}
-                        </Text>
-                      </Surface>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-          </ScrollView>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: 20,
-            }}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
           >
-            {step > 1 && (
-              <CustomButton onPress={() => setStep(step - 1)}>
-                {t('common.back', { defaultValue: 'Anterior' })}
-              </CustomButton>
-            )}
+            <Text style={{ textAlign: 'right', marginBottom: 5 }}>
+              {t('addBusiness.step_info', { step, totalSteps: TOTAL_STEPS })}
+            </Text>
+            <ProgressBar
+              progress={step / TOTAL_STEPS}
+              color={theme.colors.primary}
+              style={{ marginBottom: 20 }}
+            />
 
-            {step < TOTAL_STEPS ? (
-              <CustomButton onPress={() => setStep(step + 1)}>
-                {t('common.next', { defaultValue: 'Próximo' })}
-              </CustomButton>
-            ) : (
-              <CustomButton onPress={handleFinalSubmit} loading={loading}>
-                {t('campaign.submit_create', {
-                  defaultValue: 'Criar Campanha',
-                })}
-              </CustomButton>
-            )}
-          </View>
-        </KeyboardAvoidingView>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {step === 1 && renderStep1()}
+              {step === 2 && renderStep2()}
 
-        <CustomSnackBar
-          visible={snackbarVisible}
-          message={snackbarMessage}
-          onDismiss={() => setSnackbarVisible(false)}
-        />
-        <CustomDialog
-          title={dialogTitle}
-          visible={dialogVisible}
-          onDismiss={() => setDialogVisible(false)}
-        >
-          <Text>{dialogText}</Text>
-        </CustomDialog>
-      </SafeAreaView>
-    </Surface>
+              {step === 3 && (
+                <View>
+                  <Text
+                    variant="headlineSmall"
+                    style={{
+                      color: theme.colors.primary,
+                      fontWeight: 'bold',
+                      marginBottom: 10,
+                      textAlign: 'center',
+                      margin: 10,
+                    }}
+                  >
+                    {t('campaign.config_packages')}
+                  </Text>
+
+                  <CustomTextInput
+                    label={t('campaign.reward_desc')}
+                    value={pacote.descricaoRecompensa}
+                    onChangeText={t =>
+                      setPacote({ ...pacote, descricaoRecompensa: t })
+                    }
+                    required={formData.pacotes.length === 0}
+                    lenght={100}
+                  />
+                  <CustomTextInput
+                    label={t('campaign.cost_points')}
+                    value={pacote.custoEmPontos}
+                    onChangeText={t =>
+                      setPacote({ ...pacote, custoEmPontos: t })
+                    }
+                    required={formData.pacotes.length === 0}
+                    isNumber
+                    lenght={5}
+                  />
+                  <CustomTextInput
+                    label={t('campaign.initial_stock')}
+                    value={pacote.stockInicial}
+                    onChangeText={t =>
+                      setPacote({ ...pacote, stockInicial: t })
+                    }
+                    required={formData.pacotes.length === 0}
+                    isNumber
+                    lenght={6}
+                  />
+
+                  <CustomButton onPress={addPack} className="m-5">
+                    + {t('campaign.add_package')}
+                  </CustomButton>
+
+                  {formData.pacotes.length > 0 && (
+                    <View style={{ marginTop: 10 }}>
+                      <Text variant="titleMedium">
+                        {t('campaign.packs_list')}
+                      </Text>
+                      {formData.pacotes.map((p, i) => (
+                        <Surface
+                          key={i}
+                          style={{
+                            padding: 10,
+                            marginVertical: 5,
+                            borderRadius: 8,
+                            backgroundColor: theme.colors.background,
+                          }}
+                        >
+                          <Text>
+                            {t('campaign.package_item', {
+                              desc: p.descricaoRecompensa,
+                              points: p.custoEmPontos,
+                            })}
+                          </Text>
+                        </Surface>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+            </ScrollView>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginTop: 20,
+              }}
+            >
+              {step > 1 && (
+                <CustomButton onPress={() => setStep(step - 1)}>
+                  {t('common.back', { defaultValue: 'Anterior' })}
+                </CustomButton>
+              )}
+
+              {step < TOTAL_STEPS ? (
+                <CustomButton onPress={() => setStep(step + 1)}>
+                  {t('common.next', { defaultValue: 'Próximo' })}
+                </CustomButton>
+              ) : (
+                <CustomButton onPress={handleFinalSubmit} loading={loading}>
+                  {t('campaign.submit_create', {
+                    defaultValue: 'Criar Campanha',
+                  })}
+                </CustomButton>
+              )}
+            </View>
+          </KeyboardAvoidingView>
+
+          <CustomSnackBar
+            visible={snackbarVisible}
+            message={snackbarMessage}
+            onDismiss={() => setSnackbarVisible(false)}
+          />
+          <CustomDialog
+            title={dialogTitle}
+            visible={dialogVisible}
+            onDismiss={() => setDialogVisible(false)}
+          >
+            <Text>{dialogText}</Text>
+          </CustomDialog>
+        </SafeAreaView>
+      </Surface>
     </>
   );
 };

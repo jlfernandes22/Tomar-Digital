@@ -39,20 +39,20 @@ import { router, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
-
 // Components
 import DetalhesCampanha from './CampaignDetails';
 import CustomSnackBar from './CustomSnackBar';
 import CustomDialog from './CustomDialog';
 import LoadingScreen from './LoadingScreen';
 
+import { useApiFetch } from '@/utils/apiFetch';
 export default function CampaignMerchantJoin() {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
   const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch();
 
   // --- Local State ---
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -93,39 +93,43 @@ export default function CampaignMerchantJoin() {
    * The `isRefresh` parameter controls whether we show the full loading
    * screen or just the pull-to-refresh spinner.
    */
-  const fetchCampaigns = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    try {
-      const response = await fetch(`${API_URL}/campanhas/comerciante-com-status`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch campaigns');
+  const fetchCampaigns = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
+      try {
+        const response = await apiFetch(`/campanhas/comerciante-com-status`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-      const dados = await response.json();
-      setCampaigns(dados);
-    } catch (error) {
-      console.error('[CampaignMerchantJoin] Erro no fetchCampaigns:', error);
-      setCampaigns([]);
-      showError(
-        t('common.error_alert', { defaultValue: 'Erro' }),
-        t('campaign.error_load', { defaultValue: 'Não foi possível carregar as campanhas.' }),
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.token, t]);
+        if (!response.ok) {
+          throw new Error('Failed to fetch campaigns');
+        }
+
+        const dados = await response.json();
+        setCampaigns(dados);
+      } catch (error) {
+        console.error('[CampaignMerchantJoin] Erro no fetchCampaigns:', error);
+        setCampaigns([]);
+        showError(
+          t('common.error_alert', { defaultValue: 'Erro' }),
+          t('campaign.error_load', {
+            defaultValue: 'Não foi possível carregar as campanhas.',
+          }),
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user?.token, t],
+  );
 
   /** Pull-to-refresh handler. */
   const handleRefresh = useCallback(() => {
@@ -173,7 +177,9 @@ export default function CampaignMerchantJoin() {
           color: theme.colors.onSurfaceVariant,
           bg: theme.colors.surfaceVariant,
           icon: 'circle-outline',
-          label: t('campaign.not_participating', { defaultValue: 'Não participando' }),
+          label: t('campaign.not_participating', {
+            defaultValue: 'Não participando',
+          }),
         };
     }
   };
@@ -203,7 +209,8 @@ export default function CampaignMerchantJoin() {
               style={{ color: theme.colors.primary, flex: 1, marginRight: 8 }}
             >
               {String(
-                item.titulo || t('common.no_title', { defaultValue: 'Sem título' }),
+                item.titulo ||
+                  t('common.no_title', { defaultValue: 'Sem título' }),
               )}
             </Text>
             <Chip
@@ -241,8 +248,12 @@ export default function CampaignMerchantJoin() {
                   : 'N/A'}
               </Text>
               {participacao.businessName ? (
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {t('campaign.business_label', { defaultValue: 'Negócio' })}: {participacao.businessName}
+                <Text
+                  variant="labelSmall"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  {t('campaign.business_label', { defaultValue: 'Negócio' })}:{' '}
+                  {participacao.businessName}
                 </Text>
               ) : null}
             </View>
@@ -287,15 +298,23 @@ export default function CampaignMerchantJoin() {
           color={theme.colors.onBackground}
         />
         <Appbar.Content
-          title={t('merchant.join_campaigns', { defaultValue: 'Aderir a Campanhas' })}
+          title={t('merchant.join_campaigns', {
+            defaultValue: 'Aderir a Campanhas',
+          })}
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
 
       <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <SafeAreaView style={{ flex: 1, paddingHorizontal: 16 }} edges={['left', 'right']}>
+        <SafeAreaView
+          style={{ flex: 1, paddingHorizontal: 16 }}
+          edges={['left', 'right']}
+        >
           {/* Helper text */}
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}
+          >
             {t('merchant.join_helper', {
               defaultValue:
                 'Selecione uma campanha para aderir com um dos seus negócios',
@@ -311,7 +330,10 @@ export default function CampaignMerchantJoin() {
             keyExtractor={item => item._id?.toString()}
             contentContainerStyle={{ paddingBottom: 20 }}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
             }
             ListEmptyComponent={
               <View style={{ alignItems: 'center', marginTop: 40 }}>
@@ -322,7 +344,10 @@ export default function CampaignMerchantJoin() {
                 />
                 <Text
                   variant="bodyMedium"
-                  style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}
+                  style={{
+                    color: theme.colors.onSurfaceVariant,
+                    textAlign: 'center',
+                  }}
                 >
                   {t('campaign.no_campaigns_merchant', {
                     defaultValue:

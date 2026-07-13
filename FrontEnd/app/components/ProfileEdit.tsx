@@ -40,12 +40,14 @@ import CustomButton from './CustomButton';
 import LoadingScreen from './LoadingScreen';
 import { images } from '@/constants/images';
 
+import { useApiFetch } from '@/utils/apiFetch';
 const EditProfile = () => {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { user, updateUser } = useAuth();
   const { currentTheme: theme } = useAppTheme();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   // Initialize state safely with fallbacks in case the user object is partially populated
@@ -138,10 +140,9 @@ const EditProfile = () => {
         } as any);
       }
 
-      const response = await fetch(`${API_URL}/editarUser/${user.id}`, {
+      const response = await apiFetch(`/editarUser/${user.id}`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user.token}`,
           Accept: 'application/json',
           // Note: 'Content-Type' is intentionally omitted. React Native sets it automatically.
         },
@@ -370,7 +371,8 @@ const EditProfile = () => {
                     isNIF
                     className="mb-4 w-full"
                     accessibilityLabel={t('accessibility.edit_nif', {
-                      defaultValue: 'Campo de NIF para edição de perfil (opcional)',
+                      defaultValue:
+                        'Campo de NIF para edição de perfil (opcional)',
                     })}
                     accessibilityHint={t('accessibility.edit_nif_hint', {
                       defaultValue:

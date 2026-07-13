@@ -19,7 +19,6 @@ import { router, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
 import * as FileSystem from 'expo-file-system/legacy';
 
 // Components & Types
@@ -28,12 +27,14 @@ import CustomButton from './CustomButton';
 import LoadingScreen from './LoadingScreen';
 import IComercianteForm from '@/constants/Interfaces/MerchantForm';
 
+import { useApiFetch } from '@/utils/apiFetch';
 export default function MerchantForm() {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   const [formData, setFormData] = useState<IComercianteForm>({
@@ -199,10 +200,9 @@ export default function MerchantForm() {
       };
       data.append('documentoPDF', fileToUpload as any);
 
-      const response = await fetch(`${API_URL}/pedidoComerciante`, {
+      const response = await apiFetch(`/pedidoComerciante`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user.token}`,
           Accept: 'application/json',
           // Note: 'Content-Type' is intentionally omitted. React Native sets it automatically
           // with the correct boundary parameter for FormData.

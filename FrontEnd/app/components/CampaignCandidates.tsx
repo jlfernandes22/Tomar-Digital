@@ -24,8 +24,6 @@ import {
 // Contexts & Hooks
 import { useAuth } from '@/context/AuthContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
-
 // Components
 import CustomDialog from './CustomDialog';
 import CustomSnackBar from './CustomSnackBar';
@@ -34,12 +32,14 @@ import LoadingScreen from './LoadingScreen';
 // Types
 import Candidatura from '@/constants/Interfaces/Candidate';
 
+import { useApiFetch } from '@/utils/apiFetch';
 export default function CandidaturasCampanha() {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { user } = useAuth();
   const theme = useTheme();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
@@ -59,9 +59,8 @@ export default function CandidaturasCampanha() {
   const carregarCandidaturas = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/candidaturasCampanha`, {
+      const response = await apiFetch(`/candidaturasCampanha`, {
         headers: {
-          Authorization: `Bearer ${user?.token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -86,11 +85,10 @@ export default function CandidaturasCampanha() {
   const handleDecidir = useCallback(
     async (businessId: string, campaignId: string, novoStatus: string) => {
       try {
-        const response = await fetch(`${API_URL}/decidirAdesaoCampanha`, {
+        const response = await apiFetch(`/decidirAdesaoCampanha`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}`,
           },
           // Backend expects 'acao' instead of 'action' or 'status'
           body: JSON.stringify({

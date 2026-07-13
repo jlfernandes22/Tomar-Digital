@@ -4,6 +4,16 @@
  * Displays a list of businesses owned by the authenticated merchant.
  * It fetches data when the screen comes into focus and provides a fallback
  * UI with a call-to-action if the merchant has no registered businesses.
+ *
+ * TOKEN EXPIRY HANDLING:
+ * This screen uses `useApiFetch()` instead of raw `fetch()`. The hook
+ * automatically:
+ * - Adds the Authorization header with the user's JWT
+ * - Detects 401 responses (expired/invalid token) and triggers logout
+ * - Redirects the user to the login screen
+ *
+ * This fixes the bug where a comerciante with an expired token would see
+ * "Could not load businesses" on this screen without being logged out.
  */
 import React, { useState, useCallback, useEffect } from 'react';
 import { Image, FlatList, View, RefreshControl } from 'react-native';
@@ -21,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 // Contexts & Hooks
 import { useAuth } from '@/context/AuthContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
+import { useApiFetch } from '@/utils/apiFetch';
 import { images } from '@/constants/images';
 
 // Components
@@ -54,6 +64,14 @@ const MyBusinesses = () => {
   const theme = useTheme();
   const { setLoadingQR } = useLoadingState(); // Setter used to sync with global FAB visibility
 
+  // --- API Fetch (with auto-logout on 401) ---
+  // useApiFetch returns a function that automatically:
+  //   1. Adds `Authorization: Bearer <token>` to every request
+  //   2. Calls `logout()` when the backend returns 401 (expired token)
+  // This replaces the old pattern of manually setting the Authorization
+  // header and not handling 401s.
+  const apiFetch = useApiFetch();
+
   // --- Local State ---
   const [negocios, setNegocios] = useState<Business[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,41 +85,50 @@ const MyBusinesses = () => {
    * Fetches the user's approved businesses from the backend.
    * Wrapped in useCallback to ensure a stable reference for useFocusEffect,
    * preventing unnecessary re-renders when the screen regains focus.
+   *
+   * Uses apiFetch instead of raw fetch — if the token is expired, the user
+   * is automatically logged out and redirected to login by the hook.
    */
-  const carregarNegocios = useCallback(async (isRefresh = false) => {
-    if (!user?.token) return;
+  const carregarNegocios = useCallback(
+    async (isRefresh = false) => {
+      if (!user?.token) return;
 
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    try {
-      const response = await fetch(`${API_URL}/meusNegocios`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(t('myBusinesses.error_load'));
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
+      try {
+        // apiFetch automatically adds the Authorization header and handles 401.
+        const response = await apiFetch('/meusNegocios', {
+          method: 'GET',
+        });
 
-      const dados = await response.json();
-      setNegocios(Array.isArray(dados) ? dados : []);
-    } catch (error: any) {
-      console.error('Erro ao carregar favoritos', error);
-      setSnackbarMessage(
-        t('myBusinesses.error_load_msg', { error: error.message }),
-      );
-      setSnackbarVisible(true);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.token, t]);
+        // If the token was expired, apiFetch already triggered logout and
+        // the user is being redirected. We can bail out early.
+        if (response.status === 401) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(t('myBusinesses.error_load'));
+        }
+
+        const dados = await response.json();
+        setNegocios(Array.isArray(dados) ? dados : []);
+      } catch (error: any) {
+        console.error('Erro ao carregar negócios', error);
+        setSnackbarMessage(
+          t('myBusinesses.error_load_msg', { error: error.message }),
+        );
+        setSnackbarVisible(true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user?.token, apiFetch, t],
+  );
 
   /** Pull-to-refresh handler. */
   const handleRefresh = useCallback(() => {
