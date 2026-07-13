@@ -39,8 +39,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
-
 // Components & Utils
 import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
@@ -48,13 +46,15 @@ import LoadingScreen from './LoadingScreen';
 import { DashboardPdf } from '@/constants/html/DashboardPdf';
 import { exportDashboardToExcel } from '@/constants/excelUtils';
 
+import { useApiFetch } from '@/utils/apiFetch';
 const Dashboard = () => {
   // --- Hooks (Context & Global State) ---
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
   const { t, i18n } = useTranslation();
   const { width: screenWidth } = useWindowDimensions();
-  const { setLoadingQR } = useLoadingState(); // Syncs with global FAB visibility
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Syncs with global FAB visibility
 
   // --- Local State ---
   const [refreshing, setRefreshing] = useState(false);
@@ -139,13 +139,33 @@ const Dashboard = () => {
   const getCampaignStatusStyle = (status: string) => {
     switch (status) {
       case 'ativa':
-        return { color: '#16A34A', bg: '#16A34A20', icon: 'check-circle', label: t('campaign.status_active', { defaultValue: 'Ativa' }) };
+        return {
+          color: '#16A34A',
+          bg: '#16A34A20',
+          icon: 'check-circle',
+          label: t('campaign.status_active', { defaultValue: 'Ativa' }),
+        };
       case 'agendada':
-        return { color: '#2563EB', bg: '#2563EB20', icon: 'clock-outline', label: t('campaign.status_scheduled', { defaultValue: 'Agendada' }) };
+        return {
+          color: '#2563EB',
+          bg: '#2563EB20',
+          icon: 'clock-outline',
+          label: t('campaign.status_scheduled', { defaultValue: 'Agendada' }),
+        };
       case 'expirada':
-        return { color: '#DC2626', bg: '#DC262620', icon: 'close-circle', label: t('campaign.status_expired', { defaultValue: 'Expirada' }) };
+        return {
+          color: '#DC2626',
+          bg: '#DC262620',
+          icon: 'close-circle',
+          label: t('campaign.status_expired', { defaultValue: 'Expirada' }),
+        };
       default:
-        return { color: theme.colors.onSurfaceVariant, bg: theme.colors.surfaceVariant, icon: 'circle-outline', label: status };
+        return {
+          color: theme.colors.onSurfaceVariant,
+          bg: theme.colors.surfaceVariant,
+          icon: 'circle-outline',
+          label: status,
+        };
     }
   };
 
@@ -175,10 +195,9 @@ const Dashboard = () => {
   const fetchAllInfo = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/dashboard`, {
+      const response = await apiFetch(`/dashboard`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${user?.token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -654,35 +673,106 @@ const Dashboard = () => {
                 {/* Section title */}
                 <Text
                   variant="titleLarge"
-                  style={{ color: theme.colors.onSurface, marginLeft: 18, marginBottom: 12 }}
+                  style={{
+                    color: theme.colors.onSurface,
+                    marginLeft: 18,
+                    marginBottom: 12,
+                  }}
                 >
-                  {t('dashboard.campaign_analytics', { defaultValue: 'Análise de Campanhas' })}
+                  {t('dashboard.campaign_analytics', {
+                    defaultValue: 'Análise de Campanhas',
+                  })}
                 </Text>
 
                 {/* Gamification summary cards */}
                 {allInfo.gamification && (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16, marginHorizontal: 10 }}>
-                    <Surface style={{ flex: 1, minWidth: 100, padding: 12, borderRadius: 12, backgroundColor: theme.colors.tertiaryContainer }}>
-                      <Text variant="labelSmall" style={{ color: theme.colors.onTertiaryContainer }}>
-                        {t('dashboard.total_invoices', { defaultValue: 'Faturas' })}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      gap: 8,
+                      marginBottom: 16,
+                      marginHorizontal: 10,
+                    }}
+                  >
+                    <Surface
+                      style={{
+                        flex: 1,
+                        minWidth: 100,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: theme.colors.tertiaryContainer,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onTertiaryContainer }}
+                      >
+                        {t('dashboard.total_invoices', {
+                          defaultValue: 'Faturas',
+                        })}
                       </Text>
-                      <Text variant="headlineSmall" style={{ fontWeight: 'bold', color: theme.colors.onTertiaryContainer }}>
+                      <Text
+                        variant="headlineSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: theme.colors.onTertiaryContainer,
+                        }}
+                      >
                         {allInfo.gamification.totalInvoices || 0}
                       </Text>
                     </Surface>
-                    <Surface style={{ flex: 1, minWidth: 100, padding: 12, borderRadius: 12, backgroundColor: theme.colors.surfaceVariant }}>
-                      <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                        {t('dashboard.total_packs_sold', { defaultValue: 'Pacotes Vendidos' })}
+                    <Surface
+                      style={{
+                        flex: 1,
+                        minWidth: 100,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: theme.colors.surfaceVariant,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onSurfaceVariant }}
+                      >
+                        {t('dashboard.total_packs_sold', {
+                          defaultValue: 'Pacotes Vendidos',
+                        })}
                       </Text>
-                      <Text variant="headlineSmall" style={{ fontWeight: 'bold', color: theme.colors.onSurfaceVariant }}>
+                      <Text
+                        variant="headlineSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: theme.colors.onSurfaceVariant,
+                        }}
+                      >
                         {allInfo.gamification.totalRedemptions || 0}
                       </Text>
                     </Surface>
-                    <Surface style={{ flex: 1, minWidth: 100, padding: 12, borderRadius: 12, backgroundColor: theme.colors.errorContainer }}>
-                      <Text variant="labelSmall" style={{ color: theme.colors.onErrorContainer }}>
-                        {t('dashboard.points_in_circulation', { defaultValue: 'Pontos em Circulação' })}
+                    <Surface
+                      style={{
+                        flex: 1,
+                        minWidth: 100,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: theme.colors.errorContainer,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onErrorContainer }}
+                      >
+                        {t('dashboard.points_in_circulation', {
+                          defaultValue: 'Pontos em Circulação',
+                        })}
                       </Text>
-                      <Text variant="headlineSmall" style={{ fontWeight: 'bold', color: theme.colors.onErrorContainer }}>
+                      <Text
+                        variant="headlineSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: theme.colors.onErrorContainer,
+                        }}
+                      >
                         {allInfo.gamification.totalPointsInCirculation || 0}
                       </Text>
                     </Surface>
@@ -698,7 +788,11 @@ const Dashboard = () => {
                   showsHorizontalScrollIndicator={false}
                   bounces={false}
                   onScroll={Animated.event(
-                    [{ nativeEvent: { contentOffset: { x: campaignScrollX } } }],
+                    [
+                      {
+                        nativeEvent: { contentOffset: { x: campaignScrollX } },
+                      },
+                    ],
                     { useNativeDriver: false },
                   )}
                   renderItem={({ item: campaign }) => {
@@ -717,68 +811,214 @@ const Dashboard = () => {
                           elevation={0}
                         >
                           {/* Campaign header: title + status chip */}
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, paddingLeft: 16, marginBottom: 12 }}>
-                            <Text variant="titleLarge" style={{ fontWeight: 'bold', color: theme.colors.primary, flex: 1, marginRight: 8 }}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingTop: 16,
+                              paddingLeft: 16,
+                              marginBottom: 12,
+                            }}
+                          >
+                            <Text
+                              variant="titleLarge"
+                              style={{
+                                fontWeight: 'bold',
+                                color: theme.colors.primary,
+                                flex: 1,
+                                marginRight: 8,
+                              }}
+                            >
                               {campaign.titulo}
                             </Text>
                             <Chip
                               icon={statusStyle.icon}
                               compact
                               style={{ backgroundColor: statusStyle.bg }}
-                              textStyle={{ color: statusStyle.color, fontSize: 11 }}
+                              textStyle={{
+                                color: statusStyle.color,
+                                fontSize: 11,
+                              }}
                             >
                               {statusStyle.label}
                             </Chip>
                           </View>
 
                           {/* Stats grid */}
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              flexWrap: 'wrap',
+                              gap: 12,
+                              paddingHorizontal: 16,
+                            }}
+                          >
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.adhered', { defaultValue: 'Aderentes' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{campaign.totalBusinessesAdhered}</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.adhered', {
+                                  defaultValue: 'Aderentes',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalBusinessesAdhered}
+                              </Text>
                             </View>
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.money_spent', { defaultValue: 'Dinheiro Gasto' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{(campaign.totalMoneySpent || 0).toFixed(2)} €</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.money_spent', {
+                                  defaultValue: 'Dinheiro Gasto',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {(campaign.totalMoneySpent || 0).toFixed(2)} €
+                              </Text>
                             </View>
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.invoices', { defaultValue: 'Faturas' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{campaign.totalInvoicesProcessed}</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.invoices', {
+                                  defaultValue: 'Faturas',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalInvoicesProcessed}
+                              </Text>
                             </View>
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.packs_sold', { defaultValue: 'Pacotes Vendidos' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{campaign.totalPacksSold}</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.packs_sold', {
+                                  defaultValue: 'Pacotes Vendidos',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalPacksSold}
+                              </Text>
                             </View>
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.points_spent', { defaultValue: 'Pontos Gastos' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{campaign.totalPointsSpent}</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.points_spent', {
+                                  defaultValue: 'Pontos Gastos',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalPointsSpent}
+                              </Text>
                             </View>
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.delivered', { defaultValue: 'Vouchers Entregues' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{campaign.totalVouchersDelivered}</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.delivered', {
+                                  defaultValue: 'Vouchers Entregues',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalVouchersDelivered}
+                              </Text>
                             </View>
                             <View style={{ minWidth: 100 }}>
-                              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>{t('dashboard.active_vouchers', { defaultValue: 'Vouchers Ativos' })}</Text>
-                              <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>{campaign.totalVouchersActive}</Text>
+                              <Text
+                                variant="labelSmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
+                                {t('dashboard.active_vouchers', {
+                                  defaultValue: 'Vouchers Ativos',
+                                })}
+                              </Text>
+                              <Text
+                                variant="headlineSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                {campaign.totalVouchersActive}
+                              </Text>
                             </View>
                           </View>
 
                           {/* Pack details */}
                           {campaign.packs && campaign.packs.length > 0 && (
-                            <View style={{ marginTop: 12, paddingTop: 12, paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: theme.colors.outlineVariant }}>
-                              <Text variant="titleSmall" style={{ fontWeight: 'bold', marginBottom: 8 }}>
-                                {t('dashboard.pack_details', { defaultValue: 'Pacotes' })}
+                            <View
+                              style={{
+                                marginTop: 12,
+                                paddingTop: 12,
+                                paddingHorizontal: 16,
+                                borderTopWidth: 1,
+                                borderTopColor: theme.colors.outlineVariant,
+                              }}
+                            >
+                              <Text
+                                variant="titleSmall"
+                                style={{ fontWeight: 'bold', marginBottom: 8 }}
+                              >
+                                {t('dashboard.pack_details', {
+                                  defaultValue: 'Pacotes',
+                                })}
                               </Text>
-                              {campaign.packs.map((pack: any, pIndex: number) => (
-                                <View key={pIndex} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                                  <Text variant="bodySmall" style={{ flex: 1 }}>
-                                    {pack.rewardDescription} ({pack.pointsCost} pts)
-                                  </Text>
-                                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: 'bold' }}>
-                                    {pack.sold}/{pack.stock} {t('dashboard.sold', { defaultValue: 'vendidos' })}
-                                  </Text>
-                                </View>
-                              ))}
+                              {campaign.packs.map(
+                                (pack: any, pIndex: number) => (
+                                  <View
+                                    key={pIndex}
+                                    style={{
+                                      flexDirection: 'row',
+                                      justifyContent: 'space-between',
+                                      marginBottom: 6,
+                                    }}
+                                  >
+                                    <Text
+                                      variant="bodySmall"
+                                      style={{ flex: 1 }}
+                                    >
+                                      {pack.rewardDescription} (
+                                      {pack.pointsCost} pts)
+                                    </Text>
+                                    <Text
+                                      variant="bodySmall"
+                                      style={{
+                                        color: theme.colors.onSurfaceVariant,
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      {pack.sold}/{pack.stock}{' '}
+                                      {t('dashboard.sold', {
+                                        defaultValue: 'vendidos',
+                                      })}
+                                    </Text>
+                                  </View>
+                                ),
+                              )}
                             </View>
                           )}
                         </Surface>

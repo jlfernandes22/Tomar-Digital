@@ -17,7 +17,6 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
 import { images } from '@/constants/images';
 
 // Components
@@ -30,12 +29,14 @@ import LoadingScreen from '../components/LoadingScreen';
 // Types
 import Favorito from '@/constants/Interfaces/Favorites';
 
+import { useApiFetch } from '@/utils/apiFetch';
 const Saved = () => {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
@@ -56,40 +57,42 @@ const Saved = () => {
    * Wrapped in useCallback to ensure a stable reference for useFocusEffect,
    * preventing unnecessary re-renders when the screen regains focus.
    */
-  const carregarFavoritos = useCallback(async (isRefresh = false) => {
-    if (!user?.id) return;
+  const carregarFavoritos = useCallback(
+    async (isRefresh = false) => {
+      if (!user?.id) return;
 
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    try {
-      const response = await fetch(`${API_URL}/meusFavoritos/${user.id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // The /meusFavoritos endpoint requires JWT authentication
-          // (authorize(["cidadao", "comerciante", "camara"]) middleware).
-          // Without this header the request is rejected with 401 and the
-          // favorites list never loads.
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
-      const dados = await response.json();
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      try {
+        const response = await apiFetch(`/meusFavoritos/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // The /meusFavoritos endpoint requires JWT authentication
+            // (authorize(["cidadao", "comerciante", "camara"]) middleware).
+            // Without this header the request is rejected with 401 and the
+            // favorites list never loads.
+          },
+        });
+        const dados = await response.json();
 
-      // Ensure we always have an array to render, even if the API returns an object or null
-      const listaFinal = Array.isArray(dados) ? dados : dados.favoritos || [];
-      setFavoritos(listaFinal);
-    } catch (error) {
-      setDialogTitle(t('common.error'));
-      setDialogText(`${t('common.error')}\n${error}`);
-      setDialogVisible(true);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.id, user?.token, t]);
+        // Ensure we always have an array to render, even if the API returns an object or null
+        const listaFinal = Array.isArray(dados) ? dados : dados.favoritos || [];
+        setFavoritos(listaFinal);
+      } catch (error) {
+        setDialogTitle(t('common.error'));
+        setDialogText(`${t('common.error')}\n${error}`);
+        setDialogVisible(true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user?.id, user?.token, t],
+  );
 
   /** Pull-to-refresh handler. */
   const handleRefresh = useCallback(() => {
@@ -109,7 +112,7 @@ const Saved = () => {
       );
 
       try {
-        const response = await fetch(`${API_URL}/retirarFavorito`, {
+        const response = await apiFetch(`/retirarFavorito`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -117,7 +120,6 @@ const Saved = () => {
             // (The backend now derives userId from the JWT, but we keep
             //  userId in the body for backwards compatibility with older
             //  backend versions.)
-            Authorization: `Bearer ${user?.token}`,
           },
           body: JSON.stringify({ userId: user?.id, businessId }),
         });

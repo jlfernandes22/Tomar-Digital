@@ -15,7 +15,6 @@ import {
   Linking,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { API_URL } from '@/constants/api';
 import { useAuth } from '@/context/AuthContext';
 import { router, Stack } from 'expo-router';
 import { delay } from '../../utils/delay';
@@ -34,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { useLoadingState } from '@/context/LoadingContext';
 import LoadingScreen from './LoadingScreen';
 
+import { useApiFetch } from '@/utils/apiFetch';
 export default function ScanScreen() {
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
@@ -45,6 +45,7 @@ export default function ScanScreen() {
 
   // Syncs local loading state with global context to hide the global FAB during processing.
   const { loadingQR, setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch();
 
   // `loading` controls the full-screen processing indicator after taking a photo.
   // `photoLoading` specifically disables the capture button to prevent double-taps.
@@ -190,11 +191,10 @@ export default function ScanScreen() {
 
     if (acceptedTerms !== user?.acceptedInvoiceTerms) {
       try {
-        const response = await fetch(`${API_URL}/aceitarTermosFatura`, {
+        const response = await apiFetch(`/aceitarTermosFatura`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}`,
           },
           body: JSON.stringify({ acceptedInvoiceTerms: acceptedTerms }),
         });
@@ -270,12 +270,11 @@ export default function ScanScreen() {
       } as any);
       formData.append('QRCodeData', scannedQr || '');
 
-      const response = await fetch(`${API_URL}/lerFatura`, {
+      const response = await apiFetch(`/lerFatura`, {
         method: 'POST',
         headers: {
           // Note: Do not set 'Content-Type' manually here.
           // React Native fetch sets it automatically including the boundary token.
-          Authorization: `Bearer ${user?.token}`,
         },
         body: formData,
       });

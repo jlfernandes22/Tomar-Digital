@@ -38,12 +38,14 @@ import CustomSnackBar from './CustomSnackBar';
 import LoadingScreen from './LoadingScreen';
 import PedidoComerciante from '@/constants/Interfaces/MerchantRequest';
 
+import { useApiFetch } from '@/utils/apiFetch';
 export default function AprovarComerciantes() {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   // Data state
@@ -79,9 +81,8 @@ export default function AprovarComerciantes() {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/obter/PedidosComerciante`, {
+      const response = await apiFetch(`/obter/PedidosComerciante`, {
         headers: {
-          Authorization: `Bearer ${user.token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -199,7 +200,6 @@ export default function AprovarComerciantes() {
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${user?.token}`,
             'Content-Type': 'application/json',
           },
         },
@@ -239,7 +239,6 @@ export default function AprovarComerciantes() {
           {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${user?.token}`,
               'Content-Type': 'application/json',
             },
           },

@@ -25,7 +25,6 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
 
 // Utils & Constants
-import { API_URL } from '@/constants/api';
 import { delay } from '../../utils/delay';
 import getAddress from '../../utils/getAddress';
 import { pickImage } from '@/utils/imagePicker';
@@ -39,6 +38,7 @@ import CustomDialog from '../components/CustomDialog';
 import CustomChip from '../components/CustomChip';
 import LoadingScreen from '../components/LoadingScreen';
 
+import { useApiFetch } from '@/utils/apiFetch';
 // Static configuration constants
 const TOTAL_STEPS = 3;
 const CATEGORIES = [
@@ -57,6 +57,7 @@ export default function AddBusiness() {
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
   const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch();
 
   // --- Form & UI State ---
   const [step, setStep] = useState(1);
@@ -303,10 +304,9 @@ export default function AddBusiness() {
         } as any);
       });
 
-      const response = await fetch(`${API_URL}/registarNegocio`, {
+      const response = await apiFetch(`/registarNegocio`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user.token}`,
           // Note: 'Content-Type' is intentionally omitted. React Native's fetch
           // sets it automatically with the correct boundary parameter for FormData.
         },

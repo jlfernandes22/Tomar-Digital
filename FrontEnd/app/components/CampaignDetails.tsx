@@ -22,14 +22,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Modal, ScrollView, TouchableOpacity } from 'react-native';
-import { Surface, Text, IconButton, Divider, Chip, Dialog } from 'react-native-paper';
+import {
+  Surface,
+  Text,
+  IconButton,
+  Divider,
+  Chip,
+  Dialog,
+} from 'react-native-paper';
 import { router } from 'expo-router';
 
 // Contexts & Hooks
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
 
 // Components & Types
 import CustomButton from './CustomButton';
@@ -37,12 +43,22 @@ import CustomDialog from './CustomDialog';
 import LoadingScreen from './LoadingScreen';
 import DetalhesProps from '@/constants/Interfaces/PropsDetails';
 
-const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onPurchaseSuccess, showJoinFlow = true }: DetalhesProps) => {
+import { useApiFetch } from '@/utils/apiFetch';
+const DetalhesCampanha = ({
+  visible,
+  campaign,
+  onClose,
+  onSnackbar,
+  onError,
+  onPurchaseSuccess,
+  showJoinFlow = true,
+}: DetalhesProps) => {
   // --- Hooks (Context & Global State) ---
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { user, updateUser } = useAuth();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Role Flags ---
   // Determine which UI flows to show based on the user's role.
@@ -91,7 +107,9 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
   } | null>(null);
 
   // Participating businesses state (for citizens to see where they can earn points)
-  const [participatingBusinesses, setParticipatingBusinesses] = useState<any[]>([]);
+  const [participatingBusinesses, setParticipatingBusinesses] = useState<any[]>(
+    [],
+  );
   const [showBusinesses, setShowBusinesses] = useState(false);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
   // Tracks whether the API has been called at least once (even if result was empty)
@@ -127,11 +145,10 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
 
     setPurchasingPackId(packId);
     try {
-      const response = await fetch(`${API_URL}/packs/comprar`, {
+      const response = await apiFetch(`/packs/comprar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({
           campaignId: renderedCampaign._id,
@@ -151,8 +168,10 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
       } catch (parseError) {
         console.error(
           '[CampaignDetails] Resposta não-JSON do servidor (provável HTML 404).',
-          'Status:', response.status,
-          'Primeiros 100 chars:', responseText.substring(0, 100),
+          'Status:',
+          response.status,
+          'Primeiros 100 chars:',
+          responseText.substring(0, 100),
         );
         if (showLocalError) {
           showLocalError(
@@ -180,7 +199,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
             packs: prev.packs.map((p: any) =>
               p._id === packId
                 ? { ...p, currentStock: Math.max(0, p.currentStock - 1) }
-                : p
+                : p,
             ),
           };
         });
@@ -234,11 +253,10 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/campanhas/aderir`, {
+      const response = await apiFetch(`/campanhas/aderir`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({
           businessId: negocioSelecionado,
@@ -289,7 +307,8 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
       // the join flow is enabled (i.e. the modal was opened from "Aderir a
       // Campanhas"). When opened from "Ver Campanhas", showJoinFlow is false
       // and we skip the fetch entirely to avoid an unnecessary API call.
-      if (!isComerciante || !showJoinFlow || !visible || !campaign?.listaCAES) return;
+      if (!isComerciante || !showJoinFlow || !visible || !campaign?.listaCAES)
+        return;
 
       // Handle CAE being either an array or a single string
       const caeParaBuscar = Array.isArray(renderedCampaign.listaCAES)
@@ -297,12 +316,7 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
         : renderedCampaign.listaCAES;
 
       try {
-        const response = await fetch(
-          `${API_URL}/negociosCae?cae=${caeParaBuscar}`,
-          {
-            headers: { Authorization: `Bearer ${user?.token}` },
-          },
-        );
+        const response = await apiFetch(`/negociosCae?cae=${caeParaBuscar}`);
 
         if (response.ok) {
           const data = await response.json();
@@ -357,8 +371,8 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
     // First load — fetch from API
     setLoadingBusinesses(true);
     try {
-      const response = await fetch(
-        `${API_URL}/packs/campanha/${renderedCampaign._id}/negocios`,
+      const response = await apiFetch(
+        `/packs/campanha/${renderedCampaign._id}/negocios`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -424,7 +438,10 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                 alignItems: 'center',
               }}
             >
-              <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
+              <Text
+                variant="titleLarge"
+                style={{ color: theme.colors.primary }}
+              >
                 {t('campaign.details', { defaultValue: 'Detalhes' })}
               </Text>
               <IconButton
@@ -442,11 +459,21 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
 
             <ScrollView style={{ flexGrow: 0 }}>
               {/* Campaign Title & Description — visible to all roles */}
-              <Text variant="headlineSmall" style={{ marginBottom: 6, color: theme.colors.primary }}>
+              <Text
+                variant="headlineSmall"
+                style={{ marginBottom: 6, color: theme.colors.primary }}
+              >
                 {renderedCampaign.titulo}
               </Text>
               {renderedCampaign.slogan ? (
-                <Text variant="bodyMedium" style={{ marginBottom: 8, fontStyle: 'italic', color: theme.colors.onSurfaceVariant }}>
+                <Text
+                  variant="bodyMedium"
+                  style={{
+                    marginBottom: 8,
+                    fontStyle: 'italic',
+                    color: theme.colors.onSurfaceVariant,
+                  }}
+                >
                   {renderedCampaign.slogan}
                 </Text>
               ) : null}
@@ -459,12 +486,15 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
               {temPacks ? (
                 <View style={{ marginBottom: 16 }}>
                   <Text variant="titleMedium" style={{ marginBottom: 10 }}>
-                    {t('packs.available_packs', { defaultValue: 'Pacotes disponíveis' })}
+                    {t('packs.available_packs', {
+                      defaultValue: 'Pacotes disponíveis',
+                    })}
                   </Text>
 
                   {renderedCampaign.packs.map((pack: any) => {
                     // Determine if the current user (citizen OR merchant) can buy this pack
-                    const insufficientPoints = canBuyPacks && user.Points < pack.pointsCost;
+                    const insufficientPoints =
+                      canBuyPacks && user.Points < pack.pointsCost;
                     const outOfStock = pack.currentStock <= 0;
                     const isThisPackLoading = purchasingPackId === pack._id;
 
@@ -481,19 +511,35 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                         }}
                       >
                         {/* Pack description and cost */}
-                        <Text variant="titleSmall" style={{ fontWeight: 'bold' }}>
+                        <Text
+                          variant="titleSmall"
+                          style={{ fontWeight: 'bold' }}
+                        >
                           {pack.rewardDescription}
                         </Text>
-                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 12,
+                            marginTop: 6,
+                            flexWrap: 'wrap',
+                          }}
+                        >
                           <Chip compact textStyle={{ fontSize: 12 }}>
-                            {t('packs.cost', { defaultValue: 'Custo' })}: {pack.pointsCost} {t('packs.points', { defaultValue: 'pts' })}
+                            {t('packs.cost', { defaultValue: 'Custo' })}:{' '}
+                            {pack.pointsCost}{' '}
+                            {t('packs.points', { defaultValue: 'pts' })}
                           </Chip>
                           <Chip compact textStyle={{ fontSize: 12 }}>
-                            {t('packs.stock', { defaultValue: 'Stock' })}: {pack.currentStock}/{pack.stock}
+                            {t('packs.stock', { defaultValue: 'Stock' })}:{' '}
+                            {pack.currentStock}/{pack.stock}
                           </Chip>
                           {pack.maxPerUser > 1 && (
                             <Chip compact textStyle={{ fontSize: 12 }}>
-                              {t('packs.max_per_user', { defaultValue: 'Máx./utilizador' })}: {pack.maxPerUser}
+                              {t('packs.max_per_user', {
+                                defaultValue: 'Máx./utilizador',
+                              })}
+                              : {pack.maxPerUser}
                             </Chip>
                           )}
                         </View>
@@ -503,32 +549,56 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                           <View style={{ marginTop: 10 }}>
                             <CustomButton
                               onPress={() => handleComprarPack(pack._id)}
-                              disabled={insufficientPoints || outOfStock || isThisPackLoading}
+                              disabled={
+                                insufficientPoints ||
+                                outOfStock ||
+                                isThisPackLoading
+                              }
                               loading={isThisPackLoading}
                               buttonColor={theme.colors.primary}
                               textColor={theme.colors.onPrimary}
                               accessibilityLabel={t('accessibility.buy_pack', {
                                 defaultValue: `Comprar pacote ${pack.rewardDescription}`,
                               })}
-                              accessibilityHint={t('accessibility.buy_pack_hint', {
-                                defaultValue: 'Gasta pontos para comprar este pacote e recebe um código de levantamento',
-                              })}
+                              accessibilityHint={t(
+                                'accessibility.buy_pack_hint',
+                                {
+                                  defaultValue:
+                                    'Gasta pontos para comprar este pacote e recebe um código de levantamento',
+                                },
+                              )}
                             >
                               {isThisPackLoading
-                                ? t('common.processing', { defaultValue: 'A processar...' })
+                                ? t('common.processing', {
+                                    defaultValue: 'A processar...',
+                                  })
                                 : insufficientPoints
-                                  ? t('packs.insufficient_points', { defaultValue: 'Pontos insuficientes' })
+                                  ? t('packs.insufficient_points', {
+                                      defaultValue: 'Pontos insuficientes',
+                                    })
                                   : outOfStock
-                                    ? t('packs.out_of_stock', { defaultValue: 'Esgotado' })
-                                    : t('packs.buy_button', { defaultValue: 'Comprar' })}
+                                    ? t('packs.out_of_stock', {
+                                        defaultValue: 'Esgotado',
+                                      })
+                                    : t('packs.buy_button', {
+                                        defaultValue: 'Comprar',
+                                      })}
                             </CustomButton>
                           </View>
                         )}
 
                         {/* Camara (read-only): note that only citizens/merchants can buy */}
                         {!canBuyPacks && (
-                          <Text variant="labelSmall" style={{ marginTop: 8, color: theme.colors.onSurfaceVariant }}>
-                            {t('packs.citizen_can_buy', { defaultValue: 'Disponível para cidadãos' })}
+                          <Text
+                            variant="labelSmall"
+                            style={{
+                              marginTop: 8,
+                              color: theme.colors.onSurfaceVariant,
+                            }}
+                          >
+                            {t('packs.citizen_can_buy', {
+                              defaultValue: 'Disponível para cidadãos',
+                            })}
                           </Text>
                         )}
                       </View>
@@ -536,8 +606,16 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                   })}
                 </View>
               ) : (
-                <Text variant="bodyMedium" style={{ marginBottom: 16, color: theme.colors.onSurfaceVariant }}>
-                  {t('packs.no_packs', { defaultValue: 'Esta campanha não tem pacotes disponíveis.' })}
+                <Text
+                  variant="bodyMedium"
+                  style={{
+                    marginBottom: 16,
+                    color: theme.colors.onSurfaceVariant,
+                  }}
+                >
+                  {t('packs.no_packs', {
+                    defaultValue: 'Esta campanha não tem pacotes disponíveis.',
+                  })}
                 </Text>
               )}
 
@@ -551,15 +629,22 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                   onPress={fetchParticipatingBusinesses}
                   disabled={loadingBusinesses}
                   loading={loadingBusinesses}
-                  accessibilityLabel={t('accessibility.view_participating_businesses', {
-                    defaultValue: 'Ver negócios participantes nesta campanha',
-                  })}
+                  accessibilityLabel={t(
+                    'accessibility.view_participating_businesses',
+                    {
+                      defaultValue: 'Ver negócios participantes nesta campanha',
+                    },
+                  )}
                 >
                   {loadingBusinesses
                     ? t('common.loading', { defaultValue: 'A carregar...' })
                     : showBusinesses
-                      ? t('packs.hide_businesses', { defaultValue: 'Ocultar negócios participantes' })
-                      : t('packs.view_businesses', { defaultValue: 'Ver negócios participantes' })}
+                      ? t('packs.hide_businesses', {
+                          defaultValue: 'Ocultar negócios participantes',
+                        })
+                      : t('packs.view_businesses', {
+                          defaultValue: 'Ver negócios participantes',
+                        })}
                 </CustomButton>
 
                 {showBusinesses && (
@@ -580,18 +665,28 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                             onClose();
                             router.push({
                               pathname: '/components/BusinessDetails',
-                              params: { id: biz._id, dadosNegocio: JSON.stringify(biz) },
+                              params: {
+                                id: biz._id,
+                                dadosNegocio: JSON.stringify(biz),
+                              },
                             });
                           }}
                           accessible={true}
                           accessibilityRole="button"
-                          accessibilityLabel={t('accessibility.view_business_details', {
-                            name: biz.name,
-                            defaultValue: `Ver detalhes de ${biz.name}`,
-                          })}
-                          accessibilityHint={t('accessibility.view_business_details_hint', {
-                            defaultValue: 'Clica para ver os detalhes deste negócio',
-                          })}
+                          accessibilityLabel={t(
+                            'accessibility.view_business_details',
+                            {
+                              name: biz.name,
+                              defaultValue: `Ver detalhes de ${biz.name}`,
+                            },
+                          )}
+                          accessibilityHint={t(
+                            'accessibility.view_business_details_hint',
+                            {
+                              defaultValue:
+                                'Clica para ver os detalhes deste negócio',
+                            },
+                          )}
                           style={{
                             marginBottom: 8,
                             padding: 10,
@@ -601,16 +696,34 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                             backgroundColor: theme.colors.surface,
                           }}
                         >
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
                             <View style={{ flex: 1 }}>
-                              <Text variant="titleSmall" style={{ fontWeight: 'bold' }}>
+                              <Text
+                                variant="titleSmall"
+                                style={{ fontWeight: 'bold' }}
+                              >
                                 {biz.name}
                               </Text>
-                              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                              <Text
+                                variant="bodySmall"
+                                style={{ color: theme.colors.onSurfaceVariant }}
+                              >
                                 {biz.category}
                               </Text>
                               {biz.address ? (
-                                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+                                <Text
+                                  variant="labelSmall"
+                                  style={{
+                                    color: theme.colors.onSurfaceVariant,
+                                    marginTop: 2,
+                                  }}
+                                >
                                   {biz.address}
                                 </Text>
                               ) : null}
@@ -624,8 +737,18 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                         </TouchableOpacity>
                       ))
                     ) : (
-                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 8 }}>
-                        {t('packs.no_participating_businesses', { defaultValue: 'Ainda não há negócios participantes nesta campanha.' })}
+                      <Text
+                        variant="bodySmall"
+                        style={{
+                          color: theme.colors.onSurfaceVariant,
+                          textAlign: 'center',
+                          marginTop: 8,
+                        }}
+                      >
+                        {t('packs.no_participating_businesses', {
+                          defaultValue:
+                            'Ainda não há negócios participantes nesta campanha.',
+                        })}
                       </Text>
                     )}
                   </View>
@@ -676,10 +799,13 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                                   ? theme.colors.onPrimary
                                   : theme.colors.onSecondaryContainer
                               }
-                              accessibilityLabel={t('accessibility.select_name', {
-                                name: negocio.name,
-                                defaultValue: `Selecionar ${negocio.name}`,
-                              })}
+                              accessibilityLabel={t(
+                                'accessibility.select_name',
+                                {
+                                  name: negocio.name,
+                                  defaultValue: `Selecionar ${negocio.name}`,
+                                },
+                              )}
                               accessibilityHint={t(
                                 'accessibility.select_business_campaign',
                                 {
@@ -708,9 +834,12 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                                 }),
                               )
                         }
-                        accessibilityLabel={t('accessibility.continue_confirmation', {
-                          defaultValue: 'Continuar para a confirmação',
-                        })}
+                        accessibilityLabel={t(
+                          'accessibility.continue_confirmation',
+                          {
+                            defaultValue: 'Continuar para a confirmação',
+                          },
+                        )}
                       >
                         {t('common.continue', { defaultValue: 'Continuar' })}
                       </CustomButton>
@@ -745,8 +874,12 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
                           })}
                         >
                           {loading
-                            ? t('common.sending', { defaultValue: 'A enviar...' })
-                            : t('common.confirm_btn', { defaultValue: 'Confirmar' })}
+                            ? t('common.sending', {
+                                defaultValue: 'A enviar...',
+                              })
+                            : t('common.confirm_btn', {
+                                defaultValue: 'Confirmar',
+                              })}
                         </CustomButton>
                       </View>
                     </View>
@@ -770,7 +903,10 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
             >
               <Dialog.Title>{errorDialogTitle}</Dialog.Title>
               <Dialog.Content>
-                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
                   {errorDialogText}
                 </Text>
               </Dialog.Content>
@@ -792,16 +928,20 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
       {/* Purchase Success Dialog — shows the pickup code after a successful purchase */}
       <CustomDialog
         visible={successDialogVisible}
-        title={t('packs.purchase_success_title', { defaultValue: 'Compra efetuada!' })}
+        title={t('packs.purchase_success_title', {
+          defaultValue: 'Compra efetuada!',
+        })}
         onDismiss={() => {
           setSuccessDialogVisible(false);
           setSuccessData(null);
           // Show the snackbar AFTER the dialog closes — the modal will also
           // start closing, allowing the Portal-based snackbar to appear on top.
           if (onSnackbar) {
-            onSnackbar(t('packs.purchase_success_snackbar', {
-              defaultValue: 'Pacote comprado com sucesso!',
-            }));
+            onSnackbar(
+              t('packs.purchase_success_snackbar', {
+                defaultValue: 'Pacote comprado com sucesso!',
+              }),
+            );
           }
         }}
         onPress={() => {
@@ -809,9 +949,11 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
           setSuccessData(null);
           // Same — show snackbar after dialog dismiss
           if (onSnackbar) {
-            onSnackbar(t('packs.purchase_success_snackbar', {
-              defaultValue: 'Pacote comprado com sucesso!',
-            }));
+            onSnackbar(
+              t('packs.purchase_success_snackbar', {
+                defaultValue: 'Pacote comprado com sucesso!',
+              }),
+            );
           }
         }}
         buttonText={t('common.ok', { defaultValue: 'OK' })}
@@ -821,20 +963,60 @@ const DetalhesCampanha = ({ visible, campaign, onClose, onSnackbar, onError, onP
       >
         {successData ? (
           <View>
-            <Text variant="bodyMedium" style={{ marginBottom: 12, textAlign: 'center' }}>
+            <Text
+              variant="bodyMedium"
+              style={{ marginBottom: 12, textAlign: 'center' }}
+            >
               {successData.rewardDescription}
             </Text>
-            <Text variant="labelSmall" style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>
-              {t('packs.your_pickup_code', { defaultValue: 'O seu código de levantamento' })}
+            <Text
+              variant="labelSmall"
+              style={{
+                textAlign: 'center',
+                color: theme.colors.onSurfaceVariant,
+                marginBottom: 4,
+              }}
+            >
+              {t('packs.your_pickup_code', {
+                defaultValue: 'O seu código de levantamento',
+              })}
             </Text>
-            <Text variant="headlineMedium" style={{ textAlign: 'center', fontWeight: 'bold', color: theme.colors.primary, marginBottom: 12, fontFamily: 'monospace' }}>
+            <Text
+              variant="headlineMedium"
+              style={{
+                textAlign: 'center',
+                fontWeight: 'bold',
+                color: theme.colors.primary,
+                marginBottom: 12,
+                fontFamily: 'monospace',
+              }}
+            >
               {successData.pickupCode}
             </Text>
-            <Text variant="bodySmall" style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant }}>
-              {t('packs.present_at_camara', { defaultValue: 'Apresente este código na Câmara Municipal para levantar o seu prémio.' })}
+            <Text
+              variant="bodySmall"
+              style={{
+                textAlign: 'center',
+                color: theme.colors.onSurfaceVariant,
+              }}
+            >
+              {t('packs.present_at_camara', {
+                defaultValue:
+                  'Apresente este código na Câmara Municipal para levantar o seu prémio.',
+              })}
             </Text>
-            <Text variant="labelSmall" style={{ textAlign: 'center', marginTop: 8, color: theme.colors.onSurfaceVariant }}>
-              {t('packs.points_remaining', { defaultValue: 'Pontos restantes' })}: {successData.pointsRemaining}
+            <Text
+              variant="labelSmall"
+              style={{
+                textAlign: 'center',
+                marginTop: 8,
+                color: theme.colors.onSurfaceVariant,
+              }}
+            >
+              {t('packs.points_remaining', {
+                defaultValue: 'Pontos restantes',
+              })}
+              : {successData.pointsRemaining}
             </Text>
           </View>
         ) : null}

@@ -44,6 +44,7 @@ import { API_URL } from '@/constants/api';
 import CustomDialog from './CustomDialog';
 import LoadingScreen from './LoadingScreen';
 
+import { useApiFetch } from '@/utils/apiFetch';
 // --- Types ---
 type PurchaseStatus = 'ativo' | 'entregue' | 'expirado';
 type FilterStatus = PurchaseStatus | 'todos';
@@ -73,6 +74,7 @@ const MyPurchases = () => {
   const { currentTheme: theme } = useAppTheme();
   const { user } = useAuth();
   const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch();
 
   // --- Local State ---
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -94,29 +96,37 @@ const MyPurchases = () => {
   const fetchPurchases = useCallback(
     async (filter: FilterStatus) => {
       try {
-        const url =
+        const path =
           filter === 'todos'
-            ? `${API_URL}/packs/minhas-compras`
-            : `${API_URL}/packs/minhas-compras?status=${filter}`;
+            ? '/packs/minhas-compras'
+            : `/packs/minhas-compras?status=${filter}`;
 
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${user?.token}` },
-        });
+        const response = await apiFetch(path);
 
         if (response.ok) {
           const data = await response.json();
           setPurchases(data);
         } else {
           setPurchases([]);
-          setErrorDialogTitle(t('common.error_alert', { defaultValue: 'Erro' }));
-          setErrorDialogText(t('packs.error_loading', { defaultValue: 'Erro ao carregar compras.' }));
+          setErrorDialogTitle(
+            t('common.error_alert', { defaultValue: 'Erro' }),
+          );
+          setErrorDialogText(
+            t('packs.error_loading', {
+              defaultValue: 'Erro ao carregar compras.',
+            }),
+          );
           setErrorDialogVisible(true);
         }
       } catch (error) {
         console.error('[MyPurchases] Erro ao buscar compras:', error);
         setPurchases([]);
         setErrorDialogTitle(t('common.error_alert', { defaultValue: 'Erro' }));
-        setErrorDialogText(t('common.error_comm_server', { defaultValue: 'Não foi possível comunicar com o servidor.' }));
+        setErrorDialogText(
+          t('common.error_comm_server', {
+            defaultValue: 'Não foi possível comunicar com o servidor.',
+          }),
+        );
         setErrorDialogVisible(true);
       }
     },
@@ -234,15 +244,20 @@ const MyPurchases = () => {
 
           {/* Campaign title */}
           {item.campaign ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>
-              {t('packs.campaign_label', { defaultValue: 'Campanha' })}: {item.campaign.titulo}
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}
+            >
+              {t('packs.campaign_label', { defaultValue: 'Campanha' })}:{' '}
+              {item.campaign.titulo}
             </Text>
           ) : null}
 
           {/* Points spent + date */}
           <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
             <Text variant="labelSmall">
-              {t('packs.points_spent', { defaultValue: 'Pontos gastos' })}: {item.pack.pointsCost}
+              {t('packs.points_spent', { defaultValue: 'Pontos gastos' })}:{' '}
+              {item.pack.pointsCost}
             </Text>
             <Text variant="labelSmall">
               {new Date(item.redeemedAt).toLocaleDateString()}
@@ -262,36 +277,72 @@ const MyPurchases = () => {
                 alignItems: 'center',
               }}
             >
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                {t('packs.pickup_code', { defaultValue: 'Código de levantamento' })}
+              <Text
+                variant="labelSmall"
+                style={{
+                  color: theme.colors.onSurfaceVariant,
+                  marginBottom: 4,
+                }}
+              >
+                {t('packs.pickup_code', {
+                  defaultValue: 'Código de levantamento',
+                })}
               </Text>
               <Text
                 variant="headlineSmall"
-                style={{ fontWeight: 'bold', color: theme.colors.primary, fontFamily: 'monospace' }}
+                style={{
+                  fontWeight: 'bold',
+                  color: theme.colors.primary,
+                  fontFamily: 'monospace',
+                }}
               >
                 {item.pickupCode}
               </Text>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}>
-                {t('packs.present_at_camara', { defaultValue: 'Apresente este código na Câmara Municipal' })}
+              <Text
+                variant="labelSmall"
+                style={{
+                  color: theme.colors.onSurfaceVariant,
+                  marginTop: 4,
+                  textAlign: 'center',
+                }}
+              >
+                {t('packs.present_at_camara', {
+                  defaultValue: 'Apresente este código na Câmara Municipal',
+                })}
               </Text>
-              <Text variant="labelSmall" style={{ color: statusStyle.color, marginTop: 4 }}>
-                {t('packs.expires_on', { defaultValue: 'Expira em' })}: {new Date(item.expiresAt).toLocaleDateString()}
+              <Text
+                variant="labelSmall"
+                style={{ color: statusStyle.color, marginTop: 4 }}
+              >
+                {t('packs.expires_on', { defaultValue: 'Expira em' })}:{' '}
+                {new Date(item.expiresAt).toLocaleDateString()}
               </Text>
             </View>
           ) : (
             /* For non-active vouchers, show the code smaller and the relevant date */
             <View>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontFamily: 'monospace' }}>
+              <Text
+                variant="labelSmall"
+                style={{
+                  color: theme.colors.onSurfaceVariant,
+                  fontFamily: 'monospace',
+                }}
+              >
                 {item.pickupCode}
               </Text>
               {item.status === 'entregue' && item.validatedAt ? (
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {t('packs.delivered_on', { defaultValue: 'Entregue em' })}: {new Date(item.validatedAt).toLocaleDateString()}
+                <Text
+                  variant="labelSmall"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  {t('packs.delivered_on', { defaultValue: 'Entregue em' })}:{' '}
+                  {new Date(item.validatedAt).toLocaleDateString()}
                 </Text>
               ) : null}
               {item.status === 'expirado' ? (
                 <Text variant="labelSmall" style={{ color: statusStyle.color }}>
-                  {t('packs.expired_on', { defaultValue: 'Expirou em' })}: {new Date(item.expiresAt).toLocaleDateString()}
+                  {t('packs.expired_on', { defaultValue: 'Expirou em' })}:{' '}
+                  {new Date(item.expiresAt).toLocaleDateString()}
                 </Text>
               ) : null}
             </View>
@@ -304,9 +355,18 @@ const MyPurchases = () => {
   // --- Filter Chips Configuration ---
   const filters: { key: FilterStatus; label: string }[] = [
     { key: 'todos', label: t('packs.filter_all', { defaultValue: 'Todos' }) },
-    { key: 'ativo', label: t('packs.filter_active', { defaultValue: 'Ativos' }) },
-    { key: 'entregue', label: t('packs.filter_delivered', { defaultValue: 'Entregues' }) },
-    { key: 'expirado', label: t('packs.filter_expired', { defaultValue: 'Expirados' }) },
+    {
+      key: 'ativo',
+      label: t('packs.filter_active', { defaultValue: 'Ativos' }),
+    },
+    {
+      key: 'entregue',
+      label: t('packs.filter_delivered', { defaultValue: 'Entregues' }),
+    },
+    {
+      key: 'expirado',
+      label: t('packs.filter_expired', { defaultValue: 'Expirados' }),
+    },
   ];
 
   // --- Render ---
@@ -319,7 +379,9 @@ const MyPurchases = () => {
           color={theme.colors.onBackground}
         />
         <Appbar.Content
-          title={t('packs.my_purchases_title', { defaultValue: 'Minhas Compras' })}
+          title={t('packs.my_purchases_title', {
+            defaultValue: 'Minhas Compras',
+          })}
           titleStyle={{ fontWeight: 'bold' }}
         />
       </Appbar.Header>
@@ -328,10 +390,16 @@ const MyPurchases = () => {
         <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
           {/* Points balance header */}
           <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+            <Text
+              variant="bodyMedium"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
               {t('packs.your_balance', { defaultValue: 'Saldo de pontos' })}
             </Text>
-            <Text variant="headlineMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+            <Text
+              variant="headlineMedium"
+              style={{ fontWeight: 'bold', color: theme.colors.primary }}
+            >
               {user?.Points ?? 0} {t('packs.points', { defaultValue: 'pts' })}
             </Text>
           </View>
@@ -367,7 +435,10 @@ const MyPurchases = () => {
             keyExtractor={item => item._id}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
             }
             ListEmptyComponent={
               <View style={{ alignItems: 'center', marginTop: 40 }}>
@@ -378,11 +449,18 @@ const MyPurchases = () => {
                 />
                 <Text
                   variant="bodyMedium"
-                  style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}
+                  style={{
+                    color: theme.colors.onSurfaceVariant,
+                    textAlign: 'center',
+                  }}
                 >
                   {activeFilter === 'todos'
-                    ? t('packs.no_purchases', { defaultValue: 'Ainda não comprou nenhum pacote.' })
-                    : t('packs.no_purchases_filter', { defaultValue: 'Não tem compras neste estado.' })}
+                    ? t('packs.no_purchases', {
+                        defaultValue: 'Ainda não comprou nenhum pacote.',
+                      })
+                    : t('packs.no_purchases_filter', {
+                        defaultValue: 'Não tem compras neste estado.',
+                      })}
                 </Text>
               </View>
             }

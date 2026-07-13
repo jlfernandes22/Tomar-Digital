@@ -25,14 +25,13 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useLoadingState } from '@/context/LoadingContext';
-import { API_URL } from '@/constants/api';
-
 // Components
 import CustomButton from './CustomButton';
 import CustomDialog from './CustomDialog';
 import BusinessList from './BusinessList';
 import LoadingScreen from './LoadingScreen';
 
+import { useApiFetch } from '@/utils/apiFetch';
 // --- Interfaces ---
 interface Business {
   _id: string;
@@ -53,7 +52,8 @@ export default function AprovarNegocios() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { currentTheme: theme } = useAppTheme();
-  const { setLoadingQR } = useLoadingState(); // Setter used to sync loading state with the global FAB
+  const { setLoadingQR } = useLoadingState();
+  const apiFetch = useApiFetch(); // Setter used to sync loading state with the global FAB
 
   // --- Local State ---
   const [pendentes, setPendentes] = useState<Business[]>([]);
@@ -86,15 +86,13 @@ export default function AprovarNegocios() {
       setLoading(true);
 
       const [resPendentes, resOwners] = await Promise.all([
-        fetch(`${API_URL}/business/pendentes`, {
+        apiFetch(`/business/pendentes`, {
           headers: {
-            Authorization: `Bearer ${user.token}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`${API_URL}/utilizador/negocioPendentes`, {
+        apiFetch(`/utilizador/negocioPendentes`, {
           headers: {
-            Authorization: `Bearer ${user.token}`,
             'Content-Type': 'application/json',
           },
         }),
@@ -114,10 +112,9 @@ export default function AprovarNegocios() {
   /** Approves a business and removes it from the local pending list optimistically. */
   const handleAprovar = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/business/aprovar/${id}`, {
+      const response = await apiFetch(`/business/aprovar/${id}`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user?.token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -145,10 +142,9 @@ export default function AprovarNegocios() {
   /** Executes the discard API call after confirmation. */
   const executeDescartar = async (id: string) => {
     try {
-      const response = await fetch(`${API_URL}/business/rejeitar/${id}`, {
+      const response = await apiFetch(`/business/rejeitar/${id}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${user?.token}`,
           'Content-Type': 'application/json',
         },
       });

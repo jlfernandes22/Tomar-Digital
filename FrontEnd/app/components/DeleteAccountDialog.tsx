@@ -27,14 +27,13 @@ import { Portal, Dialog, Text } from 'react-native-paper';
 // Contexts & Hooks
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
-import { API_URL } from '@/constants/api';
-
 // Components
 import CustomButton from './CustomButton';
 import CustomTextInput from './CustomTextInput';
 import CustomDialog from './CustomDialog';
 import delay from '@/utils/delay';
 
+import { useApiFetch } from '@/utils/apiFetch';
 interface DeleteAccountDialogProps {
   visible: boolean;
   onDismiss: () => void;
@@ -48,6 +47,7 @@ const DeleteAccountDialog = ({
   const { t } = useTranslation();
   const { currentTheme: theme } = useAppTheme();
   const { logout, user } = useAuth();
+  const apiFetch = useApiFetch();
 
   // --- State ---
   const [password, setPassword] = useState('');
@@ -100,11 +100,10 @@ const DeleteAccountDialog = ({
     setErrorMessage('');
 
     try {
-      const response = await fetch(`${API_URL}/apagarConta`, {
+      const response = await apiFetch(`/apagarConta`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify({ password }),
       });
