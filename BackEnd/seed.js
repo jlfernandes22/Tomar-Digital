@@ -8579,18 +8579,48 @@ quais não nos foi possível relocalizar Sítio arqueológico.",
           const random = randomBytes(4).toString("hex").toUpperCase();
           const pickupCode = `TD-${year}-${random}`;
 
-          // 50% entregue, 35% ativo, 15% expirado
-          const rand = Math.random();
+          // --- Status assignment based on expiresAt date ---
+          // Previously, 15% of vouchers were randomly set to "expirado"
+          // regardless of their expiresAt date, causing a bug where vouchers
+          // showed as expired but had a future expiration date.
+          //
+          // Now: status is determined by whether expiresAt has passed.
+          //   - If expired: 50% "entregue" (redeemed before expiry), 50% "expirado"
+          //   - If still valid: 30% "entregue" (already redeemed), 70% "ativo"
+          const expiresAt = new Date(
+            new Date(campaign.DataExpiracao).getTime() + 7 * 24 * 60 * 60 * 1000
+          );
+          const now = new Date();
+
           let status = "ativo";
           let validatedAt = null;
           let validatedBy = null;
-          if (rand < 0.5) {
-            status = "entregue";
-            validatedAt = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
-            const camaraUser = await User.findOne({ role: "camara" });
-            validatedBy = camaraUser ? camaraUser._id : null;
-          } else if (rand < 0.65) {
-            status = "expirado";
+
+          if (expiresAt < now) {
+            // Voucher deadline has passed — simulate whether it was redeemed
+            if (Math.random() < 0.5) {
+              status = "entregue";
+              // Validated sometime in the 7 days before expiry
+              validatedAt = new Date(
+                expiresAt.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000
+              );
+              const camaraUser = await User.findOne({ role: "camara" });
+              validatedBy = camaraUser ? camaraUser._id : null;
+            } else {
+              status = "expirado";
+            }
+          } else {
+            // Voucher is still valid — simulate whether it was already redeemed
+            if (Math.random() < 0.3) {
+              status = "entregue";
+              // Validated sometime in the last 7 days
+              validatedAt = new Date(
+                now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000
+              );
+              const camaraUser = await User.findOne({ role: "camara" });
+              validatedBy = camaraUser ? camaraUser._id : null;
+            }
+            // else: status stays "ativo"
           }
 
           redemptionsToCreate.push({
@@ -8606,7 +8636,7 @@ quais não nos foi possível relocalizar Sítio arqueológico.",
             redeemedAt: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000),
             validatedAt,
             validatedBy,
-            expiresAt: new Date(new Date(campaign.DataExpiracao).getTime() + 7 * 24 * 60 * 60 * 1000),
+            expiresAt,
           });
 
           // Track sold count for this pack
