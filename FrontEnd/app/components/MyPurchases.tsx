@@ -171,7 +171,12 @@ const MyPurchases = () => {
 
   // --- Early Return (Loading State) ---
   if (loading) {
-    return <LoadingScreen />;
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <LoadingScreen />
+      </>
+    );
   }
 
   // --- Derived Values ---

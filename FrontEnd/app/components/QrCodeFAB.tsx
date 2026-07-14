@@ -29,10 +29,24 @@ const QrCodeFAB = () => {
   const isScanScreen = segments.includes('ScanScreen');
   const isCreateCampaign = segments.includes('CampaignCreate');
   const isAddBusiness = segments.includes('BusinessAdd');
-  const isProfile = segments.includes('Profile');
+  const isProfile =
+    segments.includes('Profile') ||
+    segments.includes('ProfileEdit') ||
+    segments.includes('Preferences');
   const isValidatePack = segments.includes('ValidatePack');
   const isMyPurchases = segments.includes('MyPurchases');
   const isBusinessDetails = segments.includes('BusinessDetails');
+  const isViewCampaign =
+    segments.includes('CampaignList') ||
+    segments.includes('CampaignListMerchant') ||
+    segments.includes('CampaignIndex') ||
+    segments.includes('CampaignCandidates');
+  const isJoinCampaign =
+    segments.includes('CampaignMerchant') ||
+    segments.includes('CampaignMerchantJoin');
+  const isAboutApp = segments.includes('AppAbout');
+  const isMerchantsCandidates = segments.includes('MerchantsCandidates');
+  const isBusinessCandidates = segments.includes('BusinessCandidates');
 
   // Hide the FAB on auth screens, specific full-screen forms, the scanner itself,
   // or if a global loading state is active to prevent navigation overlaps.
@@ -45,7 +59,12 @@ const QrCodeFAB = () => {
     loadingQR ||
     isValidatePack ||
     isMyPurchases ||
-    isBusinessDetails;
+    isBusinessDetails ||
+    isViewCampaign ||
+    isAboutApp ||
+    isJoinCampaign ||
+    isMerchantsCandidates ||
+    isBusinessCandidates;
 
   // --- Early Return ---
   if (shouldHideFAB) {
