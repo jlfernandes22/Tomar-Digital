@@ -22,14 +22,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Modal, ScrollView, TouchableOpacity } from 'react-native';
-import {
-  Surface,
-  Text,
-  IconButton,
-  Divider,
-  Chip,
-  Dialog,
-} from 'react-native-paper';
+import { Surface, Text, IconButton, Divider, Chip } from 'react-native-paper';
 import { router } from 'expo-router';
 
 // Contexts & Hooks
@@ -889,138 +882,123 @@ const DetalhesCampanha = ({
             </ScrollView>
 
             {/*
-              Local Error Dialog — rendered INSIDE the modal (not via Portal).
-              Paper's Portal renders below React Native's Modal, so a
-              Portal-based CustomDialog would be hidden behind the modal.
-              By rendering the Dialog directly here (without Portal), it
-              becomes part of the modal's own view hierarchy and appears
-              on top of the modal content.
+              Local Error Dialog — rendered INSIDE the modal using the
+              `inModal` prop on CustomDialog. This prop skips the <Portal>
+              wrapper, because Paper's Portal renders at the root level
+              (below React Native's Modal in the view hierarchy) and would
+              be invisible to the user. See CustomDialog.tsx for details.
             */}
-            <Dialog
+            <CustomDialog
+              inModal
               visible={errorDialogVisible}
+              title={errorDialogTitle}
               onDismiss={() => setErrorDialogVisible(false)}
-              style={{ backgroundColor: theme.colors.surfaceContainer }}
+              onPress={() => setErrorDialogVisible(false)}
+              buttonText={t('common.ok', { defaultValue: 'OK' })}
+              accessibilityLabel={t('accessibility.close_message', {
+                defaultValue: 'Fechar mensagem',
+              })}
             >
-              <Dialog.Title>{errorDialogTitle}</Dialog.Title>
-              <Dialog.Content>
-                <Text
-                  variant="bodyMedium"
-                  style={{ color: theme.colors.onSurfaceVariant }}
-                >
-                  {errorDialogText}
-                </Text>
-              </Dialog.Content>
-              <Dialog.Actions>
-                <CustomButton
-                  onPress={() => setErrorDialogVisible(false)}
-                  accessibilityLabel={t('accessibility.close_message', {
-                    defaultValue: 'Fechar mensagem',
-                  })}
-                >
-                  {t('common.ok', { defaultValue: 'OK' })}
-                </CustomButton>
-              </Dialog.Actions>
-            </Dialog>
+              <Text
+                variant="bodyMedium"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
+                {errorDialogText}
+              </Text>
+            </CustomDialog>
+
+            {/*
+              Purchase Success Dialog — shows the pickup code after a
+              successful purchase. Also rendered with `inModal` so it
+              appears on top of the modal content (not hidden behind it).
+            */}
+            <CustomDialog
+              inModal
+              visible={successDialogVisible}
+              title={t('packs.purchase_success_title', {
+                defaultValue: 'Compra efetuada!',
+              })}
+              onDismiss={() => {
+                setSuccessDialogVisible(false);
+                setSuccessData(null);
+                // No snackbar — the success dialog itself confirms the
+                // purchase. Showing a snackbar after closing the campaign
+                // details modal would be redundant and confusing.
+              }}
+              onPress={() => {
+                setSuccessDialogVisible(false);
+                setSuccessData(null);
+                // Same — no snackbar. The dialog already showed the
+                // pickup code and success message.
+              }}
+              buttonText={t('common.ok', { defaultValue: 'OK' })}
+              buttonColor={theme.colors.primary}
+              textColor={theme.colors.onPrimary}
+              icon="check-circle"
+            >
+              {successData ? (
+                <View>
+                  <Text
+                    variant="bodyMedium"
+                    style={{ marginBottom: 12, textAlign: 'center' }}
+                  >
+                    {successData.rewardDescription}
+                  </Text>
+                  <Text
+                    variant="labelSmall"
+                    style={{
+                      textAlign: 'center',
+                      color: theme.colors.onSurfaceVariant,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {t('packs.your_pickup_code', {
+                      defaultValue: 'O seu código de levantamento',
+                    })}
+                  </Text>
+                  <Text
+                    variant="headlineMedium"
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      color: theme.colors.primary,
+                      marginBottom: 12,
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    {successData.pickupCode}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={{
+                      textAlign: 'center',
+                      color: theme.colors.onSurfaceVariant,
+                    }}
+                  >
+                    {t('packs.present_at_camara', {
+                      defaultValue:
+                        'Apresente este código na Câmara Municipal para levantar o seu prémio.',
+                    })}
+                  </Text>
+                  <Text
+                    variant="labelSmall"
+                    style={{
+                      textAlign: 'center',
+                      marginTop: 8,
+                      color: theme.colors.onSurfaceVariant,
+                    }}
+                  >
+                    {t('packs.points_remaining', {
+                      defaultValue: 'Pontos restantes',
+                    })}
+                    : {successData.pointsRemaining}
+                  </Text>
+                </View>
+              ) : null}
+            </CustomDialog>
           </Surface>
         </View>
       </Modal>
-
-      {/* Purchase Success Dialog — shows the pickup code after a successful purchase */}
-      <CustomDialog
-        visible={successDialogVisible}
-        title={t('packs.purchase_success_title', {
-          defaultValue: 'Compra efetuada!',
-        })}
-        onDismiss={() => {
-          setSuccessDialogVisible(false);
-          setSuccessData(null);
-          // Show the snackbar AFTER the dialog closes — the modal will also
-          // start closing, allowing the Portal-based snackbar to appear on top.
-          if (onSnackbar) {
-            onSnackbar(
-              t('packs.purchase_success_snackbar', {
-                defaultValue: 'Pacote comprado com sucesso!',
-              }),
-            );
-          }
-        }}
-        onPress={() => {
-          setSuccessDialogVisible(false);
-          setSuccessData(null);
-          // Same — show snackbar after dialog dismiss
-          if (onSnackbar) {
-            onSnackbar(
-              t('packs.purchase_success_snackbar', {
-                defaultValue: 'Pacote comprado com sucesso!',
-              }),
-            );
-          }
-        }}
-        buttonText={t('common.ok', { defaultValue: 'OK' })}
-        buttonColor={theme.colors.primary}
-        textColor={theme.colors.onPrimary}
-        icon="check-circle"
-      >
-        {successData ? (
-          <View>
-            <Text
-              variant="bodyMedium"
-              style={{ marginBottom: 12, textAlign: 'center' }}
-            >
-              {successData.rewardDescription}
-            </Text>
-            <Text
-              variant="labelSmall"
-              style={{
-                textAlign: 'center',
-                color: theme.colors.onSurfaceVariant,
-                marginBottom: 4,
-              }}
-            >
-              {t('packs.your_pickup_code', {
-                defaultValue: 'O seu código de levantamento',
-              })}
-            </Text>
-            <Text
-              variant="headlineMedium"
-              style={{
-                textAlign: 'center',
-                fontWeight: 'bold',
-                color: theme.colors.primary,
-                marginBottom: 12,
-                fontFamily: 'monospace',
-              }}
-            >
-              {successData.pickupCode}
-            </Text>
-            <Text
-              variant="bodySmall"
-              style={{
-                textAlign: 'center',
-                color: theme.colors.onSurfaceVariant,
-              }}
-            >
-              {t('packs.present_at_camara', {
-                defaultValue:
-                  'Apresente este código na Câmara Municipal para levantar o seu prémio.',
-              })}
-            </Text>
-            <Text
-              variant="labelSmall"
-              style={{
-                textAlign: 'center',
-                marginTop: 8,
-                color: theme.colors.onSurfaceVariant,
-              }}
-            >
-              {t('packs.points_remaining', {
-                defaultValue: 'Pontos restantes',
-              })}
-              : {successData.pointsRemaining}
-            </Text>
-          </View>
-        ) : null}
-      </CustomDialog>
 
       {/*
         NOTE: The snackbar is NOT rendered here.

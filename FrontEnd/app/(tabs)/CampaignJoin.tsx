@@ -183,7 +183,9 @@ export default function JoinCampaign() {
             marginBottom: 10,
           }}
         >
-          {t('campaign.join_title_citizen', { defaultValue: 'Campanhas a decorrer' })}
+          {t('campaign.join_title_citizen', {
+            defaultValue: 'Campanhas a decorrer',
+          })}
         </Text>
 
         <Divider

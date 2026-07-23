@@ -206,7 +206,7 @@ const seedDatabase = async () => {
         password: hashedPassword,
         city: "Tomar",
         role: "cidadao",
-        Points: 850,
+        Points: 1500,
         NIF: generateValidNIF(false),
       }),
       buildUser({
