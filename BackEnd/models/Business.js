@@ -13,6 +13,9 @@ const BusinessSchema = new mongoose.Schema({
     required: true,
   },
 
+  listaCAES: {type: [String], required: true},
+
+
   //Categoria do negócio baseado na cidade de Tomar
   category: {
     type: String,
@@ -32,6 +35,11 @@ const BusinessSchema = new mongoose.Schema({
   location: {
     lat: Number,
     long: Number,
+  },
+
+  address: {
+    type: String,
+    default: "",
   },
 
   status: {
@@ -63,6 +71,18 @@ const BusinessSchema = new mongoose.Schema({
       },
     },
   ],
+
+  logo: {
+    type: String,
+    default: "",
+  },
+
+  gallery: { type: [], default: [""] },
+
+  description: {
+    type: String,
+    required: true,
+  },
 });
 
 export default mongoose.model("Business", BusinessSchema);

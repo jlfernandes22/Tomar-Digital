@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
   //Nome do utilizador
   name: {
     type: String,
-    required: true,
+    required: false,
   },
 
   //Email
@@ -46,6 +46,18 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  acceptedInvoiceTerms: {
+    type: Boolean,
+    default: false,
+  },
+
+  codigoValidar: {type: String},
+
+  isVerified: {type: Boolean, required:true},
+
+  codigoResetPassword: { type: String, default: null },
+  
+  codigoResetExpira: { type: Date, default: null },
 });
 
 export default mongoose.model("User", UserSchema);

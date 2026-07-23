@@ -1,161 +1,351 @@
+/**
+ * Register Screen
+ *
+ * Handles new user registration. Collects email, city, and password,
+ * performs client-side validation (including password strength), and
+ * communicates with the backend to create the account.
+ * On success, it navigates the user to the email validation screen.
+ */
+
 import {
   Image,
-  Text,
   View,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-} from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { API_URL } from "@/constants/api";
-import { router } from "expo-router";
-import { images } from "@/constants/images";
-import { delay } from "@/app/utils/delay";
-import CustomButton from "../components/CustomButton";
-import CustomTextField from "../components/CustomTextInput";
-import CustomSnackBar from "../components/CustomSnackBar";
-import { useTheme } from "react-native-paper";
+} from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_URL } from '@/constants/api';
+import { router } from 'expo-router';
+import { images } from '@/constants/images';
+import { delay } from '../../utils/delay';
+import CustomButton from '../components/CustomButton';
+import CustomTextField from '../components/CustomTextInput';
+import CustomSnackBar from '../components/CustomSnackBar';
+import CustomDialog from '../components/CustomDialog';
+import { useAppTheme } from '@/context/ThemeContext';
+import { Surface, Text } from 'react-native-paper';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const Register = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("");
-  const [city, setCity] = useState("");
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const theme = useTheme();
+  const { t } = useTranslation();
 
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [city, setCity] = useState('');
+  const [nif, setNif] = useState('');
+
+  // UI feedback state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogText, setDialogText] = useState('');
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { currentTheme: theme } = useAppTheme();
+
+  /**
+   * Handles the registration process.
+   * Runs sequential client-side validations before making the API call.
+   * If successful, navigates the user to the Validate screen.
+   */
   const handleRegister = async () => {
-    // 1. Validação local antes de incomodar o servidor!
+    setLoading(true);
+
+    // 1. Check for empty required fields
     if (!email || !password) {
-      setSnackbarMessage(
-        "Aviso: Por favor, preencha pelo menos email, password.",
-      );
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('register.warning_empty'));
+      setDialogVisible(true);
+      setLoading(false);
       return;
     }
 
+    // 2. Ensure passwords match
     if (password !== confirmPassword) {
-      console.log(password, confirmPassword);
-      setSnackbarMessage("Aviso: As palavras-passe não coincidem!");
-      setSnackbarVisible(true);
+      setDialogTitle(t('common.warning'));
+      setDialogText(t('register.warning_mismatch'));
+      setDialogVisible(true);
+      setLoading(false);
+      return;
+    }
+
+    // 3. Enforce password strength using a regex pattern.
+    // Requires: 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 special character.
+    const isSecure =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(
+        password,
+      );
+
+    if (!isSecure) {
+      setDialogTitle(t('common.warning'));
+      setDialogText(
+        t('register.warning_weak_password', {
+          defaultValue:
+            'A password deve ter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial.',
+        }),
+      );
+      setDialogVisible(true);
+      setLoading(false);
       return;
     }
 
     try {
-      // 2. Enviar dados (normalmente não se envia o confirmPassword para a API)
       const response = await fetch(`${API_URL}/registar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-          city: city,
-        }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, city, nif }),
       });
+
+      // Handle rate limiting (HTTP 429) early without attempting to parse JSON
+      if (response.status === 429) {
+        setDialogTitle(t('common.error'));
+        setDialogText(t('common.error_429'));
+        setDialogVisible(true);
+        setLoading(false);
+        return;
+      }
 
       const dados = await response.json();
 
       if (response.ok) {
-        setSnackbarMessage("Sucesso: A redirecionar...");
+        setLoading(false);
+        setSnackbarMessage(t('register.success'));
         setSnackbarVisible(true);
+
+        // Brief pause to allow the user to read the success snackbar before transitioning
         await delay(500);
 
-        router.replace("/Login");
+        // Navigate to the Validate screen, passing the email as a param
+        // so the user doesn't have to type it again.
+        router.replace({
+          pathname: '/Validate',
+          params: { email: email },
+        });
+        setEmail('');
+        setCity('');
+        setNif('');
+        setPassword('');
+        setConfirmPassword('');
       } else {
-        setSnackbarMessage(
-          "Erro: " + dados.message || "Erro: Não foi possível criar a conta.",
-        );
-        setSnackbarVisible(true);
+        // Handle expected API errors (e.g., email already in use)
+        setDialogTitle(t('common.error'));
+        setDialogText(dados.message || t('register.error_generic'));
+        setDialogVisible(true);
+        setLoading(false);
       }
     } catch (err) {
-      setSnackbarMessage("Erro de Rede. Verifique a sua ligação à internet.");
-      setSnackbarVisible(true);
+      // Handle unexpected network errors
+      setDialogTitle(t('common.error'));
+      setDialogText(t('register.error_server'));
+      setDialogVisible(true);
+      setLoading(false);
     }
   };
 
   return (
     <View className="flex-1">
+      {/* Background Image and Overlay */}
+      {/* The overlay adds a semi-transparent layer to ensure text readability over the image */}
       <Image
         source={images.backgroundRegister}
-        className="absolute w-full h-full"
+        className="absolute h-full w-full"
         resizeMode="cover"
       />
-      <View className="absolute w-full h-full bg-convento-900/60" />
+      <View
+        className="absolute h-full w-full"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
+      />
 
       <SafeAreaView className="flex-1 bg-transparent">
+        {/* Language Switcher positioned at the top right */}
+        <View
+          style={{
+            width: '100%',
+            alignItems: 'flex-end',
+            paddingRight: 10,
+            paddingTop: 10,
+            zIndex: 10, // Ensures the button is tappable above other elements
+          }}
+        >
+          <LanguageSwitcher />
+        </View>
+
+        {/*
+          KeyboardAvoidingView shifts the content up when the keyboard appears.
+          - 'padding' is generally preferred on iOS to avoid layout jump issues.
+          - 'height' works better on Android to prevent resizing artifacts.
+          - keyboardVerticalOffset adds a small gap on Android so inputs aren't flush against the keyboard.
+        */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === "android" ? 20 : 0}
+          keyboardVerticalOffset={Platform.OS === 'android' ? 20 : 0}
         >
           <ScrollView
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: 'center',
+              paddingBottom: 40,
+            }}
+            // Prevents the keyboard from dismissing when tapping inside a text field,
+            // but allows it to dismiss when tapping outside.
             keyboardShouldPersistTaps="handled"
-            bounces={false}
+            bounces={false} // Disables iOS scroll bounce for a more form-like feel
           >
+            {/* Wraps the form to allow tapping outside inputs to dismiss the keyboard */}
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View className="flex-1 w-[85%] self-center pt-10 space-y-4">
-                <Text className="mb-10 text-center text-5xl font-bold text-neutral-300">
-                  Criar conta
-                </Text>
-
-                {/* Campo do email*/}
-                <CustomTextField
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  isEmail
-                  className="mb-[2rem]"
-                />
-
-                {/* Campo da cidade*/}
-                <CustomTextField
-                  label="Cidade (Ex: Tomar)"
-                  value={city}
-                  onChangeText={setCity}
-                  className="mb-[2rem]"
-                />
-
-                {/* Campo da palavra-passe*/}
-                <CustomTextField
-                  label="Palavra-passe"
-                  value={password}
-                  onChangeText={setPassword}
-                  isPassword
-                  className="mb-[2rem]"
-                />
-
-                {/* Confirmar Password */}
-                <CustomTextField
-                  label="Comfirmar Palavra-passe"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  isPassword
-                  className="mb-[2rem]"
-                />
-
-                {/* Botão de Registo */}
-                <CustomButton
-                  onPress={handleRegister}
-                  buttonColor={theme.colors.primaryContainer}
-                  className="mt-8"
+              <View className="w-[90%] self-center py-10">
+                <Surface
+                  elevation={2}
+                  style={{
+                    backgroundColor: theme.colors.surfaceContainer,
+                    padding: 32,
+                    borderRadius: theme.roundness === 0 ? 0 : 24,
+                  }}
                 >
-                  Criar Conta
-                </CustomButton>
+                  <Text
+                    className="mb-4 text-center text-4xl font-bold"
+                    style={{
+                      color: theme.colors.primary,
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                    }}
+                    variant="headlineLarge"
+                  >
+                    {t('register.title')}
+                  </Text>
+
+                  <CustomTextField
+                    label={t('register.email')}
+                    value={email}
+                    onChangeText={setEmail}
+                    isEmail // Triggers email-specific keyboard and validation in CustomTextInput
+                    className="mb-5"
+                    lenght={200}
+                    required
+                    accessibilityLabel={t('accessibility.register_email', {
+                      defaultValue: 'Campo de email para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_email_hint', {
+                      defaultValue: 'Introduza o seu endereço de email',
+                    })}
+                  />
+
+                  <CustomTextField
+                    label={t('register.city')}
+                    value={city}
+                    onChangeText={setCity}
+                    className="mb-5"
+                    lenght={30}
+                    accessibilityLabel={t('accessibility.register_city', {
+                      defaultValue: 'Campo de cidade para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_city_hint', {
+                      defaultValue: 'Introduza a sua cidade de residência',
+                    })}
+                  />
+
+                  <CustomTextField
+                    label={t('register.NIF')}
+                    value={nif}
+                    onChangeText={setNif}
+                    className="mb-5"
+                    isNIF
+                    lenght={9}
+                    accessibilityLabel={t('accessibility.register_nif', {
+                      defaultValue: 'Campo de NIF para registo (opcional)',
+                    })}
+                    accessibilityHint={t('accessibility.register_nif_hint', {
+                      defaultValue:
+                        'Introduza o seu Número de Identificação Fiscal (9 dígitos). Opcional.',
+                    })}
+                  />
+
+                  <CustomTextField
+                    label={t('register.password')}
+                    value={password}
+                    onChangeText={setPassword}
+                    isPassword // CustomTextInput handles the secure entry and eye icon internally
+                    className="mb-5"
+                    lenght={100}
+                    required
+                    accessibilityLabel={t('accessibility.register_password', {
+                      defaultValue: 'Campo de palavra-passe para registo',
+                    })}
+                    accessibilityHint={t('accessibility.register_password_hint', {
+                      defaultValue:
+                        'Introduza uma palavra-passe com pelo menos 8 caracteres, uma maiúscula, um número e um caractere especial',
+                    })}
+                  />
+
+                  <CustomTextField
+                    label={t('register.confirm_password')}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    isPassword
+                    className="mb-8"
+                    lenght={100}
+                    required
+                    accessibilityLabel={t('accessibility.register_confirm_password', {
+                      defaultValue: 'Campo de confirmação de palavra-passe',
+                    })}
+                    accessibilityHint={t('accessibility.register_confirm_password_hint', {
+                      defaultValue: 'Reintroduza a mesma palavra-passe para confirmação',
+                    })}
+                  />
+
+                  <CustomButton
+                    onPress={handleRegister}
+                    loading={loading}
+                    accessibilityLabel={t('register.register_button')}
+                    accessibilityHint={t('accessibility.register_hint', {
+                      defaultValue: 'Clica para criar uma nova conta',
+                    })}
+                  >
+                    {t('register.register_button')}
+                  </CustomButton>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingTop: 16,
+                      alignSelf: 'center',
+                    }}
+                  >
+                    <Text>{t('register.has_account')} </Text>
+                    <Text
+                      onPress={() => router.replace('/Login')}
+                      style={{ color: theme.colors.error }}
+                    >
+                      {t('register.login')}
+                    </Text>
+                  </View>
+                </Surface>
               </View>
             </TouchableWithoutFeedback>
           </ScrollView>
+
+          {/* Global UI feedback components */}
           <CustomSnackBar
             visible={snackbarVisible}
             message={snackbarMessage}
             onDismiss={() => setSnackbarVisible(false)}
           />
+          <CustomDialog
+            title={dialogTitle}
+            visible={dialogVisible}
+            onDismiss={() => setDialogVisible(false)}
+          >
+            <Text>{dialogText}</Text>
+          </CustomDialog>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

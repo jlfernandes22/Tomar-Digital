@@ -1,8 +1,8 @@
-import React from "react";
-import ProfileDetails from "../components/ProfileDetails";
+import React from 'react';
+import MenuPerfil from '../components/ProfileMenu';
 
 const Profile = () => {
-  return <ProfileDetails />;
+  return <MenuPerfil />;
 };
 
 export default Profile;
